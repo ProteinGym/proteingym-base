@@ -1,0 +1,28 @@
+default_install_hook_types:
+  - pre-commit
+  - post-checkout
+  - post-merge
+  - post-rewrite
+
+repos:
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.9.6
+  hooks:
+    # Run the linter.
+    - id: ruff
+      args: [ --fix, --preview ]
+      exclude: notebooks/
+    # Run the formatter.
+    - id: ruff-format
+      args: [ --preview ]
+      exclude: notebooks/
+
+- repo: https://github.com/astral-sh/uv-pre-commit
+  # uv version.
+  rev: 0.6.1
+  hooks:
+    # Update the uv lockfile.
+    - id: uv-lock
+    # Synchronize the dependencies upon branch checkout, pull or rebase.
+    - id: uv-sync
