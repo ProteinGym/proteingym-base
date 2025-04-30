@@ -45,6 +45,6 @@ uv run jupyter lab
 uv run pytest
 ```
 
-## TODO
+## todo
 
 - [ ] replace this [train_and_test_split](https://github.com/ProteinGym2/pg2-dataset/blob/51af99ee8143de35150abebe637c8d56262aee87/src/pg2_dataset/datasets/csv.py#L25) with different split strategies from https://github.com/ProteinGym2/pg2-data/tree/main/src/pg2_data/split_strategy
