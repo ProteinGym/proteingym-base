@@ -27,6 +27,10 @@ ds = CSVDataset(
 print(ds.train[0])
 print(ds.train[0].pg2_split)
 print(ds.train[0].pg2_uuid)
+
+print(ds.test[0])
+print(ds.test[0].pg2_split)
+print(ds.test[0].pg2_uuid)
 ```
 
 ## play around
