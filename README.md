@@ -1,4 +1,56 @@
 # pg2 dataset
+## schema
+
+``` mermaid
+classDiagram
+    class ModelManifest{
+        train_entrypoint: str|None
+        predict_entrypoint: str
+    }
+    class MeasurementWithUncertainty{
+        value: float
+        uncertainty: PositiveFloat
+    }
+    class Dataset{
+        +records: list[Record]
+        +structure: Structure
+        +msa: MSA
+        +alphabet: SequenceAlphabet
+        +assay_meta: list[AssayMeta]
+        +reference_sequences: list[str]
+        +meta: DatasetMeta
+        +splits: dict[tuple[Round, Sequence, SplitStrategy], TrainValidTestEnum]
+        +split(strategy: Callable)
+        +data_frame_by_target(target: str)
+        +data_frame()
+    }
+    Dataset <|-- Record
+    class Record{
+      +engineering_round: int
+      +sequence: str
+      +target_name: str
+      +$key: float|str|MeasurementWithUncertainty
+    }
+    class AssayMeta{
+        +target_name: str
+        +features: dict[str, type]
+        +description: str
+        +$constant: any
+    }
+    Dataset <|-- AssayMeta
+    Dataset <|-- DatasetMeta
+    Record <|-- MeasurementWithUncertainty
+    class DatasetMeta {
+        +xref: CrossReference
+    }
+   
+```
+
+Validators
+
+- Every $target_name should have a corresponding AssayMeta
+- No missing values in records for listed features assay metadata for target
+- ...
 
 ## develop locally
 
