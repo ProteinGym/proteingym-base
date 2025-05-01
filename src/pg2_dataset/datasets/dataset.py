@@ -3,7 +3,7 @@ import uuid
 from typing import Any
 import pandas as pd
 
-from pg2_dataset.primitives.example import Example
+from pg2_dataset.primitives.record import Record
 
 
 class Dataset:
@@ -26,42 +26,48 @@ class Dataset:
     @property
     def dataset(self):
         if not hasattr(self, "_dataset_"):
-            self._dataset_ = self._dataset
+            self._dataset_ = self._enrich(self._dataset)
+
+        if not hasattr(self, "_train_"):
+            self._train_ = [record:=self._assign("train", _record) for _record in self._dataset_[:self.train_size]]
+
+        if not hasattr(self, "_test_"):
+            self._test_ =[record:=self._assign("test", _record) for _record in self._dataset_[self.train_size: self.train_size+self.test_size]]
 
         return self._dataset_
 
 
     @property
     def train(self):
-        if not hasattr(self, "_train_"):
-            self._train_ = self._enrich(self._train, "train")
-
         return self._train_
 
 
     @property
     def test(self):
-        if not hasattr(self, "_test_"):
-            self._test_ = self._enrich(self._test, "test")
-
         return self._test_
 
+    def _assign(
+        self, split: str, record: Record,
+    ):
+        record.split = split
+        return record
+
     def _enrich(
-        self, data: list[dict[str, Any]], split: str | None = None
+        self, data: list[dict[str, Any]],
     ):  
         output = []
 
-        for example in data:
-            example_obj = Example(
-                **example, pg2_uuid=str(uuid.uuid4()), pg2_split=split
+        for record in data:
+            record_obj = Record(
+                **record, uuid=str(uuid.uuid4())
             )
             if self.input_keys:
-                example_obj.with_inputs(*self.input_keys)
+                record_obj.with_inputs(*self.input_keys)
 
             if self.label:
-                example_obj.with_label(self.label)
+                record_obj.with_label(self.label)
 
-            output.append(example_obj)
+            output.append(record_obj)
 
         # NOTE: we use these uuids for dedup internally, for internal train/test splits.
 

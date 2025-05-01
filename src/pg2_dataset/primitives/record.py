@@ -1,4 +1,4 @@
-class Example:
+class Record:
     def __init__(self, base=None, **kwargs):
         super().__init__()
 

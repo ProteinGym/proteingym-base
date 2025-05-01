@@ -1,5 +1,5 @@
-from pg2_dataset.primitives.example import Example
+from pg2_dataset.primitives.record import Record
 
 __all__ = [
-    "Example",
+    "Record",
 ]
