@@ -19,7 +19,6 @@ ds = CSVDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     input_keys=["mutated_sequence"],
     label="DMS_score",
-    random_state=42,
     train_size=10,
     test_size=2,
 )

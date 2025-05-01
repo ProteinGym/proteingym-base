@@ -27,7 +27,7 @@ class TestCSVDataset:
     def test_split(self, csv_file_path):
         dataset = CSVDataset(
             file_path=csv_file_path,
-            random_state=42,
+            input_keys=["sequence"],
             train_size=3,
             test_size=2,
         )
@@ -45,10 +45,9 @@ class TestCSVDataset:
     def test_input_keys(self, csv_file_path):
         dataset = CSVDataset(
             file_path=csv_file_path,
-            random_state=42,
+            input_keys=["sequence"],
             train_size=3,
             test_size=2,
-            input_keys=["sequence"],
         )
 
         for example in dataset.train:
@@ -65,10 +64,9 @@ class TestCSVDataset:
         with pytest.raises(ValueError):
             dataset = CSVDataset(
                 file_path=csv_file_path,
-                random_state=42,
+                input_keys=["bad_sequence"],
                 train_size=3,
                 test_size=2,
-                input_keys=["bad_sequence"],
             )
 
             dataset.train
@@ -76,10 +74,10 @@ class TestCSVDataset:
     def test_label(self, csv_file_path):
         dataset = CSVDataset(
             file_path=csv_file_path,
-            random_state=42,
+            input_keys=["sequence"],
+            label="a",
             train_size=3,
             test_size=2,
-            label="a",
         )
 
         for example in dataset.train:
@@ -92,10 +90,10 @@ class TestCSVDataset:
         with pytest.raises(ValueError):
             dataset = CSVDataset(
                 file_path=csv_file_path,
-                random_state=42,
-                train_size=3,
-                test_size=2,
+                input_keys=["sequence"],
                 label=["a"],
+                train_size=3,
+                test_size=2,
             )
 
             dataset.train
@@ -103,10 +101,10 @@ class TestCSVDataset:
         with pytest.raises(ValueError):
             dataset = CSVDataset(
                 file_path=csv_file_path,
-                random_state=42,
-                train_size=3,
-                test_size=2,
+                input_keys=["sequence"],
                 label=["a", "b"],
+                train_size=3,
+                test_size=2,
             )
 
             dataset.train
@@ -114,10 +112,10 @@ class TestCSVDataset:
         with pytest.raises(ValueError):
             dataset = CSVDataset(
                 file_path=csv_file_path,
-                random_state=42,
+                input_keys=["sequence"],
+                label=["d"],
                 train_size=3,
                 test_size=2,
-                label=["d"],
             )
 
             dataset.train
