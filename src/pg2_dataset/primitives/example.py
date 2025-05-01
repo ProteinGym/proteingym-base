@@ -47,7 +47,7 @@ class Example:
         return len([k for k in self._store if not k.startswith("pg2_")])
 
     def __repr__(self):
-        d = {k: v for k, v in self._store.items() if not k.startswith("pg2_")}
+        d = {k: v for k, v in self._store.items()}
         return (
             f"Example({d})"
             + f" (input_keys={self._input_keys})"
@@ -87,9 +87,8 @@ class Example:
         if not set(keys).issubset(set(self.keys())):
             raise ValueError(f"expected features {keys} missing.")
 
-        copied = self.copy()
-        copied._input_keys = set(keys)
-        return copied
+        self._input_keys = set(keys)
+        return self
 
     def with_label(self, key):
         if key not in self.keys():

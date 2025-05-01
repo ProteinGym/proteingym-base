@@ -10,18 +10,21 @@ class Dataset:
         self,
         train_seed: int = 0,
         train_size: int | None = None,
-        eval_seed=0,
-        dev_size: int | None = None,
+        val_seed=0,
+        val_size: int | None = None,
         test_size: int | None = None,
         input_keys: list[str] = [],
         label: str | None = None,
     ):
-        self.train_size = train_size
         self.train_seed = train_seed
-        self.dev_size = dev_size
-        self.dev_seed = eval_seed
+        self.train_size = train_size
+
+        self.val_seed = val_seed
+        self.val_size = val_size
+        
+        self.test_seed = val_seed
         self.test_size = test_size
-        self.test_seed = eval_seed
+
         self.input_keys = input_keys
         self.label = label
 
@@ -40,12 +43,12 @@ class Dataset:
 
     @property
     def dev(self):
-        if not hasattr(self, "_dev_"):
-            self._dev_ = self._shuffle_and_sample(
-                "dev", self._dev, self.dev_size, self.dev_seed
+        if not hasattr(self, "_val_"):
+            self._val_ = self._shuffle_and_sample(
+                "val", self._val, self.val_size, self.val_seed
             )
 
-        return self._dev_
+        return self._val_
 
     @property
     def test(self):
