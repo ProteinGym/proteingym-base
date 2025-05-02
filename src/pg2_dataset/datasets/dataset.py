@@ -27,23 +27,29 @@ class Dataset:
     def dataset(self):
         if not hasattr(self, "_dataset_"):
             self._dataset_ = self._enrich(self._dataset)
-
-        if not hasattr(self, "_train_"):
-            self._train_ = [record:=self._assign("train", _record) for _record in self._dataset_[:self.train_size]]
-
-        if not hasattr(self, "_test_"):
-            self._test_ =[record:=self._assign("test", _record) for _record in self._dataset_[self.train_size: self.train_size+self.test_size]]
-
+        
         return self._dataset_
 
 
     @property
     def train(self):
+        if not hasattr(self, "_dataset_"):
+            self._dataset_ = self._enrich(self._dataset)
+
+        if not hasattr(self, "_train_"):
+            self._train_ = [record:=self._assign("train", _record) for _record in self._dataset_[:self.train_size]]
+        
         return self._train_
 
 
     @property
     def test(self):
+        if not hasattr(self, "_dataset_"):
+            self._dataset_ = self._enrich(self._dataset)
+
+        if not hasattr(self, "_test_"):
+            self._test_ =[record:=self._assign("test", _record) for _record in self._dataset_[self.train_size: self.train_size+self.test_size]]
+
         return self._test_
 
     def _assign(

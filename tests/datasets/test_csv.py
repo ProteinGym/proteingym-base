@@ -28,18 +28,19 @@ class TestCSVDataset:
         dataset = CSVDataset(
             file_path=csv_file_path,
             input_keys=["sequence"],
+            label="c",
             train_size=3,
             test_size=2,
         )
 
         assert dataset.train is not None, "dataset.train is None."
         assert len(dataset.train) == 3, (
-            "dataset.train does not have the correct number of examples."
+            "dataset.train does not have the correct number of records."
         )
 
         assert dataset.test is not None, "dataset.test is None."
         assert len(dataset.test) == 2, (
-            "dataset.test does not have the correct number of examples."
+            "dataset.test does not have the correct number of records."
         )
 
     def test_input_keys(self, csv_file_path):
@@ -50,13 +51,13 @@ class TestCSVDataset:
             test_size=2,
         )
 
-        for example in dataset.train:
-            assert set(example._input_keys) == {"sequence"}, (
+        for record in dataset.train:
+            assert set(record._input_keys) == {"sequence"}, (
                 "input_keys are not correctly set in dataset.train."
             )
 
-        for example in dataset.test:
-            assert set(example._input_keys) == {"sequence"}, (
+        for record in dataset.test:
+            assert set(record._input_keys) == {"sequence"}, (
                 "input_keys are not correctly set in dataset.test."
             )
 
@@ -80,11 +81,11 @@ class TestCSVDataset:
             test_size=2,
         )
 
-        for example in dataset.train:
-            assert example._label == "a", "label is not correctly set in dataset.train."
+        for record in dataset.train:
+            assert record._label == "a", "label is not correctly set in dataset.train."
 
-        for example in dataset.test:
-            assert example._label == "a", "label is not correctly set in dataset.test."
+        for record in dataset.test:
+            assert record._label == "a", "label is not correctly set in dataset.test."
 
     def test_bad_label(self, csv_file_path):
         with pytest.raises(ValueError):
