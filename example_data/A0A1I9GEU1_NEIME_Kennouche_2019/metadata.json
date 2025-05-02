@@ -1,0 +1,12 @@
+{
+    "machine" : {
+        "machine name" : "hplc1",
+        "machine type" : "hplc",
+    },
+    "conditions" : {
+        "temperature" : 25,
+        "pressure" : 1,
+        "humidity" : 0.5,
+        "ph" : 7.0
+    },
+}
