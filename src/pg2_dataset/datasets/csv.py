@@ -34,10 +34,12 @@ class CSVDataset(Dataset):
         # shuffle by input_keys
         if not set(input_keys).issubset(set(data.columns)):
             raise ValueError(f"expected features {input_keys} missing.")
-        
+
         random.seed(seed)
 
         groups = [df for _, df in data.groupby(input_keys)]
         random.shuffle(groups)
 
-        self._dataset = pd.concat(groups).reset_index(drop=True).to_dict(orient="records")
+        self._dataset = (
+            pd.concat(groups).reset_index(drop=True).to_dict(orient="records")
+        )

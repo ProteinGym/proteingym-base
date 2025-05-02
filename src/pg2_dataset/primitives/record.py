@@ -7,7 +7,7 @@ class Record:
         self._input_keys = None
         self._label = None
 
-        # Initialize from a base Example if provided
+        # Initialize from a base record if provided
         if base and isinstance(base, type(self)):
             self._store = base._store.copy()
 
@@ -49,7 +49,7 @@ class Record:
     def __repr__(self):
         d = {k: v for k, v in self._store.items()}
         return (
-            f"Example({d})"
+            f"Record({d})"
             + f" (input_keys={self._input_keys})"
             + f" (label={self._label})"
         )
@@ -58,7 +58,7 @@ class Record:
         return self.__repr__()
 
     def __eq__(self, other):
-        return isinstance(other, Example) and self._store == other._store
+        return isinstance(other, Record) and self._store == other._store
 
     def __hash__(self):
         return hash(tuple(self._store.items()))
