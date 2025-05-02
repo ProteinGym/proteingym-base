@@ -1,57 +1,48 @@
 import uuid
-from typing import Any
-
+import polars as pl
 from pg2_dataset.primitives.record import Record
 
 
 class Dataset:
     def __init__(
         self,
-        input_keys: list[str] = [],
-        label: str | None = None,
+        features: list[str] = [],
+        targets: list[str] = [],
         train_size: int | None = None,
         test_size: int | None = None,
     ):
+        self.features = features
+        self.targets = targets
+
         self.train_size = train_size
         self.test_size = test_size
-
-        self.input_keys = input_keys
-        self.label = label
 
         self.name = self.__class__.__name__
 
     @property
-    def dataset(self):
-        if not hasattr(self, "_dataset_"):
-            self._dataset_ = self._enrich(self._dataset)
+    def data_frame(self):
+        if not hasattr(self, "_data_frame_"):
+            self._data_frame_ = self._to_records(self._data_frame)
 
-        return self._dataset_
+        return self._data_frame_
 
     @property
     def train(self):
-        if not hasattr(self, "_dataset_"):
-            self._dataset_ = self._enrich(self._dataset)
+        if not hasattr(self, "_data_frame_"):
+            self._data_frame_ = self._to_records(self._data_frame)
 
         if not hasattr(self, "_train_"):
-            self._train_ = [
-                self._assign("train", _record)
-                for _record in self._dataset_[: self.train_size]
-            ]
+            self._train_ = [self._assign("train", _record) for _record in self._data_frame_[: self.train_size]]
 
         return self._train_
 
     @property
     def test(self):
-        if not hasattr(self, "_dataset_"):
-            self._dataset_ = self._enrich(self._dataset)
+        if not hasattr(self, "_data_frame_"):
+            self._data_frame_ = self._to_records(self._data_frame)
 
         if not hasattr(self, "_test_"):
-            self._test_ = [
-                self._assign("test", _record)
-                for _record in self._dataset_[
-                    self.train_size : self.train_size + self.test_size
-                ]
-            ]
+            self._test_ = [self._assign("test", _record) for _record in self._data_frame_[self.train_size : self.train_size + self.test_size]]
 
         return self._test_
 
@@ -60,25 +51,23 @@ class Dataset:
         split: str,
         record: Record,
     ):
-        record.split = split
+        record.pg2_split = split
         return record
 
-    def _enrich(
+    def _to_records(
         self,
-        data: list[dict[str, Any]],
+        data: pl.DataFrame,
     ):
-        output = []
+        records = []
 
-        for record in data:
-            record_obj = Record(**record, uuid=str(uuid.uuid4()))
-            if self.input_keys:
-                record_obj.with_inputs(*self.input_keys)
+        for record in data.to_dicts():
+            record_obj = Record(**record, pg2_uuid=str(uuid.uuid4()))
+            if self.features:
+                record_obj.with_features(*self.features)
 
-            if self.label:
-                record_obj.with_label(self.label)
+            if self.targets:
+                record_obj.with_targets(*self.targets)
 
-            output.append(record_obj)
+            records.append(record_obj)
 
-        # NOTE: we use these uuids for dedup internally, for internal train/test splits.
-
-        return output
+        return records
