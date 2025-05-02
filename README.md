@@ -4,8 +4,10 @@
 ``` mermaid
 classDiagram
     class ModelManifest{
-        train_entrypoint: str|None
-        predict_entrypoint: str
+        train_entrypoint: Path|None
+        predict_entrypoint: Path
+        train_artifacts: list[Artifact]
+        hyper_parameters: list[HyperParameter]
     }
     class MeasurementWithUncertainty{
         value: float
@@ -20,9 +22,11 @@ classDiagram
         +reference_sequences: list[str]
         +meta: DatasetMeta
         +splits: dict[tuple[Round, Sequence, SplitStrategy], TrainValidTestEnum]
-        +split(strategy: Callable)
-        +data_frame_by_target(target: str)
-        +data_frame()
+        +add_split(strategy: Callable) None
+        +data_frame_by_target(target: str) pd.DataFrame
+        +data_frame() pd.DataFrame
+        +iter_by_rounds() Generator[Dataset]
+        +split() tuple[Dataset, Dataset, Dataset]
     }
     Dataset <|-- Record
     class Record{
@@ -41,9 +45,10 @@ classDiagram
     Dataset <|-- DatasetMeta
     Record <|-- MeasurementWithUncertainty
     class DatasetMeta {
+        +doi: Uri
+        +source: Uri
         +xref: CrossReference
     }
-   
 ```
 
 Validators
