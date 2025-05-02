@@ -71,17 +71,10 @@ ds = CSVDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
-    train_size=10,
-    test_size=2,
 )
 
-print(ds.train[0])
-print(ds.train[0].pg2_split)
-print(ds.train[0].pg2_uuid)
-
-print(ds.test[0])
-print(ds.test[0].pg2_split)
-print(ds.test[0].pg2_uuid)
+print(len(ds.data_frame))
+print(ds.data_frame[0])
 ```
 
 ## play around

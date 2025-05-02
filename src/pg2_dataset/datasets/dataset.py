@@ -1,6 +1,6 @@
 import uuid
 import polars as pl
-from pg2_dataset.primitives.record import Record
+from pydantic import create_model
 
 
 class Dataset:
@@ -8,66 +8,54 @@ class Dataset:
         self,
         features: list[str] = [],
         targets: list[str] = [],
-        train_size: int | None = None,
-        test_size: int | None = None,
     ):
-        self.features = features
-        self.targets = targets
+        if bool(set(features) & set(targets)):
+            raise ValueError(f"{features} and {targets} should share the same columns")
 
-        self.train_size = train_size
-        self.test_size = test_size
+        self.features = list(set(features))
+        self.targets = list(set(targets))
 
         self.name = self.__class__.__name__
 
     @property
     def data_frame(self):
         if not hasattr(self, "_data_frame_"):
-            self._data_frame_ = self._to_records(self._data_frame)
+            self._data_frame_ = [record for record in self._to_records(self._data_frame) if self._has_all_targets(record)]
 
         return self._data_frame_
 
-    @property
-    def train(self):
-        if not hasattr(self, "_data_frame_"):
-            self._data_frame_ = self._to_records(self._data_frame)
+    def data_frame_by_target(self, target: str):
+        if not hasattr(self, f"_data_frame_by_target_{target}_"):
+            setattr(
+                self,
+                f"_data_frame_by_target_{target}_",
+                [record for record in self._to_records(self._data_frame) if self._has_target(record, target)],
+            )
 
-        if not hasattr(self, "_train_"):
-            self._train_ = [self._assign("train", _record) for _record in self._data_frame_[: self.train_size]]
+        return getattr(self, f"_data_frame_by_target_{target}_")
 
-        return self._train_
+    def _has_all_targets(self, record: object) -> bool:
+        return all([getattr(record, target) for target in self.targets])
 
-    @property
-    def test(self):
-        if not hasattr(self, "_data_frame_"):
-            self._data_frame_ = self._to_records(self._data_frame)
-
-        if not hasattr(self, "_test_"):
-            self._test_ = [self._assign("test", _record) for _record in self._data_frame_[self.train_size : self.train_size + self.test_size]]
-
-        return self._test_
-
-    def _assign(
-        self,
-        split: str,
-        record: Record,
-    ):
-        record.pg2_split = split
-        return record
+    def _has_target(self, record: object, target: str) -> bool:
+        return getattr(record, target)
 
     def _to_records(
         self,
         data: pl.DataFrame,
-    ):
+    ) -> list[object]:
         records = []
 
-        for record in data.to_dicts():
-            record_obj = Record(**record, pg2_uuid=str(uuid.uuid4()))
-            if self.features:
-                record_obj.with_features(*self.features)
+        for row in data.to_dicts():
+            fields = {key: (type(value), value) for key, value in row.items() if key}
 
-            if self.targets:
-                record_obj.with_targets(*self.targets)
+            Record = create_model("Record", **fields)
+            record = Record(**row)
 
-            records.append(record_obj)
+            record._features = self.features
+            record._targets = self.targets
+            record._uuid = str(uuid.uuid4())
+
+            records.append(record)
 
         return records

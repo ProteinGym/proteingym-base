@@ -18,10 +18,10 @@ def good_data():
 @pytest.fixture
 def null_data():
     return f"""sequence,a,b,c
-{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,2,3.1
+,1,2,3.1
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,3.2
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,,3.3
-{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,2,
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,
 ,1,2,3.5
 """
 
@@ -45,43 +45,15 @@ class TestCSVDataset:
 
         return str(file_path)
 
-    def test_train_and_test_split_correctly(self, good_csv_file_path):
-        dataset = CSVDataset(
-            file_path=good_csv_file_path,
-            features=["sequence"],
-            targets=["c"],
-            train_size=3,
-            test_size=2,
-        )
-
-        print(dataset._data_frame)
-
-        assert dataset.data_frame is not None, "dataset.data_frame is None."
-        assert len(dataset.data_frame) == 5, "dataset.data_frame does not have the correct number of records."
-
-        assert dataset.train is not None, "dataset.train is None."
-        assert len(dataset.train) == 3, "dataset.train does not have the correct number of records."
-
-        assert dataset.test is not None, "dataset.test is None."
-        assert len(dataset.test) == 2, "dataset.test does not have the correct number of records."
-
     def test_features_should_exist_in_data_frame(self, good_csv_file_path):
         dataset = CSVDataset(
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
-            train_size=3,
-            test_size=2,
         )
 
         for record in dataset.data_frame:
-            assert record._features == {"sequence"}, "features are not correctly set in dataset.train."
-
-        for record in dataset.train:
-            assert record._features == {"sequence"}, "features are not correctly set in dataset.train."
-
-        for record in dataset.test:
-            assert record._features == {"sequence"}, "features are not correctly set in dataset.test."
+            assert set(record._features) == {"sequence"}, "features are not correctly set in dataset.train."
 
     def test_bad_features_should_raise_error(self, good_csv_file_path):
         with pytest.raises(ValueError):
@@ -89,8 +61,6 @@ class TestCSVDataset:
                 file_path=good_csv_file_path,
                 features=["bad_sequence"],
                 targets=["c"],
-                train_size=3,
-                test_size=2,
             )
 
     def test_targets_should_exist_in_data_frame(self, good_csv_file_path):
@@ -98,18 +68,10 @@ class TestCSVDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
-            train_size=3,
-            test_size=2,
         )
 
         for record in dataset.data_frame:
-            assert record._targets == {"c"}, "features are not correctly set in dataset.train."
-
-        for record in dataset.train:
-            assert record._targets == {"c"}, "targets are not correctly set in dataset.train."
-
-        for record in dataset.test:
-            assert record._targets == {"c"}, "targets are not correctly set in dataset.test."
+            assert set(record._targets) == {"c"}, "features are not correctly set in dataset.train."
 
     def test_bad_targets_should_raise_error(self, good_csv_file_path):
         with pytest.raises(ValueError):
@@ -117,8 +79,6 @@ class TestCSVDataset:
                 file_path=good_csv_file_path,
                 features=["sequence"],
                 targets=["d"],
-                train_size=3,
-                test_size=2,
             )
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
@@ -128,8 +88,6 @@ class TestCSVDataset:
             targets=["c"],
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
-            train_size=3,
-            test_size=2,
         )
 
         assert dataset.data_frame is not None, "dataset.data_frame is None."
@@ -149,8 +107,6 @@ class TestCSVDataset:
                 targets=["c"],
                 columns=["sequence", "a", "b", "c"],
                 schemas=[pl.String, pl.Int64, pl.Int64, pl.Int64],
-                train_size=3,
-                test_size=2,
             )
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
@@ -160,13 +116,23 @@ class TestCSVDataset:
             targets=["c"],
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
-            train_size=3,
-            test_size=2,
         )
 
         assert dataset._data_frame.select(pl.all().is_null().sum()).to_dicts()[0] == {
-            "a": 1,
+            "a": 2,
             "b": 1,
             "c": 1,
-            "sequence": 1,
+            "sequence": 2,
         }
+
+    def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
+        dataset = CSVDataset(
+            file_path=null_csv_file_path,
+            features=["sequence"],
+            targets=["a", "c"],
+        )
+
+        data_frame_by_target = dataset.data_frame_by_target("c")
+
+        assert len(data_frame_by_target) == 4, "only 4 valid records by the target 'c'"
+        assert set([record.c for record in data_frame_by_target]) == set([3.1, 3.2, 3.3, 3.5])
