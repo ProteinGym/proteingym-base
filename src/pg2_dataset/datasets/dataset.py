@@ -51,7 +51,7 @@ class Dataset:
         split: str,
         record: Record,
     ):
-        record.split = split
+        record.pg2_split = split
         return record
 
     def _to_records(

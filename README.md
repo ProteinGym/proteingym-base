@@ -69,8 +69,8 @@ from pg2_dataset.datasets.csv import CSVDataset
 
 ds = CSVDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
-    input_keys=["mutated_sequence"],
-    label="DMS_score",
+    features=["mutated_sequence"],
+    targets=["DMS_score"],
     train_size=10,
     test_size=2,
 )
