@@ -26,16 +26,3 @@ jobs:
   
       - name: Run tests
         run: uv run pytest tests
-    
-      - name: Lint with Ruff
-        run: ruff format
-      
-      - name: Check with Ruff
-        run: ruff check --fix
-        continue-on-error: true
-      
-      - name: Test with pytest
-        run: coverage run -m pytest  -v -s
-    
-      - name: Generate Coverage Report
-        run: coverage report -m
