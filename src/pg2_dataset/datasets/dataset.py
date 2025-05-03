@@ -21,7 +21,6 @@ class Dataset:
     def data_frame(self):
         if not hasattr(self, "_data_frame_"):
             self._data_frame_ = [record for record in self._to_records(self._data_frame) if self._has_all_targets(record)]
-
         return self._data_frame_
 
     def data_frame_by_target(self, target: str):
