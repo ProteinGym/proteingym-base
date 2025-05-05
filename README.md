@@ -64,7 +64,7 @@ pre-commit install
 
 ## a small example
 
-We use [polars](https://github.com/pola-rs/polars) to load typed data frames. You can read [this reference](https://docs.pola.rs/user-guide/migration/pandas/) as to why polars is chosen over Pandas.
+We use [polars](https://github.com/pola-rs/polars) to load typed data frames. You can read [this reference](https://docs.pola.rs/user-guide/migration/pandas/) as to why Polars is chosen over Pandas.
 
 You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. As shown in the following example, the mandatory fields needed to load a CSV data frame are `file_path`, `features` (feature names of the data frame required for a model to train or predict) and `targets` (predictions from a model):
 
