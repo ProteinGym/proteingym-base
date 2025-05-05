@@ -22,7 +22,7 @@ def null_data():
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,3.2
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,,3.3
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,
-,1,2,3.5
+{""},1,2,3.5
 """
 
 

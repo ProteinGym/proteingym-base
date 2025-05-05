@@ -64,7 +64,11 @@ pre-commit install
 
 ## a small example
 
-```
+We use [polars](https://github.com/pola-rs/polars) to load typed data frames. You can read [this reference](https://docs.pola.rs/user-guide/migration/pandas/) as to why polars is chosen over Pandas.
+
+You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. As shown in the following example, the mandatory fields needed to load a CSV data frame are `file_path`, `features` (feature names of the data frame required for a model to train or predict) and `targets` (predictions from a model):
+
+```python
 from pg2_dataset.datasets.csv import CSVDataset
 
 ds = CSVDataset(
@@ -76,6 +80,39 @@ ds = CSVDataset(
 print(len(ds.data_frame))
 print(ds.data_frame[0])
 ```
+
+It is also recommended to load a data frames with its schema, as shown in the following example:
+
+```python
+import polars as pl
+from pg2_dataset.datasets.csv import CSVDataset
+
+ds = CSVDataset(
+    file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
+    features=["mutated_sequence"],
+    targets=["DMS_score"],
+    columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
+    schemas=[pl.String, pl.String, pl.Float32, pl.Int64]
+)
+
+print(len(ds.data_frame))
+print(ds.data_frame[0])
+```
+
+Or if some columns are used for classification, you can do this:
+
+```python
+ds = CSVDataset(
+    file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
+    features=["mutated_sequence"],
+    targets=["DMS_score"],
+    columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
+    schemas=[pl.String, pl.String, pl.Float32, pl.Categorical]
+)
+```
+
+> [!TIP]
+> You can find the polars data types to use in this guide: https://docs.pola.rs/api/python/stable/reference/datatypes.html
 
 ## play around
 
