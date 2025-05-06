@@ -96,7 +96,7 @@ mmcif_data.atom_site # returns the complete table for atom_site
 mmcif_data.atom_site.cartn_x # returns only the values for the cartn_x coordinates.
 ```
 
-## a small example
+## sequence example
 
 We use [polars](https://github.com/pola-rs/polars) to load typed data frames. You can read [this reference](https://docs.pola.rs/user-guide/migration/pandas/) as to why Polars is chosen over Pandas.
 
@@ -109,7 +109,7 @@ ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
-    sequence_feature_name="mutated_sequence",
+    sequence_feature="mutated_sequence",
 )
 
 print(len(ds.data_frame))
@@ -126,7 +126,7 @@ ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
-    sequence_feature_name="mutated_sequence",
+    sequence_feature="mutated_sequence",
     columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
     schemas=[pl.String, pl.String, pl.Float32, pl.Int64],
 )
@@ -142,7 +142,7 @@ ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
-    sequence_feature_name="mutated_sequence",
+    sequence_feature="mutated_sequence",
     columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
     schemas=[pl.String, pl.String, pl.Float32, pl.Categorical]
 )
