@@ -32,11 +32,11 @@ classDiagram
     class Record{
       +engineering_round: int
       +sequence: str
-      +target_name: str
+      +targets: list[str]
       +$key: float|str|MeasurementWithUncertainty
     }
     class AssayMeta{
-        +target_name: str
+        +target: str
         +features: dict[str, type]
         +description: str
         +$constant: any
@@ -53,7 +53,7 @@ classDiagram
 
 Validators
 
-- Every $target_name should have a corresponding AssayMeta
+- Every $target should have a corresponding AssayMeta
 - No missing values in records for listed features assay metadata for target
 - ...
 
