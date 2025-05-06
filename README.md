@@ -128,24 +128,11 @@ ds = RecordsDataset(
     targets=["DMS_score"],
     sequence_feature="mutated_sequence",
     columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
-    schemas=[pl.String, pl.String, pl.Float32, pl.Int64],
+    schemas=[pl.String, pl.String, pl.Float32, pl.Float32],
 )
 
 print(len(ds.data_frame))
 print(ds.data_frame[0])
-```
-
-Or if some columns are used for classification, you can do this:
-
-```python
-ds = RecordsDataset(
-    file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
-    features=["mutated_sequence"],
-    targets=["DMS_score"],
-    sequence_feature="mutated_sequence",
-    columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
-    schemas=[pl.String, pl.String, pl.Float32, pl.Categorical]
-)
 ```
 
 > [!TIP]
