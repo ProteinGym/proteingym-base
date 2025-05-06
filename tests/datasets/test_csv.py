@@ -50,6 +50,9 @@ class TestRecordsDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
+            sequence_feature_name="sequence",
+            columns=["sequence", "c"],
+            schemas=[pl.String, pl.Float64],
         )
 
         for record in dataset.data_frame:
@@ -61,6 +64,9 @@ class TestRecordsDataset:
                 file_path=good_csv_file_path,
                 features=["bad_sequence"],
                 targets=["c"],
+                sequence_feature_name="sequence",
+                columns=["sequence", "c"],
+                schemas=[pl.String, pl.Float64],
             )
 
     def test_targets_should_exist_in_data_frame(self, good_csv_file_path):
@@ -68,6 +74,9 @@ class TestRecordsDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
+            sequence_feature_name="sequence",
+            columns=["sequence", "c"],
+            schemas=[pl.String, pl.Float64],
         )
 
         for record in dataset.data_frame:
@@ -79,6 +88,9 @@ class TestRecordsDataset:
                 file_path=good_csv_file_path,
                 features=["sequence"],
                 targets=["d"],
+                sequence_feature_name="sequence",
+                columns=["sequence", "c"],
+                schemas=[pl.String, pl.Float64],
             )
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
@@ -86,8 +98,9 @@ class TestRecordsDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
+            sequence_feature_name="sequence",
             columns=["sequence", "a", "b", "c"],
-            schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
+            schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
         )
 
         assert dataset.data_frame is not None, "dataset.data_frame is None."
@@ -95,8 +108,8 @@ class TestRecordsDataset:
 
         for record in dataset.data_frame:
             assert isinstance(record.sequence, str), f"{record.sequence} should be a string"
-            assert isinstance(record.a, int), f"{record.a} should be an integer"
-            assert isinstance(record.b, int), f"{record.b} should be an integer"
+            assert isinstance(record.a, float), f"{record.a} should be an integer"
+            assert isinstance(record.b, float), f"{record.b} should be an integer"
             assert isinstance(record.c, float), f"{record.c} should be a float"
 
     def test_bad_schema_should_raise_error(self, good_csv_file_path):
@@ -105,8 +118,9 @@ class TestRecordsDataset:
                 file_path=good_csv_file_path,
                 features=["sequence"],
                 targets=["c"],
+                sequence_feature_name="sequence",
                 columns=["sequence", "a", "b", "c"],
-                schemas=[pl.String, pl.Int64, pl.Int64, pl.Int64],
+                schemas=[pl.String, pl.Float64, pl.Float64, pl.Int64],
             )
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
@@ -114,8 +128,9 @@ class TestRecordsDataset:
             file_path=null_csv_file_path,
             features=["sequence"],
             targets=["c"],
+            sequence_feature_name="sequence",
             columns=["sequence", "a", "b", "c"],
-            schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
+            schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
         )
 
         assert dataset._data_frame.select(pl.all().is_null().sum()).to_dicts()[0] == {
@@ -130,9 +145,24 @@ class TestRecordsDataset:
             file_path=null_csv_file_path,
             features=["sequence"],
             targets=["a", "c"],
+            sequence_feature_name="sequence",
+            columns=["sequence", "a", "b", "c"],
+            schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
         )
 
         data_frame_by_target = dataset.data_frame_by_target("c")
 
-        assert len(data_frame_by_target) == 4, "only 4 valid records by the target 'c'"
-        assert set([record.c for record in data_frame_by_target]) == set([3.1, 3.2, 3.3, 3.5])
+        assert len(data_frame_by_target) == 2, "only 2 valid records by the target 'c'"
+        assert set([record.c for record in data_frame_by_target]) == set([3.2, 3.3])
+
+    def test_extra_features_should_be_within_allowed_types(self, good_csv_file_path):
+        dataset = RecordsDataset(
+            file_path=good_csv_file_path,
+            features=["sequence"],
+            targets=["c"],
+            sequence_feature_name="sequence",
+            columns=["sequence", "a", "b", "c"],
+            schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
+        )
+
+        assert dataset.data_frame is not None, "dataset.data_frame is None."

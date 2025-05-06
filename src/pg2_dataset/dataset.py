@@ -1,6 +1,6 @@
 import uuid
 import polars as pl
-from pydantic import create_model
+from pg2_dataset.primitives import Record
 
 
 class Dataset:
@@ -34,22 +34,23 @@ class Dataset:
 
         return getattr(self, f"_data_frame_by_target_{target}_")
 
-    def _has_all_targets(self, record: object) -> bool:
+    def _has_all_targets(self, record: Record) -> bool:
         return all([getattr(record, target) for target in self.targets])
 
-    def _has_target(self, record: object, target: str) -> bool:
+    def _has_target(self, record: Record, target: str) -> bool:
         return getattr(record, target)
 
     def _to_records(
         self,
         data: pl.DataFrame,
-    ) -> list[object]:
+    ) -> list[Record]:
         records = []
 
         for row in data.to_dicts():
-            fields = {key: (type(value), value) for key, value in row.items() if key}
+            if not row["sequence"]:
+                continue
 
-            Record = create_model("Record", **fields)
+            row["targets"] = self.targets
             record = Record(**row)
 
             record._features = self.features
