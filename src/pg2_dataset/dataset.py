@@ -47,12 +47,14 @@ class Dataset:
         records = []
 
         for row in data.to_dicts():
+            # skip null sequence in the data frame
             if not row["sequence"]:
                 continue
 
             row["targets"] = self.targets
             record = Record(**row)
 
+            # add metadata attributes for tracking
             record._features = self.features
             record._targets = self.targets
             record._uuid = str(uuid.uuid4())
