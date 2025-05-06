@@ -1,0 +1,10 @@
+{
+    "corresponding author" : "K van der Weg",
+    "author list" : {
+        "author1" : "name1",
+        "author2" : "name2",
+        "author3" : "name3",
+    },
+    "doi" : "doi.my_identifier_here",
+    "xref" : "some xref",
+}
