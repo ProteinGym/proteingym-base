@@ -103,12 +103,13 @@ We use [polars](https://github.com/pola-rs/polars) to load typed data frames. Yo
 You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. As shown in the following example, the mandatory fields needed to load a CSV data frame are `file_path`, `features` (feature names of the data frame required for a model to train or predict) and `targets` (predictions from a model):
 
 ```python
-from pg2_dataset.datasets.csv import CSVDataset
+from pg2_dataset.backend.records import RecordsDataset
 
-ds = CSVDataset(
+ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
+    sequence_feature_name=["mutated_sequence"],
 )
 
 print(len(ds.data_frame))
@@ -125,6 +126,7 @@ ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
+    sequence_feature_name=["mutated_sequence"]
     columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
     schemas=[pl.String, pl.String, pl.Float32, pl.Int64]
 )
