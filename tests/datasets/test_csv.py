@@ -2,6 +2,7 @@ import pytest
 import random
 import polars as pl
 from pg2_dataset.backend.records import RecordsDataset
+from pydantic import ValidationError
 
 
 @pytest.fixture
@@ -26,6 +27,17 @@ def null_data():
 """
 
 
+@pytest.fixture
+def any_data():
+    return f"""a_sequence,a,b,c,round
+,1,2,3.1
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,3.2,1
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,,3.3,2
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,,2
+{""},1,2,3.5,1
+"""
+
+
 class TestRecordsDataset:
     @pytest.fixture
     def good_csv_file_path(self, good_data, tmpdir):
@@ -45,6 +57,15 @@ class TestRecordsDataset:
 
         return str(file_path)
 
+    @pytest.fixture
+    def any_csv_file_path(self, any_data, tmpdir):
+        file_path = tmpdir / "any.csv"
+
+        with open(file_path, "w") as file:
+            file.write(any_data)
+
+        return str(file_path)
+
     def test_features_should_exist_in_data_frame(self, good_csv_file_path):
         dataset = RecordsDataset(
             file_path=good_csv_file_path,
@@ -57,6 +78,23 @@ class TestRecordsDataset:
 
         for record in dataset.data_frame:
             assert set(record._features) == {"sequence"}, "features are not correctly set in dataset.train."
+
+    def test_features_should_be_renamed_correctly(self, any_csv_file_path):
+        dataset = RecordsDataset(
+            file_path=any_csv_file_path,
+            features=["a_sequence", "round"],
+            targets=["c"],
+            sequence_feature="a_sequence",
+            engineering_round_feature="round",
+            columns=["a_sequence", "c", "round"],
+            schemas=[pl.String, pl.Float64],
+        )
+
+        assert "sequence" in dataset._data_frame.columns, "sequence feature should be renamed to 'sequence'"
+        assert "a_sequence" not in dataset._data_frame.columns, "sequence feature should be renamed to 'sequence'"
+
+        assert "engineering_round" in dataset._data_frame.columns, "engineering round feature should be renamed to 'engineering_round'"
+        assert "round" not in dataset._data_frame.columns, "engineering round feature should be renamed to 'engineering_round'"
 
     def test_bad_features_should_raise_error(self, good_csv_file_path):
         with pytest.raises(ValueError):
@@ -80,7 +118,7 @@ class TestRecordsDataset:
         )
 
         for record in dataset.data_frame:
-            assert set(record._targets) == {"c"}, "features are not correctly set in dataset.train."
+            assert set(record._targets) == {"c"}, "targets are not correctly set in dataset.train."
 
     def test_bad_targets_should_raise_error(self, good_csv_file_path):
         with pytest.raises(ValueError):
@@ -93,14 +131,36 @@ class TestRecordsDataset:
                 schemas=[pl.String, pl.Float64],
             )
 
+    def test_features_and_targets_should_not_overlap(self, good_csv_file_path):
+        with pytest.raises(ValueError):
+            RecordsDataset(
+                file_path=good_csv_file_path,
+                features=["sequence", "c"],
+                targets=["c"],
+                sequence_feature="sequence",
+                columns=["sequence", "c"],
+                schemas=[pl.String, pl.Float64],
+            )
+
+    def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
+        with pytest.raises(pl.exceptions.ColumnNotFoundError):
+            RecordsDataset(
+                file_path=good_csv_file_path,
+                features=["sequence"],
+                targets=["c"],
+                sequence_feature="sequence",
+                columns=["sequence", "c", "e"],
+                schemas=[pl.String, pl.Float64, pl.Float64],
+            )
+
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
         dataset = RecordsDataset(
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
             sequence_feature="sequence",
-            columns=["sequence", "a", "b", "c"],
-            schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
+            columns=["sequence", "c"],
+            schemas=[pl.String, pl.Float64],
         )
 
         assert dataset.data_frame is not None, "dataset.data_frame is None."
@@ -108,8 +168,6 @@ class TestRecordsDataset:
 
         for record in dataset.data_frame:
             assert isinstance(record.sequence, str), f"{record.sequence} should be a string"
-            assert isinstance(record.a, float), f"{record.a} should be an integer"
-            assert isinstance(record.b, float), f"{record.b} should be an integer"
             assert isinstance(record.c, float), f"{record.c} should be a float"
 
     def test_bad_schema_should_raise_error(self, good_csv_file_path):
@@ -119,8 +177,8 @@ class TestRecordsDataset:
                 features=["sequence"],
                 targets=["c"],
                 sequence_feature="sequence",
-                columns=["sequence", "a", "b", "c"],
-                schemas=[pl.String, pl.Float64, pl.Float64, pl.Int64],
+                columns=["sequence", "c"],
+                schemas=[pl.String, pl.Int64],
             )
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
@@ -156,13 +214,12 @@ class TestRecordsDataset:
         assert set([record.c for record in data_frame_by_target]) == set([3.2, 3.3])
 
     def test_extra_features_should_be_within_allowed_types(self, good_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=good_csv_file_path,
-            features=["sequence"],
-            targets=["c"],
-            sequence_feature="sequence",
-            columns=["sequence", "a", "b", "c"],
-            schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
-        )
-
-        assert dataset.data_frame is not None, "dataset.data_frame is None."
+        with pytest.raises(ValidationError):
+            RecordsDataset(
+                file_path=good_csv_file_path,
+                features=["sequence"],
+                targets=["c"],
+                sequence_feature="sequence",
+                columns=["sequence", "a", "b", "c"],
+                schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
+            ).data_frame

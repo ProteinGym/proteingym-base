@@ -9,9 +9,6 @@ class Dataset:
         features: list[str] = [],
         targets: list[str] = [],
     ):
-        if bool(set(features) & set(targets)):
-            raise ValueError(f"{features} and {targets} should not share the same columns")
-
         self.features = list(set(features))
         self.targets = list(set(targets))
 

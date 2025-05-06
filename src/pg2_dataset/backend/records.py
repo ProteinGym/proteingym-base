@@ -31,6 +31,9 @@ class RecordsDataset(Dataset):
         self.schemas = schemas
 
         # sanity check
+        if bool(set(features) & set(targets)):
+            raise ValueError(f"{features} and {targets} should not share the same columns")
+
         if self.sequence_feature and self.sequence_feature not in set(self.features):
             raise ValueError(f"expected sequence feature {self.sequence_feature} missing from {self.features}.")
 
