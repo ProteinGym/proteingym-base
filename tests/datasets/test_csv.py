@@ -1,7 +1,7 @@
 import pytest
 import random
 import polars as pl
-from pg2_dataset.datasets.csv import CSVDataset
+from pg2_dataset.backend.records import RecordsDataset
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def null_data():
 """
 
 
-class TestCSVDataset:
+class TestRecordsDataset:
     @pytest.fixture
     def good_csv_file_path(self, good_data, tmpdir):
         file_path = tmpdir / "good.csv"
@@ -46,7 +46,7 @@ class TestCSVDataset:
         return str(file_path)
 
     def test_features_should_exist_in_data_frame(self, good_csv_file_path):
-        dataset = CSVDataset(
+        dataset = RecordsDataset(
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
@@ -57,14 +57,14 @@ class TestCSVDataset:
 
     def test_bad_features_should_raise_error(self, good_csv_file_path):
         with pytest.raises(ValueError):
-            CSVDataset(
+            RecordsDataset(
                 file_path=good_csv_file_path,
                 features=["bad_sequence"],
                 targets=["c"],
             )
 
     def test_targets_should_exist_in_data_frame(self, good_csv_file_path):
-        dataset = CSVDataset(
+        dataset = RecordsDataset(
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
@@ -75,14 +75,14 @@ class TestCSVDataset:
 
     def test_bad_targets_should_raise_error(self, good_csv_file_path):
         with pytest.raises(ValueError):
-            CSVDataset(
+            RecordsDataset(
                 file_path=good_csv_file_path,
                 features=["sequence"],
                 targets=["d"],
             )
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
-        dataset = CSVDataset(
+        dataset = RecordsDataset(
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
@@ -101,7 +101,7 @@ class TestCSVDataset:
 
     def test_bad_schema_should_raise_error(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ComputeError):
-            CSVDataset(
+            RecordsDataset(
                 file_path=good_csv_file_path,
                 features=["sequence"],
                 targets=["c"],
@@ -110,7 +110,7 @@ class TestCSVDataset:
             )
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
-        dataset = CSVDataset(
+        dataset = RecordsDataset(
             file_path=null_csv_file_path,
             features=["sequence"],
             targets=["c"],
@@ -126,7 +126,7 @@ class TestCSVDataset:
         }
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
-        dataset = CSVDataset(
+        dataset = RecordsDataset(
             file_path=null_csv_file_path,
             features=["sequence"],
             targets=["a", "c"],

@@ -85,9 +85,9 @@ It is also recommended to load a data frames with its schema, as shown in the fo
 
 ```python
 import polars as pl
-from pg2_dataset.datasets.csv import CSVDataset
+from pg2_dataset.backend.records import RecordsDataset
 
-ds = CSVDataset(
+ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
@@ -102,7 +102,7 @@ print(ds.data_frame[0])
 Or if some columns are used for classification, you can do this:
 
 ```python
-ds = CSVDataset(
+ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],

@@ -1,10 +1,10 @@
 import io
 import polars as pl
-from pg2_dataset.datasets.dataset import Dataset
+from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
 
 
-class CSVDataset(Dataset):
+class RecordsDataset(Dataset):
     def __init__(
         self,
         file_path: str,
