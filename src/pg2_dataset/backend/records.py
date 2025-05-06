@@ -31,8 +31,11 @@ class RecordsDataset(Dataset):
         self.schemas = schemas
 
         # sanity check
-        if self.sequence_feature_name not in set(self.features):
+        if self.sequence_feature_name and self.sequence_feature_name not in set(self.features):
             raise ValueError(f"expected sequence feature {self.sequence_feature_name} missing from {self.features}.")
+
+        if self.engineering_round_feature_name and self.engineering_round_feature_name not in set(self.features):
+            raise ValueError(f"expected engineering round feature {self.engineering_round_feature_name} missing from {self.features}.")
 
         self._data_frame = self._read_data_frame()
 
