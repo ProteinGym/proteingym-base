@@ -67,6 +67,35 @@ source .venv/bin/activate
 pre-commit install
 ```
 
+## structure example
+```
+from pg2_dataset.datatypes.structure import MMcifFile
+
+mmcif = MMcifFile()
+mmcif_data = mmcif.from_mmcif('example_data/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif')
+
+x = mmcif_data.atom_site.cartn_x
+y = mmcif_data.atom_site.cartn_y
+z = mmcif_data.atom_site.cartn_z
+atom_type = mmcif_data.atom_site.id
+
+#do cool stuff with your structural data...
+```
+
+Every entry in an mmcif file should be accessible. 
+Typically there are two types of entry: key-value pairs and tabular datas. 
+To access key-value pairs (e.g. for `_citation.pdbx_database_id_DOI`) you can access it by writing out the full key, where each '.' and '-' is replace by '_':
+
+```
+mmcif_data.citation_pdbx_database_id_DOI
+```
+
+To get the full tabular data one can access this with the common table name, or further take only the column by the column name:
+```
+mmcif_data.atom_site # returns the complete table for atom_site
+mmcif_data.atom_site.cartn_x # returns only the values for the cartn_x coordinates.
+```
+
 ## a small example
 
 ```

@@ -1,0 +1,18 @@
+{
+    "target" : "stability",
+    "feature" : {
+        "feature_1" : "str",
+        "feature_2" : "float",
+    },
+    "description" : "This is my A0A1I9GEU Toy dataset assay meta data",
+    "machine" : {
+        "machine name" : "hplc1",
+        "machine type" : "hplc",
+    },
+    "conditions" : {
+        "temperature" : 25,
+        "pressure" : 1,
+        "humidity" : 0.5,
+        "ph" : 7.0
+    },
+}
