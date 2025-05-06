@@ -109,7 +109,7 @@ ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
-    sequence_feature_name=["mutated_sequence"],
+    sequence_feature_name="mutated_sequence",
 )
 
 print(len(ds.data_frame))
@@ -126,9 +126,9 @@ ds = RecordsDataset(
     file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
-    sequence_feature_name=["mutated_sequence"]
+    sequence_feature_name="mutated_sequence",
     columns=["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"],
-    schemas=[pl.String, pl.String, pl.Float32, pl.Int64]
+    schemas=[pl.String, pl.String, pl.Float32, pl.Int64],
 )
 
 print(len(ds.data_frame))
