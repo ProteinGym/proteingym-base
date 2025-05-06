@@ -50,7 +50,7 @@ class TestRecordsDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
-            sequence_feature_name="sequence",
+            sequence_feature="sequence",
             columns=["sequence", "c"],
             schemas=[pl.String, pl.Float64],
         )
@@ -64,7 +64,7 @@ class TestRecordsDataset:
                 file_path=good_csv_file_path,
                 features=["bad_sequence"],
                 targets=["c"],
-                sequence_feature_name="sequence",
+                sequence_feature="sequence",
                 columns=["sequence", "c"],
                 schemas=[pl.String, pl.Float64],
             )
@@ -74,7 +74,7 @@ class TestRecordsDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
-            sequence_feature_name="sequence",
+            sequence_feature="sequence",
             columns=["sequence", "c"],
             schemas=[pl.String, pl.Float64],
         )
@@ -88,7 +88,7 @@ class TestRecordsDataset:
                 file_path=good_csv_file_path,
                 features=["sequence"],
                 targets=["d"],
-                sequence_feature_name="sequence",
+                sequence_feature="sequence",
                 columns=["sequence", "c"],
                 schemas=[pl.String, pl.Float64],
             )
@@ -98,7 +98,7 @@ class TestRecordsDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
-            sequence_feature_name="sequence",
+            sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
         )
@@ -118,7 +118,7 @@ class TestRecordsDataset:
                 file_path=good_csv_file_path,
                 features=["sequence"],
                 targets=["c"],
-                sequence_feature_name="sequence",
+                sequence_feature="sequence",
                 columns=["sequence", "a", "b", "c"],
                 schemas=[pl.String, pl.Float64, pl.Float64, pl.Int64],
             )
@@ -128,7 +128,7 @@ class TestRecordsDataset:
             file_path=null_csv_file_path,
             features=["sequence"],
             targets=["c"],
-            sequence_feature_name="sequence",
+            sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
         )
@@ -145,7 +145,7 @@ class TestRecordsDataset:
             file_path=null_csv_file_path,
             features=["sequence"],
             targets=["a", "c"],
-            sequence_feature_name="sequence",
+            sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
         )
@@ -160,7 +160,7 @@ class TestRecordsDataset:
             file_path=good_csv_file_path,
             features=["sequence"],
             targets=["c"],
-            sequence_feature_name="sequence",
+            sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
         )

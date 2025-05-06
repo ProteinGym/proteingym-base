@@ -10,8 +10,8 @@ class RecordsDataset(Dataset):
         file_path: str,
         features: list[str],
         targets: list[str],
-        sequence_feature_name: str,
-        engineering_round_feature_name: str | None = None,
+        sequence_feature: str,
+        engineering_round_feature: str | None = None,
         columns: list[str] | None = None,
         schemas: list[pl.datatypes.classes.DataTypeClass] | None = None,
         *args,
@@ -24,20 +24,40 @@ class RecordsDataset(Dataset):
         self.features = list(set(features))
         self.targets = list(set(targets))
 
-        self.sequence_feature_name = sequence_feature_name
-        self.engineering_round_feature_name = engineering_round_feature_name
+        self.sequence_feature = sequence_feature
+        self.engineering_round_feature = engineering_round_feature
 
         self.columns = columns
         self.schemas = schemas
 
         # sanity check
-        if self.sequence_feature_name and self.sequence_feature_name not in set(self.features):
-            raise ValueError(f"expected sequence feature {self.sequence_feature_name} missing from {self.features}.")
+        if self.sequence_feature and self.sequence_feature not in set(self.features):
+            raise ValueError(f"expected sequence feature {self.sequence_feature} missing from {self.features}.")
 
-        if self.engineering_round_feature_name and self.engineering_round_feature_name not in set(self.features):
-            raise ValueError(f"expected engineering round feature {self.engineering_round_feature_name} missing from {self.features}.")
+        if self.engineering_round_feature and self.engineering_round_feature not in set(self.features):
+            raise ValueError(f"expected engineering round feature {self.engineering_round_feature} missing from {self.features}.")
 
         self._data_frame = self._read_data_frame()
+
+    def _rename_feature(self, feature: str) -> str:
+        match feature:
+            case self.sequence_feature:
+                return "sequence"
+
+            case self.engineering_round_feature:
+                return "engineering_round"
+
+            case _:
+                return feature
+
+    def _rename_features(self, data: pl.DataFrame) -> pl.DataFrame:
+        if self.sequence_feature:
+            data = data.rename({self.sequence_feature: self._rename_feature(self.sequence_feature)})
+
+        if self.engineering_round_feature:
+            data = data.rename({self.engineering_round_feature: self._rename_feature(self.engineering_round_feature)})
+
+        return data
 
     def _read_data_frame(self) -> pl.DataFrame:
         # load data from file
@@ -56,11 +76,9 @@ class RecordsDataset(Dataset):
         if not set(self.targets).issubset(set(data.columns)):
             raise ValueError(f"expected targets {self.targets} missing from {self.columns}.")
 
-        # rename columns
-        if self.sequence_feature_name:
-            data = data.rename({self.sequence_feature_name: "sequence"})
+        # rename features
+        self.features = [self._rename_feature(feature) for feature in self.features]
 
-        if self.engineering_round_feature_name:
-            data = data.rename({self.engineering_round_feature_name: "engineering_round"})
+        data = self._rename_features(data)
 
         return data
