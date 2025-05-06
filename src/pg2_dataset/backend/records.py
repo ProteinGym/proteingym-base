@@ -1,21 +1,19 @@
 import io
-import random
 import polars as pl
-from pg2_dataset.datasets.dataset import Dataset
+from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
 
 
-class CSVDataset(Dataset):
+class RecordsDataset(Dataset):
     def __init__(
         self,
         file_path: str,
         features: list[str],
         targets: list[str],
+        sequence_feature_name: str,
+        engineering_round_feature_name: str | None = None,
         columns: list[str] | None = None,
         schemas: list[pl.datatypes.classes.DataTypeClass] | None = None,
-        seed: int = 0,
-        train_size: int = 0,
-        test_size: int = 0,
         *args,
         **kwargs,
     ) -> None:
@@ -23,33 +21,23 @@ class CSVDataset(Dataset):
 
         self.file_path = file_path
 
-        self.features = features
-        self.targets = targets
+        self.features = list(set(features))
+        self.targets = list(set(targets))
+
+        self.sequence_feature_name = sequence_feature_name
+        self.engineering_round_feature_name = engineering_round_feature_name
 
         self.columns = columns
         self.schemas = schemas
 
-        self.seed = seed
+        # sanity check
+        if self.sequence_feature_name not in set(self.features):
+            raise ValueError(f"expected sequence feature {self.sequence_feature_name} missing from {self.features}.")
 
-        self.train_size = train_size
-        self.test_size = test_size
+        self._data_frame = self._read_data_frame()
 
-        if bool(set(features) & set(targets)):
-            raise ValueError(f"{features} should not be part of {targets}")
-
-        # 1. load data
-        data = self._load_data()
-
-        # 2. shuffle data
-        random.seed(seed)
-
-        groups = [df for _, df in data.group_by(features)]
-        random.shuffle(groups)
-
-        # 3. set data frame
-        self._data_frame = pl.concat(groups)
-
-    def _load_data(self) -> pl.DataFrame:
+    def _read_data_frame(self) -> pl.DataFrame:
+        # load data from file
         data_str = read_bytes(self.file_path).decode("utf-8")
 
         if self.columns and self.schemas:
@@ -58,10 +46,18 @@ class CSVDataset(Dataset):
         else:
             data = pl.read_csv(io.StringIO(data_str))
 
+        # sanity check
         if not set(self.features).issubset(set(data.columns)):
             raise ValueError(f"expected features {self.features} missing from {self.columns}.")
 
         if not set(self.targets).issubset(set(data.columns)):
             raise ValueError(f"expected targets {self.targets} missing from {self.columns}.")
+
+        # rename columns
+        if self.sequence_feature_name:
+            data = data.rename({self.sequence_feature_name: "sequence"})
+
+        if self.engineering_round_feature_name:
+            data = data.rename({self.engineering_round_feature_name: "engineering_round"})
 
         return data

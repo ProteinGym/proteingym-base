@@ -1,3 +1,5 @@
+fail_fast: false
+
 default_install_hook_types:
   - pre-commit
   - post-checkout
@@ -5,18 +7,24 @@ default_install_hook_types:
   - post-rewrite
 
 repos:
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  # Ruff version.
-  rev: v0.9.6
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
   hooks:
-    # Run the linter.
-    - id: ruff
-      args: [ --fix, --preview ]
-      exclude: notebooks/
-    # Run the formatter.
+    - id: check-merge-conflict
+
+- repo: https://github.com/abravalheri/validate-pyproject
+  rev: v0.24.1
+  hooks:
+    - id: validate-pyproject
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.11.7
+  hooks:
     - id: ruff-format
-      args: [ --preview ]
-      exclude: notebooks/
+    - id: ruff
+      args: [--fix, --exit-non-zero-on-fix]
+      types_or: [python, pyi]
+      require_serial: true
 
 - repo: https://github.com/astral-sh/uv-pre-commit
   # uv version.
@@ -26,3 +34,13 @@ repos:
     - id: uv-lock
     # Synchronize the dependencies upon branch checkout, pull or rebase.
     - id: uv-sync
+  
+- repo: local
+  hooks:
+  - id: pytest
+    name: pytest
+    entry: uv run pytest
+    language: system
+    types: [python]
+    pass_filenames: false
+    always_run: true
