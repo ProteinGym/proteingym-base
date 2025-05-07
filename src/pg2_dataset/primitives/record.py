@@ -1,6 +1,5 @@
 from typing_extensions import Self
-from typing import Annotated
-from pydantic import BaseModel, model_validator, AfterValidator
+from pydantic import BaseModel, model_validator
 
 
 class MeasurementWithUncertainty(BaseModel):
@@ -26,21 +25,3 @@ class Record(BaseModel, extra="allow"):
             if self.model_extra[f] is not None and not isinstance(self.model_extra[f], allowed_types):
                 raise ValueError(f"Invalid data type for field {f}. Expected one of {allowed_types}. Got {type(self.model_extra[f])}.")
         return self
-
-
-class AssayMeta(BaseModel, extra="allow"):
-    target: str
-    # features: dict[str,type] #str is the key? would type be python <class 'something'> kind of format?
-    description: str
-
-
-def uri_check(uri):
-    if ":" not in uri:
-        raise ValueError("Invalid URI")
-    return uri
-
-
-class DatasetMeta(BaseModel):
-    doi: Annotated[str, AfterValidator(uri_check)]
-    source: Annotated[str, AfterValidator(uri_check)]
-    # xref: CrossReference #how to define that?
