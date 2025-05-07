@@ -53,6 +53,10 @@ class Dataset(BaseModel):
         records = []
 
         for row in data.to_dicts():
+
+            if not row["sequence"]:
+                continue
+                
             row["targets"] = self.targets
             record = Record(**row)
 
