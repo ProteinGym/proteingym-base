@@ -76,7 +76,7 @@ class TestRecordsDataset:
             schemas=[pl.String, pl.Float64],
         )
 
-        assert set(["sequence"]).issubset(set(dataset.data_frame().columns.to_list())), "features are not correctly set in dataset.train."
+        assert set(dataset.features).issubset(set(dataset.data_frame().columns.to_list())), "features are not correctly set in dataset.train."
 
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
         dataset = RecordsDataset(
