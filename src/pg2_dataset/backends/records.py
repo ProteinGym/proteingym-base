@@ -33,7 +33,7 @@ class RecordsDataset(Dataset):
     def raw_data_frame(self) -> pl.DataFrame:
         return self._read_data_frame()
 
-    @field_validator("features", "targets", mode="after")
+    @field_validator("features", "targets", "columns", mode="after")
     @classmethod
     def unique(cls, items: list[str]) -> list[str]:
         return list(set(items))
