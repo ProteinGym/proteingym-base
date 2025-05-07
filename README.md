@@ -103,27 +103,41 @@ We use [polars](https://github.com/pola-rs/polars) to load typed data frames. Yo
 You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. As shown in the following example, the mandatory fields needed to load a CSV data frame are `file_path`, `features` (feature names of the data frame required for a model to train or predict) and `targets` (predictions from a model):
 
 ```python
-from pg2_dataset.backend.records import RecordsDataset
+from pg2_dataset.backends.records import RecordsDataset
 
 ds = RecordsDataset(
-    file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
+    records_file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
     sequence_feature="mutated_sequence",
 )
 
-print(len(ds.data_frame))
-print(ds.data_frame[0])
+print(ds.data_frame())
 ```
 
-It is also recommended to load a data frames with its schema, as shown in the following example:
+You can also initialize the dataset with a TOML file. The test TOML file can be found here - [dataset.toml](example_data/dataset.toml):
+
+```python
+from pg2_dataset.backends.records import RecordsDataset
+
+ds = RecordsDataset(
+    toml_file="example_data/dataset.toml",
+    features=["mutated_sequence"],
+    targets=["DMS_score"],
+    sequence_feature="mutated_sequence",
+)
+
+print(ds.data_frame())
+```
+
+We also recommended to load a data frames with its schema, as shown in the following example:
 
 ```python
 import polars as pl
-from pg2_dataset.backend.records import RecordsDataset
+from pg2_dataset.backends.records import RecordsDataset
 
 ds = RecordsDataset(
-    file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
+    records_file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
     sequence_feature="mutated_sequence",
@@ -131,8 +145,25 @@ ds = RecordsDataset(
     schemas=[pl.String, pl.String, pl.Float32, pl.Float32],
 )
 
-print(len(ds.data_frame))
-print(ds.data_frame[0])
+print(ds.data_frame())
+```
+
+Above three examples will all give the following result:
+```
+    mutant                                           sequence  DMS_score  DMS_score_bin                                                                  
+0      F1I  ITLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -3.598            0.0
+1      F1L  LTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.678            0.0
+2      F1Y  YTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -2.373            0.0
+3      F1V  VTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      1.299            1.0
+4      F1S  STLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.127            0.0
+..     ...                                                ...        ...            ...
+917  S161R  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.344            0.0
+918  S161I  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      1.472            1.0
+919  S161G  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      0.345            1.0
+920  S161T  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -1.969            0.0
+921  S161C  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -1.697            0.0
+
+[922 rows x 4 columns]
 ```
 
 > [!TIP]
