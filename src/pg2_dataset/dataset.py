@@ -1,41 +1,50 @@
 import uuid
 import polars as pl
-from pg2_dataset.primitives import Record
+import pandas as pd
+from pydantic import BaseModel, computed_field
+from pg2_dataset.primitives.record import Record
+from pg2_dataset.primitives.structure import MMcifFile
+from pg2_dataset.primitives.setting import DatasetSettings
 
 
-class Dataset:
-    def __init__(
-        self,
-        features: list[str] = [],
-        targets: list[str] = [],
-    ):
-        self.features = list(set(features))
-        self.targets = list(set(targets))
+class Dataset(BaseModel):
+    toml_file: str | None = None
+    include_records: bool = True
+    include_structure: bool = False
+    include_msa: bool = False
 
-        self.name = self.__class__.__name__
+    @computed_field
+    def settings(self) -> DatasetSettings:
+        if self.toml_file:
+            DatasetSettings._toml_file = self.toml_file
+            return DatasetSettings()
+        else:
+            return None
 
-    @property
-    def data_frame(self):
-        if not hasattr(self, "_data_frame_"):
-            self._data_frame_ = [record for record in self._to_records(self._data_frame) if self._has_all_targets(record)]
+    @computed_field
+    # @cached_property
+    def records(self) -> list[Record] | None:
+        if self.include_records:
+            if not self.raw_data_frame.is_empty():
+                return [record for record in self._to_records(self.raw_data_frame)]
+            else:
+                raise ValueError("Either no raw data frame is provided or raw data frame is empty.")
+        else:
+            return None
 
-        return self._data_frame_
+    def data_frame(self) -> pd.DataFrame | None:
+        if self.include_records:
+            if not self.raw_data_frame.is_empty():
+                return self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in self.targets])).to_pandas()
+        else:
+            raise None
 
     def data_frame_by_target(self, target: str):
-        if not hasattr(self, f"_data_frame_by_target_{target}_"):
-            setattr(
-                self,
-                f"_data_frame_by_target_{target}_",
-                [record for record in self._to_records(self._data_frame) if self._has_target(record, target)],
-            )
-
-        return getattr(self, f"_data_frame_by_target_{target}_")
-
-    def _has_all_targets(self, record: Record) -> bool:
-        return all([getattr(record, target) for target in self.targets])
-
-    def _has_target(self, record: Record, target: str) -> bool:
-        return getattr(record, target)
+        if self.include_records:
+            if not self.raw_data_frame.is_empty():
+                return self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence", target]])).to_pandas()
+        else:
+            raise None
 
     def _to_records(
         self,
@@ -44,18 +53,25 @@ class Dataset:
         records = []
 
         for row in data.to_dicts():
-            # skip null sequence in the data frame
-            if not row["sequence"]:
-                continue
-
             row["targets"] = self.targets
             record = Record(**row)
 
             # add metadata attributes for tracking
-            record._features = self.features
-            record._targets = self.targets
             record._uuid = str(uuid.uuid4())
 
             records.append(record)
 
         return records
+
+    @computed_field
+    # @cached_property
+    def structure(self) -> None:
+        if self.include_structure:
+            if self.settings.artifacts.structure:
+                mmcif = MMcifFile()
+                return mmcif.from_mmcif(self.settings.artifacts.structure)
+            else:
+                raise ValueError("No structure file provided in toml file.")
+
+        else:
+            return None
