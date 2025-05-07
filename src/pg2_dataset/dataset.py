@@ -35,7 +35,7 @@ class Dataset(BaseModel):
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
             if not self.raw_data_frame.is_empty():
-                return self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in self.targets])).to_pandas()
+                return self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence"] + self.targets])).to_pandas()
         else:
             raise None
 
