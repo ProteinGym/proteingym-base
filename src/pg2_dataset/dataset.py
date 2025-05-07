@@ -53,7 +53,7 @@ class Dataset(BaseModel):
         records = []
 
         for row in data.to_dicts():
-
+            # skip null sequence in the data frame
             if not row["sequence"]:
                 continue
                 
