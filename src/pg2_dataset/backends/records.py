@@ -60,35 +60,35 @@ class RecordsDataset(Dataset):
             return self
 
     @model_validator(mode="after")
-    def check_sequence_should_be_in_columns(self):
+    def check_sequence_should_be_in_columns(self) -> Self:
         if self.sequence_feature and self.columns and self.sequence_feature not in set(self.columns):
             raise ValueError(f"sequence {self.sequence_feature} should exist in {self.columns}.")
         else:
             return self
 
     @model_validator(mode="after")
-    def check_engineering_round_should_be_in_columns(self):
+    def check_engineering_round_should_be_in_columns(self) -> Self:
         if self.engineering_round_feature and self.columns and self.engineering_round_feature not in set(self.columns):
             raise ValueError(f"engineering round {self.engineering_round_feature} should exist in {self.columns}.")
         else:
             return self
 
     @model_validator(mode="after")
-    def check_columns_should_be_unique(self):
+    def check_columns_should_be_unique(self) -> Self:
         if self.columns and len(list(set(self.columns))) != len(self.columns):
             raise ValueError(f"columns {self.columns} have duplicate column names.")
         else:
             return self
 
     @model_validator(mode="after")
-    def check_columns_should_match_schemas(self):
+    def check_columns_should_match_schemas(self) -> Self:
         if self.columns and self.schemas and len(self.columns) != len(self.schemas):
             raise ValueError(f"columns {self.columns} and schemas {self.schemas} should have the same length.")
         else:
             return self
 
     @model_validator(mode="after")
-    def check_schemas_should_not_exist_without_columns(self):
+    def check_schemas_should_not_exist_without_columns(self) -> Self:
         if self.schemas and not self.columns:
             raise ValueError(f"schemas {self.schemas} should not exist without columns.")
         else:

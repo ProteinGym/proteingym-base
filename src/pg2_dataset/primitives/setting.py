@@ -1,5 +1,5 @@
 from typing import Tuple, Type
-
+from typing_extensions import Self
 from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, TomlConfigSettingsSource
 
@@ -11,9 +11,6 @@ class Artifacts(BaseModel):
 
 
 class Records(BaseModel):
-    features: list[str] = []
-    targets: list[str] = []
-
     sequence_feature: str | None = None
     engineering_round_feature: str | None = None
 
@@ -21,7 +18,7 @@ class Records(BaseModel):
     schemas: list[str] = []
 
     @model_validator(mode="after")
-    def check_schemas_should_not_exist_without_columns(self):
+    def check_schemas_should_not_exist_without_columns(self) -> Self:
         if self.schemas and not self.columns:
             raise ValueError(f"schemas {self.schemas} should not exist without columns.")
         else:
