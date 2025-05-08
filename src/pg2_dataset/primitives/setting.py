@@ -10,10 +10,22 @@ class Artifacts(BaseModel):
     msa: str | None = None
 
 
+class Records(BaseModel):
+    features: list[str] = []
+    targets: list[str] = []
+
+    sequence_feature: str | None = None
+    engineering_round_feature: str | None = None
+
+    columns: list[str] = []
+    schemas: list[str] = []
+
+
 class DatasetSettings(BaseSettings):
     _toml_file: str | None = None
 
     artifacts: Artifacts
+    records: Records
 
     @classmethod
     def settings_customise_sources(

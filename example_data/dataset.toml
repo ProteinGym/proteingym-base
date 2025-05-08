@@ -4,6 +4,13 @@ structure = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
 # msa = "data/msa.npy" #?
 # predictions = "data/outputs.csv" #?
 
+[records]
+features = ["mutated_sequence"]
+targets = ["DMS_score"]
+sequence_feature = "mutated_sequence"
+columns = ["mutated_sequence", "DMS_score"]
+schemas = ["pl.String", "pl.Float64"]
+
 # [metadata]
 # name = "project name"
 # description = "project description"

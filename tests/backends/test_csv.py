@@ -234,7 +234,7 @@ class TestRecordsDataset:
         with pytest.raises(ValidationError):
             ds = RecordsDataset(
                 records_file_path=good_csv_file_path,
-                features=["sequence"],
+                features=["sequence", "a"],
                 targets=["c"],
                 sequence_feature="sequence",
                 columns=["sequence", "a", "b", "c"],

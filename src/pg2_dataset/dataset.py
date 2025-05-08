@@ -61,7 +61,7 @@ class Dataset(BaseModel):
     ) -> list[Record]:
         records = []
 
-        for row in data.to_dicts():
+        for row in data.select(self.features + self.targets).to_dicts():
             # skip null sequence in the data frame
             if not row["sequence"]:
                 continue
