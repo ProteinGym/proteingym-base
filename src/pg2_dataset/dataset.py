@@ -26,32 +26,31 @@ class Dataset(BaseModel):
     @cached_property
     def records(self) -> list[Record] | None:
         if self.include_records:
-            if not self.raw_data_frame.is_empty():
-                return [record for record in self._to_records(self.raw_data_frame)]
-            else:
-                raise ValueError("Either no raw data frame is provided or raw data frame is empty.")
+            return [record for record in self._to_records(self.raw_data_frame)]
         else:
             return None
 
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
-            if not self.raw_data_frame.is_empty():
-                return (
-                    self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence"] + self.targets]))
-                    .select(self.features + self.targets)
-                    .to_pandas()
-                )
+            valid_data_frame = self.raw_data_frame.filter(pl.col("sequence").is_not_null())
+
+            if self.columns:
+                return valid_data_frame.select(self.columns).to_pandas()
+            else:
+                return valid_data_frame.to_pandas()
+
         else:
             return None
 
     def data_frame_by_target(self, target: str):
         if self.include_records:
-            if not self.raw_data_frame.is_empty():
-                return (
-                    self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence", target]]))
-                    .select(self.features + [target])
-                    .to_pandas()
-                )
+            valid_data_frame = self.raw_data_frame.filter(pl.all_horizontal([pl.col(col).is_not_null() for col in ["sequence", target]]))
+
+            if self.columns:
+                return valid_data_frame.select(self.columns).to_pandas()
+            else:
+                return valid_data_frame.to_pandas()
+
         else:
             return None
 
@@ -61,12 +60,16 @@ class Dataset(BaseModel):
     ) -> list[Record]:
         records = []
 
-        for row in data.select(self.features + self.targets).to_dicts():
+        if self.columns:
+            rows = data.select(self.columns).to_dicts()
+        else:
+            rows = data.to_dicts()
+
+        for row in rows:
             # skip null sequence in the data frame
             if not row["sequence"]:
                 continue
 
-            row["targets"] = self.targets
             record = Record(**row)
 
             # add metadata attributes for tracking

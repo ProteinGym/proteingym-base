@@ -16,7 +16,6 @@ class MeasurementWithUncertainty(BaseModel):
 class Record(BaseModel, extra="allow"):
     engineering_round: int = 1
     sequence: str
-    targets: list[str]
 
     @model_validator(mode="after")
     def check_extra_fields(self) -> Self:

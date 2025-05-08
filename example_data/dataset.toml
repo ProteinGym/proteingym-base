@@ -1,15 +1,13 @@
 [artifacts]
-records = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/sequences.csv"
+records = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/sequences.csv" # or uri
 structure = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
 # msa = "data/msa.npy" #?
-# predictions = "data/outputs.csv" #?
 
 [records]
 features = ["mutated_sequence"]
 targets = ["DMS_score"]
 sequence_feature = "mutated_sequence"
-columns = ["mutated_sequence", "DMS_score"]
-schemas = ["pl.String", "pl.Float64"]
+
 
 # [metadata]
 # name = "project name"
@@ -18,14 +16,14 @@ schemas = ["pl.String", "pl.Float64"]
 # source = "DOI: 10.1000/xyz123"
 # xref = ?
 
-# [assay_one] # hyperparameter goes here
+# [assays]
+# [assay.one]
 # target = "target_name"
 
-# hyperparams = { param = 1, other_param = "value" }
-
 # features = ["feature1", "feature2"]
+# updated -> hierarchy of constants
 # arbitrary_constant1 = "arbitrary value 1"
 # arbitrary_constant2 = "arbitrary value 2"
 
-# [assay_two]
+# [assay.two]
 # target = "target_name"

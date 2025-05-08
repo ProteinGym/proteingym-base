@@ -66,23 +66,9 @@ class TestRecordsDataset:
 
         return str(file_path)
 
-    def test_features_should_exist_in_data_frame(self, good_csv_file_path):
-        dataset = RecordsDataset(
-            records_file_path=good_csv_file_path,
-            features=["sequence"],
-            targets=["c"],
-            sequence_feature="sequence",
-            columns=["sequence", "c"],
-            schemas=[pl.String, pl.Float64],
-        )
-
-        assert set(dataset.features).issubset(set(dataset.data_frame().columns.to_list())), "features are not correctly set in dataset.train."
-
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
         dataset = RecordsDataset(
             records_file_path=any_csv_file_path,
-            features=["a_sequence", "round"],
-            targets=["c"],
             sequence_feature="a_sequence",
             engineering_round_feature="round",
             columns=["a_sequence", "c", "round"],
@@ -95,69 +81,19 @@ class TestRecordsDataset:
         assert "engineering_round" in dataset.data_frame().columns.to_list(), "engineering round feature should be renamed to 'engineering_round'"
         assert "round" not in dataset.data_frame().columns.to_list(), "engineering round feature should be renamed to 'engineering_round'"
 
-    def test_bad_features_should_raise_error(self, good_csv_file_path):
-        with pytest.raises(ValueError):
-            RecordsDataset(
-                records_file_path=good_csv_file_path,
-                features=["bad_sequence"],
-                targets=["c"],
-                sequence_feature="sequence",
-                columns=["sequence", "c"],
-                schemas=[pl.String, pl.Float64],
-            )
-
-    def test_targets_should_exist_in_data_frame(self, good_csv_file_path):
-        dataset = RecordsDataset(
-            records_file_path=good_csv_file_path,
-            features=["sequence"],
-            targets=["c"],
-            sequence_feature="sequence",
-            columns=["sequence", "c"],
-            schemas=[pl.String, pl.Float64],
-        )
-
-        assert set(dataset.targets).issubset(set(dataset.data_frame().columns.to_list())), "targets are not correctly set in dataset.data_frame."
-
-    def test_bad_targets_should_raise_error(self, good_csv_file_path):
-        with pytest.raises(ValueError):
-            RecordsDataset(
-                records_file_path=good_csv_file_path,
-                features=["sequence"],
-                targets=["d"],
-                sequence_feature="sequence",
-                columns=["sequence", "c"],
-                schemas=[pl.String, pl.Float64],
-            )
-
-    def test_features_and_targets_should_not_overlap(self, good_csv_file_path):
-        with pytest.raises(ValueError):
-            RecordsDataset(
-                records_file_path=good_csv_file_path,
-                features=["sequence", "c"],
-                targets=["c"],
-                sequence_feature="sequence",
-                columns=["sequence", "c"],
-                schemas=[pl.String, pl.Float64],
-            )
-
     def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
             ds = RecordsDataset(
                 records_file_path=good_csv_file_path,
-                features=["sequence"],
-                targets=["c"],
                 sequence_feature="sequence",
                 columns=["sequence", "c", "e"],
                 schemas=[pl.String, pl.Float64, pl.Float64],
             )
-
             print(ds)
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
         dataset = RecordsDataset(
             records_file_path=good_csv_file_path,
-            features=["sequence"],
-            targets=["c"],
             sequence_feature="sequence",
             columns=["sequence", "c"],
             schemas=[pl.String, pl.Float64],
@@ -174,20 +110,15 @@ class TestRecordsDataset:
         with pytest.raises(pl.exceptions.ComputeError):
             ds = RecordsDataset(
                 records_file_path=good_csv_file_path,
-                features=["sequence"],
-                targets=["c"],
                 sequence_feature="sequence",
                 columns=["sequence", "c"],
                 schemas=[pl.String, pl.Int64],
             )
-
             print(ds)
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
         dataset = RecordsDataset(
             records_file_path=null_csv_file_path,
-            features=["sequence"],
-            targets=["c"],
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
@@ -198,13 +129,25 @@ class TestRecordsDataset:
             "b": 1,
             "c": 1,
             "sequence": 2,
+            "engineering_round": 0,
         }
+
+    def test_get_records_correctly(self, null_csv_file_path):
+        dataset = RecordsDataset(
+            records_file_path=null_csv_file_path,
+            sequence_feature="sequence",
+            columns=["sequence", "a", "b", "c"],
+            schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
+        )
+
+        assert len(dataset.records) == 3, "only 3 valid records"
+        for record in dataset.records:
+            assert record.sequence is not None, "sequence should not be None"
+            assert record.engineering_round is not None, "engineering round should be None"
 
     def test_get_data_frame_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             records_file_path=null_csv_file_path,
-            features=["sequence"],
-            targets=["a", "c"],
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
@@ -212,14 +155,12 @@ class TestRecordsDataset:
 
         data_frame = dataset.data_frame()
 
-        assert len(data_frame) == 1, "only 2 valid records with the targets 'a' and 'c'"
-        assert len(data_frame.columns) == 3, "only 3 columns with the feature 'sequence' and the targets 'a' and 'c'"
+        assert len(data_frame) == 3, "only 3 valid records"
+        assert len(data_frame.columns) == 5, "there are 4 selected columns and 1 enginering round column"
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             records_file_path=null_csv_file_path,
-            features=["sequence"],
-            targets=["a", "c"],
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
             schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
@@ -227,18 +168,15 @@ class TestRecordsDataset:
 
         data_frame_by_target = dataset.data_frame_by_target("c")
 
-        assert len(data_frame_by_target) == 2, "only 2 valid records by the target 'c'"
-        assert len(data_frame_by_target.columns) == 2, "only 2 columns with the feature 'sequence' and the target 'c'"
+        assert len(data_frame_by_target) == 2, "only 2 valid records"
+        assert len(data_frame_by_target.columns) == 5, "there are 4 selected columns and 1 enginering round column"
 
-    def test_extra_features_should_be_within_allowed_types(self, good_csv_file_path):
+    def test_extra_columns_should_be_within_allowed_types(self, good_csv_file_path):
         with pytest.raises(ValidationError):
             ds = RecordsDataset(
                 records_file_path=good_csv_file_path,
-                features=["sequence", "a"],
-                targets=["c"],
                 sequence_feature="sequence",
                 columns=["sequence", "a", "b", "c"],
                 schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
             )
-
             print(ds)
