@@ -102,7 +102,7 @@ We use [polars](https://github.com/pola-rs/polars) to load typed data frames. Yo
 
 You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. 
 
-As shown in the following example, the mandatory fields of records dataset are `features`, `targets` and `sequence_feature`. We can either use `records_file_path` or `toml_file` to configure the path to load the records:
+As shown in the following example, the mandatory fields of records dataset are `features`, `targets` and `sequence_feature`. You can either use `records_file_path` or `toml_file` to configure the path to load the records:
 
 ```python
 from pg2_dataset.backends.records import RecordsDataset
