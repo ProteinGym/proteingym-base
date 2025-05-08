@@ -75,8 +75,6 @@ from pg2_dataset.backends.records import RecordsDataset
 
 ds = RecordsDataset(
     toml_file="example_data/dataset.toml",
-    features=["mutated_sequence"],
-    targets=["DMS_score"],
     sequence_feature="mutated_sequence",
     include_structure=True,
 )
