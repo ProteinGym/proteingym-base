@@ -32,7 +32,6 @@ classDiagram
     class Record{
       +engineering_round: int
       +sequence: str
-      +targets: list[str]
       +$key: float|str|MeasurementWithUncertainty
     }
     class AssayMeta{
