@@ -3,7 +3,7 @@ import tempfile
 import pytest
 from io import StringIO
 
-from src.pg2_dataset.primitives.msa import MSA
+from pg2_dataset.primitives.msa import MSA
 
 
 @pytest.fixture
