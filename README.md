@@ -66,6 +66,31 @@ source .venv/bin/activate
 pre-commit install
 ```
 
+## getting started
+
+You can just load the dataset as below, then go ahead with using it for model training or prediction:
+
+```python
+from pg2_dataset.backends.records import RecordsDataset
+
+ds = RecordsDataset(
+    toml_file="example_data/dataset.toml",
+    features=["mutated_sequence"],
+    targets=["DMS_score"],
+    sequence_feature="mutated_sequence",
+    include_structure=True,
+)
+
+# load records
+records = ds.records
+
+# load structure
+x = ds.structure.atom_site.cartn_x
+y = ds.structure.atom_site.cartn_y
+z = ds.structure.atom_site.cartn_z
+atom_type = ds.structure.atom_site.id
+```
+
 ## structure example
 ```
 from pg2_dataset.primitives.structure import MMcifFile
@@ -191,6 +216,6 @@ uv run pytest
 ## todo
 
 - [ ] add different split strategies from https://github.com/ProteinGym2/pg2-data/tree/main/src/pg2_data/split_strategy.
-- [ ] refactor [Example.py](https://github.com/ProteinGym2/pg2-dataset/blob/main/src/pg2_dataset/primitives/example.py) with Pydantic model to do schema validation.
+- [x] refactor [Example.py](https://github.com/ProteinGym2/pg2-dataset/blob/main/src/pg2_dataset/primitives/example.py) with Pydantic model to do schema validation.
 - [ ] use it in pg2-project as a common dependency to replace its "dataset.py" module, first in pg2-model-pls.
 - [ ] use it in pg2 benchmarking, e.g., it can be in DVC.
