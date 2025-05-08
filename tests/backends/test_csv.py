@@ -180,3 +180,12 @@ class TestRecordsDataset:
                 schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
             )
             print(ds)
+
+    def test_schemas_should_not_exist_without_columns(self, good_csv_file_path):
+        with pytest.raises(ValidationError):
+            ds = RecordsDataset(
+                records_file_path=good_csv_file_path,
+                sequence_feature="sequence",
+                schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
+            )
+            print(ds)

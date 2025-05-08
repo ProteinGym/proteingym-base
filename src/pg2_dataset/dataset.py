@@ -30,6 +30,19 @@ class Dataset(BaseModel):
         else:
             return None
 
+    @computed_field
+    @cached_property
+    def structure(self) -> None:
+        if self.include_structure:
+            if self.settings.artifacts.structure:
+                mmcif = MMcifFile()
+                return mmcif.from_mmcif(self.settings.artifacts.structure)
+            else:
+                raise ValueError("No structure file provided in toml file.")
+
+        else:
+            return None
+
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
             valid_data_frame = self.raw_data_frame.filter(pl.col("sequence").is_not_null())
@@ -78,16 +91,3 @@ class Dataset(BaseModel):
             records.append(record)
 
         return records
-
-    @computed_field
-    @cached_property
-    def structure(self) -> None:
-        if self.include_structure:
-            if self.settings.artifacts.structure:
-                mmcif = MMcifFile()
-                return mmcif.from_mmcif(self.settings.artifacts.structure)
-            else:
-                raise ValueError("No structure file provided in toml file.")
-
-        else:
-            return None

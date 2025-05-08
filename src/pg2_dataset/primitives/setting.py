@@ -1,6 +1,6 @@
 from typing import Tuple, Type
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, TomlConfigSettingsSource
 
 
@@ -19,6 +19,13 @@ class Records(BaseModel):
 
     columns: list[str] = []
     schemas: list[str] = []
+
+    @model_validator(mode="after")
+    def check_schemas_should_not_exist_without_columns(self):
+        if self.schemas and not self.columns:
+            raise ValueError(f"schemas {self.schemas} should not exist without columns.")
+        else:
+            return self
 
 
 class DatasetSettings(BaseSettings):
