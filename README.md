@@ -132,7 +132,7 @@ ds = RecordsDataset(
 print(ds.data_frame())
 ```
 
-We also recommended to load a data frame with its schema, as shown in the following example, so you will be aware of the schema further down the road:
+We also recommend to load a data frame with its schema, as shown in the following example, so you will be aware of the schema further down the road:
 
 ```python
 import polars as pl
@@ -150,7 +150,7 @@ ds = RecordsDataset(
 print(ds.data_frame())
 ```
 
-Above three examples will all give the following result:
+Above three examples all give the following result:
 ```
     mutant                                           sequence  DMS_score  DMS_score_bin                                                                  
 0      F1I  ITLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -3.598            0.0
@@ -168,7 +168,7 @@ Above three examples will all give the following result:
 [922 rows x 4 columns]
 ```
 
-Additionally, for a records dataset `ds`, you also have the following properties to use:
+Additionally, for a records dataset `ds`, you also have the following properties or functions to use:
 * `raw_data_frame`: a Polars data frame, which hasn't been filtered, selected, purely loaded from a CSV file.
 * `records`: a list of `Record` from the `raw_data_frame`, with not null `sequence`.
 * `data_frame_by_target()`: a function to retrieve a specific target from `raw_data_frame`, with not null features and target.
