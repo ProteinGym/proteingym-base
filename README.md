@@ -68,10 +68,10 @@ pre-commit install
 
 ## structure example
 ```
-from pg2_dataset.datatypes.structure import MMcifFile
+from pg2_dataset.primitives.structure import MMcifFile
 
 mmcif = MMcifFile()
-mmcif_data = mmcif.from_mmcif('example_data/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif')
+mmcif_data = mmcif.from_file('example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif')
 
 x = mmcif_data.atom_site.cartn_x
 y = mmcif_data.atom_site.cartn_y
