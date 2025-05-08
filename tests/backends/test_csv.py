@@ -200,6 +200,21 @@ class TestRecordsDataset:
             "sequence": 2,
         }
 
+    def test_get_data_frame_correctly(self, null_csv_file_path):
+        dataset = RecordsDataset(
+            records_file_path=null_csv_file_path,
+            features=["sequence"],
+            targets=["a", "c"],
+            sequence_feature="sequence",
+            columns=["sequence", "a", "b", "c"],
+            schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
+        )
+
+        data_frame = dataset.data_frame()
+
+        assert len(data_frame) == 1, "only 2 valid records with the targets 'a' and 'c'"
+        assert len(data_frame.columns) == 3, "only 3 columns with the feature 'sequence' and the targets 'a' and 'c'"
+
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             records_file_path=null_csv_file_path,
@@ -213,6 +228,7 @@ class TestRecordsDataset:
         data_frame_by_target = dataset.data_frame_by_target("c")
 
         assert len(data_frame_by_target) == 2, "only 2 valid records by the target 'c'"
+        assert len(data_frame_by_target.columns) == 2, "only 2 columns with the feature 'sequence' and the target 'c'"
 
     def test_extra_features_should_be_within_allowed_types(self, good_csv_file_path):
         with pytest.raises(ValidationError):

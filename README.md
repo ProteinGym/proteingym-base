@@ -100,7 +100,9 @@ mmcif_data.atom_site.cartn_x # returns only the values for the cartn_x coordinat
 
 We use [polars](https://github.com/pola-rs/polars) to load typed data frames. You can read [this reference](https://docs.pola.rs/user-guide/migration/pandas/) as to why Polars is chosen over Pandas.
 
-You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. As shown in the following example, the mandatory fields needed to load a CSV data frame are `file_path`, `features` (feature names of the data frame required for a model to train or predict) and `targets` (predictions from a model):
+You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. 
+
+As shown in the following example, the mandatory fields of records dataset are `features`, `targets` and `sequence_feature`. We can either use `records_file_path` or `toml_file` to configure the path to load the records:
 
 ```python
 from pg2_dataset.backends.records import RecordsDataset
@@ -115,7 +117,7 @@ ds = RecordsDataset(
 print(ds.data_frame())
 ```
 
-You can also initialize the dataset with a TOML file. The test TOML file can be found here - [dataset.toml](example_data/dataset.toml):
+To initialize a dataset with a TOML file, you can try the test TOML file - [dataset.toml](example_data/dataset.toml):
 
 ```python
 from pg2_dataset.backends.records import RecordsDataset
@@ -130,7 +132,7 @@ ds = RecordsDataset(
 print(ds.data_frame())
 ```
 
-We also recommended to load a data frames with its schema, as shown in the following example:
+We also recommended to load a data frame with its schema, as shown in the following example, so you will be aware of the schema further down the road:
 
 ```python
 import polars as pl
@@ -165,6 +167,12 @@ Above three examples will all give the following result:
 
 [922 rows x 4 columns]
 ```
+
+Additionally, for a records dataset `ds`, you also have the following properties to use:
+* `raw_data_frame`: a Polars data frame, which hasn't been filtered, selected, purely loaded from a CSV file.
+* `records`: a list of `Record` from the `raw_data_frame`, with not null `sequence`.
+* `data_frame_by_target()`: a function to retrieve a specific target from `raw_data_frame`, with not null features and target.
+* `data_frame()`: a function to retrieve all targets from `raw_data_frame`, with not null features and targets.
 
 > [!TIP]
 > You can find the polars data types to use in this guide: https://docs.pola.rs/api/python/stable/reference/datatypes.html

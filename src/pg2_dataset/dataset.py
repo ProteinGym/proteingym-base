@@ -2,6 +2,7 @@ import uuid
 import polars as pl
 import pandas as pd
 from pydantic import BaseModel, computed_field
+from functools import cached_property
 from pg2_dataset.primitives.record import Record
 from pg2_dataset.primitives.structure import MMcifFile
 from pg2_dataset.primitives.setting import DatasetSettings
@@ -22,7 +23,7 @@ class Dataset(BaseModel):
             return None
 
     @computed_field
-    # @cached_property
+    @cached_property
     def records(self) -> list[Record] | None:
         if self.include_records:
             if not self.raw_data_frame.is_empty():
@@ -35,16 +36,24 @@ class Dataset(BaseModel):
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
             if not self.raw_data_frame.is_empty():
-                return self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence"] + self.targets])).to_pandas()
+                return (
+                    self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence"] + self.targets]))
+                    .select(self.features + self.targets)
+                    .to_pandas()
+                )
         else:
-            raise None
+            return None
 
     def data_frame_by_target(self, target: str):
         if self.include_records:
             if not self.raw_data_frame.is_empty():
-                return self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence", target]])).to_pandas()
+                return (
+                    self.raw_data_frame.filter(pl.all_horizontal([~pl.col(col).is_null() for col in ["sequence", target]]))
+                    .select(self.features + [target])
+                    .to_pandas()
+                )
         else:
-            raise None
+            return None
 
     def _to_records(
         self,
@@ -56,7 +65,7 @@ class Dataset(BaseModel):
             # skip null sequence in the data frame
             if not row["sequence"]:
                 continue
-                
+
             row["targets"] = self.targets
             record = Record(**row)
 
@@ -68,7 +77,7 @@ class Dataset(BaseModel):
         return records
 
     @computed_field
-    # @cached_property
+    @cached_property
     def structure(self) -> None:
         if self.include_structure:
             if self.settings.artifacts.structure:

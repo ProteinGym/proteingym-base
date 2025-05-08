@@ -1,5 +1,6 @@
 import io
 import polars as pl
+from functools import cached_property
 from pydantic import ConfigDict, computed_field, field_validator, model_validator
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
@@ -29,7 +30,7 @@ class RecordsDataset(Dataset):
             raise ValueError("No records file path provided.")
 
     @computed_field
-    # @cached_property
+    @cached_property
     def raw_data_frame(self) -> pl.DataFrame:
         return self._read_data_frame()
 
