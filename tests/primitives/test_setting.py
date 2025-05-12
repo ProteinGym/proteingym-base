@@ -1,4 +1,5 @@
 import pytest
+
 from pg2_dataset.primitives.setting import DatasetSettings
 
 
@@ -65,11 +66,21 @@ class TestSetting:
 
         assert len(settings.assays) == 2, "only 2 assays"
 
-        assert len(settings.assays[0].columns.features) == 2, "the first assay has 2 features"
-        assert len(settings.assays[1].columns.features) == 1, "the second assay has 1 feature"
+        assert len(settings.assays[0].columns.features) == 2, (
+            "the first assay has 2 features"
+        )
+        assert len(settings.assays[1].columns.features) == 1, (
+            "the second assay has 1 feature"
+        )
 
-        assert settings.assays[0].columns.target == "target1", "the first assay has the target `target1`"
-        assert settings.assays[1].columns.target == "target2", "the second assay has the target `target2`"
+        assert settings.assays[0].columns.target == "target1", (
+            "the first assay has the target `target1`"
+        )
+        assert settings.assays[1].columns.target == "target2", (
+            "the second assay has the target `target2`"
+        )
 
         assert len(settings.assays[0].constants) == 2, "the first assay has 2 constants"
-        assert len(settings.assays[1].constants) == 0, "the second assay has 0 constants"
+        assert len(settings.assays[1].constants) == 0, (
+            "the second assay has 0 constants"
+        )

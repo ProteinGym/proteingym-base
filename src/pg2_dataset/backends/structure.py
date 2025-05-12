@@ -1,9 +1,11 @@
 from functools import cached_property
+
 from pydantic import computed_field, model_validator
 from typing_extensions import Self
+
 from pg2_dataset.dataset import Dataset
-from pg2_dataset.primitives.structure import MMcifFile, MMcifEntry, MMcifTabular
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.structure import MMcifEntry, MMcifFile, MMcifTabular
 
 
 class StructureDataset(Dataset):
@@ -24,14 +26,22 @@ class StructureDataset(Dataset):
             return self._to_mmcif(self.raw_lines)
 
         else:
-            return ValueError("Either no implementation of the structure dataset or include_structure is False")
+            return ValueError(
+                """Either no implementation of the structure dataset,
+                or include_structure is False
+                """
+            )
 
     @model_validator(mode="after")
     def configure_structure_file_path(self) -> Self:
         if self.structure_file_path:
             return self
 
-        elif self.settings and self.settings.artifacts and self.settings.artifacts.structure:
+        elif (
+            self.settings
+            and self.settings.artifacts
+            and self.settings.artifacts.structure
+        ):
             self.structure_file_path = self.settings.artifacts.structure
             return self
 
@@ -42,7 +52,8 @@ class StructureDataset(Dataset):
         key_value_pairs = []
         tabular_data = {}
 
-        # TODO: Should save the file header too if we want perfect conversion from file -> data -> file
+        # TODO: Should save the file header too
+        # if we want perfect conversion from file -> data -> file
         # file_header = lines[0]
         lines = data[1:]
 
@@ -104,7 +115,9 @@ class StructureDataset(Dataset):
                         if row:
                             row_data.append(row)
                             clean_table_name = current_table_name.lstrip("_")
-                            tabular_data[clean_table_name] = MMcifTabular(headers=current_headers, rows=row_data)
+                            tabular_data[clean_table_name] = MMcifTabular(
+                                headers=current_headers, rows=row_data
+                            )
 
                         i += 1
 
@@ -138,9 +151,13 @@ class StructureDataset(Dataset):
                                 i += 1
 
                             value_string = "\n".join(multi_line_value)
-                            key_value_pairs.append(MMcifEntry(key=key, value=value_string))
+                            key_value_pairs.append(
+                                MMcifEntry(key=key, value=value_string)
+                            )
                         else:
-                            key_value_pairs.append(MMcifEntry(key=key, value=value_string))
+                            key_value_pairs.append(
+                                MMcifEntry(key=key, value=value_string)
+                            )
                     else:
                         print(f"Unexpected line format: {line}")
                         i += 1

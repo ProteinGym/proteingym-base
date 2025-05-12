@@ -1,13 +1,15 @@
 import io
 import uuid
-import polars as pl
-import pandas as pd
 from functools import cached_property
-from pydantic import ConfigDict, computed_field, model_validator
-from typing_extensions import Self
+from typing import Self
+
+import pandas as pd
+import polars as pl
+from pydantic import ConfigDict, Field, computed_field, model_validator
+
 from pg2_dataset.dataset import Dataset
-from pg2_dataset.primitives.record import Record
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.record import Record
 
 
 class RecordsDataset(Dataset):
@@ -18,8 +20,10 @@ class RecordsDataset(Dataset):
     sequence_feature: str | None = None
     engineering_round_feature: str | None = None
 
-    columns: list[str] = []
-    schemas: list[pl.datatypes.classes.DataTypeClass] = []
+    # TODO: since we need both, combine them to dict[str, DataTypeClass] instead -
+    #   and save some validators?
+    columns: list[str] = Field(default_factory=list)
+    schemas: list[pl.datatypes.classes.DataTypeClass] = Field(default_factory=list)
 
     @computed_field
     @cached_property
@@ -36,14 +40,20 @@ class RecordsDataset(Dataset):
             return [record for record in self._to_records(self.raw_data_frame)]
 
         else:
-            return ValueError("Either no implementation of the records dataset or include_records is False")
+            return ValueError(
+                """Either no implementation of the records dataset,
+                or include_records is False
+                """
+            )
 
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
             if not hasattr(self, "raw_data_frame"):
                 raise ValueError("No implementation of the raw_data_frame attribute")
 
-            valid_data_frame = self.raw_data_frame.filter(pl.col("sequence").is_not_null())
+            valid_data_frame = self.raw_data_frame.filter(
+                pl.col("sequence").is_not_null()
+            )
 
             if self.columns:
                 return valid_data_frame.select(self.columns).to_pandas()
@@ -58,7 +68,11 @@ class RecordsDataset(Dataset):
             if not hasattr(self, "raw_data_frame"):
                 raise ValueError("No implementation of the raw_data_frame attribute")
 
-            valid_data_frame = self.raw_data_frame.filter(pl.all_horizontal([pl.col(col).is_not_null() for col in ["sequence", target]]))
+            valid_data_frame = self.raw_data_frame.filter(
+                pl.all_horizontal(
+                    [pl.col(col).is_not_null() for col in ["sequence", target]]
+                )
+            )
 
             if self.columns:
                 return valid_data_frame.select(self.columns).to_pandas()
@@ -73,7 +87,11 @@ class RecordsDataset(Dataset):
         if self.records_file_path:
             return self
 
-        elif self.settings and self.settings.artifacts and self.settings.artifacts.records:
+        elif (
+            self.settings
+            and self.settings.artifacts
+            and self.settings.artifacts.records
+        ):
             self.records_file_path = self.settings.artifacts.records
             return self
 
@@ -85,7 +103,11 @@ class RecordsDataset(Dataset):
         if self.sequence_feature:
             return self
 
-        elif self.settings and self.settings.records and self.settings.records.sequence_feature:
+        elif (
+            self.settings
+            and self.settings.records
+            and self.settings.records.sequence_feature
+        ):
             self.sequence_feature = self.settings.records.sequence_feature
             return self
 
@@ -97,8 +119,14 @@ class RecordsDataset(Dataset):
         if self.engineering_round_feature:
             return self
 
-        elif self.settings and self.settings.records and self.settings.records.engineering_round_feature:
-            self.engineering_round_feature = self.settings.records.engineering_round_feature
+        elif (
+            self.settings
+            and self.settings.records
+            and self.settings.records.engineering_round_feature
+        ):
+            self.engineering_round_feature = (
+                self.settings.records.engineering_round_feature
+            )
             return self
 
         else:
@@ -106,15 +134,28 @@ class RecordsDataset(Dataset):
 
     @model_validator(mode="after")
     def check_sequence_should_be_in_columns(self) -> Self:
-        if self.sequence_feature and self.columns and self.sequence_feature not in set(self.columns):
-            raise ValueError(f"sequence {self.sequence_feature} should exist in {self.columns}.")
+        if (
+            self.sequence_feature
+            and self.columns
+            and self.sequence_feature not in set(self.columns)
+        ):
+            raise ValueError(
+                f"sequence {self.sequence_feature} should exist in {self.columns}."
+            )
         else:
             return self
 
     @model_validator(mode="after")
     def check_engineering_round_should_be_in_columns(self) -> Self:
-        if self.engineering_round_feature and self.columns and self.engineering_round_feature not in set(self.columns):
-            raise ValueError(f"engineering round {self.engineering_round_feature} should exist in {self.columns}.")
+        if (
+            self.engineering_round_feature
+            and self.columns
+            and self.engineering_round_feature not in set(self.columns)
+        ):
+            raise ValueError(
+                f"engineering round {self.engineering_round_feature} should exist in"
+                f" {self.columns}."
+            )
         else:
             return self
 
@@ -128,14 +169,19 @@ class RecordsDataset(Dataset):
     @model_validator(mode="after")
     def check_columns_should_match_schemas(self) -> Self:
         if self.columns and self.schemas and len(self.columns) != len(self.schemas):
-            raise ValueError(f"columns {self.columns} and schemas {self.schemas} should have the same length.")
+            raise ValueError(
+                f"columns {self.columns} and schemas {self.schemas} "
+                "should have the same length."
+            )
         else:
             return self
 
     @model_validator(mode="after")
     def check_schemas_should_not_exist_without_columns(self) -> Self:
         if self.schemas and not self.columns:
-            raise ValueError(f"schemas {self.schemas} should not exist without columns.")
+            raise ValueError(
+                f"schemas {self.schemas} should not exist without columns."
+            )
         else:
             return self
 
@@ -190,10 +236,18 @@ class RecordsDataset(Dataset):
 
     def _rename_columns(self, data: pl.DataFrame) -> pl.DataFrame:
         if self.sequence_feature:
-            data = data.rename({self.sequence_feature: self._rename_column(self.sequence_feature)})
+            data = data.rename(
+                {self.sequence_feature: self._rename_column(self.sequence_feature)}
+            )
 
         if self.engineering_round_feature:
-            data = data.rename({self.engineering_round_feature: self._rename_column(self.engineering_round_feature)})
+            data = data.rename(
+                {
+                    self.engineering_round_feature: self._rename_column(
+                        self.engineering_round_feature
+                    )
+                }
+            )
 
         return data
 
@@ -202,7 +256,11 @@ class RecordsDataset(Dataset):
         data_str = read_bytes(self.records_file_path).decode("utf-8")
 
         if self.columns and self.schemas:
-            data = pl.read_csv(io.StringIO(data_str), columns=self.columns, schema_overrides=self.schemas)
+            data = pl.read_csv(
+                io.StringIO(data_str),
+                columns=self.columns,
+                schema_overrides=self.schemas,
+            )
             self.columns = [self._rename_column(col) for col in self.columns]
 
         elif self.columns:

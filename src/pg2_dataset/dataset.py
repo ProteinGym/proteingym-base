@@ -1,5 +1,7 @@
 from abc import ABC
+
 from pydantic import BaseModel, computed_field
+
 from pg2_dataset.primitives.setting import DatasetSettings
 
 
@@ -13,7 +15,7 @@ class Dataset(BaseModel, ABC):
         raise NotImplementedError
 
     @computed_field
-    def settings(self) -> DatasetSettings:
+    def settings(self) -> DatasetSettings | None:
         if self.toml_file:
             DatasetSettings._toml_file = self.toml_file
             return DatasetSettings()

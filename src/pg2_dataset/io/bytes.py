@@ -1,5 +1,5 @@
-from cloudpathlib import CloudPath
 import dvc.api
+from cloudpathlib import CloudPath
 from loguru import logger
 
 
@@ -10,7 +10,9 @@ def read_bytes(file_path: str) -> bytes:
         match file_path:
             # option 1: dvc file path
             case _file_path if _file_path.startswith(dataset_registry):
-                with dvc.api.open(file_path[len(dataset_registry) + 1 :], dataset_registry, mode="rb") as f:
+                with dvc.api.open(
+                    file_path[len(dataset_registry) + 1 :], dataset_registry, mode="rb"
+                ) as f:
                     return f.read()
 
             # option 2: google cloud storage

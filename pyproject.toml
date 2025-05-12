@@ -37,4 +37,14 @@ python_files = "test_*.py"
 python_functions = "test_*"
 
 [tool.ruff]
-line-length = 150
+line-length = 88
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "N", # pep8 naming
+    "I", # isort
+    # "C", # flake8-comprehensions
+    "B", # flake8-bugbear
+]
