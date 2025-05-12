@@ -3,8 +3,11 @@ import re
 
 class MSA:
     def __init__(self, records: dict[str, str]):
-        self.sequences = list(records.values())
         self.records = records
+
+    @property
+    def sequences(self) -> list[str]:
+        return list(self.records.values())
 
     @staticmethod
     def _extract_record_name(header_line: str) -> str:
@@ -20,20 +23,20 @@ class MSA:
             The extracted record name
         """
         # Remove the '>' character
-        if header_line.startswith('>'):
+        if header_line.startswith(">"):
             header = header_line[1:].strip()
         else:
             header = header_line.strip()
 
         # Check if the header has the format tr|NAME|DESCRIPTION
-        pipe_match = re.match(r'.*\|(.*?)\|', header)
+        pipe_match = re.match(r".*\|(.*?)\|", header)
         if pipe_match:
             return pipe_match.group(1)
         else:
             return header
 
     @staticmethod
-    def from_a2m(file_path: str) -> 'MSA':
+    def from_a2m(file_path: str) -> "MSA":
         """
         Parse an A2M file and return an MSA object.
 
@@ -43,33 +46,31 @@ class MSA:
         Returns:
             MSA object with sequences and records
         """
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-
         records = {}
+        name = None
+        seq = ""
+        with open(file_path, "r") as file:
+            for line in file:
+                line = line.strip()
+                if line.startswith(">"):
+                    if name is not None:
+                        records[name] = seq
+                    name = MSA._extract_record_name(line)
+                    seq = ""
+                else:
+                    seq += line
 
-        while lines:
-            if lines[0].startswith('>'):
-                name = MSA._extract_record_name(lines[0])
+            # save last entry
+            if name is not None:
+                records[name] = seq
 
-                lines.pop(0)
-                seq = ''
-            else:
-                seq += lines[0].strip()
-                lines.pop(0)
-            records[name] = seq
-
-        # Check all sequences are same length
-        sequences = list(records.values())
-        if sequences:
-            seq_length = len(sequences[0])
-            if not all(len(seq) == seq_length for seq in sequences):
-                raise ValueError("All sequences in A2M format must be of same length")
+        if len({len(s) for s in records.values()}) > 1:
+            raise ValueError("All sequences in A2M format must be of same length")
 
         return MSA(records=records)
 
     @staticmethod
-    def from_a3m(file_path: str) -> 'MSA':
+    def from_a3m(file_path: str) -> "MSA":
         """
         Parse an A3M file and return an MSA object.
 
@@ -79,26 +80,28 @@ class MSA:
         Returns:
             MSA object with sequences and records
         """
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-
         records = {}
+        name = None
+        seq = ""
+        with open(file_path, "r") as file:
+            for line in file:
+                line = line.strip()
+                if line.startswith(">"):
+                    if name is not None:
+                        records[name] = seq
+                    name = MSA._extract_record_name(line)
+                    seq = ""
+                else:
+                    seq += line
 
-        while lines:
-            if lines[0].startswith('>'):
-                name = MSA._extract_record_name(lines[0])
-
-                lines.pop(0)
-                seq = ''
-            else:
-                seq += lines[0].strip()
-                lines.pop(0)
-            records[name] = seq
+            # save last entry
+            if name is not None:
+                records[name] = seq
 
         return MSA(records=records)
 
     @staticmethod
-    def from_psi(file_path: str) -> 'MSA':
+    def from_psi(file_path: str) -> "MSA":
         """
         Parse a PSI file and return an MSA object.
 
@@ -110,14 +113,10 @@ class MSA:
         """
 
         records = {}
-
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-
-        while lines:
-            header, sequence = lines[0].strip().split()
-            name = MSA._extract_record_name(header)
-            records[name] = sequence
-            lines.pop(0)
+        with open(file_path, "r") as file:
+            for line in file:
+                header, sequence = line.strip().split()
+                name = MSA._extract_record_name(header)
+                records[name] = sequence
 
         return MSA(records=records)

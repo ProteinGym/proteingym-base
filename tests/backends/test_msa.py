@@ -1,5 +1,3 @@
-import os
-import tempfile
 import pytest
 from io import StringIO
 
@@ -178,21 +176,18 @@ def test_multiline_sequences(monkeypatch):
     assert msa.records["Simple header"] == "ACGTA-GT"
 
 
-def test_real_file_io():
+def test_real_file_io(tmp_path):
     """Test reading from an actual temporary file."""
-    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
-        temp_file.write(">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n")
-        temp_path = temp_file.name
+    temp_file = tmp_path / "temp_file.a2m"
+    temp_file.write_text(
+        ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n"
+    )
 
-    try:
-        msa = MSA.from_a2m(temp_path)
+    msa = MSA.from_a2m(str(temp_file))
+    assert len(msa.sequences) == 2
+    assert msa.sequences[0] == "ACGTACGT"
+    assert msa.sequences[1] == "ACGTA-GT"
 
-        assert len(msa.sequences) == 2
-        assert msa.sequences[0] == "ACGTACGT"
-        assert msa.sequences[1] == "ACGTA-GT"
-
-        assert len(msa.records) == 2
-        assert msa.records["ABC123"] == "ACGTACGT"
-        assert msa.records["Simple header"] == "ACGTA-GT"
-    finally:
-        os.unlink(temp_path)
+    assert len(msa.records) == 2
+    assert msa.records["ABC123"] == "ACGTACGT"
+    assert msa.records["Simple header"] == "ACGTA-GT"
