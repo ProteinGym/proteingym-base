@@ -68,6 +68,7 @@ class TestRecordsDataset:
 
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
         dataset = RecordsDataset(
+            include_records=True,
             records_file_path=any_csv_file_path,
             sequence_feature="a_sequence",
             engineering_round_feature="round",
@@ -84,6 +85,7 @@ class TestRecordsDataset:
     def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
             ds = RecordsDataset(
+                include_records=True,
                 records_file_path=good_csv_file_path,
                 sequence_feature="sequence",
                 columns=["sequence", "c", "e"],
@@ -93,6 +95,7 @@ class TestRecordsDataset:
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
         dataset = RecordsDataset(
+            include_records=True,
             records_file_path=good_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "c"],
@@ -109,6 +112,7 @@ class TestRecordsDataset:
     def test_bad_schema_should_raise_error(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ComputeError):
             ds = RecordsDataset(
+                include_records=True,
                 records_file_path=good_csv_file_path,
                 sequence_feature="sequence",
                 columns=["sequence", "c"],
@@ -118,6 +122,7 @@ class TestRecordsDataset:
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
         dataset = RecordsDataset(
+            include_records=True,
             records_file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
@@ -134,6 +139,7 @@ class TestRecordsDataset:
 
     def test_get_records_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
+            include_records=True,
             records_file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
@@ -147,6 +153,7 @@ class TestRecordsDataset:
 
     def test_get_data_frame_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
+            include_records=True,
             records_file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
@@ -160,6 +167,7 @@ class TestRecordsDataset:
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
+            include_records=True,
             records_file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
@@ -174,6 +182,7 @@ class TestRecordsDataset:
     def test_extra_columns_should_be_within_allowed_types(self, good_csv_file_path):
         with pytest.raises(ValidationError):
             ds = RecordsDataset(
+                include_records=True,
                 records_file_path=good_csv_file_path,
                 sequence_feature="sequence",
                 columns=["sequence", "a", "b", "c"],
@@ -184,6 +193,7 @@ class TestRecordsDataset:
     def test_schemas_should_not_exist_without_columns(self, good_csv_file_path):
         with pytest.raises(ValidationError):
             ds = RecordsDataset(
+                include_records=True,
                 records_file_path=good_csv_file_path,
                 sequence_feature="sequence",
                 schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],

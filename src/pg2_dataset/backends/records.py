@@ -21,7 +21,7 @@ class RecordsDataset(Dataset):
     @computed_field
     @cached_property
     def raw_data_frame(self) -> pl.DataFrame:
-        return self._read_data_frame()
+        return self._from_csv()
 
     @model_validator(mode="after")
     def configure_records_file_path(self) -> Self:
@@ -127,7 +127,7 @@ class RecordsDataset(Dataset):
 
         return data
 
-    def _read_data_frame(self) -> pl.DataFrame:
+    def _from_csv(self) -> pl.DataFrame:
         # load data from file
         data_str = read_bytes(self.records_file_path).decode("utf-8")
 

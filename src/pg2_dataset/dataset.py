@@ -1,18 +1,22 @@
 import uuid
+from abc import ABC
 import polars as pl
 import pandas as pd
 from pydantic import BaseModel, computed_field
 from functools import cached_property
 from pg2_dataset.primitives.record import Record
-from pg2_dataset.primitives.structure import MMcifFile
+from pg2_dataset.primitives.structure import MMcifFile, MMcifEntry, MMcifTabular
 from pg2_dataset.primitives.setting import DatasetSettings
 
 
-class Dataset(BaseModel):
+class Dataset(BaseModel, ABC):
     toml_file: str | None = None
-    include_records: bool = True
+    include_records: bool = False
     include_structure: bool = False
     include_msa: bool = False
+
+    def to_zip(self) -> None:
+        raise NotImplementedError
 
     @computed_field
     def settings(self) -> DatasetSettings:
@@ -26,7 +30,11 @@ class Dataset(BaseModel):
     @cached_property
     def records(self) -> list[Record] | None:
         if self.include_records:
+            if not hasattr(self, "raw_data_frame"):
+                raise ValueError("No implementation found for the raw_data_frame attribute")
+
             return [record for record in self._to_records(self.raw_data_frame)]
+
         else:
             return None
 
@@ -34,17 +42,19 @@ class Dataset(BaseModel):
     @cached_property
     def structure(self) -> MMcifFile | None:
         if self.include_structure:
-            if self.settings.artifacts.structure:
-                mmcif = MMcifFile()
-                return mmcif.from_file(self.settings.artifacts.structure)
-            else:
-                raise ValueError("No structure file provided in toml file.")
+            if not hasattr(self, "raw_lines"):
+                raise ValueError("No implementation found for the raw_lines attribute")
+
+            return self._to_mmcif(self.raw_lines)
 
         else:
             return None
 
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
+            if not hasattr(self, "raw_data_frame"):
+                raise ValueError("No implementation found for the raw_data_frame attribute")
+
             valid_data_frame = self.raw_data_frame.filter(pl.col("sequence").is_not_null())
 
             if self.columns:
@@ -57,6 +67,9 @@ class Dataset(BaseModel):
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         if self.include_records:
+            if not hasattr(self, "raw_data_frame"):
+                raise ValueError("No implementation found for the raw_data_frame attribute")
+
             valid_data_frame = self.raw_data_frame.filter(pl.all_horizontal([pl.col(col).is_not_null() for col in ["sequence", target]]))
 
             if self.columns:
@@ -91,3 +104,114 @@ class Dataset(BaseModel):
             records.append(record)
 
         return records
+
+    def _to_mmcif(self, data: list[str]) -> MMcifFile:
+        key_value_pairs = []
+        tabular_data = {}
+
+        # TODO: Should save the file header too if we want perfect conversion from file -> data -> file
+        # file_header = lines[0]
+        lines = data[1:]
+
+        is_tabular = False
+        current_headers = []
+        current_table_name = None
+
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            # breaklines
+            if line.startswith("#"):
+                is_tabular = False
+                i += 1
+                continue
+            # start of tabular lines
+            if line == "loop_":
+                is_tabular = True
+                current_headers = []
+                current_table_name = None
+                row_data = []
+                i += 1
+                continue
+            # start tabular data
+            if is_tabular:
+                # headers of tabular data
+                if line.startswith("_"):
+                    header_line = line
+                    if "." in header_line:
+                        header_splits = header_line.split(".")
+                        category = header_splits[0]
+                        field = header_splits[1]
+                        if current_table_name is None:
+                            current_table_name = category
+                        current_headers.append(field)
+                    i += 1
+                    continue
+                # data of tabular data
+                else:
+                    if current_table_name and current_headers:
+                        row = []
+                        current_value = ""
+                        in_quotes = False
+                        for part in line.split():
+                            if part.startswith('"'):
+                                in_quotes = True
+                                current_value += part + " "
+                            elif part.endswith('"'):
+                                in_quotes = False
+                                current_value += part
+                                row.append(current_value.strip().strip('"'))
+                                current_value = ""
+                            else:
+                                if in_quotes:
+                                    current_value += part + " "
+                                else:
+                                    row.append(part)
+
+                        if row:
+                            row_data.append(row)
+                            clean_table_name = current_table_name.lstrip("_")
+                            tabular_data[clean_table_name] = MMcifTabular(headers=current_headers, rows=row_data)
+
+                        i += 1
+
+                        continue
+            # key-value pairs
+            else:
+                parts = line.split(None, 1)
+                if len(parts) == 2:
+                    key, value = parts
+                    key_value_pairs.append(MMcifEntry(key=key, value=value))
+                    i += 1
+                # if key value pairs are multiline
+                elif len(parts) != 2:
+                    if line.startswith("_"):
+                        key = line
+                        value_string = ""
+                        i += 1
+
+                        if i < len(lines) and lines[i].startswith(";"):
+                            multi_line_value = []
+                            first_line = lines[i][1:].strip()
+                            if first_line:  # Add first line if it has content
+                                multi_line_value.append(first_line)
+                            i += 1
+
+                            while i < len(lines) and not (lines[i].strip() == ";"):
+                                multi_line_value.append(lines[i].strip())
+                                i += 1
+
+                            if i < len(lines) and lines[i].strip() == ";":
+                                i += 1
+
+                            value_string = "\n".join(multi_line_value)
+                            key_value_pairs.append(MMcifEntry(key=key, value=value_string))
+                        else:
+                            key_value_pairs.append(MMcifEntry(key=key, value=value_string))
+                    else:
+                        print(f"Unexpected line format: {line}")
+                        i += 1
+                continue
+            i += 1
+
+        return MMcifFile(key_value_pairs=key_value_pairs, tabular_data=tabular_data)

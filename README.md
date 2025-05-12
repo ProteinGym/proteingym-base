@@ -132,6 +132,7 @@ As shown in the following example, the mandatory fields of records dataset are `
 from pg2_dataset.backends.records import RecordsDataset
 
 ds = RecordsDataset(
+    include_records=True,
     records_file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
@@ -147,6 +148,7 @@ To initialize a dataset with a TOML file, you can try the test TOML file - [data
 from pg2_dataset.backends.records import RecordsDataset
 
 ds = RecordsDataset(
+    include_records=True,
     toml_file="example_data/dataset.toml",
     features=["mutated_sequence"],
     targets=["DMS_score"],
@@ -163,6 +165,7 @@ import polars as pl
 from pg2_dataset.backends.records import RecordsDataset
 
 ds = RecordsDataset(
+    include_records=True,
     records_file_path="https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv",
     features=["mutated_sequence"],
     targets=["DMS_score"],
@@ -176,27 +179,27 @@ print(ds.data_frame())
 
 Above three examples all give the following result:
 ```
-    mutant                                           sequence  DMS_score  DMS_score_bin                                                                  
-0      F1I  ITLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -3.598            0.0
-1      F1L  LTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.678            0.0
-2      F1Y  YTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -2.373            0.0
-3      F1V  VTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      1.299            1.0
-4      F1S  STLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.127            0.0
-..     ...                                                ...        ...            ...
-917  S161R  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.344            0.0
-918  S161I  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      1.472            1.0
-919  S161G  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      0.345            1.0
-920  S161T  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -1.969            0.0
-921  S161C  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -1.697            0.0
+    mutant                                           sequence  DMS_score  DMS_score_bin  engineering_round                              
+0      F1I  ITLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -3.598            0.0                  1
+1      F1L  LTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.678            0.0                  1
+2      F1Y  YTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -2.373            0.0                  1
+3      F1V  VTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      1.299            1.0                  1
+4      F1S  STLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.127            0.0                  1
+..     ...                                                ...        ...            ...                ...
+917  S161R  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -0.344            0.0                  1
+918  S161I  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      1.472            1.0                  1
+919  S161G  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...      0.345            1.0                  1
+920  S161T  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -1.969            0.0                  1
+921  S161C  FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSA...     -1.697            0.0                  1
 
-[922 rows x 4 columns]
+[922 rows x 5 columns]
 ```
 
 Additionally, for a records dataset `ds`, you also have the following properties or functions to use:
 * `raw_data_frame`: a Polars data frame, which hasn't been filtered, selected, purely loaded from a CSV file.
 * `records`: a list of `Record` from the `raw_data_frame`, with not null `sequence`.
-* `data_frame_by_target()`: a function to retrieve a specific target from `raw_data_frame`, with not null features and target.
-* `data_frame()`: a function to retrieve all targets from `raw_data_frame`, with not null features and targets.
+* `data_frame_by_target()`: a function to retrieve a specific target from `raw_data_frame`.
+* `data_frame()`: a function to retrieve all columns from `raw_data_frame`.
 
 > [!TIP]
 > You can find the polars data types to use in this guide: https://docs.pola.rs/api/python/stable/reference/datatypes.html
