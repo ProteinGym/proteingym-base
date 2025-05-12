@@ -91,7 +91,7 @@ z = ds.structure.atom_site.cartn_z
 atom_type = ds.structure.atom_site.id
 ```
 > [!TIP]
-> You can also load each backend: i.e., "records", "structure" or "msa" separately. The backends of pg2_dataset deal with various data formatS: `csv`, `cif`, etc... which can be extended by inheriting `Dataset` from [dataset.py](src/pg2_dataset/dataset.py).
+> You can also load each backend: i.e., "records", "structure" or "msa" separately. The backends of pg2_dataset deal with various data formats: `csv`, `cif`, etc... which can be extended by inheriting `Dataset` from [dataset.py](src/pg2_dataset/dataset.py).
 
 ### load records dataset
 
