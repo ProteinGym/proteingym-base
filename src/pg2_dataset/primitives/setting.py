@@ -1,4 +1,4 @@
-from typing import Tuple, Type
+from typing import Tuple, Type, Any
 from typing_extensions import Self
 from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, TomlConfigSettingsSource
@@ -25,11 +25,33 @@ class Records(BaseModel):
             return self
 
 
+class Metadata(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    doi: str | None = None
+    source: str | None = None
+    xref: str | None = None
+
+
+class AssayColumns(BaseModel):
+    features: list[str] = []
+    target: str | None = None
+
+
+class Assay(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    columns: AssayColumns
+    constants: dict[str, Any] = {}
+
+
 class DatasetSettings(BaseSettings):
     _toml_file: str | None = None
 
-    artifacts: Artifacts
-    records: Records
+    artifacts: Artifacts | None = None
+    records: Records | None = None
+    metadata: Metadata | None = None
+    assays: list[Assay] = []
 
     @classmethod
     def settings_customise_sources(
