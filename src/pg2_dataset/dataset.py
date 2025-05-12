@@ -31,29 +31,29 @@ class Dataset(BaseModel, ABC):
     def records(self) -> list[Record] | None:
         if self.include_records:
             if not hasattr(self, "raw_data_frame"):
-                raise ValueError("No implementation found for the raw_data_frame attribute")
+                raise ValueError("No implementation of the raw_data_frame attribute")
 
             return [record for record in self._to_records(self.raw_data_frame)]
 
         else:
-            return None
+            return ValueError("Either no implementation of the records dataset or include_records is False")
 
     @computed_field
     @cached_property
     def structure(self) -> MMcifFile | None:
         if self.include_structure:
             if not hasattr(self, "raw_lines"):
-                raise ValueError("No implementation found for the raw_lines attribute")
+                raise ValueError("No implementation of the raw_lines attribute")
 
             return self._to_mmcif(self.raw_lines)
 
         else:
-            return None
+            return ValueError("Either no implementation of the structure dataset or include_structure is False")
 
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
             if not hasattr(self, "raw_data_frame"):
-                raise ValueError("No implementation found for the raw_data_frame attribute")
+                raise ValueError("No implementation of the raw_data_frame attribute")
 
             valid_data_frame = self.raw_data_frame.filter(pl.col("sequence").is_not_null())
 
@@ -68,7 +68,7 @@ class Dataset(BaseModel, ABC):
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         if self.include_records:
             if not hasattr(self, "raw_data_frame"):
-                raise ValueError("No implementation found for the raw_data_frame attribute")
+                raise ValueError("No implementation of the raw_data_frame attribute")
 
             valid_data_frame = self.raw_data_frame.filter(pl.all_horizontal([pl.col(col).is_not_null() for col in ["sequence", target]]))
 

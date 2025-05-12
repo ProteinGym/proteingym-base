@@ -68,17 +68,17 @@ pre-commit install
 
 ## getting started
 
+### load combined dataset
+
 You can just load the dataset as below, then go ahead with using it for model training or prediction:
 
 ```python
-from pg2_dataset.backends.records import RecordsDataset
+from pg2_dataset.backends.combined import CombinedDataset
 
-ds = RecordsDataset(
+ds = CombinedDataset(
     toml_file="example_data/dataset.toml",
-    features=["mutated_sequence"],
-    targets=["DMS_score"],
-    sequence_feature="mutated_sequence",
-    include_structure=True,
+    include_records = True,
+    include_structure = True,
 )
 
 # load records
@@ -90,18 +90,53 @@ y = ds.structure.atom_site.cartn_y
 z = ds.structure.atom_site.cartn_z
 atom_type = ds.structure.atom_site.id
 ```
+> [!TIP]
+> You can also load each backend: i.e., "records", "structure" or "msa" separately. The backends of pg2_dataset deal with various data formatS: `csv`, `cif`, etc... which can be extended by inheriting `Dataset` from [dataset.py](src/pg2_dataset/dataset.py).
+
+### load records dataset
+
+```
+from pg2_dataset.backends.records import RecordsDataset
+
+ds = RecordsDataset(
+    toml_file="example_data/dataset.toml",
+    include_records = True,
+)
+
+# load records
+records = ds.records
+```
+
+### load structure dataset
+
+```
+from pg2_dataset.backends.structure import StructureDataset
+
+ds = StructureDataset(
+    toml_file="example_data/dataset.toml",
+    include_structure = True,
+)
+
+# load structure
+x = ds.structure.atom_site.cartn_x
+y = ds.structure.atom_site.cartn_y
+z = ds.structure.atom_site.cartn_z
+atom_type = ds.structure.atom_site.id
+```
 
 ## structure example
 ```
-from pg2_dataset.primitives.structure import MMcifFile
+from pg2_dataset.backends.structure import StructureDataset
 
-mmcif = MMcifFile()
-mmcif_data = mmcif.from_file('example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif')
+ds = StructureDataset(
+    structure_file_path="example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif",
+    include_structure = True,
+)
 
-x = mmcif_data.atom_site.cartn_x
-y = mmcif_data.atom_site.cartn_y
-z = mmcif_data.atom_site.cartn_z
-atom_type = mmcif_data.atom_site.id
+x = ds.structure.atom_site.cartn_x
+y = ds.structure.atom_site.cartn_y
+z = ds.structure.atom_site.cartn_z
+atom_type = ds.structure.atom_site.id
 
 #do cool stuff with your structural data...
 ```
@@ -111,13 +146,13 @@ Typically there are two types of entry: key-value pairs and tabular datas.
 To access key-value pairs (e.g. for `_citation.pdbx_database_id_DOI`) you can access it by writing out the full key, where each '.' and '-' is replace by '_':
 
 ```
-mmcif_data.citation_pdbx_database_id_DOI
+ds.structure.citation_pdbx_database_id_DOI
 ```
 
 To get the full tabular data one can access this with the common table name, or further take only the column by the column name:
 ```
-mmcif_data.atom_site # returns the complete table for atom_site
-mmcif_data.atom_site.cartn_x # returns only the values for the cartn_x coordinates.
+ds.structure.atom_site # returns the complete table for atom_site
+ds.structure.atom_site.cartn_x # returns only the values for the cartn_x coordinates.
 ```
 
 ## sequence example

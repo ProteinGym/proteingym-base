@@ -19,7 +19,7 @@ class StructureDataset(Dataset):
             return self
 
         elif self.settings and self.settings.artifacts and self.settings.artifacts.structure:
-            self.structure_file_path = self.settings.artifacts.structure_file_path
+            self.structure_file_path = self.settings.artifacts.structure
             return self
 
         else:
