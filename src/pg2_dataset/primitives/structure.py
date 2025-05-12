@@ -1,6 +1,8 @@
-from pydantic import BaseModel, create_model
+from typing import Any
+
+from pydantic import BaseModel, Field, create_model
+
 from pg2_dataset.io.bytes import read_bytes
-from typing import List, Dict, Any
 
 
 class MMcifEntry(BaseModel):
@@ -9,10 +11,11 @@ class MMcifEntry(BaseModel):
 
 
 class MMcifTabular(BaseModel):
-    headers: List[str]
-    rows: List[List[str]]
+    headers: list[str]
+    rows: list[list[str]]
 
-    def _infer_type(self, value: str) -> Any:
+    @staticmethod
+    def _infer_type(value: str) -> Any:
         """Infer the data type of a value and convert it."""
         try:
             if "." in value:
@@ -30,19 +33,26 @@ class MMcifTabular(BaseModel):
         # Default to string
         return value
 
-    def _infer_column_type(self, column_values: List[str]) -> List[Any]:
+    def _infer_column_type(self, column_values: list[str]) -> list[Any]:
         """Infer and convert types for an entire column."""
         return [self._infer_type(val) for val in column_values]
 
-    def __getattr__(self, name: str) -> List[Any]:
-        """Allow access to columns by header name (case-insensitive) with type inference"""
+    def __getattr__(self, name: str) -> list[Any]:
+        """Allow access to columns by header name (case-insensitive) with type
+        inference"""
         name_lower = name.lower()
 
-        header_indices = [i for i, h in enumerate(self.headers) if h.lower() == name_lower]
+        header_indices = [
+            i for i, h in enumerate(self.headers) if h.lower() == name_lower
+        ]
 
         if not header_indices:
             # Also try with common variations (e.g., cartn_x vs Cartn_x)
-            header_indices = [i for i, h in enumerate(self.headers) if h.lower().replace("_", "") == name_lower.replace("_", "")]
+            header_indices = [
+                i
+                for i, h in enumerate(self.headers)
+                if h.lower().replace("_", "") == name_lower.replace("_", "")
+            ]
 
         if header_indices:
             idx = header_indices[0]
@@ -50,17 +60,21 @@ class MMcifTabular(BaseModel):
 
             return self._infer_column_type(column_values)
 
-        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'. Available columns: {', '.join(self.headers)}")
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{name}'. "
+            f"Available columns: {', '.join(self.headers)}"
+        )
 
 
 class MMcifFile(BaseModel):
     """Main class for handling MMcif file data with dynamic field creation"""
 
-    key_value_pairs: List[MMcifEntry] = []
-    tabular_data: Dict[str, MMcifTabular] = {}
+    key_value_pairs: list[MMcifEntry] = Field(default_factory=list)
+    tabular_data: dict[str, MMcifTabular] = Field(default_factory=dict)
 
     #######
-    # We are parsing mainly two different objects in an MMCif file. key-value entries and tabular entries
+    # We are parsing mainly two different objects in an MMCif file. key-value entries
+    # and tabular entries
     # All entries are separated by # lines
     # Tabular data always start with a _loop line
     #######
@@ -92,21 +106,22 @@ class MMcifFile(BaseModel):
 
         # Create dynamic model
         if fields:
-            DynamicModel = create_model("DynamicMMcifFile", **fields)
-            dynamic_instance = DynamicModel(**{k: v[1] for k, v in fields.items()})
+            dynamic_model = create_model("DynamicMMcifFile", **fields)
+            dynamic_instance = dynamic_model(**{k: v[1] for k, v in fields.items()})
 
             for field_name, value in dynamic_instance:
                 object.__setattr__(self, field_name, value)
 
     @classmethod
     def from_file(cls, file_path: str) -> "MMcifFile":
-        key_value_pairs = []
-        tabular_data = {}
+        key_value_pairs = Field(default_factory=list)
+        tabular_data = Field(default_factory=dict)
 
         data_str = read_bytes(file_path).decode("utf-8")
         lines = [line.strip() for line in data_str.splitlines() if line.strip()]
 
-        # TODO: Should save the file header too if we want perfect conversion from file -> data -> file
+        # TODO: Should save the file header too if we want perfect conversion from
+        #  file -> data -> file
         # file_header = lines[0]
         lines = lines[1:]
 
@@ -115,6 +130,7 @@ class MMcifFile(BaseModel):
         current_table_name = None
 
         i = 0
+        # TODO: refactor this, too complicated
         while i < len(lines):
             line = lines[i]
             # breaklines
@@ -168,7 +184,9 @@ class MMcifFile(BaseModel):
                         if row:
                             row_data.append(row)
                             clean_table_name = current_table_name.lstrip("_")
-                            tabular_data[clean_table_name] = MMcifTabular(headers=current_headers, rows=row_data)
+                            tabular_data[clean_table_name] = MMcifTabular(
+                                headers=current_headers, rows=row_data
+                            )
 
                         i += 1
 
@@ -202,9 +220,13 @@ class MMcifFile(BaseModel):
                                 i += 1
 
                             value_string = "\n".join(multi_line_value)
-                            key_value_pairs.append(MMcifEntry(key=key, value=value_string))
+                            key_value_pairs.append(
+                                MMcifEntry(key=key, value=value_string)
+                            )
                         else:
-                            key_value_pairs.append(MMcifEntry(key=key, value=value_string))
+                            key_value_pairs.append(
+                                MMcifEntry(key=key, value=value_string)
+                            )
                     else:
                         print(f"Unexpected line format: {line}")
                         i += 1

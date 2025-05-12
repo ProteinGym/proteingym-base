@@ -1,11 +1,13 @@
 import uuid
-import polars as pl
-import pandas as pd
-from pydantic import BaseModel, computed_field
 from functools import cached_property
+
+import pandas as pd
+import polars as pl
+from pydantic import BaseModel, computed_field
+
 from pg2_dataset.primitives.record import Record
-from pg2_dataset.primitives.structure import MMcifFile
 from pg2_dataset.primitives.setting import DatasetSettings
+from pg2_dataset.primitives.structure import MMcifFile
 
 
 class Dataset(BaseModel):
@@ -15,7 +17,7 @@ class Dataset(BaseModel):
     include_msa: bool = False
 
     @computed_field
-    def settings(self) -> DatasetSettings:
+    def settings(self) -> DatasetSettings | None:
         if self.toml_file:
             DatasetSettings._toml_file = self.toml_file
             return DatasetSettings()
@@ -26,7 +28,7 @@ class Dataset(BaseModel):
     @cached_property
     def records(self) -> list[Record] | None:
         if self.include_records:
-            return [record for record in self._to_records(self.raw_data_frame)]
+            return list(self._to_records(self.raw_data_frame))
         else:
             return None
 
@@ -45,7 +47,9 @@ class Dataset(BaseModel):
 
     def data_frame(self) -> pd.DataFrame | None:
         if self.include_records:
-            valid_data_frame = self.raw_data_frame.filter(pl.col("sequence").is_not_null())
+            valid_data_frame = self.raw_data_frame.filter(
+                pl.col("sequence").is_not_null()
+            )
 
             if self.columns:
                 return valid_data_frame.select(self.columns).to_pandas()
@@ -57,7 +61,11 @@ class Dataset(BaseModel):
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         if self.include_records:
-            valid_data_frame = self.raw_data_frame.filter(pl.all_horizontal([pl.col(col).is_not_null() for col in ["sequence", target]]))
+            valid_data_frame = self.raw_data_frame.filter(
+                pl.all_horizontal(
+                    [pl.col(col).is_not_null() for col in ["sequence", target]]
+                )
+            )
 
             if self.columns:
                 return valid_data_frame.select(self.columns).to_pandas()
