@@ -1,11 +1,14 @@
 from typing import Annotated
-from pydantic import BaseModel, AfterValidator
+
+from pydantic import AfterValidator, BaseModel
+
 from pg2_dataset.utils.strings import uri_check
 
 
 class AssayMeta(BaseModel, extra="allow"):
     target: str
-    # features: dict[str,type] #str is the key? would type be python <class 'something'> kind of format?
+    # features: dict[str,type] #str is the key? would type be python
+    # <class 'something'> kind of format?
     description: str
 
 
