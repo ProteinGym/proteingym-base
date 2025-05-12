@@ -17,8 +17,10 @@ class RecordsDataset(Dataset):
     sequence_feature: str | None = None
     engineering_round_feature: str | None = None
 
-    columns: list[str] = []
-    schemas: list[pl.datatypes.classes.DataTypeClass] = []
+    # TODO: since we need both, combine them to dict[str, DataTypeClass] instead -
+    #   and save some validators?
+    columns: list[str] = Field(default_factory=list)
+    schemas: list[pl.datatypes.classes.DataTypeClass] = Field(default_factory=list)
 
     @computed_field
     @cached_property

@@ -18,8 +18,8 @@ class Records(BaseModel):
     sequence_feature: str | None = None
     engineering_round_feature: str | None = None
 
-    columns: list[str] = []
-    schemas: list[str] = []
+    columns: list[str] = Field(default_factory=list)
+    schemas: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def check_schemas_should_not_exist_without_columns(self) -> Self:
@@ -48,6 +48,7 @@ class DatasetSettings(BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         sources = (init_settings, env_settings, dotenv_settings, file_secret_settings)
 
+        # FIXME: this is always true - `self`?
         if cls._toml_file:
             sources = sources + (
                 TomlConfigSettingsSource(settings_cls, toml_file=cls._toml_file),
