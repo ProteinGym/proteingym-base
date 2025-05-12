@@ -1,4 +1,5 @@
-from typing_extensions import Self
+from typing import Self
+
 from pydantic import BaseModel, model_validator
 
 

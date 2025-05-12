@@ -1,8 +1,6 @@
 import io
-import polars as pl
 from functools import cached_property
-from pydantic import ConfigDict, computed_field, model_validator
-from typing_extensions import Self
+from typing import Self
 
 import polars as pl
 from pydantic import ConfigDict, Field, computed_field, model_validator
