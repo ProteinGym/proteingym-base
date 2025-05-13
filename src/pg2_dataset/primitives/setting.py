@@ -39,15 +39,11 @@ class Metadata(BaseModel):
     xref: str | None = None
 
 
-class AssayColumns(BaseModel):
-    features: list[str] = Field(default_factory=list)
-    target: str | None = None
-
-
 class Assay(BaseModel):
     name: str | None = None
     description: str | None = None
-    columns: AssayColumns | None = None
+    features: list[str] = Field(default_factory=list)
+    target: str | None = None
     constants: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -57,7 +53,7 @@ class DatasetSettings(BaseSettings):
     artifacts: Artifacts | None = None
     records: Records | None = None
     metadata: Metadata | None = None
-    assays: list[Assay] = Field(default_factory=list)
+    assays: dict[str, Assay] = Field(default_factory=dict)
 
     @classmethod
     def settings_customise_sources(
