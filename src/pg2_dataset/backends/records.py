@@ -32,15 +32,15 @@ class RecordsDataset(Dataset):
 
     @computed_field
     @cached_property
-    def records(self) -> list[Record] | None:
+    def records(self) -> list[Record]:
         if self.include_records:
             if not hasattr(self, "raw_data_frame"):
                 raise ValueError("No implementation of the raw_data_frame attribute")
 
-            return [record for record in self._to_records(self.raw_data_frame)]
+            return self._to_records(self.raw_data_frame)
 
         else:
-            return ValueError(
+            raise ValueError(
                 """Either no implementation of the records dataset,
                 or include_records is False
                 """
