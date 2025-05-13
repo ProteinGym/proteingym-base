@@ -78,19 +78,11 @@ class TestRecordsDataset:
             schemas=[pl.String, pl.Float64, pl.Int64],
         )
 
-        assert "sequence" in dataset.data_frame().columns.to_list(), (
-            "sequence feature should be renamed to 'sequence'"
-        )
-        assert "a_sequence" not in dataset.data_frame().columns.to_list(), (
-            "sequence feature should be renamed to 'sequence'"
-        )
+        assert "sequence" in dataset.data_frame().columns.to_list()
+        assert "a_sequence" not in dataset.data_frame().columns.to_list()
 
-        assert "engineering_round" in dataset.data_frame().columns.to_list(), (
-            "engineering round feature should be renamed to 'engineering_round'"
-        )
-        assert "round" not in dataset.data_frame().columns.to_list(), (
-            "engineering round feature should be renamed to 'engineering_round'"
-        )
+        assert "engineering_round" in dataset.data_frame().columns.to_list()
+        assert "round" not in dataset.data_frame().columns.to_list()
 
     def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
@@ -113,15 +105,11 @@ class TestRecordsDataset:
         )
 
         assert dataset.data_frame() is not None, "dataset.data_frame is None."
-        assert len(dataset.data_frame()) == 5, (
-            "dataset.data_frame does not have the correct number of records."
-        )
+        assert len(dataset.data_frame()) == 5
 
         for record in dataset.data_frame().to_dict("records"):
-            assert isinstance(record["sequence"], str), (
-                f"{record['sequence']} should be a string"
-            )
-            assert isinstance(record["c"], float), f"{record['c']} should be a float"
+            assert isinstance(record["sequence"], str)
+            assert isinstance(record["c"], float)
 
     def test_bad_schema_should_raise_error(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ComputeError):
@@ -162,12 +150,10 @@ class TestRecordsDataset:
             schemas=[pl.String, pl.Float64, pl.Float64, pl.Float64],
         )
 
-        assert len(dataset.records) == 3, "only 3 valid records"
+        assert len(dataset.records) == 3
         for record in dataset.records:
-            assert record.sequence is not None, "sequence should not be None"
-            assert record.engineering_round is not None, (
-                "engineering round should be None"
-            )
+            assert record.sequence is not None
+            assert record.engineering_round is not None
 
     def test_get_data_frame_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
@@ -180,7 +166,7 @@ class TestRecordsDataset:
 
         data_frame = dataset.data_frame()
 
-        assert len(data_frame) == 3, "only 3 valid records"
+        assert len(data_frame) == 3
         assert len(data_frame.columns) == 5, (
             "there are 4 selected columns and 1 enginering round column"
         )
@@ -196,7 +182,7 @@ class TestRecordsDataset:
 
         data_frame_by_target = dataset.data_frame_by_target("c")
 
-        assert len(data_frame_by_target) == 2, "only 2 valid records"
+        assert len(data_frame_by_target) == 2
         assert len(data_frame_by_target.columns) == 5, (
             "there are 4 selected columns and 1 enginering round column"
         )
