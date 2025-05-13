@@ -1,5 +1,6 @@
-import pytest
 from io import StringIO
+
+import pytest
 
 from pg2_dataset.primitives.msa import MSA
 
@@ -72,7 +73,7 @@ class MockFile:
 
 def test_from_a2m(monkeypatch):
     """Test the from_a2m static method."""
-    a2m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"
+    a2m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
 
     # Create a mock file object
     mock_file = MockFile(a2m_content)
@@ -95,7 +96,7 @@ def test_from_a2m(monkeypatch):
 
 def test_from_a2m_different_lengths(monkeypatch):
     """Test the from_a2m method with sequences of different lengths."""
-    a2m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA\n>sp|XYZ789|Description2\nACGT--GT\n"
+    a2m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
 
     # Create a mock file object
     mock_file = MockFile(a2m_content)
@@ -109,7 +110,7 @@ def test_from_a2m_different_lengths(monkeypatch):
 
 def test_from_a3m(monkeypatch):
     """Test the from_a3m static method."""
-    a3m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"
+    a3m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
 
     # Create a mock file object
     mock_file = MockFile(a3m_content)
@@ -132,7 +133,7 @@ def test_from_a3m(monkeypatch):
 
 def test_from_psi(monkeypatch):
     """Test the from_psi static method."""
-    psi_content = "tr|ABC123|Description1 ACGTACGT\nSimpleHeader ACGTA-GT\n>sp|XYZ789|Description2 ACGT--GT\n"
+    psi_content = "tr|ABC123|Description1 ACGTACGT\nSimpleHeader ACGTA-GT\n>sp|XYZ789|Description2 ACGT--GT\n"  # noqa: E501
 
     # Create a mock file object
     mock_file = MockFile(psi_content)
