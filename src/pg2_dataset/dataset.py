@@ -1,8 +1,7 @@
 from abc import ABC
-from typing import Type
 
 import polars as pl
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 from pg2_dataset.primitives.setting import DatasetSettings
 from pg2_dataset.splits.abstract_split_strategy import (
@@ -16,7 +15,7 @@ class Dataset(BaseModel, ABC):
     include_records: bool = False
     include_structure: bool = False
     include_msa: bool = False
-    splits: dict[tuple[int, str, str], str] = {}
+    splits: dict[tuple[int, str, str], str] = Field(default_factory=dict)
 
     def to_zip(self) -> None:
         raise NotImplementedError
@@ -29,7 +28,7 @@ class Dataset(BaseModel, ABC):
         else:
             return None
 
-    def add_split(self, strategy: Type[AbstractSplitStrategy], **kwargs) -> None:
+    def add_split(self, strategy: type[AbstractSplitStrategy], **kwargs) -> None:
         """
         Add split information to the dataset using the specified strategy.
 
