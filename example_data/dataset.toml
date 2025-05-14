@@ -8,22 +8,23 @@ sequence_feature = "mutated_sequence"
 columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"]
 schemas = ["pl.String", "pl.String", "pl.Float32", "pl.Float32"]
 
-# [metadata]
-# name = "project name"
-# description = "project description"
-# doi = "DOI: 10.1000/xyz123"
-# source = "DOI: 10.1000/xyz123"
-# xref = ?
+[metadata]
+name = "project name"
+description = "project description"
+doi = "DOI: 10.1000/xyz123"
+source = "DOI: 10.1000/xyz123"
+xref = ""
 
-# [assays]
-# [assay.one]
-# target = "target_name"
+[assays.assay_name_one]
+features = ["feature1", "feature2"]
+target = "target1"
+description = "lorem ipsum"
 
-# features = ["feature1", "feature2"]
+[assays.assay_name_one.constants]
+key_one = "1"
+key_two = 2
 
-# TODO -> add hierarchy of constants
-# arbitrary_constant1 = "arbitrary value 1"
-# arbitrary_constant2 = "arbitrary value 2"
-
-# [assay.two]
-# target = "target_name"
+[assays.assay_name_two]
+features = ["feature1"]
+target = "target2"
+description = "dolor sit amet"

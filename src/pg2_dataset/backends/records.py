@@ -1,12 +1,15 @@
 import io
+import uuid
 from functools import cached_property
 from typing import Self
 
+import pandas as pd
 import polars as pl
 from pydantic import ConfigDict, Field, computed_field, model_validator
 
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.record import Record
 
 
 class RecordsDataset(Dataset):
@@ -25,7 +28,59 @@ class RecordsDataset(Dataset):
     @computed_field
     @cached_property
     def raw_data_frame(self) -> pl.DataFrame:
-        return self._read_data_frame()
+        return self._from_csv()
+
+    @computed_field
+    @cached_property
+    def records(self) -> list[Record]:
+        if self.include_records:
+            if not hasattr(self, "raw_data_frame"):
+                raise ValueError("No implementation of the raw_data_frame attribute")
+
+            return self._to_records(self.raw_data_frame)
+
+        else:
+            raise ValueError(
+                """Either no implementation of the records dataset,
+                or include_records is False
+                """
+            )
+
+    def data_frame(self) -> pd.DataFrame | None:
+        if self.include_records:
+            if not hasattr(self, "raw_data_frame"):
+                raise ValueError("No implementation of the raw_data_frame attribute")
+
+            valid_data_frame = self.raw_data_frame.filter(
+                pl.col("sequence").is_not_null()
+            )
+
+            if self.columns:
+                return valid_data_frame.select(self.columns).to_pandas()
+            else:
+                return valid_data_frame.to_pandas()
+
+        else:
+            return None
+
+    def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
+        if self.include_records:
+            if not hasattr(self, "raw_data_frame"):
+                raise ValueError("No implementation of the raw_data_frame attribute")
+
+            valid_data_frame = self.raw_data_frame.filter(
+                pl.all_horizontal(
+                    [pl.col(col).is_not_null() for col in ["sequence", target]]
+                )
+            )
+
+            if self.columns:
+                return valid_data_frame.select(self.columns).to_pandas()
+            else:
+                return valid_data_frame.to_pandas()
+
+        else:
+            return None
 
     @model_validator(mode="after")
     def configure_records_file_path(self) -> Self:
@@ -143,6 +198,31 @@ class RecordsDataset(Dataset):
         else:
             return self
 
+    def _to_records(
+        self,
+        data: pl.DataFrame,
+    ) -> list[Record]:
+        records = []
+
+        if self.columns:
+            rows = data.select(self.columns).to_dicts()
+        else:
+            rows = data.to_dicts()
+
+        for row in rows:
+            # skip null sequence in the data frame
+            if not row["sequence"]:
+                continue
+
+            record = Record(**row)
+
+            # add metadata attributes for tracking
+            record._uuid = str(uuid.uuid4())
+
+            records.append(record)
+
+        return records
+
     def _rename_column(self, feature: str) -> str:
         match feature:
             case self.sequence_feature:
@@ -171,7 +251,7 @@ class RecordsDataset(Dataset):
 
         return data
 
-    def _read_data_frame(self) -> pl.DataFrame:
+    def _from_csv(self) -> pl.DataFrame:
         # load data from file
         data_str = read_bytes(self.records_file_path).decode("utf-8")
 

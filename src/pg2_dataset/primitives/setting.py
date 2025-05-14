@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import (
@@ -31,11 +31,29 @@ class Records(BaseModel):
             return self
 
 
+class Metadata(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    doi: str | None = None
+    source: str | None = None
+    xref: str | None = None
+
+
+class Assay(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    features: list[str] = Field(default_factory=list)
+    target: str | None = None
+    constants: dict[str, Any] = Field(default_factory=dict)
+
+
 class DatasetSettings(BaseSettings):
     _toml_file: str | None = None
 
-    artifacts: Artifacts
-    records: Records
+    artifacts: Artifacts | None = None
+    records: Records | None = None
+    metadata: Metadata | None = None
+    assays: dict[str, Assay] = Field(default_factory=dict)
 
     @classmethod
     def settings_customise_sources(
