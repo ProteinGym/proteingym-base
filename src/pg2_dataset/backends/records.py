@@ -268,18 +268,28 @@ class RecordsDataset(Dataset):
             return
 
         strategy_name = "DefaultSplit"
+        valid_split_values = {
+            TrainTestValid.train.value,
+            TrainTestValid.valid.value,
+            TrainTestValid.test.value,
+        }
+
+        invalid_values = (
+            set(self.raw_data_frame.select("split").unique().to_series())
+            - valid_split_values
+        )
+        if invalid_values:
+            raise ValueError(
+                f"Invalid split values found: {invalid_values}. "
+                f"Split values must be one of: {', '.join(valid_split_values)}"
+            )
 
         for row in self.raw_data_frame.select(
             ["sequence", "engineering_round", "split"]
         ).to_dicts():
-            if row["split"] in [
-                TrainTestValid.train.value,
-                TrainTestValid.valid.value,
-                TrainTestValid.test.value,
-            ]:
-                self.splits[
-                    SplitKey(row["engineering_round"], row["sequence"], strategy_name)
-                ] = row["split"]
+            self.splits[
+                SplitKey(row["engineering_round"], row["sequence"], strategy_name)
+            ] = row["split"]
 
     def _from_csv(self) -> pl.DataFrame:
         # load data from file
