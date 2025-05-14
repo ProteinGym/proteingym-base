@@ -39,7 +39,7 @@ class Metadata(BaseModel):
     xref: str | None = None
 
 
-class Assay(BaseModel):
+class Assay(BaseModel, extra="allow"):
     name: str | None = None
     description: str | None = None
     features: list[str] = Field(default_factory=list)
