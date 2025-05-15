@@ -1,15 +1,16 @@
 import io
 import uuid
-from functools import cached_property
 from typing import Self
 
 import pandas as pd
 import polars as pl
-from pydantic import ConfigDict, Field, computed_field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.dataclasses import SplitKey
 from pg2_dataset.primitives.record import Record
+from pg2_dataset.splits.abstract_split_strategy import TrainTestValid
 
 
 class RecordsDataset(Dataset):
@@ -25,13 +26,20 @@ class RecordsDataset(Dataset):
     columns: list[str] = Field(default_factory=list)
     schemas: list[pl.datatypes.classes.DataTypeClass] = Field(default_factory=list)
 
-    @computed_field
-    @cached_property
+    @property
     def raw_data_frame(self) -> pl.DataFrame:
+        if hasattr(self, "_cached_data_frame"):
+            return self._cached_data_frame
         return self._from_csv()
 
-    @computed_field
-    @cached_property
+    @raw_data_frame.setter
+    def raw_data_frame(self, value):
+        self._cached_data_frame = value
+
+    def update_data_frame(self, data_frame) -> pl.DataFrame:
+        self._cached_data_frame = data_frame
+
+    @property
     def records(self) -> list[Record] | None:
         if self.include_records:
             if not hasattr(self, "raw_data_frame"):
@@ -198,6 +206,15 @@ class RecordsDataset(Dataset):
         else:
             return self
 
+    @model_validator(mode="after")
+    def configure_splits(self) -> Self:
+        """Load splits from dataframe when dataset is initialized."""
+
+        if self.include_records and hasattr(self, "raw_data_frame"):
+            if "split" in self.raw_data_frame.columns:
+                self._load_splits_from_dataframe()
+        return self
+
     def _to_records(
         self,
         data: pl.DataFrame,
@@ -251,34 +268,66 @@ class RecordsDataset(Dataset):
 
         return data
 
+    def _load_splits_from_dataframe(self) -> None:
+        """Load splits from the dataframe if a 'split' column exists."""
+        if "split" not in self.raw_data_frame.columns:
+            return
+
+        strategy_name = "DefaultSplit"
+        valid_split_values = {
+            TrainTestValid.train.value,
+            TrainTestValid.valid.value,
+            TrainTestValid.test.value,
+        }
+
+        invalid_values = (
+            set(self.raw_data_frame.select("split").unique().to_series())
+            - valid_split_values
+        )
+        if invalid_values:
+            raise ValueError(
+                f"Invalid split values found: {invalid_values}. "
+                f"Split values must be one of: {', '.join(valid_split_values)}"
+            )
+
+        for row in self.raw_data_frame.select(
+            ["sequence", "engineering_round", "split"]
+        ).to_dicts():
+            self.splits[
+                SplitKey(row["engineering_round"], row["sequence"], strategy_name)
+            ] = row["split"]
+
     def _from_csv(self) -> pl.DataFrame:
-        # load data from file
         data_str = read_bytes(self.records_file_path).decode("utf-8")
 
-        if self.columns and self.schemas:
+        # Store original column names for reading CSV
+        original_columns = getattr(
+            self, "_original_columns", self.columns.copy() if self.columns else None
+        )
+        self._original_columns = original_columns  # Save for future calls
+
+        if original_columns and self.schemas:
             data = pl.read_csv(
                 io.StringIO(data_str),
-                columns=self.columns,
+                columns=original_columns,
                 schema_overrides=self.schemas,
             )
-            self.columns = [self._rename_column(col) for col in self.columns]
-
-        elif self.columns:
-            data = pl.read_csv(io.StringIO(data_str), columns=self.columns)
-            self.columns = [self._rename_column(col) for col in self.columns]
-
+        elif original_columns:
+            data = pl.read_csv(io.StringIO(data_str), columns=original_columns)
         else:
             data = pl.read_csv(io.StringIO(data_str))
 
-        # rename columns
         data = self._rename_columns(data)
 
-        # add columns
         if "engineering_round" not in data.columns:
             data = data.with_columns(pl.lit(1).alias("engineering_round"))
 
-        # update columns
         if self.columns:
             self.columns = data.columns
 
+        # Update self.columns with renamed columns if not already done
+        if self.columns and not getattr(self, "_columns_renamed", False):
+            self.columns = [self._rename_column(col) for col in self.columns]
+            self._columns_renamed = True
+            print(f"These are our self.columns: {self.columns}")
         return data
