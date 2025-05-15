@@ -9,7 +9,9 @@ from pydantic import ConfigDict, Field, computed_field, model_validator
 
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.dataclasses import SplitKey
 from pg2_dataset.primitives.record import Record
+from pg2_dataset.splits.abstract_split_strategy import TrainTestValid
 
 
 class RecordsDataset(Dataset):
@@ -198,6 +200,15 @@ class RecordsDataset(Dataset):
         else:
             return self
 
+    @model_validator(mode="after")
+    def configure_splits(self) -> Self:
+        """Load splits from dataframe when dataset is initialized."""
+
+        if self.include_records and hasattr(self, "raw_data_frame"):
+            if "split" in self.raw_data_frame.columns:
+                self._load_splits_from_dataframe()
+        return self
+
     def _to_records(
         self,
         data: pl.DataFrame,
@@ -250,6 +261,35 @@ class RecordsDataset(Dataset):
             )
 
         return data
+
+    def _load_splits_from_dataframe(self) -> None:
+        """Load splits from the dataframe if a 'split' column exists."""
+        if "split" not in self.raw_data_frame.columns:
+            return
+
+        strategy_name = "DefaultSplit"
+        valid_split_values = {
+            TrainTestValid.train.value,
+            TrainTestValid.valid.value,
+            TrainTestValid.test.value,
+        }
+
+        invalid_values = (
+            set(self.raw_data_frame.select("split").unique().to_series())
+            - valid_split_values
+        )
+        if invalid_values:
+            raise ValueError(
+                f"Invalid split values found: {invalid_values}. "
+                f"Split values must be one of: {', '.join(valid_split_values)}"
+            )
+
+        for row in self.raw_data_frame.select(
+            ["sequence", "engineering_round", "split"]
+        ).to_dicts():
+            self.splits[
+                SplitKey(row["engineering_round"], row["sequence"], strategy_name)
+            ] = row["split"]
 
     def _from_csv(self) -> pl.DataFrame:
         # load data from file
