@@ -2,8 +2,10 @@ import random
 
 import polars as pl
 import pytest
+from pydantic import ValidationError
 
 from pg2_dataset.backends.records import RecordsDataset
+from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
 
 @pytest.fixture
@@ -31,11 +33,22 @@ def null_data():
 @pytest.fixture
 def any_data():
     return f"""a_sequence,a,b,c,round
-{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,2,3.1
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,2,3.1,1
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,3.2,1
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,,3.3,2
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,,2
 {"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,2,3.5,1
+"""
+
+
+@pytest.fixture
+def split_data():
+    return f"""a_sequence,a,b,c,round,a_split
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,2,3.1,1,train
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,3.2,1,valid
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,,3.3,2,test
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},,2,,2,train
+{"".join(random.choices("ACDEFGHIJKLMNOPQRSTVYW", k=10))},1,2,3.5,1,test
 """
 
 
@@ -67,6 +80,15 @@ class TestRecordsDataset:
 
         return str(file_path)
 
+    @pytest.fixture
+    def split_csv_file_path(self, split_data, tmpdir):
+        file_path = tmpdir / "split.csv"
+
+        with open(file_path, "w") as file:
+            file.write(split_data)
+
+        return str(file_path)
+
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
         dataset = RecordsDataset(
             records_file_path=any_csv_file_path,
@@ -81,14 +103,31 @@ class TestRecordsDataset:
         assert "engineering_round" in dataset.data_frame.columns.to_list()
         assert "round" not in dataset.data_frame.columns.to_list()
 
+    def test_sequence_feature_should_exist(self, good_csv_file_path):
+        with pytest.raises(ValidationError):
+            dataset = RecordsDataset(
+                records_file_path=good_csv_file_path,
+            )
+            print(dataset)
+
+    def test_engineering_round_feature_should_exist(self, good_csv_file_path):
+        dataset = RecordsDataset(
+            records_file_path=good_csv_file_path,
+            sequence_feature="sequence",
+        )
+
+        assert "engineering_round" in dataset.data_frame.columns.to_list()
+        for record in dataset.records:
+            assert record.engineering_round == 1
+
     def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
-            ds = RecordsDataset(
+            dataset = RecordsDataset(
                 records_file_path=good_csv_file_path,
                 sequence_feature="sequence",
                 columns=["sequence", "c", "e"],
             )
-            print(ds)
+            print(dataset)
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
         dataset = RecordsDataset(
@@ -140,10 +179,8 @@ class TestRecordsDataset:
             columns=["sequence", "a", "b", "c"],
         )
 
-        data_frame = dataset.data_frame
-
-        assert len(data_frame) == 4
-        assert len(data_frame.columns) == 5, (
+        assert len(dataset.data_frame) == 4
+        assert len(dataset.data_frame.columns) == 5, (
             "there are 4 selected columns and 1 engineering round column"
         )
 
@@ -160,3 +197,46 @@ class TestRecordsDataset:
         assert len(data_frame_by_target.columns) == 5, (
             "there are 4 selected columns and 1 engineering round column"
         )
+
+    def test_split_data_frame_by_default_correctly(self, split_csv_file_path):
+        dataset = RecordsDataset(
+            records_file_path=split_csv_file_path,
+            sequence_feature="a_sequence",
+            split_feature="a_split",
+            columns=["a_sequence", "a", "b", "c", "a_split"],
+        )
+
+        assert "split" in dataset.data_frame.columns.to_list()
+        assert "a_split" not in dataset.data_frame.columns.to_list()
+
+        assert len(dataset.train) == 2
+        assert len(dataset.valid) == 1
+        assert len(dataset.test) == 2
+
+    def test_split_data_frame_by_random_strategy_correctly(self, split_csv_file_path):
+        dataset = RecordsDataset(
+            records_file_path=split_csv_file_path,
+            sequence_feature="a_sequence",
+            split_strategy=RandomSplitStrategy,
+            split_strategy_kwargs={"train_ratio": 0.6, "valid_ratio": 0.2},
+            columns=["a_sequence", "a", "b", "c", "a_split"],
+        )
+
+        assert len(dataset.train) == 3
+        assert len(dataset.valid) == 1
+        assert len(dataset.test) == 1
+
+    def test_iter_by_rounds(self, split_csv_file_path):
+        dataset = RecordsDataset(
+            records_file_path=split_csv_file_path,
+            sequence_feature="a_sequence",
+            engineering_round_feature="round",
+            columns=["a_sequence", "a", "b", "c", "round"],
+        )
+
+        for round_idx, batch in enumerate(dataset.iter_by_rounds()):
+            if round_idx == 0:
+                assert len(batch) == 3
+
+            if round_idx == 1:
+                assert len(batch) == 2

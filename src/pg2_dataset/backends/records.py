@@ -35,8 +35,8 @@ class RecordsDataset(AbstractDataset):
 
     columns: list[str] = Field(default_factory=list)
 
-    records_split_strategy_kwargs: dict[str, Any] = Field(default_factory=dict)
-    records_split_strategy: AbstractSplitStrategy | None = None
+    split_strategy_kwargs: dict[str, Any] = Field(default_factory=dict)
+    split_strategy: AbstractSplitStrategy | None = None
 
     _strategy_name: str = PrivateAttr()
     _renamed_columns: list[str] = PrivateAttr(default_factory=list)
@@ -63,14 +63,14 @@ class RecordsDataset(AbstractDataset):
     @computed_field
     @cached_property
     def train(self) -> pd.DataFrame:
-        if self.records_split_strategy:
+        if self.split_strategy:
             return self.renamed_data_frame.filter(
                 pl.col(self._strategy_name) == TrainTestValid.train
             ).to_pandas()
 
         elif self.split_feature:
             return self.renamed_data_frame.filter(
-                pl.col(self.split_feature) == TrainTestValid.train
+                pl.col("split") == TrainTestValid.train
             ).to_pandas()
 
         else:
@@ -82,14 +82,14 @@ class RecordsDataset(AbstractDataset):
     @computed_field
     @cached_property
     def valid(self) -> pd.DataFrame:
-        if self.records_split_strategy:
+        if self.split_strategy:
             return self.renamed_data_frame.filter(
                 pl.col(self._strategy_name) == TrainTestValid.valid
             ).to_pandas()
 
         elif self.split_feature:
             return self.renamed_data_frame.filter(
-                pl.col(self.split_feature) == TrainTestValid.valid
+                pl.col("split") == TrainTestValid.valid
             ).to_pandas()
 
         else:
@@ -101,14 +101,14 @@ class RecordsDataset(AbstractDataset):
     @computed_field
     @cached_property
     def test(self) -> pd.DataFrame:
-        if self.records_split_strategy:
+        if self.split_strategy:
             return self.renamed_data_frame.filter(
                 pl.col(self._strategy_name) == TrainTestValid.test
             ).to_pandas()
 
         elif self.split_feature:
             return self.renamed_data_frame.filter(
-                pl.col(self.split_feature) == TrainTestValid.test
+                pl.col("split") == TrainTestValid.test
             ).to_pandas()
 
         else:
@@ -152,10 +152,10 @@ class RecordsDataset(AbstractDataset):
                 pl.col("engineering_round") == current_round
             ).to_pandas()
 
-    @field_validator("records_split_strategy", mode="before")
-    def initialise_records_split_strategy(cls, v, info):
+    @field_validator("split_strategy", mode="before")
+    def initialise_split_strategy(cls, v, info):
         if isinstance(v, type) and issubclass(v, AbstractSplitStrategy):
-            kwargs = info.data.get("records_split_strategy_kwargs")
+            kwargs = info.data.get("split_strategy_kwargs")
             return v(**kwargs)
 
         return v
@@ -355,9 +355,9 @@ class RecordsDataset(AbstractDataset):
 
         self._renamed_columns = data.columns
 
-        if self.records_split_strategy:
-            self._strategy_name = self.records_split_strategy.__class__.__name__
-            split_map = self.records_split_strategy.split(data.to_pandas())
+        if self.split_strategy:
+            self._strategy_name = self.split_strategy.__class__.__name__
+            split_map = self.split_strategy.split(data.to_pandas())
 
             data = data.with_columns(
                 pl.col("sequence").replace_strict(split_map).alias(self._strategy_name)
