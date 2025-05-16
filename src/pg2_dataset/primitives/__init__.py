@@ -1,9 +1,11 @@
 from pg2_dataset.primitives.record import Record
-from pg2_dataset.primitives.structure import MMcifFile
 from pg2_dataset.primitives.setting import DatasetSettings
+from pg2_dataset.primitives.split_key import SplitKey
+from pg2_dataset.primitives.structure import MMcifFile
 
 __all__ = [
-    "Record",
-    "MMcifFile",
     "DatasetSettings",
+    "MMcifFile",
+    "Record",
+    "SplitKey",
 ]

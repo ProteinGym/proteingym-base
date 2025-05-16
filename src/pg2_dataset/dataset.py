@@ -3,8 +3,7 @@ from abc import ABC
 import polars as pl
 from pydantic import BaseModel, Field, computed_field
 
-from pg2_dataset.primitives.dataclasses import SplitKey
-from pg2_dataset.primitives.setting import DatasetSettings
+from pg2_dataset.primitives import DatasetSettings, SplitKey
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,

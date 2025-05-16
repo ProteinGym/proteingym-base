@@ -9,8 +9,7 @@ from pydantic import ConfigDict, Field, computed_field, model_validator
 
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
-from pg2_dataset.primitives.dataclasses import SplitKey
-from pg2_dataset.primitives.record import Record
+from pg2_dataset.primitives import Record, SplitKey
 from pg2_dataset.splits.abstract_split_strategy import TrainTestValid
 
 
