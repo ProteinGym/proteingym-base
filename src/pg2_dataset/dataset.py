@@ -1,10 +1,11 @@
 from abc import ABC
-from typing import Self
+from typing import Generator, Self
 
 import polars as pl
 from pydantic import BaseModel, Field, computed_field
 
-from pg2_dataset.primitives import DatasetSettings, SplitKey
+from pg2_dataset.primitives.dataclasses import SplitKey
+from pg2_dataset.primitives.setting import DatasetSettings
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
@@ -74,6 +75,7 @@ class Dataset(BaseModel, ABC):
         strategy_names = set(key.strategy_name for key in self.splits.keys())
         if not strategy_names:
             return None
+
         # user-defined splits > default split
         if len(strategy_names) > 1 and "DefaultSplit" in strategy_names:
             strategy_names.remove("DefaultSplit")
@@ -86,6 +88,7 @@ class Dataset(BaseModel, ABC):
         strategy_name = self._get_latest_strategy_name()
         if not strategy_name:
             return self._create_empty_subset()
+
         return self._create_subset_dataset(TrainTestValid.train, strategy_name)
 
     @property
@@ -94,6 +97,7 @@ class Dataset(BaseModel, ABC):
         strategy_name = self._get_latest_strategy_name()
         if not strategy_name:
             return self._create_empty_subset()
+
         return self._create_subset_dataset(TrainTestValid.valid, strategy_name)
 
     @property
@@ -102,6 +106,7 @@ class Dataset(BaseModel, ABC):
         strategy_name = self._get_latest_strategy_name()
         if not strategy_name:
             return self._create_empty_subset()
+
         return self._create_subset_dataset(TrainTestValid.test, strategy_name)
 
     def split(self, strategy_name: str | None = None) -> tuple[Self, Self, Self]:
@@ -178,3 +183,42 @@ class Dataset(BaseModel, ABC):
             )
 
         return subset
+
+    def iter_by_rounds(
+        self, max_round: int | None = None
+    ) -> Generator["Dataset", None, None]:
+        """
+        Generate datasets by engineering rounds.
+
+        Args:
+            max_round: Optional maximum round to include.
+                If None, includes all rounds.
+            only_current_round:
+                If True, only include records from the current round.
+                If False (default), include records up to and
+                including the current round.
+
+        Yields:
+            Dataset objects filtered to include records from the specified rounds.
+        """
+        if not self.include_records:
+            raise ValueError("Cannot iterate by rounds without records")
+
+        records = self.records
+        available_rounds = sorted(set(record.engineering_round for record in records))
+
+        if not available_rounds:
+            return
+
+        if max_round is not None:
+            available_rounds = [r for r in available_rounds if r <= max_round]
+
+        for current_round in available_rounds:
+            subset = self.model_copy(deep=True)
+            if hasattr(subset, "raw_data_frame"):
+                raw_df = subset.raw_data_frame
+                if raw_df is not None:
+                    raw_df = raw_df.filter(pl.col("engineering_round") == current_round)
+                    subset.update_data_frame(raw_df)
+
+            yield subset

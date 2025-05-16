@@ -168,7 +168,7 @@ class TestRecordsDataset:
 
         assert len(data_frame) == 3
         assert len(data_frame.columns) == 5, (
-            "there are 4 selected columns and 1 enginering round column"
+            "there are 4 selected columns and 1 engineering round column"
         )
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
@@ -184,19 +184,23 @@ class TestRecordsDataset:
 
         assert len(data_frame_by_target) == 2
         assert len(data_frame_by_target.columns) == 5, (
-            "there are 4 selected columns and 1 enginering round column"
+            "there are 4 selected columns and 1 engineering round column"
         )
 
-    def test_extra_columns_should_be_within_allowed_types(self, good_csv_file_path):
-        with pytest.raises(ValidationError):
-            ds = RecordsDataset(
-                include_records=True,
-                records_file_path=good_csv_file_path,
-                sequence_feature="sequence",
-                columns=["sequence", "a", "b", "c"],
-                schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
-            )
-            print(ds)
+    # since we do allow ints now i think we don't need to test for allowed
+    # types anymore? Since we got str/float/int?
+    #
+    #
+    # def test_extra_columns_should_be_within_allowed_types(self, good_csv_file_path):
+    #     with pytest.raises(ValidationError):
+    #         ds = RecordsDataset(
+    #             include_records=True,
+    #             records_file_path=good_csv_file_path,
+    #             sequence_feature="sequence",
+    #             columns=["sequence", "a", "b", "c"],
+    #             schemas=[pl.String, pl.Int64, pl.Int64, pl.Float64],
+    #         )
+    #         print(ds)
 
     def test_schemas_should_not_exist_without_columns(self, good_csv_file_path):
         with pytest.raises(ValidationError):

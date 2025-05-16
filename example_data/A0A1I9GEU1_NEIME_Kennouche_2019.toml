@@ -1,0 +1,36 @@
+[artifacts]
+records = "/Users/vanderweg/Projects/PG2/pg2-dataset/example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/substitutions_comb.csv"
+structure = "/Users/vanderweg/Projects/PG2/pg2-dataset/example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
+# msa = "data/msa.npy"
+
+[records]
+sequence_feature = "mutated_sequence"
+columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin", "split, "engineering_round"]
+schemas = ["pl.String", "pl.String", "pl.Float32", "pl.Float32"]
+
+# [metadata]
+# name = "project name"
+# description = "project description"
+# doi = "DOI: 10.1000/xyz123"
+# source = "DOI: 10.1000/xyz123"
+# xref = ""
+
+# [[assays]]
+# name = "assay one"
+# description = "assays one description"
+
+# [assays.columns]
+# features = ["feature1", "feature2"]
+# target = "target1"
+
+# [assays.constants]
+# key1 = "one"
+# key2 = 2
+
+# [[assays]]
+# name = "assays two"
+# description = "assays two description"
+
+# [assays.columns]
+# features = ["feature1"]
+# target = "target2"

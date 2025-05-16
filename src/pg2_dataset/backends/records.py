@@ -1,15 +1,15 @@
 import io
 import uuid
-from functools import cached_property
 from typing import Self
 
 import pandas as pd
 import polars as pl
-from pydantic import ConfigDict, Field, computed_field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
-from pg2_dataset.primitives import Record, SplitKey
+from pg2_dataset.primitives.dataclasses import SplitKey
+from pg2_dataset.primitives.record import Record
 from pg2_dataset.splits.abstract_split_strategy import TrainTestValid
 
 
@@ -26,14 +26,21 @@ class RecordsDataset(Dataset):
     columns: list[str] = Field(default_factory=list)
     schemas: list[pl.datatypes.classes.DataTypeClass] = Field(default_factory=list)
 
-    @computed_field
-    @cached_property
+    @property
     def raw_data_frame(self) -> pl.DataFrame:
+        if hasattr(self, "_cached_data_frame"):
+            return self._cached_data_frame
         return self._from_csv()
 
-    @computed_field
-    @cached_property
-    def records(self) -> list[Record]:
+    @raw_data_frame.setter
+    def raw_data_frame(self, value):
+        self._cached_data_frame = value
+
+    def update_data_frame(self, data_frame) -> pl.DataFrame:
+        self._cached_data_frame = data_frame
+
+    @property
+    def records(self) -> list[Record] | None:
         if self.include_records:
             if not hasattr(self, "raw_data_frame"):
                 raise ValueError("No implementation of the raw_data_frame attribute")
@@ -291,33 +298,36 @@ class RecordsDataset(Dataset):
             ] = row["split"]
 
     def _from_csv(self) -> pl.DataFrame:
-        # load data from file
         data_str = read_bytes(self.records_file_path).decode("utf-8")
 
-        if self.columns and self.schemas:
+        # Store original column names for reading CSV
+        original_columns = getattr(
+            self, "_original_columns", self.columns.copy() if self.columns else None
+        )
+        self._original_columns = original_columns  # Save for future calls
+
+        if original_columns and self.schemas:
             data = pl.read_csv(
                 io.StringIO(data_str),
-                columns=self.columns,
+                columns=original_columns,
                 schema_overrides=self.schemas,
             )
-            self.columns = [self._rename_column(col) for col in self.columns]
-
-        elif self.columns:
-            data = pl.read_csv(io.StringIO(data_str), columns=self.columns)
-            self.columns = [self._rename_column(col) for col in self.columns]
-
+        elif original_columns:
+            data = pl.read_csv(io.StringIO(data_str), columns=original_columns)
         else:
             data = pl.read_csv(io.StringIO(data_str))
 
-        # rename columns
         data = self._rename_columns(data)
 
-        # add columns
         if "engineering_round" not in data.columns:
             data = data.with_columns(pl.lit(1).alias("engineering_round"))
 
-        # update columns
         if self.columns:
             self.columns = data.columns
 
+        # Update self.columns with renamed columns if not already done
+        if self.columns and not getattr(self, "_columns_renamed", False):
+            self.columns = [self._rename_column(col) for col in self.columns]
+            self._columns_renamed = True
+            print(f"These are our self.columns: {self.columns}")
         return data
