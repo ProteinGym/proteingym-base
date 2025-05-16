@@ -1,13 +1,13 @@
 import random
 from abc import ABC, abstractmethod
-from enum import Enum
+from enum import StrEnum
 from math import ceil, floor
 from typing import Collection, NamedTuple
 
 import pandas as pd
 
 
-class TrainTestValid(Enum):
+class TrainTestValid(StrEnum):
     train = "train"
     valid = "valid"
     test = "test"
