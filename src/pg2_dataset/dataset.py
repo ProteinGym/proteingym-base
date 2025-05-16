@@ -13,8 +13,8 @@ from pg2_dataset.splits.abstract_split_strategy import (
 
 class Dataset(BaseModel, ABC):
     toml_file: str | None = None
-    include_records: bool = False
-    include_structure: bool = False
+    include_records: bool = True
+    include_structure: bool = True
     include_msa: bool = False
     splits: dict[SplitKey, str] = Field(default_factory=dict)
 
