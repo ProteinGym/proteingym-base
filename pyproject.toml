@@ -38,6 +38,8 @@ python_functions = "test_*"
 
 [tool.ruff]
 line-length = 88
+ignore = ["N805"]
+
 [tool.ruff.lint]
 select = [
     "E", # pycodestyle errors

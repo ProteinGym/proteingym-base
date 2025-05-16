@@ -14,7 +14,7 @@ class Record(BaseModel, extra="allow"):
 
     @model_validator(mode="after")
     def check_extra_fields(self) -> Self:
-        allowed_types = (float, str, MeasurementWithUncertainty)
+        allowed_types = (int, float, str, MeasurementWithUncertainty)
         for f in self.model_extra:
             if self.model_extra[f] is not None and not isinstance(
                 self.model_extra[f], allowed_types
