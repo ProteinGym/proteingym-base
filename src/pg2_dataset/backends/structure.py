@@ -18,7 +18,7 @@ class StructureDataset(Dataset):
 
     @computed_field
     @cached_property
-    def structure(self) -> MMcifFile | None:
+    def structure(self) -> MMcifFile:
         if self.include_structure:
             if not hasattr(self, "raw_lines"):
                 raise ValueError("No implementation of the raw_lines attribute")
@@ -26,7 +26,7 @@ class StructureDataset(Dataset):
             return self._to_mmcif(self.raw_lines)
 
         else:
-            return ValueError(
+            raise ValueError(
                 """Either no implementation of the structure dataset,
                 or include_structure is False
                 """

@@ -45,10 +45,10 @@ class RecordsDataset(Dataset):
             if not hasattr(self, "raw_data_frame"):
                 raise ValueError("No implementation of the raw_data_frame attribute")
 
-            return [record for record in self._to_records(self.raw_data_frame)]
+            return self._to_records(self.raw_data_frame)
 
         else:
-            return ValueError(
+            raise ValueError(
                 """Either no implementation of the records dataset,
                 or include_records is False
                 """
@@ -275,9 +275,9 @@ class RecordsDataset(Dataset):
 
         strategy_name = "DefaultSplit"
         valid_split_values = {
-            TrainTestValid.train.value,
-            TrainTestValid.valid.value,
-            TrainTestValid.test.value,
+            TrainTestValid.train,
+            TrainTestValid.valid,
+            TrainTestValid.test,
         }
 
         invalid_values = (

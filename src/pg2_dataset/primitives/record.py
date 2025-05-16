@@ -1,17 +1,11 @@
 from typing import Self
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, PositiveFloat, model_validator
 
 
 class MeasurementWithUncertainty(BaseModel):
     value: float
-    uncertainty: float  # validate for positive
-
-    @model_validator(mode="after")
-    def uncertainty_check(self) -> Self:
-        if self.uncertainty < 0.0:
-            raise ValueError("uncertainty must be non negative.")
-        return self
+    uncertainty: PositiveFloat
 
 
 class Record(BaseModel, extra="allow"):

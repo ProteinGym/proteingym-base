@@ -21,25 +21,18 @@ description = "test_description"
 doi = "test_doi"
 source = "test_source"
 
-[[assays]]
-name = "assay_name_one"
-description = "assay_description_one"
-
-[assays.columns]
+[assays.assay_name_one]
 features = ["feature1", "feature2"]
 target = "target1"
-
-[assays.constants]
+description = "lorem ipsum"
+[assays.assay_name_one.constants]
 key_one = "1"
 key_two = 2
 
-[[assays]]
-name = "assay_name_two"
-description = "assay_description_two"
-
-[assays.columns]
+[assays.assay_name_two]
 features = ["feature1"]
 target = "target2"
+description = "dolor sit amet"
 """
 
 
@@ -64,23 +57,13 @@ class TestSetting:
         DatasetSettings._toml_file = example_toml_file_path
         settings = DatasetSettings()
 
-        assert len(settings.assays) == 2, "only 2 assays"
+        assert len(settings.assays) == 2
 
-        assert len(settings.assays[0].columns.features) == 2, (
-            "the first assay has 2 features"
-        )
-        assert len(settings.assays[1].columns.features) == 1, (
-            "the second assay has 1 feature"
-        )
+        assert len(settings.assays["assay_name_one"].features) == 2
+        assert len(settings.assays["assay_name_two"].features) == 1
 
-        assert settings.assays[0].columns.target == "target1", (
-            "the first assay has the target `target1`"
-        )
-        assert settings.assays[1].columns.target == "target2", (
-            "the second assay has the target `target2`"
-        )
+        assert settings.assays["assay_name_one"].target == "target1"
+        assert settings.assays["assay_name_two"].target == "target2"
 
-        assert len(settings.assays[0].constants) == 2, "the first assay has 2 constants"
-        assert len(settings.assays[1].constants) == 0, (
-            "the second assay has 0 constants"
-        )
+        assert len(settings.assays["assay_name_one"].constants) == 2
+        assert len(settings.assays["assay_name_two"].constants) == 0
