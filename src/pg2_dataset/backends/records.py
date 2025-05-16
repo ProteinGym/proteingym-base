@@ -268,9 +268,9 @@ class RecordsDataset(Dataset):
 
         strategy_name = "DefaultSplit"
         valid_split_values = {
-            TrainTestValid.train.value,
-            TrainTestValid.valid.value,
-            TrainTestValid.test.value,
+            TrainTestValid.train,
+            TrainTestValid.valid,
+            TrainTestValid.test,
         }
 
         invalid_values = (

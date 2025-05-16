@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Self
 
 import polars as pl
 from pydantic import BaseModel, Field, computed_field
@@ -73,39 +74,37 @@ class Dataset(BaseModel, ABC):
         strategy_names = set(key.strategy_name for key in self.splits.keys())
         if not strategy_names:
             return None
-        # userdefined splits > default split
+        # user-defined splits > default split
         if len(strategy_names) > 1 and "DefaultSplit" in strategy_names:
             strategy_names.remove("DefaultSplit")
         return list(strategy_names)[-1]
 
     # Do we move these and import?
     @property
-    def train(self) -> "Dataset":
+    def train(self) -> Self:
         """Get the training dataset split."""
         strategy_name = self._get_latest_strategy_name()
         if not strategy_name:
             return self._create_empty_subset()
-        return self._create_subset_dataset(TrainTestValid.train.value, strategy_name)
+        return self._create_subset_dataset(TrainTestValid.train, strategy_name)
 
     @property
-    def valid(self) -> "Dataset":
+    def valid(self) -> Self:
         """Get the validation dataset split."""
         strategy_name = self._get_latest_strategy_name()
         if not strategy_name:
             return self._create_empty_subset()
-        return self._create_subset_dataset(TrainTestValid.valid.value, strategy_name)
+        return self._create_subset_dataset(TrainTestValid.valid, strategy_name)
 
     @property
-    def test(self) -> "Dataset":
+    def test(self) -> Self:
         """Get the test dataset split."""
         strategy_name = self._get_latest_strategy_name()
         if not strategy_name:
             return self._create_empty_subset()
-        return self._create_subset_dataset(TrainTestValid.test.value, strategy_name)
+        return self._create_subset_dataset(TrainTestValid.test, strategy_name)
 
-    def split(
-        self, strategy_name: str | None = None
-    ) -> tuple["Dataset", "Dataset", "Dataset"]:
+    def split(self, strategy_name: str | None = None) -> tuple[Self, Self, Self]:
         """
         Split the dataset into train, validation, and test datasets based on
         the specified strategy.
@@ -132,19 +131,13 @@ class Dataset(BaseModel, ABC):
                 empty = self._create_empty_subset()
                 return empty, empty, empty
 
-        train_dataset = self._create_subset_dataset(
-            TrainTestValid.train.value, strategy_name
-        )
-        valid_dataset = self._create_subset_dataset(
-            TrainTestValid.valid.value, strategy_name
-        )
-        test_dataset = self._create_subset_dataset(
-            TrainTestValid.test.value, strategy_name
-        )
+        train_dataset = self._create_subset_dataset(TrainTestValid.train, strategy_name)
+        valid_dataset = self._create_subset_dataset(TrainTestValid.valid, strategy_name)
+        test_dataset = self._create_subset_dataset(TrainTestValid.test, strategy_name)
 
         return train_dataset, valid_dataset, test_dataset
 
-    def _create_empty_subset(self) -> "Dataset":
+    def _create_empty_subset(self) -> Self:
         """
         Create an empty subset of the dataset.
 
@@ -158,7 +151,9 @@ class Dataset(BaseModel, ABC):
 
         return subset
 
-    def _create_subset_dataset(self, split_type: str, strategy_name: str) -> "Dataset":
+    def _create_subset_dataset(
+        self, split_type: TrainTestValid, strategy_name: str
+    ) -> Self:
         """
         Create a subset of the dataset based on the split type and strategy.
 
