@@ -3,9 +3,9 @@ from typing import Generator, Self
 
 import polars as pl
 from pydantic import BaseModel, Field, computed_field
+
 from pg2_dataset.primitives.dataclasses import SplitKey
 from pg2_dataset.primitives.setting import DatasetSettings
-
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
@@ -75,7 +75,7 @@ class Dataset(BaseModel, ABC):
         strategy_names = set(key.strategy_name for key in self.splits.keys())
         if not strategy_names:
             return None
-         
+
         # user-defined splits > default split
         if len(strategy_names) > 1 and "DefaultSplit" in strategy_names:
             strategy_names.remove("DefaultSplit")
