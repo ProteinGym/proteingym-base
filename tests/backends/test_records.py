@@ -150,7 +150,7 @@ class TestRecordsDataset:
             columns=["sequence", "a", "b", "c"],
         )
 
-        assert dataset.renamed_data_frame.select(pl.all().is_null().sum()).to_dicts()[
+        assert dataset._internal_data_frame.select(pl.all().is_null().sum()).to_dicts()[
             0
         ] == {
             "a": 2,
