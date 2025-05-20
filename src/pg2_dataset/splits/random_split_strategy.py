@@ -6,7 +6,7 @@ from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     split_name,
 )
-from pg2_dataset.backends.abstract_dataset import SEQUENCE
+from pg2_dataset.primitives.setting import SEQUENCE
 
 
 class RandomSplitStrategy(AbstractSplitStrategy):

@@ -4,10 +4,6 @@ from pydantic import BaseModel, computed_field
 
 from pg2_dataset.primitives.setting import DatasetSettings
 
-ENGINEERING_ROUND = "engineering_round"
-SEQUENCE = "sequence"
-SPLIT = "split"
-
 
 class AbstractDataset(BaseModel, ABC):
     toml_file: str | None = None

@@ -7,6 +7,10 @@ from pydantic_settings import (
     TomlConfigSettingsSource,
 )
 
+ENGINEERING_ROUND = "engineering_round"
+SEQUENCE = "sequence"
+SPLIT = "split"
+
 
 class Artifacts(BaseModel):
     records: str | None = None
@@ -14,10 +18,10 @@ class Artifacts(BaseModel):
     msa: str | None = None
 
 
-class Records(BaseModel):
-    sequence_feature: str | None = None
-    engineering_round_feature: str | None = None
-    split_feature: str | None = None
+class RecordsMeta(BaseModel):
+    sequence_feature: str = SEQUENCE
+    engineering_round_feature: str = ""
+    split_feature: str = ""
 
     columns: list[str] = Field(default_factory=list)
 
@@ -42,7 +46,7 @@ class DatasetSettings(BaseSettings):
     _toml_file: str | None = None
 
     artifacts: Artifacts | None = None
-    records: Records | None = None
+    records: RecordsMeta | None = None
     metadata: Metadata | None = None
     assays: dict[str, Assay] = Field(default_factory=dict)
 
