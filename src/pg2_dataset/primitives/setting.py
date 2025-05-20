@@ -1,6 +1,6 @@
-from typing import Any, Self
+from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -17,18 +17,9 @@ class Artifacts(BaseModel):
 class Records(BaseModel):
     sequence_feature: str | None = None
     engineering_round_feature: str | None = None
+    split_feature: str | None = None
 
     columns: list[str] = Field(default_factory=list)
-    schemas: list[str] = Field(default_factory=list)
-
-    @model_validator(mode="after")
-    def check_schemas_should_not_exist_without_columns(self) -> Self:
-        if self.schemas and not self.columns:
-            raise ValueError(
-                f"schemas {self.schemas} should not exist without columns."
-            )
-        else:
-            return self
 
 
 class Metadata(BaseModel):
