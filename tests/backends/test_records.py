@@ -282,7 +282,10 @@ class TestRecordsDataset:
             if round_idx == 1:
                 assert len(batch) == 2
 
-    # def test_initialize_records_dataset_from_toml(self, example_toml_file_path):
-    #     dataset = RecordsDataset(
-    #         toml_file=example_toml_file_path,
-    #     )
+    def test_initialize_records_dataset_from_toml(self, example_toml_file_path):
+        dataset = RecordsDataset(
+            toml_file=example_toml_file_path,
+        )
+
+        assert dataset.settings.artifacts.records == "records.csv"
+        assert dataset.settings.artifacts.structure == "structure.cif"
