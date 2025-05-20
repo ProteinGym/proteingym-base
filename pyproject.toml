@@ -39,9 +39,9 @@ python_functions = "test_*"
 
 [tool.ruff]
 line-length = 88
-ignore = ["N805"]
 
 [tool.ruff.lint]
+ignore = ["N805"]
 select = [
     "E", # pycodestyle errors
     "W", # pycodestyle warnings

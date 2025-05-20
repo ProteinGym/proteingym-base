@@ -17,8 +17,8 @@ from pydantic import (
 
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, RecordsMeta
 from pg2_dataset.primitives.record import Record
-from pg2_dataset.primitives.meta import RecordsMeta, ENGINEERING_ROUND, SEQUENCE, SPLIT
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
