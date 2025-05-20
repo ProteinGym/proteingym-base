@@ -2,11 +2,8 @@ import random
 
 import pandas as pd
 
-from pg2_dataset.splits.abstract_split_strategy import (
-    AbstractSplitStrategy,
-    split_name,
-)
-from pg2_dataset.primitives.setting import SEQUENCE
+from pg2_dataset.primitives.meta import SEQUENCE
+from pg2_dataset.splits.abstract_split_strategy import AbstractSplitStrategy, split_name
 
 
 class RandomSplitStrategy(AbstractSplitStrategy):

@@ -4,8 +4,8 @@ import polars as pl
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.backends.records import RecordsDataset, ENGINEERING_ROUND, SEQUENCE
-from pg2_dataset.primitives.setting import RecordsMeta
+from pg2_dataset.backends.records import ENGINEERING_ROUND, SEQUENCE, RecordsDataset
+from pg2_dataset.primitives.meta import RecordsMeta
 from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
 
