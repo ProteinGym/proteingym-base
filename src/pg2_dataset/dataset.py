@@ -48,7 +48,7 @@ class Dataset(BaseModel):
             # should have its path changed to local
             artifact_key = next(
                 art
-                for art, art_path in self.settings.artifacts
+                for art, art_path in self.dataset_meta.resources
                 if art_path == self.file_path
             )
             dataset_meta = self.settings.dict()
