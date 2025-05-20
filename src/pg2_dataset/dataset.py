@@ -17,6 +17,7 @@ class Dataset(BaseModel, ABC):
     @computed_field
     def settings(self) -> DatasetSettings | None:
         if self.toml_file:
-            return DatasetSettings(toml_file=self.toml_file)
+            DatasetSettings._toml_file = self.toml_file
+            return DatasetSettings()
         else:
             return None
