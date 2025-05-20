@@ -5,6 +5,7 @@ structure = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
 
 [records]
 columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"]
+sequence_feature = "mutated_sequence"
 
 [metadata]
 name = "project name"

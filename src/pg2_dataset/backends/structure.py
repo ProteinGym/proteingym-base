@@ -3,12 +3,12 @@ from functools import cached_property
 from pydantic import computed_field, model_validator
 from typing_extensions import Self
 
-from pg2_dataset.dataset import Dataset
+from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.io.bytes import read_bytes
 from pg2_dataset.primitives.structure import MMcifEntry, MMcifFile, MMcifTabular
 
 
-class StructureDataset(Dataset):
+class StructureDataset(AbstractDataset):
     @computed_field
     @cached_property
     def raw_lines(self) -> list[str]:

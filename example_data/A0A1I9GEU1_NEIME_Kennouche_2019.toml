@@ -6,7 +6,6 @@ structure = "/Users/vanderweg/Projects/PG2/pg2-dataset/example_data/v1/A0A1I9GEU
 [records]
 sequence_feature = "mutated_sequence"
 columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin", "split, "engineering_round"]
-schemas = ["pl.String", "pl.String", "pl.Float32", "pl.Float32"]
 
 # [metadata]
 # name = "project name"
