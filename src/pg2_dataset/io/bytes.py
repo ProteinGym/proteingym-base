@@ -29,6 +29,7 @@ def read_bytes(file_path: str) -> bytes:
         logger.error(exc)
         raise exc
 
+
 def write_bytes(stream, filename):
     with open(filename, "wb") as f:
         f.write(stream)

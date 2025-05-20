@@ -91,7 +91,7 @@ class TestRecordsDataset:
 
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=any_csv_file_path,
+            file_path=any_csv_file_path,
             sequence_feature="a_sequence",
             engineering_round_feature="round",
             columns=["a_sequence", "c", "round"],
@@ -106,13 +106,13 @@ class TestRecordsDataset:
     def test_sequence_feature_should_exist(self, good_csv_file_path):
         with pytest.raises(ValidationError):
             dataset = RecordsDataset(
-                records_file_path=good_csv_file_path,
+                file_path=good_csv_file_path,
             )
             print(dataset)
 
     def test_engineering_round_feature_should_exist(self, good_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=good_csv_file_path,
+            file_path=good_csv_file_path,
             sequence_feature="sequence",
         )
 
@@ -123,7 +123,7 @@ class TestRecordsDataset:
     def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
             dataset = RecordsDataset(
-                records_file_path=good_csv_file_path,
+                file_path=good_csv_file_path,
                 sequence_feature="sequence",
                 columns=["sequence", "c", "e"],
             )
@@ -131,7 +131,7 @@ class TestRecordsDataset:
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=good_csv_file_path,
+            file_path=good_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "c"],
         )
@@ -145,7 +145,7 @@ class TestRecordsDataset:
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=null_csv_file_path,
+            file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
         )
@@ -162,7 +162,7 @@ class TestRecordsDataset:
 
     def test_get_records_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=null_csv_file_path,
+            file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
         )
@@ -174,7 +174,7 @@ class TestRecordsDataset:
 
     def test_get_data_frame_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=null_csv_file_path,
+            file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
         )
@@ -186,7 +186,7 @@ class TestRecordsDataset:
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=null_csv_file_path,
+            file_path=null_csv_file_path,
             sequence_feature="sequence",
             columns=["sequence", "a", "b", "c"],
         )
@@ -200,7 +200,7 @@ class TestRecordsDataset:
 
     def test_split_data_frame_by_default_correctly(self, split_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=split_csv_file_path,
+            file_path=split_csv_file_path,
             sequence_feature="a_sequence",
             split_feature="a_split",
             columns=["a_sequence", "a", "b", "c", "a_split"],
@@ -215,7 +215,7 @@ class TestRecordsDataset:
 
     def test_split_data_frame_by_random_strategy_correctly(self, split_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=split_csv_file_path,
+            file_path=split_csv_file_path,
             sequence_feature="a_sequence",
             split_strategy=RandomSplitStrategy,
             split_strategy_kwargs={"train_ratio": 0.6, "valid_ratio": 0.2},
@@ -228,7 +228,7 @@ class TestRecordsDataset:
 
     def test_iter_by_rounds(self, split_csv_file_path):
         dataset = RecordsDataset(
-            records_file_path=split_csv_file_path,
+            file_path=split_csv_file_path,
             sequence_feature="a_sequence",
             engineering_round_feature="round",
             columns=["a_sequence", "a", "b", "c", "round"],

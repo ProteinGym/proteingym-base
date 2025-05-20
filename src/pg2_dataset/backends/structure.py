@@ -9,7 +9,6 @@ from pg2_dataset.primitives.structure import MMcifEntry, MMcifFile, MMcifTabular
 
 
 class StructureDataset(Dataset):
-
     @computed_field
     @cached_property
     def raw_lines(self) -> list[str]:
