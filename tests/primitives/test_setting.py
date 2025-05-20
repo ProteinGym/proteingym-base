@@ -6,7 +6,7 @@ from pg2_dataset.primitives.setting import DatasetSettings
 @pytest.fixture
 def example_toml():
     return """
-[artifacts]
+[resources]
 records = "records.csv"
 structure = "structure.cif"
 
@@ -50,8 +50,8 @@ class TestSetting:
         DatasetSettings._toml_file = example_toml_file_path
         settings = DatasetSettings()
 
-        assert settings.artifacts.records == "records.csv"
-        assert settings.artifacts.structure == "structure.cif"
+        assert settings.resources.records == "records.csv"
+        assert settings.resources.structure == "structure.cif"
 
     def test_get_assays_correctly(self, example_toml_file_path):
         DatasetSettings._toml_file = example_toml_file_path

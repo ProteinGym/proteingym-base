@@ -1,4 +1,4 @@
-[artifacts]
+[resources]
 records = "/Users/vanderweg/Projects/PG2/pg2-dataset/example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/substitutions_comb.csv"
 structure = "/Users/vanderweg/Projects/PG2/pg2-dataset/example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
 # msa = "data/msa.npy"

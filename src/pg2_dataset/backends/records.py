@@ -30,8 +30,6 @@ class RecordsDataset(Dataset):
     file_path: str = ""
     meta: RecordsMeta
 
-    columns: list[str] = Field(default_factory=list)
-
     split_strategy_kwargs: dict[str, Any] = Field(default_factory=dict)
     split_strategy: type[AbstractSplitStrategy] | None = None
 
@@ -137,10 +135,10 @@ class RecordsDataset(Dataset):
 
         elif (
             self.settings
-            and self.settings.artifacts
-            and self.settings.artifacts.records
+            and self.settings.resources
+            and self.settings.resources.records
         ):
-            self.file_path = self.settings.artifacts.records
+            self.file_path = self.settings.resources.records
             return self
 
         else:

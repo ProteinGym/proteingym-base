@@ -1,4 +1,4 @@
-[artifacts]
+[resources]
 records = "https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv"
 structure = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
 # msa = "data/msa.npy"

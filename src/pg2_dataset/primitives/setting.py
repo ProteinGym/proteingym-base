@@ -12,7 +12,7 @@ SEQUENCE = "sequence"
 SPLIT = "split"
 
 
-class Artifacts(BaseModel):
+class Resources(BaseModel):
     records: str | None = None
     structure: str | None = None
     msa: str | None = None
@@ -45,7 +45,7 @@ class Assay(BaseModel, extra="allow"):
 class DatasetSettings(BaseSettings):
     _toml_file: str | None = None
 
-    artifacts: Artifacts | None = None
+    resources: Resources | None = None
     records: RecordsMeta | None = None
     metadata: Metadata | None = None
     assays: dict[str, Assay] = Field(default_factory=dict)
