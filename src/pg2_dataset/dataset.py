@@ -1,7 +1,22 @@
-from pg2_dataset.backends.records import RecordsDataset
-from pg2_dataset.backends.structure import StructureDataset
+from abc import ABC
+
+from pydantic import BaseModel, computed_field
+
+from pg2_dataset.primitives.setting import DatasetSettings
 
 
-class Dataset:
-    records: RecordsDataset | None
-    structures: StructureDataset | None
+class Dataset(BaseModel, ABC):
+    toml_file: str | None = None
+
+    def to_zip(self) -> None:
+        raise NotImplementedError
+
+    def from_zip(self) -> None:
+        raise NotImplementedError
+
+    @computed_field
+    def settings(self) -> DatasetSettings | None:
+        if self.toml_file:
+            return DatasetSettings(toml_file=self.toml_file)
+        else:
+            return None

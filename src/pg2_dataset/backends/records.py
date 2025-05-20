@@ -15,7 +15,7 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.backends.abstract_dataset import AbstractDataset
+from pg2_dataset.dataset import Dataset
 from pg2_dataset.io.bytes import read_bytes
 from pg2_dataset.primitives.record import Record
 from pg2_dataset.splits.abstract_split_strategy import (
@@ -24,7 +24,7 @@ from pg2_dataset.splits.abstract_split_strategy import (
 )
 
 
-class RecordsDataset(AbstractDataset):
+class RecordsDataset(Dataset):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     records_file_path: str | None = None
