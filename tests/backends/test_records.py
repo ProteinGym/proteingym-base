@@ -52,6 +52,38 @@ def split_data():
 """
 
 
+@pytest.fixture
+def example_toml():
+    return """
+[artifacts]
+records = "records.csv"
+structure = "structure.cif"
+
+[records]
+sequence_feature = "feature1"
+columns = ["feature1", "feature2", "target1", "target2"]
+
+[metadata]
+name = "test_name"
+description = "test_description"
+doi = "test_doi"
+source = "test_source"
+
+[assays.assay_name_one]
+features = ["feature1", "feature2"]
+target = "target1"
+description = "lorem ipsum"
+[assays.assay_name_one.constants]
+key_one = "1"
+key_two = 2
+
+[assays.assay_name_two]
+features = ["feature1"]
+target = "target2"
+description = "dolor sit amet"
+"""
+
+
 class TestRecordsDataset:
     @pytest.fixture
     def good_csv_file_path(self, good_data, tmpdir):
@@ -86,6 +118,15 @@ class TestRecordsDataset:
 
         with open(file_path, "w") as file:
             file.write(split_data)
+
+        return str(file_path)
+
+    @pytest.fixture
+    def example_toml_file_path(self, example_toml, tmpdir):
+        file_path = tmpdir / "example.toml"
+
+        with open(file_path, "w") as file:
+            file.write(example_toml)
 
         return str(file_path)
 
@@ -240,3 +281,8 @@ class TestRecordsDataset:
 
             if round_idx == 1:
                 assert len(batch) == 2
+
+    # def test_initialize_records_dataset_from_toml(self, example_toml_file_path):
+    #     dataset = RecordsDataset(
+    #         toml_file=example_toml_file_path,
+    #     )
