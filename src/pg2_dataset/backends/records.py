@@ -27,7 +27,7 @@ from pg2_dataset.splits.abstract_split_strategy import (
 class RecordsDataset(Dataset):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    records_file_path: str | None = None
+    file_path: str | None = None
 
     sequence_feature: str | None = None
     engineering_round_feature: str | None = None
@@ -161,7 +161,7 @@ class RecordsDataset(Dataset):
 
     @model_validator(mode="after")
     def configure_records_file_path(self) -> Self:
-        if self.records_file_path:
+        if self.file_path:
             return self
 
         elif (
@@ -169,7 +169,7 @@ class RecordsDataset(Dataset):
             and self.settings.artifacts
             and self.settings.artifacts.records
         ):
-            self.records_file_path = self.settings.artifacts.records
+            self.file_path = self.settings.artifacts.records
             return self
 
         else:
@@ -328,7 +328,7 @@ class RecordsDataset(Dataset):
         return data
 
     def _from_csv(self) -> pl.DataFrame:
-        data_str = read_bytes(self.records_file_path).decode("utf-8")
+        data_str = read_bytes(self.file_path).decode("utf-8")
 
         if self.columns:
             data = pl.read_csv(io.StringIO(data_str), columns=self.columns)

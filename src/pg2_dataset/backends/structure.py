@@ -9,8 +9,6 @@ from pg2_dataset.primitives.structure import MMcifEntry, MMcifFile, MMcifTabular
 
 
 class StructureDataset(Dataset):
-    structure_file_path: str | None = None
-
     @computed_field
     @cached_property
     def raw_lines(self) -> list[str]:
@@ -34,7 +32,7 @@ class StructureDataset(Dataset):
 
     @model_validator(mode="after")
     def configure_structure_file_path(self) -> Self:
-        if self.structure_file_path:
+        if self.file_path:
             return self
 
         elif (
@@ -42,7 +40,7 @@ class StructureDataset(Dataset):
             and self.settings.artifacts
             and self.settings.artifacts.structure
         ):
-            self.structure_file_path = self.settings.artifacts.structure
+            self.file_path = self.settings.artifacts.structure
             return self
 
         else:
@@ -167,7 +165,7 @@ class StructureDataset(Dataset):
         return MMcifFile(key_value_pairs=key_value_pairs, tabular_data=tabular_data)
 
     def _from_cif(self) -> list[str]:
-        data_str = read_bytes(self.structure_file_path).decode("utf-8")
+        data_str = read_bytes(self.file_path).decode("utf-8")
         lines = [line.strip() for line in data_str.splitlines() if line.strip()]
 
         return lines
