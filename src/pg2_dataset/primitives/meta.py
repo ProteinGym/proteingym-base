@@ -36,7 +36,7 @@ class Metadata(BaseModel):
     xref: str = ""
 
 
-class DatasetSettings(BaseModel):
+class DatasetMeta(BaseModel):
     resources: Resources | None = None
     records: RecordsMeta | None = None
     metadata: Metadata | None = None

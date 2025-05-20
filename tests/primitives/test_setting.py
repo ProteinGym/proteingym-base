@@ -1,6 +1,6 @@
 import pytest
 
-from pg2_dataset.primitives.meta import DatasetSettings
+from pg2_dataset.primitives.meta import DatasetMeta
 
 
 @pytest.fixture
@@ -47,13 +47,13 @@ class TestSetting:
         return str(file_path)
 
     def test_get_resources_correctly(self, example_toml_file_path):
-        settings = DatasetSettings.parse_toml(example_toml_file_path)
+        settings = DatasetMeta.parse_toml(example_toml_file_path)
 
         assert settings.resources.records == "records.csv"
         assert settings.resources.structure == "structure.cif"
 
     def test_get_assays_correctly(self, example_toml_file_path):
-        settings = DatasetSettings.parse_toml(example_toml_file_path)
+        settings = DatasetMeta.parse_toml(example_toml_file_path)
 
         assert len(settings.records.assays) == 2
 
