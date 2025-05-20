@@ -27,11 +27,11 @@ from pg2_dataset.splits.abstract_split_strategy import (
 class RecordsDataset(Dataset):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    file_path: str | None = None
+    file_path: str = ""
 
-    sequence_feature: str | None = None
-    engineering_round_feature: str | None = None
-    split_feature: str | None = None
+    sequence_feature: str = SPLIT
+    engineering_round_feature: str = ENGINEERING_ROUND
+    split_feature: str = SPLIT
 
     columns: list[str] = Field(default_factory=list)
 
@@ -54,73 +54,46 @@ class RecordsDataset(Dataset):
     @cached_property
     def data_frame(self) -> pd.DataFrame:
         valid_data_frame = self._internal_data_frame.filter(
-            pl.col("sequence").is_not_null()
+            pl.col(SEQUENCE).is_not_null()
         )
 
         return valid_data_frame.to_pandas()
 
-    @computed_field
-    @cached_property
-    def train(self) -> pd.DataFrame:
+    def _get_split(self, split_name: TrainTestValid) -> pd.DataFrame:
         if self.split_strategy:
             return self._internal_data_frame.filter(
-                pl.col(self._strategy_name) == TrainTestValid.train
+                pl.col(self._strategy_name) == split_name
             ).to_pandas()
 
         elif self.split_feature:
             return self._internal_data_frame.filter(
-                pl.col("split") == TrainTestValid.train
+                pl.col(SPLIT) == split_name
             ).to_pandas()
 
         else:
-            logger.warn(
+            logger.warning(
                 "There is neither a split strategy nor a split column provided."
             )
             return self._internal_data_frame.head(0).to_pandas()
+
+    @computed_field
+    @cached_property
+    def train(self) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.train)
 
     @computed_field
     @cached_property
     def valid(self) -> pd.DataFrame:
-        if self.split_strategy:
-            return self._internal_data_frame.filter(
-                pl.col(self._strategy_name) == TrainTestValid.valid
-            ).to_pandas()
-
-        elif self.split_feature:
-            return self._internal_data_frame.filter(
-                pl.col("split") == TrainTestValid.valid
-            ).to_pandas()
-
-        else:
-            logger.warn(
-                "There is neither a split strategy nor a split column provided."
-            )
-            return self._internal_data_frame.head(0).to_pandas()
+        return self._get_split(TrainTestValid.valid)
 
     @computed_field
     @cached_property
     def test(self) -> pd.DataFrame:
-        if self.split_strategy:
-            return self._internal_data_frame.filter(
-                pl.col(self._strategy_name) == TrainTestValid.test
-            ).to_pandas()
-
-        elif self.split_feature:
-            return self._internal_data_frame.filter(
-                pl.col("split") == TrainTestValid.test
-            ).to_pandas()
-
-        else:
-            logger.warn(
-                "There is neither a split strategy nor a split column provided."
-            )
-            return self._internal_data_frame.head(0).to_pandas()
+        return self._get_split(TrainTestValid.test)
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         valid_data_frame = self._internal_data_frame.filter(
-            pl.all_horizontal(
-                [pl.col(col).is_not_null() for col in ["sequence", target]]
-            )
+            pl.all_horizontal([pl.col(col).is_not_null() for col in [SEQUENCE, target]])
         )
 
         return valid_data_frame.to_pandas()
@@ -140,7 +113,7 @@ class RecordsDataset(Dataset):
         """
 
         available_rounds = sorted(
-            self._internal_data_frame["engineering_round"].unique().to_list()
+            self._internal_data_frame[ENGINEERING_ROUND].unique().to_list()
         )
 
         if max_round:
@@ -148,9 +121,10 @@ class RecordsDataset(Dataset):
 
         for current_round in available_rounds:
             yield self._internal_data_frame.filter(
-                pl.col("engineering_round") == current_round
+                pl.col(ENGINEERING_ROUND) == current_round
             ).to_pandas()
 
+    @classmethod
     @field_validator("split_strategy", mode="before")
     def initialise_split_strategy(cls, v, info):
         if isinstance(v, type) and issubclass(v, AbstractSplitStrategy):
@@ -271,15 +245,13 @@ class RecordsDataset(Dataset):
         else:
             return self
 
-    def _to_records(
-        self,
-        data: pl.DataFrame,
-    ) -> list[Record]:
+    @staticmethod
+    def _to_records(data: pl.DataFrame) -> list[Record]:
         records = []
 
         for row in data.to_dicts():
             # skip null sequence in the data frame
-            if not row["sequence"]:
+            if not row[SEQUENCE]:
                 continue
 
             record = Record(**row)
@@ -294,13 +266,13 @@ class RecordsDataset(Dataset):
     def _rename_column(self, feature: str) -> str:
         match feature:
             case self.sequence_feature:
-                return "sequence"
+                return SEQUENCE
 
             case self.engineering_round_feature:
-                return "engineering_round"
+                return ENGINEERING_ROUND
 
             case self.split_feature:
-                return "split"
+                return SPLIT
 
             case _:
                 return feature
@@ -338,7 +310,7 @@ class RecordsDataset(Dataset):
         if data[self.sequence_feature].n_unique() != data.height:
             raise ValueError(f"The column `{self.sequence_feature}` should be unique.")
 
-        valid_split_values = [member.value for member in TrainTestValid]
+        valid_split_values = [member for member in TrainTestValid]
         if (
             self.split_feature
             and not data[self.split_feature].is_in(valid_split_values).all()
@@ -349,8 +321,8 @@ class RecordsDataset(Dataset):
 
         data = self._rename_columns(data)
 
-        if "engineering_round" not in data.columns:
-            data = data.with_columns(pl.lit(1).alias("engineering_round"))
+        if ENGINEERING_ROUND not in data.columns:
+            data = data.with_columns(pl.lit(1).alias(ENGINEERING_ROUND))
 
         self._internal_columns = data.columns
 
@@ -359,7 +331,7 @@ class RecordsDataset(Dataset):
             split_map = self.split_strategy.split(data.to_pandas())
 
             data = data.with_columns(
-                pl.col("sequence").replace_strict(split_map).alias(self._strategy_name)
+                pl.col(SEQUENCE).replace_strict(split_map).alias(self._strategy_name)
             )
 
         return data
