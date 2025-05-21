@@ -14,16 +14,12 @@ doi = "DOI: 10.1000/xyz123"
 source = "DOI: 10.1000/xyz123"
 xref = ""
 
-[assays.assay_name_one]
-features = ["feature1", "feature2"]
-target = "target1"
+[assays.DMS_score]
 description = "lorem ipsum"
 
-[assays.assay_name_one.constants]
+[assays.DMS_score.constants]
 key_one = "1"
 key_two = 2
 
-[assays.assay_name_two]
-features = ["feature1"]
-target = "target2"
+[assays.DMS_score_bin]
 description = "dolor sit amet"

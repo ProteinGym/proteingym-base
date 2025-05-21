@@ -11,12 +11,11 @@ from pg2_dataset.primitives.meta import DatasetMeta
 
 
 class Dataset(BaseModel):
-    toml_file: str | None = None
+    # FIXME: seems more natural to me to include this here
+    # dataset_meta: DatasetMeta
+    toml_file: str | None = None  # FIXME: why this property?
     records: RecordsDataset | None = None
     structure: StructureDataset | None = None
-
-    def to_zip(self) -> None:
-        raise NotImplementedError
 
     @classmethod
     def from_zip(cls, zip_file: Path | str) -> None:
@@ -37,7 +36,7 @@ class Dataset(BaseModel):
         else:
             return None
 
-    def to_zip(self, filename) -> None:  # noqa: F811
+    def to_zip(self, filename) -> None:
         with tempfile.TemporaryDirectory() as tmpdirname:
             # reading artifact file and placing in temp dir
             stream = read_bytes(self.file_path)

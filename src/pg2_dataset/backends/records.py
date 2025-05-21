@@ -11,7 +11,6 @@ from pydantic import (
     PrivateAttr,
     computed_field,
     field_validator,
-    model_validator,
 )
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
@@ -125,43 +124,6 @@ class RecordsDataset(AbstractDataset):
             return v(**kwargs)
 
         return v
-
-    @model_validator(mode="after")
-    def check_sequence_should_be_in_columns(self) -> Self:
-        if (
-            self.meta.sequence_feature
-            and self.meta.columns
-            and self.meta.sequence_feature not in set(self.meta.columns)
-        ):
-            raise ValueError(
-                f"sequence {self.meta.sequence_feature} should exist in "
-                f"{self.meta.columns}."
-            )
-        else:
-            return self
-
-    @model_validator(mode="after")
-    def check_engineering_round_should_be_in_columns(self) -> Self:
-        if (
-            self.meta.engineering_round_feature
-            and self.meta.columns
-            and self.meta.engineering_round_feature not in set(self.meta.columns)
-        ):
-            raise ValueError(
-                f"engineering round {self.engineering_round_feature} should exist in"
-                f" {self.columns}."
-            )
-        else:
-            return self
-
-    @model_validator(mode="after")
-    def check_columns_should_be_unique(self) -> Self:
-        if self.meta.columns and len(list(set(self.meta.columns))) != len(
-            self.meta.columns
-        ):
-            raise ValueError(f"columns {self.columns} have duplicate column names.")
-        else:
-            return self
 
     @staticmethod
     def _to_records(data: pl.DataFrame) -> list[Record]:
