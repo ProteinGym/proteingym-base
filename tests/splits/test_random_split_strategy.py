@@ -11,7 +11,7 @@ class TestRandomSplitStrategy:
     def fake_dataset(self):
         """Create a fake dataset with sequence and task columns"""
         sequences = [f"seq_{i}" for i in range(200)]
-        # repeat sequences to test overlap and uniquenss
+        # repeat sequences to test overlap and uniqueness
         data = pd.DataFrame({"sequence": np.repeat(sequences, 3), "task": "DMS_score"})
 
         return data
@@ -20,7 +20,7 @@ class TestRandomSplitStrategy:
     def data_with_split(self, fake_dataset):
         data = fake_dataset
         strategy = RandomSplitStrategy(train_ratio=0.5, valid_ratio=0.3)
-        split_map = strategy.split(data)
+        split_map = strategy.split(data, target="task", round_num=0)
         data["split"] = data["sequence"].map(split_map)
         return data
 
@@ -38,12 +38,27 @@ class TestRandomSplitStrategy:
         strategy = RandomSplitStrategy(
             train_ratio=0.5, valid_ratio=0.5, fixed_test_sequences=list(fixed_test)
         )
-        split_map = strategy.split(data)
+        split_map = strategy.split(data, target="task", round_num=0)
         for seq in data.sequence.unique():
             if seq in fixed_test:
-                assert split_map[seq] == TrainTestValid.test.value
+                assert (
+                    split_map[
+                        strategy.split_key(
+                            sequence=seq,
+                            round_num=0,
+                            target="task",
+                        )
+                    ]
+                    == TrainTestValid.test.value
+                )
             else:
-                assert split_map[seq] in {
+                assert split_map[
+                    strategy.split_key(
+                        sequence=seq,
+                        round_num=0,
+                        target="task",
+                    )
+                ] in {
                     TrainTestValid.valid.value,
                     TrainTestValid.train.value,
                 }

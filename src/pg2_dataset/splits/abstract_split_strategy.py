@@ -6,7 +6,7 @@ from typing import Collection, NamedTuple
 
 import pandas as pd
 
-from pg2_dataset.backends.records import SEQUENCE
+from pg2_dataset.primitives.split_key import SplitKey
 
 
 class TrainTestValid(StrEnum):
@@ -55,18 +55,34 @@ class AbstractSplitStrategy(ABC):
         return SplitSizes(n_train, n_valid, n - n_train - n_valid)
 
     @abstractmethod
-    def create_split_map(self, data: pd.DataFrame, target: str) -> dict[str, str]:
-        ...
+    def create_split_map(
+        self, data: pd.DataFrame, target: str, round_num: int
+    ) -> dict[SplitKey, str]: ...
 
-    def split(self, data: pd.DataFrame, target: str | None = None) -> dict[str, str]:
+    def split_key(self, sequence: str, target: str, round_num: int) -> SplitKey:
+        return SplitKey(
+            sequence=sequence,
+            target=target,
+            round_num=round_num,
+            strategy_name=self.__class__.__name__,
+        )
+
+    def split(
+        self, data: pd.DataFrame, target: str, round_num: int
+    ) -> dict[SplitKey, str]:
         if self.random_seed:
             random.seed(self.random_seed)
-        if not target:
-            target = next(c for c in data.columns if c != SEQUENCE)
-        test = dict.fromkeys(self.fixed_test_sequences, TrainTestValid.test.value)
+        test = {
+            self.split_key(
+                sequence=s, target=target, round_num=round_num
+            ): TrainTestValid.test
+            for s in self.fixed_test_sequences
+        }
         return {
             **test,
             **self.create_split_map(
-                data.loc[lambda d: ~d.sequence.isin(self.fixed_test_sequences)], target
+                data.loc[lambda d: ~d.sequence.isin(self.fixed_test_sequences)],
+                target,
+                round_num,
             ),
         }
