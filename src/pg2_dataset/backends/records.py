@@ -6,8 +6,8 @@ from typing import Generator, Self
 import pandas as pd
 import polars as pl
 from pydantic import (
-    Field,
     ConfigDict,
+    Field,
     PrivateAttr,
     computed_field,
 )
