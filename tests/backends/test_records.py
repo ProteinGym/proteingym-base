@@ -220,9 +220,9 @@ class TestRecordsDataset:
         )
 
         assert len(dataset.data_frame) == 4
-        assert (
-            len(dataset.data_frame.columns) == 5
-        ), "there are 4 selected columns and 1 engineering round column"
+        assert len(dataset.data_frame.columns) == 5, (
+            "there are 4 selected columns and 1 engineering round column"
+        )
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
@@ -233,9 +233,9 @@ class TestRecordsDataset:
         data_frame_by_target = dataset.data_frame_by_target("c")
 
         assert len(data_frame_by_target) == 3
-        assert (
-            len(data_frame_by_target.columns) == 5
-        ), "there are 4 selected columns and 1 engineering round column"
+        assert len(data_frame_by_target.columns) == 5, (
+            "there are 4 selected columns and 1 engineering round column"
+        )
 
     def test_split_data_frame_by_default_correctly(self, split_csv_file_path):
         dataset = RecordsDataset(
@@ -257,8 +257,7 @@ class TestRecordsDataset:
     def test_split_data_frame_by_random_strategy_correctly(self, split_csv_file_path):
         dataset = RecordsDataset(
             file_path=split_csv_file_path,
-            split_strategy=RandomSplitStrategy,
-            split_strategy_kwargs={"train_ratio": 0.6, "valid_ratio": 0.2},
+            split_strategy=RandomSplitStrategy(train_ratio=0.6, valid_ratio=0.2),
             meta=RecordsMeta(
                 sequence_feature="a_sequence",
                 columns=["a_sequence", "a", "b", "c", "a_split"],

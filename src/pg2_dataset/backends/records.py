@@ -1,14 +1,13 @@
 import io
 import uuid
 from functools import cached_property
-from typing import Any, Generator, Self
+from typing import Generator, Self
 
 import pandas as pd
 import polars as pl
 from loguru import logger
 from pydantic import (
     ConfigDict,
-    Field,
     PrivateAttr,
     computed_field,
     field_validator,
@@ -30,8 +29,7 @@ class RecordsDataset(AbstractDataset):
 
     meta: RecordsMeta
 
-    split_strategy_kwargs: dict[str, Any] = Field(default_factory=dict)
-    split_strategy: type[AbstractSplitStrategy] | None = None
+    split_strategy: AbstractSplitStrategy | None = None
 
     _strategy_name: str = PrivateAttr()
     _internal_columns: list[str] = PrivateAttr(default_factory=list)
@@ -251,10 +249,8 @@ class RecordsDataset(AbstractDataset):
         self._internal_columns = data.columns
 
         if self.split_strategy:
-            self._strategy_name = self.split_strategy.__name__
-            split_map = self.split_strategy(**self.split_strategy_kwargs).split(
-                data.to_pandas()
-            )
+            self._strategy_name = self.split_strategy.__class__.__name__
+            split_map = self.split_strategy.split(data.to_pandas())
 
             data = data.with_columns(
                 pl.col(SEQUENCE).replace_strict(split_map).alias(self._strategy_name)
