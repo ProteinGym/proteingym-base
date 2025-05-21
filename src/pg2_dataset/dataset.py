@@ -1,29 +1,39 @@
 import tempfile
-from abc import ABC
 from pathlib import Path
+from typing import Self
 
 from pydantic import BaseModel, computed_field
 
+from pg2_dataset.backends import RecordsDataset, StructureDataset
 from pg2_dataset.io.bytes import read_bytes, write_bytes
 from pg2_dataset.io.utils import export_toml, zip_from_dir
-from pg2_dataset.primitives.setting import DatasetSettings
+from pg2_dataset.primitives.meta import DatasetMeta
 
 
-class Dataset(BaseModel, ABC):
+class Dataset(BaseModel):
     toml_file: str | None = None
-    file_path: str | None = None
+    records: RecordsDataset | None = None
+    structure: StructureDataset | None = None
 
     def to_zip(self) -> None:
         raise NotImplementedError
 
-    def from_zip(self) -> None:
+    @classmethod
+    def from_zip(cls, zip_file: Path | str) -> None:
         raise NotImplementedError
 
+    @classmethod
+    def from_toml(cls, toml_file: Path | str) -> Self:
+        meta = DatasetMeta.parse_toml(toml_file)
+        return cls(
+            toml_file=toml_file,
+            records=RecordsDataset(file_path=meta.resources.records, meta=meta.records),
+        )
+
     @computed_field
-    def settings(self) -> DatasetSettings | None:
+    def dataset_meta(self) -> DatasetMeta | None:
         if self.toml_file:
-            DatasetSettings._toml_file = self.toml_file
-            return DatasetSettings()
+            return DatasetMeta.parse_toml(self.toml_file)
         else:
             return None
 
@@ -38,13 +48,13 @@ class Dataset(BaseModel, ABC):
             # should have its path changed to local
             artifact_key = next(
                 art
-                for art, art_path in self.settings.artifacts
+                for art, art_path in self.dataset_meta.resources
                 if art_path == self.file_path
             )
-            settings = self.settings.dict()
-            settings["artifacts"][artifact_key] = Path(self.file_path).name
+            dataset_meta = self.settings.dict()
+            dataset_meta["resources"][artifact_key] = Path(self.file_path).name
 
             path = Path(tmpdirname) / "dataset.toml"
-            export_toml(settings, path)
+            export_toml(dataset_meta, path)
 
             zip_from_dir(tmpdirname, filename)

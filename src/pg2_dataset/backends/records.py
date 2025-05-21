@@ -1,22 +1,22 @@
 import io
 import uuid
 from functools import cached_property
-from typing import Any, Generator, Self
+from typing import Generator, Self
 
 import pandas as pd
 import polars as pl
 from loguru import logger
 from pydantic import (
     ConfigDict,
-    Field,
     PrivateAttr,
     computed_field,
     field_validator,
     model_validator,
 )
 
-from pg2_dataset.dataset import Dataset
+from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, RecordsMeta
 from pg2_dataset.primitives.record import Record
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
@@ -24,18 +24,11 @@ from pg2_dataset.splits.abstract_split_strategy import (
 )
 
 
-class RecordsDataset(Dataset):
+class RecordsDataset(AbstractDataset):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    file_path: str | None = None
+    meta: RecordsMeta
 
-    sequence_feature: str | None = None
-    engineering_round_feature: str | None = None
-    split_feature: str | None = None
-
-    columns: list[str] = Field(default_factory=list)
-
-    split_strategy_kwargs: dict[str, Any] = Field(default_factory=dict)
     split_strategy: AbstractSplitStrategy | None = None
 
     _strategy_name: str = PrivateAttr()
@@ -54,73 +47,46 @@ class RecordsDataset(Dataset):
     @cached_property
     def data_frame(self) -> pd.DataFrame:
         valid_data_frame = self._internal_data_frame.filter(
-            pl.col("sequence").is_not_null()
+            pl.col(SEQUENCE).is_not_null()
         )
 
         return valid_data_frame.to_pandas()
 
-    @computed_field
-    @cached_property
-    def train(self) -> pd.DataFrame:
+    def _get_split(self, split_name: TrainTestValid) -> pd.DataFrame:
         if self.split_strategy:
             return self._internal_data_frame.filter(
-                pl.col(self._strategy_name) == TrainTestValid.train
+                pl.col(self._strategy_name) == split_name
             ).to_pandas()
 
-        elif self.split_feature:
+        elif self.meta.split_feature:
             return self._internal_data_frame.filter(
-                pl.col("split") == TrainTestValid.train
+                pl.col(SPLIT) == split_name
             ).to_pandas()
 
         else:
-            logger.warn(
+            logger.warning(
                 "There is neither a split strategy nor a split column provided."
             )
             return self._internal_data_frame.head(0).to_pandas()
+
+    @computed_field
+    @cached_property
+    def train(self) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.train)
 
     @computed_field
     @cached_property
     def valid(self) -> pd.DataFrame:
-        if self.split_strategy:
-            return self._internal_data_frame.filter(
-                pl.col(self._strategy_name) == TrainTestValid.valid
-            ).to_pandas()
-
-        elif self.split_feature:
-            return self._internal_data_frame.filter(
-                pl.col("split") == TrainTestValid.valid
-            ).to_pandas()
-
-        else:
-            logger.warn(
-                "There is neither a split strategy nor a split column provided."
-            )
-            return self._internal_data_frame.head(0).to_pandas()
+        return self._get_split(TrainTestValid.valid)
 
     @computed_field
     @cached_property
     def test(self) -> pd.DataFrame:
-        if self.split_strategy:
-            return self._internal_data_frame.filter(
-                pl.col(self._strategy_name) == TrainTestValid.test
-            ).to_pandas()
-
-        elif self.split_feature:
-            return self._internal_data_frame.filter(
-                pl.col("split") == TrainTestValid.test
-            ).to_pandas()
-
-        else:
-            logger.warn(
-                "There is neither a split strategy nor a split column provided."
-            )
-            return self._internal_data_frame.head(0).to_pandas()
+        return self._get_split(TrainTestValid.test)
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         valid_data_frame = self._internal_data_frame.filter(
-            pl.all_horizontal(
-                [pl.col(col).is_not_null() for col in ["sequence", target]]
-            )
+            pl.all_horizontal([pl.col(col).is_not_null() for col in [SEQUENCE, target]])
         )
 
         return valid_data_frame.to_pandas()
@@ -140,7 +106,7 @@ class RecordsDataset(Dataset):
         """
 
         available_rounds = sorted(
-            self._internal_data_frame["engineering_round"].unique().to_list()
+            self._internal_data_frame[ENGINEERING_ROUND].unique().to_list()
         )
 
         if max_round:
@@ -148,9 +114,10 @@ class RecordsDataset(Dataset):
 
         for current_round in available_rounds:
             yield self._internal_data_frame.filter(
-                pl.col("engineering_round") == current_round
+                pl.col(ENGINEERING_ROUND) == current_round
             ).to_pandas()
 
+    @classmethod
     @field_validator("split_strategy", mode="before")
     def initialise_split_strategy(cls, v, info):
         if isinstance(v, type) and issubclass(v, AbstractSplitStrategy):
@@ -160,92 +127,15 @@ class RecordsDataset(Dataset):
         return v
 
     @model_validator(mode="after")
-    def configure_records_file_path(self) -> Self:
-        if self.file_path:
-            return self
-
-        elif (
-            self.settings
-            and self.settings.artifacts
-            and self.settings.artifacts.records
-        ):
-            self.file_path = self.settings.artifacts.records
-            return self
-
-        else:
-            raise ValueError("No records file path provided.")
-
-    @model_validator(mode="after")
-    def configure_sequence_feature(self) -> Self:
-        if self.sequence_feature:
-            return self
-
-        elif (
-            self.settings
-            and self.settings.records
-            and self.settings.records.sequence_feature
-        ):
-            self.sequence_feature = self.settings.records.sequence_feature
-            return self
-
-        else:
-            raise ValueError("No sequence feature provided.")
-
-    @model_validator(mode="after")
-    def configure_engineering_round_feature(self) -> Self:
-        if self.engineering_round_feature:
-            return self
-
-        elif (
-            self.settings
-            and self.settings.records
-            and self.settings.records.engineering_round_feature
-        ):
-            self.engineering_round_feature = (
-                self.settings.records.engineering_round_feature
-            )
-            return self
-
-        else:
-            return self
-
-    @model_validator(mode="after")
-    def configure_split_feature(self) -> Self:
-        if self.split_feature:
-            return self
-
-        elif (
-            self.settings
-            and self.settings.records
-            and self.settings.records.split_feature
-        ):
-            self.split_feature = self.settings.records.split_feature
-            return self
-
-        else:
-            return self
-
-    @model_validator(mode="after")
-    def configure_columns(self) -> Self:
-        if self.columns:
-            return self
-
-        elif self.settings and self.settings.records and self.settings.records.columns:
-            self.columns = self.settings.records.columns
-            return self
-
-        else:
-            return self
-
-    @model_validator(mode="after")
     def check_sequence_should_be_in_columns(self) -> Self:
         if (
-            self.sequence_feature
-            and self.columns
-            and self.sequence_feature not in set(self.columns)
+            self.meta.sequence_feature
+            and self.meta.columns
+            and self.meta.sequence_feature not in set(self.meta.columns)
         ):
             raise ValueError(
-                f"sequence {self.sequence_feature} should exist in {self.columns}."
+                f"sequence {self.meta.sequence_feature} should exist in "
+                f"{self.meta.columns}."
             )
         else:
             return self
@@ -253,9 +143,9 @@ class RecordsDataset(Dataset):
     @model_validator(mode="after")
     def check_engineering_round_should_be_in_columns(self) -> Self:
         if (
-            self.engineering_round_feature
-            and self.columns
-            and self.engineering_round_feature not in set(self.columns)
+            self.meta.engineering_round_feature
+            and self.meta.columns
+            and self.meta.engineering_round_feature not in set(self.meta.columns)
         ):
             raise ValueError(
                 f"engineering round {self.engineering_round_feature} should exist in"
@@ -266,20 +156,20 @@ class RecordsDataset(Dataset):
 
     @model_validator(mode="after")
     def check_columns_should_be_unique(self) -> Self:
-        if self.columns and len(list(set(self.columns))) != len(self.columns):
+        if self.meta.columns and len(list(set(self.meta.columns))) != len(
+            self.meta.columns
+        ):
             raise ValueError(f"columns {self.columns} have duplicate column names.")
         else:
             return self
 
-    def _to_records(
-        self,
-        data: pl.DataFrame,
-    ) -> list[Record]:
+    @staticmethod
+    def _to_records(data: pl.DataFrame) -> list[Record]:
         records = []
 
         for row in data.to_dicts():
             # skip null sequence in the data frame
-            if not row["sequence"]:
+            if not row[SEQUENCE]:
                 continue
 
             record = Record(**row)
@@ -293,36 +183,40 @@ class RecordsDataset(Dataset):
 
     def _rename_column(self, feature: str) -> str:
         match feature:
-            case self.sequence_feature:
-                return "sequence"
+            case self.meta.sequence_feature:
+                return SEQUENCE
 
-            case self.engineering_round_feature:
-                return "engineering_round"
+            case self.meta.engineering_round_feature:
+                return ENGINEERING_ROUND
 
-            case self.split_feature:
-                return "split"
+            case self.meta.split_feature:
+                return SPLIT
 
             case _:
                 return feature
 
     def _rename_columns(self, data: pl.DataFrame) -> pl.DataFrame:
-        if self.sequence_feature:
-            data = data.rename(
-                {self.sequence_feature: self._rename_column(self.sequence_feature)}
-            )
-
-        if self.engineering_round_feature:
+        if self.meta.sequence_feature:
             data = data.rename(
                 {
-                    self.engineering_round_feature: self._rename_column(
-                        self.engineering_round_feature
+                    self.meta.sequence_feature: self._rename_column(
+                        self.meta.sequence_feature
                     )
                 }
             )
 
-        if self.split_feature:
+        if self.meta.engineering_round_feature:
             data = data.rename(
-                {self.split_feature: self._rename_column(self.split_feature)}
+                {
+                    self.meta.engineering_round_feature: self._rename_column(
+                        self.meta.engineering_round_feature
+                    )
+                }
+            )
+
+        if self.meta.split_feature:
+            data = data.rename(
+                {self.meta.split_feature: self._rename_column(self.meta.split_feature)}
             )
 
         return data
@@ -330,18 +224,18 @@ class RecordsDataset(Dataset):
     def _from_csv(self) -> pl.DataFrame:
         data_str = read_bytes(self.file_path).decode("utf-8")
 
-        if self.columns:
-            data = pl.read_csv(io.StringIO(data_str), columns=self.columns)
+        if self.meta.columns:
+            data = pl.read_csv(io.StringIO(data_str), columns=self.meta.columns)
         else:
             data = pl.read_csv(io.StringIO(data_str))
 
-        if data[self.sequence_feature].n_unique() != data.height:
+        if data[self.meta.sequence_feature].n_unique() != data.height:
             raise ValueError(f"The column `{self.sequence_feature}` should be unique.")
 
-        valid_split_values = [member.value for member in TrainTestValid]
+        valid_split_values = [member for member in TrainTestValid]
         if (
-            self.split_feature
-            and not data[self.split_feature].is_in(valid_split_values).all()
+            self.meta.split_feature
+            and not data[self.meta.split_feature].is_in(valid_split_values).all()
         ):
             raise ValueError(
                 f"Split values must be one of: {', '.join(valid_split_values)}"
@@ -349,8 +243,8 @@ class RecordsDataset(Dataset):
 
         data = self._rename_columns(data)
 
-        if "engineering_round" not in data.columns:
-            data = data.with_columns(pl.lit(1).alias("engineering_round"))
+        if ENGINEERING_ROUND not in data.columns:
+            data = data.with_columns(pl.lit(1).alias(ENGINEERING_ROUND))
 
         self._internal_columns = data.columns
 
@@ -359,7 +253,7 @@ class RecordsDataset(Dataset):
             split_map = self.split_strategy.split(data.to_pandas())
 
             data = data.with_columns(
-                pl.col("sequence").replace_strict(split_map).alias(self._strategy_name)
+                pl.col(SEQUENCE).replace_strict(split_map).alias(self._strategy_name)
             )
 
         return data

@@ -4,7 +4,8 @@ import polars as pl
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.backends.records import RecordsDataset
+from pg2_dataset.backends.records import ENGINEERING_ROUND, SEQUENCE, RecordsDataset
+from pg2_dataset.primitives.meta import RecordsMeta
 from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
 
@@ -133,31 +134,34 @@ class TestRecordsDataset:
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
         dataset = RecordsDataset(
             file_path=any_csv_file_path,
-            sequence_feature="a_sequence",
-            engineering_round_feature="round",
-            columns=["a_sequence", "c", "round"],
+            meta=RecordsMeta(
+                sequence_feature="a_sequence",
+                engineering_round_feature="round",
+                columns=["a_sequence", "c", "round"],
+            ),
         )
 
-        assert "sequence" in dataset.data_frame.columns.to_list()
+        assert SEQUENCE in dataset.data_frame.columns.to_list()
         assert "a_sequence" not in dataset.data_frame.columns.to_list()
 
-        assert "engineering_round" in dataset.data_frame.columns.to_list()
+        assert ENGINEERING_ROUND in dataset.data_frame.columns.to_list()
         assert "round" not in dataset.data_frame.columns.to_list()
 
     def test_sequence_feature_should_exist(self, good_csv_file_path):
         with pytest.raises(ValidationError):
             dataset = RecordsDataset(
                 file_path=good_csv_file_path,
+                meta=RecordsMeta(sequence_feature=""),
             )
             print(dataset)
 
     def test_engineering_round_feature_should_exist(self, good_csv_file_path):
         dataset = RecordsDataset(
             file_path=good_csv_file_path,
-            sequence_feature="sequence",
+            meta=RecordsMeta(),
         )
 
-        assert "engineering_round" in dataset.data_frame.columns.to_list()
+        assert ENGINEERING_ROUND in dataset.data_frame.columns.to_list()
         for record in dataset.records:
             assert record.engineering_round == 1
 
@@ -165,16 +169,14 @@ class TestRecordsDataset:
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
             dataset = RecordsDataset(
                 file_path=good_csv_file_path,
-                sequence_feature="sequence",
-                columns=["sequence", "c", "e"],
+                meta=RecordsMeta(columns=["sequence", "c", "e"]),
             )
             print(dataset)
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
         dataset = RecordsDataset(
             file_path=good_csv_file_path,
-            sequence_feature="sequence",
-            columns=["sequence", "c"],
+            meta=RecordsMeta(columns=["sequence", "c"]),
         )
 
         assert dataset.data_frame is not None, "dataset.data_frame is None."
@@ -187,8 +189,7 @@ class TestRecordsDataset:
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            sequence_feature="sequence",
-            columns=["sequence", "a", "b", "c"],
+            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
         )
 
         assert dataset._internal_data_frame.select(pl.all().is_null().sum()).to_dicts()[
@@ -197,15 +198,14 @@ class TestRecordsDataset:
             "a": 2,
             "b": 1,
             "c": 1,
-            "sequence": 1,
-            "engineering_round": 0,
+            SEQUENCE: 1,
+            ENGINEERING_ROUND: 0,
         }
 
     def test_get_records_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            sequence_feature="sequence",
-            columns=["sequence", "a", "b", "c"],
+            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
         )
 
         assert len(dataset.records) == 4
@@ -216,8 +216,7 @@ class TestRecordsDataset:
     def test_get_data_frame_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            sequence_feature="sequence",
-            columns=["sequence", "a", "b", "c"],
+            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
         )
 
         assert len(dataset.data_frame) == 4
@@ -228,8 +227,7 @@ class TestRecordsDataset:
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            sequence_feature="sequence",
-            columns=["sequence", "a", "b", "c"],
+            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
         )
 
         data_frame_by_target = dataset.data_frame_by_target("c")
@@ -242,9 +240,11 @@ class TestRecordsDataset:
     def test_split_data_frame_by_default_correctly(self, split_csv_file_path):
         dataset = RecordsDataset(
             file_path=split_csv_file_path,
-            sequence_feature="a_sequence",
-            split_feature="a_split",
-            columns=["a_sequence", "a", "b", "c", "a_split"],
+            meta=RecordsMeta(
+                sequence_feature="a_sequence",
+                split_feature="a_split",
+                columns=["a_sequence", "a", "b", "c", "a_split"],
+            ),
         )
 
         assert "split" in dataset.data_frame.columns.to_list()
@@ -257,10 +257,11 @@ class TestRecordsDataset:
     def test_split_data_frame_by_random_strategy_correctly(self, split_csv_file_path):
         dataset = RecordsDataset(
             file_path=split_csv_file_path,
-            sequence_feature="a_sequence",
-            split_strategy=RandomSplitStrategy,
-            split_strategy_kwargs={"train_ratio": 0.6, "valid_ratio": 0.2},
-            columns=["a_sequence", "a", "b", "c", "a_split"],
+            split_strategy=RandomSplitStrategy(train_ratio=0.6, valid_ratio=0.2),
+            meta=RecordsMeta(
+                sequence_feature="a_sequence",
+                columns=["a_sequence", "a", "b", "c", "a_split"],
+            ),
         )
 
         assert len(dataset.train) == 3
@@ -270,9 +271,11 @@ class TestRecordsDataset:
     def test_iter_by_rounds(self, split_csv_file_path):
         dataset = RecordsDataset(
             file_path=split_csv_file_path,
-            sequence_feature="a_sequence",
-            engineering_round_feature="round",
-            columns=["a_sequence", "a", "b", "c", "round"],
+            meta=RecordsMeta(
+                sequence_feature="a_sequence",
+                engineering_round_feature="round",
+                columns=["a_sequence", "a", "b", "c", "round"],
+            ),
         )
 
         for round_idx, batch in enumerate(dataset.iter_by_rounds()):
@@ -281,11 +284,3 @@ class TestRecordsDataset:
 
             if round_idx == 1:
                 assert len(batch) == 2
-
-    def test_initialize_records_dataset_from_toml(self, example_toml_file_path):
-        dataset = RecordsDataset(
-            toml_file=example_toml_file_path,
-        )
-
-        assert dataset.settings.artifacts.records == "records.csv"
-        assert dataset.settings.artifacts.structure == "structure.cif"
