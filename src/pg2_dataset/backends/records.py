@@ -158,28 +158,13 @@ class RecordsDataset(AbstractDataset):
                 return feature
 
     def _rename_columns(self, data: pl.DataFrame) -> pl.DataFrame:
-        if self.meta.sequence_feature:
-            data = data.rename(
-                {
-                    self.meta.sequence_feature: self._rename_column(
-                        self.meta.sequence_feature
-                    )
-                }
-            )
-
-        if self.meta.engineering_round_feature:
-            data = data.rename(
-                {
-                    self.meta.engineering_round_feature: self._rename_column(
-                        self.meta.engineering_round_feature
-                    )
-                }
-            )
-
-        if self.meta.split_feature:
-            data = data.rename(
-                {self.meta.split_feature: self._rename_column(self.meta.split_feature)}
-            )
+        for feature in [
+            self.meta.sequence_feature,
+            self.meta.engineering_round_feature,
+            self.meta.split_feature,
+        ]:
+            if feature:
+                data = data.rename({feature: self._rename_column(feature)})
 
         return data
 
