@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 from typing import Self
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel
 
 from pg2_dataset.backends import RecordsDataset, StructureDataset
 from pg2_dataset.io.bytes import read_bytes, write_bytes
@@ -26,13 +26,6 @@ class Dataset(BaseModel):
             meta=meta,
             records=RecordsDataset(file_path=meta.resources.records, meta=meta.records),
         )
-
-    @computed_field
-    def dataset_meta(self) -> DatasetMeta | None:
-        if self.toml_file:
-            return DatasetMeta.parse_toml(self.toml_file)
-        else:
-            return None
 
     def to_zip(self, filename) -> None:
         with tempfile.TemporaryDirectory() as tmpdirname:
