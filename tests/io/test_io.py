@@ -13,8 +13,13 @@ msa = "data/msa.npy"
 
 [records]
 sequence_feature = "mutated_sequence"
-columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"]
-schemas = ["pl.String", "pl.String", "pl.Float32", "pl.Float32"]
+columns = [
+    "mutated_sequence",
+    "mutant",
+    "DMS_score",
+    "DMS_score_bin",
+    "engineering_round"
+]
 
 
 [metadata]
@@ -29,7 +34,7 @@ xref = ""
 class TestIO:
     def test_records_zip(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            path_to_toml = "./dataset_test.toml"
+            path_to_toml = f"{tmpdir}/dataset.toml"
             with open(path_to_toml, "w") as f:
                 f.write(mock_toml_file_contents())
             dataset = RecordsDataset(toml_file=path_to_toml)
