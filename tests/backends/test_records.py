@@ -222,9 +222,9 @@ class TestRecordsDataset:
         assert "split" in dataset.data_frame.columns.to_list()
         assert "a_split" not in dataset.data_frame.columns.to_list()
 
-        assert len(dataset.train) == 2
-        assert len(dataset.valid) == 1
-        assert len(dataset.test) == 2
+        assert len(dataset.train()) == 2
+        assert len(dataset.valid()) == 1
+        assert len(dataset.test()) == 2
 
     def test_add_split_by__random_strategy(self, split_csv_file_path):
         dataset = RecordsDataset(
@@ -238,9 +238,9 @@ class TestRecordsDataset:
         dataset.add_split(
             RandomSplitStrategy(train_ratio=0.6, valid_ratio=0.2),
         )
-        assert len(dataset.train) == 3
-        assert len(dataset.valid) == 1
-        assert len(dataset.test) == 1
+        assert len(dataset.train()) == 3
+        assert len(dataset.valid()) == 1
+        assert len(dataset.test()) == 1
 
     def test_iter_by_rounds(self, split_csv_file_path):
         dataset = RecordsDataset(

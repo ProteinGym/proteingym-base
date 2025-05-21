@@ -1,16 +1,12 @@
 import io
 import uuid
 from functools import cached_property
+from itertools import chain
 from typing import Generator, Self
 
 import pandas as pd
 import polars as pl
-from pydantic import (
-    ConfigDict,
-    Field,
-    PrivateAttr,
-    computed_field,
-)
+from pydantic import ConfigDict, Field, PrivateAttr, computed_field
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.io.bytes import read_bytes
@@ -21,6 +17,8 @@ from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
 )
+
+ALL_TARGETS = "_all_"
 
 
 class RecordsDataset(AbstractDataset):
@@ -52,15 +50,13 @@ class RecordsDataset(AbstractDataset):
     def _get_split(
         self,
         split_name: TrainTestValid,
-        target: str = "",
+        target: str = ALL_TARGETS,
         round_num: int | None = None,
         strategy_name: str = "",
     ) -> pd.DataFrame:
         if not strategy_name:
             # the most recently added split
             strategy_name = list(self.split_map)[-1].strategy_name
-        if not target:
-            target = self.first_target
         if round_num is None:
             # the most recent round
             round_num = list(self.split_map)[-1].round_num
@@ -77,20 +73,14 @@ class RecordsDataset(AbstractDataset):
             pl.col(SEQUENCE).is_in(sequences)
         ).to_pandas()
 
-    @computed_field
-    @cached_property
-    def train(self) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.train)
+    def train(self, target: str = ALL_TARGETS) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.train, target=target)
 
-    @computed_field
-    @cached_property
-    def valid(self) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.valid)
+    def valid(self, target: str = ALL_TARGETS) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.valid, target=target)
 
-    @computed_field
-    @cached_property
-    def test(self) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.test)
+    def test(self, target: str = ALL_TARGETS) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.test, target=target)
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         valid_data_frame = self._internal_data_frame.filter(
@@ -169,26 +159,22 @@ class RecordsDataset(AbstractDataset):
         return data
 
     @property
-    def first_target(self) -> str:
-        return list(self.meta.assays)[0]
+    def features(self) -> list[str]:
+        return list(chain.from_iterable(e.features for e in self.meta.assays.values()))
 
     @property
     def split_cols(self) -> list[str]:
         return [
             ENGINEERING_ROUND,
             SEQUENCE,
-            self.first_target,
-        ]
+        ] + self.features
 
     def add_split(
         self,
         split_strategy: AbstractSplitStrategy,
-        target: str = "",
+        target: str = ALL_TARGETS,
         round_num: int = 1,
     ):
-        if not target:
-            target = self.first_target
-
         self.split_map.update(split_strategy.split(self.data_frame, target, round_num))
 
     def _from_csv(self) -> pl.DataFrame:
@@ -225,7 +211,7 @@ class RecordsDataset(AbstractDataset):
                             round_num=round_num,
                             sequence=sequence,
                             strategy_name="source",
-                            target=self.first_target,
+                            target=ALL_TARGETS,
                         )
                     ] = value
         return data
