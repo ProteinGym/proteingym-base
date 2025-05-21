@@ -54,6 +54,8 @@ class RecordsDataset(AbstractDataset):
         round_num: int | None = None,
         strategy_name: str = "",
     ) -> pd.DataFrame:
+        if not self.split_map:
+            raise ValueError("no split available / use add_split")
         if not strategy_name:
             # the most recently added split
             strategy_name = list(self.split_map)[-1].strategy_name
