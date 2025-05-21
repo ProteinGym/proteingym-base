@@ -1,36 +1,38 @@
-from functools import cached_property
+import os
 
-from pydantic import computed_field, model_validator
+from pydantic import Field, model_validator
 from typing_extensions import Self
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
-from pg2_dataset.io.bytes import read_bytes
-from pg2_dataset.primitives.structure import MMcifEntry, MMcifFile, MMcifTabular
+
+# Wanted to do in init but circular imports
+# Any 'defaults' to place optional imports?
+try:
+    import biotite.structure.io.pdb as pdb
+    import biotite.structure.io.pdbx as pdbx
+except ImportError:
+    _has_biotite = False
+else:
+    _has_biotite = True
+
+try:
+    from Bio.PDB import MMCIFParser, PDBParser
+    from Bio.PDB.binary_cif import BinaryCIFParser
+except ImportError:
+    _has_biopython = False
+    try:
+        BinaryCIFParser = None
+    except ImportError:
+        _has_biopython = True
+        _has_msgpack = False
+else:
+    _has_biopython = True
+    _has_msgpack = True
 
 
 class StructureDataset(AbstractDataset):
     structure_file_path: str | None = None
-
-    @computed_field
-    @cached_property
-    def raw_lines(self) -> list[str]:
-        return self._from_cif()
-
-    @computed_field
-    @cached_property
-    def structure(self) -> MMcifFile:
-        if self.include_structure:
-            if not hasattr(self, "raw_lines"):
-                raise ValueError("No implementation of the raw_lines attribute")
-
-            return self._to_mmcif(self.raw_lines)
-
-        else:
-            raise ValueError(
-                """Either no implementation of the structure dataset,
-                or include_structure is False
-                """
-            )
+    structures: dict = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def configure_structure_file_path(self) -> Self:
@@ -48,126 +50,124 @@ class StructureDataset(AbstractDataset):
         else:
             raise ValueError("No structure file path provided.")
 
-    def _to_mmcif(self, data: list[str]) -> MMcifFile:
-        key_value_pairs = []
-        tabular_data = {}
+    @model_validator(mode="after")
+    def configure_structures(self) -> Self:
+        """Checks if the file path given is a single structure or directory of
+        structures and returns the structures
 
-        # TODO: Should save the file header too
-        # if we want perfect conversion from file -> data -> file
-        # file_header = lines[0]
-        lines = data[1:]
+        Args:
+            path: location of the structure files
+        """
+        if self.structure_file_path:
+            fp = os.path.join(os.getcwd(), self.structure_file_path)
+            if os.path.isdir(fp):
+                id_list = os.listdir(fp)
+                assert len(id_list) == len(set(id_list)), (
+                    "Multiple files with same name found"
+                )
 
-        is_tabular = False
-        current_headers = []
-        current_table_name = None
-
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            # breaklines
-            if line.startswith("#"):
-                is_tabular = False
-                i += 1
-                continue
-            # start of tabular lines
-            if line == "loop_":
-                is_tabular = True
-                current_headers = []
-                current_table_name = None
-                row_data = []
-                i += 1
-                continue
-            # start tabular data
-            if is_tabular:
-                # headers of tabular data
-                if line.startswith("_"):
-                    header_line = line
-                    if "." in header_line:
-                        header_splits = header_line.split(".")
-                        category = header_splits[0]
-                        field = header_splits[1]
-                        if current_table_name is None:
-                            current_table_name = category
-                        current_headers.append(field)
-                    i += 1
-                    continue
-                # data of tabular data
-                else:
-                    if current_table_name and current_headers:
-                        row = []
-                        current_value = ""
-                        in_quotes = False
-                        for part in line.split():
-                            if part.startswith('"'):
-                                in_quotes = True
-                                current_value += part + " "
-                            elif part.endswith('"'):
-                                in_quotes = False
-                                current_value += part
-                                row.append(current_value.strip().strip('"'))
-                                current_value = ""
-                            else:
-                                if in_quotes:
-                                    current_value += part + " "
-                                else:
-                                    row.append(part)
-
-                        if row:
-                            row_data.append(row)
-                            clean_table_name = current_table_name.lstrip("_")
-                            tabular_data[clean_table_name] = MMcifTabular(
-                                headers=current_headers, rows=row_data
-                            )
-
-                        i += 1
-
-                        continue
-            # key-value pairs
+                fn_list = [
+                    os.path.join(self.structure_file_path, file) for file in id_list
+                ]
+                self.structures = self._load_structures(id_list, fn_list)
+                return self
             else:
-                parts = line.split(None, 1)
-                if len(parts) == 2:
-                    key, value = parts
-                    key_value_pairs.append(MMcifEntry(key=key, value=value))
-                    i += 1
-                # if key value pairs are multiline
-                elif len(parts) != 2:
-                    if line.startswith("_"):
-                        key = line
-                        value_string = ""
-                        i += 1
+                if os.path.isfile(fp):
+                    structure_id = self.structure_file_path.split("/")[-1]
+                    self.structures = self._load_structures(
+                        [structure_id], [self.structure_file_path]
+                    )
+                    return self
+                else:
+                    raise ValueError("No (correct) structure file path provided.")
+        else:
+            raise ValueError("No (correct) structure file path provided.")
 
-                        if i < len(lines) and lines[i].startswith(";"):
-                            multi_line_value = []
-                            first_line = lines[i][1:].strip()
-                            if first_line:  # Add first line if it has content
-                                multi_line_value.append(first_line)
-                            i += 1
+    def train(self):
+        raise NotImplementedError("StructureDataset has no split implemented yet")
 
-                            while i < len(lines) and not (lines[i].strip() == ";"):
-                                multi_line_value.append(lines[i].strip())
-                                i += 1
+    def valid(self):
+        raise NotImplementedError("StructureDataset has no split implemented yet")
 
-                            if i < len(lines) and lines[i].strip() == ";":
-                                i += 1
+    def test(self):
+        raise NotImplementedError("StructureDataset has no split implemented yet")
 
-                            value_string = "\n".join(multi_line_value)
-                            key_value_pairs.append(
-                                MMcifEntry(key=key, value=value_string)
-                            )
-                        else:
-                            key_value_pairs.append(
-                                MMcifEntry(key=key, value=value_string)
-                            )
-                    else:
-                        print(f"Unexpected line format: {line}")
-                        i += 1
-                continue
-            i += 1
+    def _load_structures(self, id_list: list, fn_list: list) -> list:
+        """Loads in list of structures"""
 
-        return MMcifFile(key_value_pairs=key_value_pairs, tabular_data=tabular_data)
+        if _has_biopython:
+            structures = self._load_biopython_structures(id_list, fn_list)
+        elif _has_biotite:
+            structures = self._load_biotite_structures(id_list, fn_list)
+        else:
+            raise ImportError("Biotite or Biopython not installed")
+        return structures
 
-    def _from_cif(self) -> list[str]:
-        data_str = read_bytes(self.structure_file_path).decode("utf-8")
-        lines = [line.strip() for line in data_str.splitlines() if line.strip()]
+    def _load_biotite_structures(self, id_list: list, fn_list: list) -> list:
+        """Loads in list of biotite structures"""
+        structures = {}
+        for idn, fn in zip(id_list, fn_list, strict=False):
+            structures[idn] = self._load_biotite_structure(fn)
+        return structures
 
-        return lines
+    def _load_biotite_structure_file(self, fn: str) -> any: #"Structure"?
+        """Loads in the biotite structure file
+        Allows for calling file if you want to access metadata"""
+
+        # Kind of placeholder until we figure out how we want
+        # to deal with fact that biotite separates structure
+        # from file.
+
+        if _has_biotite:
+            if fn.endswith(".pdb"):
+                return pdb.PDBFile.read(fn)
+            if fn.endswith(".cif"):
+                return pdbx.CIFFile.read(fn)
+            if fn.endswith(".bcif"):
+                return pdbx.BinaryCIFFile.read(fn)
+        else:
+            raise ImportError("Biotite not installed")
+
+    def _load_biotite_structure(self, fn: str) -> any: #"Structure"?
+        """Loads in biotite structure
+        Allows for easy access to structural information only"""
+
+        if type(fn) is list:
+            raise TypeError(
+                "File path must be a string,"
+                "did you mean to call _load_biotite_structures?"
+            )
+
+        if _has_biotite:
+            if fn.endswith(".pdb"):
+                return pdb.PDBFile.read(fn).get_structure()
+            if fn.endswith(".cif"):
+                return pdbx.CIFFile.read(fn).get_structure()
+            if fn.endswith(".bcif"):
+                return pdbx.BinaryCIFFile.read(fn).get_structure()
+        else:
+            raise ImportError("Biotite not installed")
+
+    def _load_biopython_structures(self, id_list, fn_list):
+        """Loads in list of biopython structures"""
+        structures = {}
+        for idn, fn in zip(id_list, fn_list, strict=False):
+            structures[idn] = self._load_biopython_structure(idn, fn)
+        return structures
+
+    def _load_biopython_structure(self, struc_id, fn) -> any: #"Structure"
+        """Loads in biopython structure
+        Allows to access the meta data associated with each structure file"""
+
+        if _has_biopython:
+            if fn.endswith(".pdb"):
+                return PDBParser().get_structure(struc_id, fn)
+            if fn.endswith(".cif"):
+                return MMCIFParser().get_structure(struc_id, fn)
+            if fn.endswith(".bcif"):
+                if _has_msgpack:
+                    return BinaryCIFParser().get_structure(struc_id, fn)
+                else:
+                    raise ImportError("Msgpack not installed")
+        else:
+            raise ImportError("Biopython not installed")
