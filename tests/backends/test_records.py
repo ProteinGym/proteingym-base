@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from pg2_dataset.backends.records import ENGINEERING_ROUND, SEQUENCE, RecordsDataset
-from pg2_dataset.primitives.meta import RecordsMeta
+from pg2_dataset.primitives.meta import AssayMeta, RecordsMeta
 from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
 
@@ -53,38 +53,6 @@ def split_data():
 """
 
 
-@pytest.fixture
-def example_toml():
-    return """
-[artifacts]
-records = "records.csv"
-structure = "structure.cif"
-
-[records]
-sequence_feature = "feature1"
-columns = ["feature1", "feature2", "target1", "target2"]
-
-[metadata]
-name = "test_name"
-description = "test_description"
-doi = "test_doi"
-source = "test_source"
-
-[assays.assay_name_one]
-features = ["feature1", "feature2"]
-target = "target1"
-description = "lorem ipsum"
-[assays.assay_name_one.constants]
-key_one = "1"
-key_two = 2
-
-[assays.assay_name_two]
-features = ["feature1"]
-target = "target2"
-description = "dolor sit amet"
-"""
-
-
 class TestRecordsDataset:
     @pytest.fixture
     def good_csv_file_path(self, good_data, tmpdir):
@@ -122,22 +90,12 @@ class TestRecordsDataset:
 
         return str(file_path)
 
-    @pytest.fixture
-    def example_toml_file_path(self, example_toml, tmpdir):
-        file_path = tmpdir / "example.toml"
-
-        with open(file_path, "w") as file:
-            file.write(example_toml)
-
-        return str(file_path)
-
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
         dataset = RecordsDataset(
             file_path=any_csv_file_path,
             meta=RecordsMeta(
                 sequence_feature="a_sequence",
                 engineering_round_feature="round",
-                columns=["a_sequence", "c", "round"],
             ),
         )
 
@@ -169,14 +127,16 @@ class TestRecordsDataset:
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
             dataset = RecordsDataset(
                 file_path=good_csv_file_path,
-                meta=RecordsMeta(columns=["sequence", "c", "e"]),
+                meta=RecordsMeta(
+                    sequence_feature="sequence",
+                    assays={"c": AssayMeta(), "e": AssayMeta()},
+                ),
             )
             print(dataset)
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
         dataset = RecordsDataset(
-            file_path=good_csv_file_path,
-            meta=RecordsMeta(columns=["sequence", "c"]),
+            file_path=good_csv_file_path, meta=RecordsMeta(assays={"c": AssayMeta()})
         )
 
         assert dataset.data_frame is not None, "dataset.data_frame is None."
@@ -189,7 +149,9 @@ class TestRecordsDataset:
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
+            meta=RecordsMeta(
+                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+            ),
         )
 
         assert dataset._internal_data_frame.select(pl.all().is_null().sum()).to_dicts()[
@@ -205,7 +167,9 @@ class TestRecordsDataset:
     def test_get_records_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
+            meta=RecordsMeta(
+                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+            ),
         )
 
         assert len(dataset.records) == 4
@@ -216,7 +180,9 @@ class TestRecordsDataset:
     def test_get_data_frame_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
+            meta=RecordsMeta(
+                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+            ),
         )
 
         assert len(dataset.data_frame) == 4
@@ -227,7 +193,9 @@ class TestRecordsDataset:
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
         dataset = RecordsDataset(
             file_path=null_csv_file_path,
-            meta=RecordsMeta(columns=["sequence", "a", "b", "c"]),
+            meta=RecordsMeta(
+                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+            ),
         )
 
         data_frame_by_target = dataset.data_frame_by_target("c")
@@ -243,7 +211,7 @@ class TestRecordsDataset:
             meta=RecordsMeta(
                 sequence_feature="a_sequence",
                 split_feature="a_split",
-                columns=["a_sequence", "a", "b", "c", "a_split"],
+                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
             ),
         )
 
@@ -260,7 +228,8 @@ class TestRecordsDataset:
             split_strategy=RandomSplitStrategy(train_ratio=0.6, valid_ratio=0.2),
             meta=RecordsMeta(
                 sequence_feature="a_sequence",
-                columns=["a_sequence", "a", "b", "c", "a_split"],
+                split_feature="a_split",
+                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
             ),
         )
 
@@ -274,7 +243,7 @@ class TestRecordsDataset:
             meta=RecordsMeta(
                 sequence_feature="a_sequence",
                 engineering_round_feature="round",
-                columns=["a_sequence", "a", "b", "c", "round"],
+                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
             ),
         )
 
