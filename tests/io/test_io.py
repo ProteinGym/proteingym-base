@@ -29,7 +29,7 @@ xref = ""
 class TestIO:
     def test_records_zip(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            path_to_toml = f"{tmpdir}/dataset.toml"
+            path_to_toml = "./dataset_test.toml"
             with open(path_to_toml, "w") as f:
                 f.write(mock_toml_file_contents())
             dataset = RecordsDataset(toml_file=path_to_toml)
