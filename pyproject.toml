@@ -13,6 +13,7 @@ dependencies = [
     "loguru>=0.7.3",
     "polars[all]>=1.28.1",
     "pydantic>=2.11.4",
+    "toml>=0.10.2",
 ]
 
 [build-system]
