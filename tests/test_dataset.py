@@ -44,3 +44,31 @@ class TestDataset:
     def test_dataset_from_toml(self, example_toml_file_path):
         ds = Dataset.from_toml(example_toml_file_path)
         assert isinstance(ds, Dataset)
+
+    @pytest.mark.slow
+    def test_dataset_from_remote(self, tmpdir):
+        toml = """
+        [resources]
+        records = "https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv"
+
+        [records]
+        sequence_feature = "mutated_sequence"
+
+        [assays.DMS_score]
+        description = "lorem ipsum"
+
+        [assays.DMS_score.constants]
+        key_one = "1"
+        key_two = 2
+
+        [assays.DMS_score_bin]
+        description = "dolor sit amet"
+        """
+        file_path = tmpdir / "example.toml"
+
+        with open(file_path, "w") as file:
+            file.write(toml)
+
+        ds = Dataset.from_toml(toml_file=str(file_path))
+
+        print(ds.records.data_frame)
