@@ -1,4 +1,5 @@
 import random
+from collections.abc import Collection
 
 import pandas as pd
 
@@ -11,7 +12,7 @@ class RandomSplitStrategy(AbstractSplitStrategy):
     def create_split_map(
         self,
         data: pd.DataFrame,
-        target: str,
+        targets: Collection[str],
         round_num: int,
     ) -> dict[SplitKey, str]:
         sequences = list(data[SEQUENCE].unique())
@@ -26,7 +27,7 @@ class RandomSplitStrategy(AbstractSplitStrategy):
             self.split_key(
                 sequence=s,
                 round_num=round_num,
-                target=target,
+                targets=targets,
             ): split_name(s, train, valid, test)
             for s in sequences
         }

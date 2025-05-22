@@ -1,5 +1,6 @@
 import io
 import uuid
+from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
 from typing import Generator, Self
@@ -16,16 +17,15 @@ from pg2_dataset.primitives.split_key import SplitKey
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
+    assign_split_map,
 )
-
-ALL_TARGETS = "_all_"
 
 
 class RecordsDataset(AbstractDataset):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     meta: RecordsMeta
-    split_map: dict[SplitKey, str] = Field(default_factory=dict)
+    split_map: dict[SplitKey, TrainTestValid] = Field(default_factory=dict)
 
     _internal_columns: list[str] = PrivateAttr(default_factory=list)
 
@@ -50,39 +50,43 @@ class RecordsDataset(AbstractDataset):
     def _get_split(
         self,
         split_name: TrainTestValid,
-        target: str = ALL_TARGETS,
+        targets: Collection[str] = (),
         round_num: int | None = None,
         strategy_name: str = "",
     ) -> pd.DataFrame:
         if not self.split_map:
             raise ValueError("no split available / use add_split")
+        if not targets:
+            targets = self.targets
         if not strategy_name:
             # the most recently added split
             strategy_name = list(self.split_map)[-1].strategy_name
         if round_num is None:
             # the most recent round
             round_num = list(self.split_map)[-1].round_num
-        sequences = [
-            k.sequence
-            for k, v in self.split_map.items()
-            if v == split_name
-            and k.target == target
-            and k.round_num == round_num
-            and k.strategy_name == strategy_name
-        ]
-
+        sequences = (
+            assign_split_map(
+                self._internal_data_frame.to_pandas(),
+                targets=targets,
+                round_num=round_num,
+                split_map=self.split_map,
+                strategy_name=strategy_name,
+            )
+            .loc[lambda d: d[SPLIT] == split_name][SEQUENCE]
+            .values
+        )
         return self._internal_data_frame.filter(
             pl.col(SEQUENCE).is_in(sequences)
         ).to_pandas()
 
-    def train(self, target: str = ALL_TARGETS) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.train, target=target)
+    def train(self, targets: Collection[str] = ()) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.train, targets=targets)
 
-    def valid(self, target: str = ALL_TARGETS) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.valid, target=target)
+    def valid(self, targets: Collection[str] = ()) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.valid, targets=targets)
 
-    def test(self, target: str = ALL_TARGETS) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.test, target=target)
+    def test(self, targets: Collection[str] = ()) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.test, targets=targets)
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         valid_data_frame = self._internal_data_frame.filter(
@@ -165,7 +169,11 @@ class RecordsDataset(AbstractDataset):
         return list(chain.from_iterable(e.features for e in self.meta.assays.values()))
 
     @property
-    def split_cols(self) -> list[str]:
+    def targets(self) -> list[str]:
+        return list(self.meta.assays)
+
+    @property
+    def unique_cols(self) -> list[str]:
         return [
             ENGINEERING_ROUND,
             SEQUENCE,
@@ -174,10 +182,12 @@ class RecordsDataset(AbstractDataset):
     def add_split(
         self,
         split_strategy: AbstractSplitStrategy,
-        target: str = ALL_TARGETS,
+        targets: Collection[str] = (),
         round_num: int = 1,
     ):
-        self.split_map.update(split_strategy.split(self.data_frame, target, round_num))
+        self.split_map.update(
+            split_strategy.split(self.data_frame, targets or self.targets, round_num)
+        )
 
     def _from_csv(self) -> pl.DataFrame:
         data_str = read_bytes(self.file_path).decode("utf-8")
@@ -193,7 +203,7 @@ class RecordsDataset(AbstractDataset):
 
         self._internal_columns = data.columns
 
-        if data[self.split_cols].n_unique() != data.height:
+        if data[self.unique_cols].n_unique() != data.height:
             raise ValueError(f"The column `{self.sequence_feature}` should be unique.")
 
         valid_split_values = [member for member in TrainTestValid]
@@ -209,11 +219,11 @@ class RecordsDataset(AbstractDataset):
                 dd = data.to_pandas().set_index(split_index)[SPLIT]
                 for (round_num, sequence), value in dd.items():
                     self.split_map[
-                        SplitKey(
+                        SplitKey.make(
                             round_num=round_num,
                             sequence=sequence,
                             strategy_name="source",
-                            target=ALL_TARGETS,
+                            targets=self.targets,
                         )
                     ] = value
         return data
