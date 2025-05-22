@@ -1,7 +1,9 @@
 import tomllib
+from functools import cached_property
+from itertools import chain
 from pathlib import Path
 
-from pydantic import BaseModel, Field, FiniteFloat
+from pydantic import BaseModel, Field, FiniteFloat, computed_field
 
 ENGINEERING_ROUND = "engineering_round"
 SEQUENCE = "sequence"
@@ -24,8 +26,23 @@ class RecordsMeta(BaseModel):
     sequence_feature: str = Field(default=SEQUENCE, min_length=1)
     engineering_round_feature: str = ""
     split_feature: str = ""
-    columns: list[str] = Field(default_factory=list)
     assays: dict[str, AssayMeta] = Field(default_factory=dict)
+
+    @computed_field
+    @cached_property
+    def columns(self) -> list[str]:
+        # TODO: may need to split this to X-columns and Y-columns
+        return sorted(
+            e
+            for e in [
+                self.sequence_feature,
+                self.engineering_round_feature,
+                self.split_feature,
+                *self.assays,
+                *chain.from_iterable(e.features for e in self.assays.values()),
+            ]
+            if e
+        )
 
 
 class Metadata(BaseModel):

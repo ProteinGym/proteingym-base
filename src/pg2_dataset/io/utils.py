@@ -1,7 +1,6 @@
+import tomllib
 from pathlib import Path
 from zipfile import ZipFile
-
-import toml
 
 
 def zip_from_dir(directory, dataset_filename):
@@ -13,4 +12,4 @@ def zip_from_dir(directory, dataset_filename):
 
 def export_toml(d, filename):
     with open(filename, "w") as f:
-        toml.dump(d, f)
+        tomllib.dump(d, f)
