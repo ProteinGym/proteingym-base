@@ -45,6 +45,11 @@ class RecordsMeta(BaseModel):
         )
 
 
+class StructuresMeta(BaseModel):
+    structure_file_path: str = Field(default=str)
+    structures: list[str] = Field(default_factory=list)
+
+
 class Metadata(BaseModel):
     name: str = ""
     description: str = ""
@@ -56,6 +61,7 @@ class Metadata(BaseModel):
 class DatasetMeta(BaseModel):
     resources: Resources | None = None
     records: RecordsMeta | None = None
+    structures: StructuresMeta | None = None
     metadata: Metadata | None = None
 
     @classmethod

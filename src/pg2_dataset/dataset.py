@@ -17,6 +17,18 @@ class Dataset(BaseModel):
     records: RecordsDataset | None = None
     structure: StructureDataset | None = None
 
+    @property
+    def structures(self):
+        """Direct access to structures dictionary from the StructureDataset
+        # -> dataset.structures instead of dataset.structure.structures
+        # Although seeing the records implementation we do dataset.records.records
+        # Is this really how we want it? Or maybe just naming differently?
+
+        """
+        if self.structure is None:
+            return {}
+        return self.structure.structures
+
     @classmethod
     def from_zip(cls, zip_file: Path | str) -> None:
         raise NotImplementedError
@@ -24,9 +36,17 @@ class Dataset(BaseModel):
     @classmethod
     def from_toml(cls, toml_file: Path | str) -> Self:
         meta = DatasetMeta.parse_toml(toml_file)
+        # from toml can assume: atleast some form of records
+        # from toml cannot assume: atleast some form of struc / msa
+        # but this creates if not None lines for each modality
+
+        structure = None
+        if meta.resources.structure is not None:
+            structure = StructureDataset(file_path=meta.resources.structure)
         return cls(
             toml_file=toml_file,
             records=RecordsDataset(file_path=meta.resources.records, meta=meta.records),
+            structure=structure,
         )
 
     @computed_field
