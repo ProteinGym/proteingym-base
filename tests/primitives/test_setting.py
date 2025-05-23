@@ -1,19 +1,14 @@
 import pytest
 
-from pg2_dataset.primitives.setting import DatasetSettings
+from pg2_dataset.primitives.meta import DatasetMeta
 
 
 @pytest.fixture
 def example_toml():
     return """
-[artifacts]
+[resources]
 records = "records.csv"
 structure = "structure.cif"
-
-[records]
-sequence_feature = "feature1"
-columns = ["feature1", "feature2", "target1", "target2"]
-schemas = ["pl.String", "pl.String", "pl.Float32", "pl.Float32"]
 
 [metadata]
 name = "test_name"
@@ -21,17 +16,22 @@ description = "test_description"
 doi = "test_doi"
 source = "test_source"
 
-[assays.assay_name_one]
+[records]
+sequence_feature = "feature1"
+columns = ["feature1", "feature2", "target1", "target2"]
+
+[records.assays.assay_name_one]
 features = ["feature1", "feature2"]
-target = "target1"
+target_name = "target1"
 description = "lorem ipsum"
-[assays.assay_name_one.constants]
+
+[records.assays.assay_name_one.constants]
 key_one = "1"
 key_two = 2
 
-[assays.assay_name_two]
+[records.assays.assay_name_two]
 features = ["feature1"]
-target = "target2"
+target_name = "target2"
 description = "dolor sit amet"
 """
 
@@ -46,24 +46,22 @@ class TestSetting:
 
         return str(file_path)
 
-    def test_get_artifacts_correctly(self, example_toml_file_path):
-        DatasetSettings._toml_file = example_toml_file_path
-        settings = DatasetSettings()
+    def test_get_resources_correctly(self, example_toml_file_path):
+        settings = DatasetMeta.parse_toml(example_toml_file_path)
 
-        assert settings.artifacts.records == "records.csv"
-        assert settings.artifacts.structure == "structure.cif"
+        assert settings.resources.records == "records.csv"
+        assert settings.resources.structure == "structure.cif"
 
     def test_get_assays_correctly(self, example_toml_file_path):
-        DatasetSettings._toml_file = example_toml_file_path
-        settings = DatasetSettings()
+        settings = DatasetMeta.parse_toml(example_toml_file_path)
 
-        assert len(settings.assays) == 2
+        assert len(settings.records.assays) == 2
 
-        assert len(settings.assays["assay_name_one"].features) == 2
-        assert len(settings.assays["assay_name_two"].features) == 1
+        assert len(settings.records.assays["assay_name_one"].features) == 2
+        assert len(settings.records.assays["assay_name_two"].features) == 1
 
-        assert settings.assays["assay_name_one"].target == "target1"
-        assert settings.assays["assay_name_two"].target == "target2"
+        assert settings.records.assays["assay_name_one"].target_name == "target1"
+        assert settings.records.assays["assay_name_two"].target_name == "target2"
 
-        assert len(settings.assays["assay_name_one"].constants) == 2
-        assert len(settings.assays["assay_name_two"].constants) == 0
+        assert len(settings.records.assays["assay_name_one"].constants) == 2
+        assert len(settings.records.assays["assay_name_two"].constants) == 0

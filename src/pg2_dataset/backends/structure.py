@@ -31,12 +31,35 @@ else:
 
 
 class StructureDataset(AbstractDataset):
+<<<<<<< HEAD
     structure_file_path: str | None = None
     structures: dict = Field(default_factory=dict)
+=======
+    @computed_field
+    @cached_property
+    def raw_lines(self) -> list[str]:
+        return self._from_cif()
+
+    @computed_field
+    @cached_property
+    def structure(self) -> MMcifFile:
+        if self.include_structure:
+            if not hasattr(self, "raw_lines"):
+                raise ValueError("No implementation of the raw_lines attribute")
+
+            return self._to_mmcif(self.raw_lines)
+
+        else:
+            raise ValueError(
+                """Either no implementation of the structure dataset,
+                or include_structure is False
+                """
+            )
+>>>>>>> origin/main
 
     @model_validator(mode="after")
     def configure_structure_file_path(self) -> Self:
-        if self.structure_file_path:
+        if self.file_path:
             return self
 
         elif (
@@ -44,7 +67,7 @@ class StructureDataset(AbstractDataset):
             and self.settings.artifacts
             and self.settings.artifacts.structure
         ):
-            self.structure_file_path = self.settings.artifacts.structure
+            self.file_path = self.settings.artifacts.structure
             return self
 
         else:
@@ -103,12 +126,18 @@ class StructureDataset(AbstractDataset):
             raise ImportError("Biotite or Biopython not installed")
         return structures
 
+<<<<<<< HEAD
     def _load_biotite_structures(self, id_list: list, fn_list: list) -> list:
         """Loads in list of biotite structures"""
         structures = {}
         for idn, fn in zip(id_list, fn_list, strict=False):
             structures[idn] = self._load_biotite_structure(fn)
         return structures
+=======
+    def _from_cif(self) -> list[str]:
+        data_str = read_bytes(self.file_path).decode("utf-8")
+        lines = [line.strip() for line in data_str.splitlines() if line.strip()]
+>>>>>>> origin/main
 
     def _load_biotite_structure_file(self, fn: str) -> any: #"Structure"?
         """Loads in the biotite structure file

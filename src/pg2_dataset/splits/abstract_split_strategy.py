@@ -6,6 +6,8 @@ from typing import Collection, NamedTuple
 
 import pandas as pd
 
+from pg2_dataset.backends.records import SEQUENCE
+
 
 class TrainTestValid(StrEnum):
     train = "train"
@@ -53,13 +55,14 @@ class AbstractSplitStrategy(ABC):
         return SplitSizes(n_train, n_valid, n - n_train - n_valid)
 
     @abstractmethod
-    def create_split_map(self, data: pd.DataFrame, target: str) -> dict[str, str]: ...
+    def create_split_map(self, data: pd.DataFrame, target: str) -> dict[str, str]:
+        ...
 
     def split(self, data: pd.DataFrame, target: str | None = None) -> dict[str, str]:
         if self.random_seed:
             random.seed(self.random_seed)
         if not target:
-            target = next(c for c in data.columns if c != "sequence")
+            target = next(c for c in data.columns if c != SEQUENCE)
         test = dict.fromkeys(self.fixed_test_sequences, TrainTestValid.test.value)
         return {
             **test,

@@ -73,12 +73,10 @@ pre-commit install
 You can just load the dataset as below, then go ahead with using it for model training or prediction:
 
 ```python
-from pg2_dataset.backends.combined import CombinedDataset
+from pg2_dataset.dataset import Dataset
 
-ds = CombinedDataset(
+ds = Dataset(
     toml_file="example_data/dataset.toml",
-    include_records = True,
-    include_structure = True,
 )
 
 # load records
@@ -129,7 +127,7 @@ atom_type = ds.structure.atom_site.id
 from pg2_dataset.backends.structure import StructureDataset
 
 ds = StructureDataset(
-    structure_file_path="example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif",
+    file_path="example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif",
     include_structure = True,
 )
 
