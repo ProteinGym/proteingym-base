@@ -3,7 +3,7 @@ from typing import IO, Self
 
 from pydantic import BaseModel
 
-from pg2_dataset.backends import AssaysDataset, StructureDataset
+from pg2_dataset.backends import MSADataset, AssaysDataset, StructureDataset
 from pg2_dataset.primitives.meta import DatasetMeta
 
 
@@ -16,6 +16,7 @@ class Dataset(BaseModel):
     meta: DatasetMeta
     assays: AssaysDataset | None = None
     structures: StructureDataset | None = None
+    msa: MSADataset | None = None
 
     @classmethod
     def from_zip(cls, zip_file: Path | str) -> None:
@@ -32,4 +33,5 @@ class Dataset(BaseModel):
             meta=meta,
             assays=AssaysDataset(meta=meta.assays_meta),
             structures=StructureDataset(meta=meta.structures_meta),
+            msa=MSADataset(file_path=meta.resources.msa),
         )

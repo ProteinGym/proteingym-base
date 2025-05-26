@@ -1,4 +1,5 @@
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
+from pg2_dataset.backends.msa import MSADataset
 from pg2_dataset.backends.assays_dataset import (
     ENGINEERING_ROUND,
     SEQUENCE,
@@ -12,4 +13,5 @@ __all__ = [
     "AbstractDataset",
     "AssaysDataset",
     "StructureDataset",
+    "MSADataset",
 ]

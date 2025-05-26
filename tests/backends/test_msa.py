@@ -2,7 +2,7 @@ from io import StringIO
 
 import pytest
 
-from pg2_dataset.primitives.msa import MSA
+from pg2_dataset.backends.msa import MSADataset
 
 
 @pytest.fixture
@@ -14,20 +14,22 @@ def msa_data():
 
 @pytest.fixture
 def msa_instance(msa_data):
-    """Fixture providing an MSA instance for tests."""
-    return MSA(records=msa_data["records"])
+    """Fixture providing an MSADataset instance for tests."""
+    instance = MSADataset()
+    instance.msa = msa_data["records"]
+    return instance
 
 
 def test_init(msa_instance, msa_data):
-    """Test the initialization of the MSA class."""
+    """Test the initialization of the MSADataset class."""
     assert msa_instance.sequences == list(msa_data["records"].values())
-    assert msa_instance.records == msa_data["records"]
+    assert msa_instance.msa == msa_data["records"]
 
 
 def test_get_sequence_by_name_error(msa_instance):
     """Test error handling when a record name is not found."""
     with pytest.raises(KeyError):
-        msa_instance.records["nonexistent"]
+        msa_instance.msa["nonexistent"]
 
 
 def test_get_sequence_by_index(msa_instance):
@@ -48,16 +50,16 @@ def test_get_sequence_by_index_error(msa_instance):
 def test_extract_record_name():
     """Test the _extract_record_name static method."""
     # Test with tr|NAME|DESCRIPTION format
-    assert MSA._extract_record_name(">tr|ABC123|Some description") == "ABC123"
+    assert MSADataset._extract_record_name(">tr|ABC123|Some description") == "ABC123"
 
     # Test with sp|NAME|DESCRIPTION format
-    assert MSA._extract_record_name(">sp|XYZ789|Another description") == "XYZ789"
+    assert MSADataset._extract_record_name(">sp|XYZ789|Another description") == "XYZ789"
 
     # Test with simple format
-    assert MSA._extract_record_name(">Simple header") == "Simple header"
+    assert MSADataset._extract_record_name(">Simple header") == "Simple header"
 
     # Test with other pipe formats
-    assert MSA._extract_record_name(">db|ACC|Name") == "ACC"
+    assert MSADataset._extract_record_name(">db|ACC|Name") == "ACC"
 
 
 class MockFile:
@@ -72,7 +74,7 @@ class MockFile:
 
 
 def test_from_a2m(monkeypatch):
-    """Test the from_a2m static method."""
+    """Test the from_a2m class method."""
     a2m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
 
     # Create a mock file object
@@ -81,17 +83,20 @@ def test_from_a2m(monkeypatch):
     # Patch the open function to return our mock file
     monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
 
-    msa = MSA.from_a2m("dummy_path.a2m")
+    # Create an instance and call the method
+    instance = MSADataset()
+    records = MSADataset.from_a2m(instance, "dummy_path.a2m")
+    instance.msa = records
 
-    assert len(msa.sequences) == 3
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-    assert msa.sequences[2] == "ACGT--GT"
+    assert len(instance.sequences) == 3
+    assert instance.sequences[0] == "ACGTACGT"
+    assert instance.sequences[1] == "ACGTA-GT"
+    assert instance.sequences[2] == "ACGT--GT"
 
-    assert len(msa.records) == 3
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
-    assert msa.records["XYZ789"] == "ACGT--GT"
+    assert len(instance.msa) == 3
+    assert instance.msa["ABC123"] == "ACGTACGT"
+    assert instance.msa["Simple header"] == "ACGTA-GT"
+    assert instance.msa["XYZ789"] == "ACGT--GT"
 
 
 def test_from_a2m_different_lengths(monkeypatch):
@@ -104,12 +109,15 @@ def test_from_a2m_different_lengths(monkeypatch):
     # Patch the open function to return our mock file
     monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
 
+    # Create an instance
+    instance = MSADataset()
+
     with pytest.raises(ValueError):
-        MSA.from_a2m("dummy_path.a2m")
+        MSADataset.from_a2m(instance, "dummy_path.a2m")
 
 
 def test_from_a3m(monkeypatch):
-    """Test the from_a3m static method."""
+    """Test the from_a3m class method."""
     a3m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
 
     # Create a mock file object
@@ -118,21 +126,24 @@ def test_from_a3m(monkeypatch):
     # Patch the open function to return our mock file
     monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
 
-    msa = MSA.from_a3m("dummy_path.a3m")
+    # Create an instance and call the method
+    instance = MSADataset()
+    records = MSADataset.from_a3m(instance, "dummy_path.a3m")
+    instance.msa = records
 
-    assert len(msa.sequences) == 3
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-    assert msa.sequences[2] == "ACGT--GT"
+    assert len(instance.sequences) == 3
+    assert instance.sequences[0] == "ACGTACGT"
+    assert instance.sequences[1] == "ACGTA-GT"
+    assert instance.sequences[2] == "ACGT--GT"
 
-    assert len(msa.records) == 3
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
-    assert msa.records["XYZ789"] == "ACGT--GT"
+    assert len(instance.msa) == 3
+    assert instance.msa["ABC123"] == "ACGTACGT"
+    assert instance.msa["Simple header"] == "ACGTA-GT"
+    assert instance.msa["XYZ789"] == "ACGT--GT"
 
 
 def test_from_psi(monkeypatch):
-    """Test the from_psi static method."""
+    """Test the from_psi class method."""
     psi_content = "tr|ABC123|Description1 ACGTACGT\nSimpleHeader ACGTA-GT\n>sp|XYZ789|Description2 ACGT--GT\n"  # noqa: E501
 
     # Create a mock file object
@@ -141,17 +152,20 @@ def test_from_psi(monkeypatch):
     # Patch the open function to return our mock file
     monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
 
-    msa = MSA.from_psi("dummy_path.psi")
+    # Create an instance and call the method
+    instance = MSADataset()
+    records = MSADataset.from_psi(instance, "dummy_path.psi")
+    instance.msa = records
 
-    assert len(msa.sequences) == 3
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-    assert msa.sequences[2] == "ACGT--GT"
+    assert len(instance.sequences) == 3
+    assert instance.sequences[0] == "ACGTACGT"
+    assert instance.sequences[1] == "ACGTA-GT"
+    assert instance.sequences[2] == "ACGT--GT"
 
-    assert len(msa.records) == 3
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["SimpleHeader"] == "ACGTA-GT"
-    assert msa.records["XYZ789"] == "ACGT--GT"
+    assert len(instance.msa) == 3
+    assert instance.msa["ABC123"] == "ACGTACGT"
+    assert instance.msa["SimpleHeader"] == "ACGTA-GT"
+    assert instance.msa["XYZ789"] == "ACGT--GT"
 
 
 def test_multiline_sequences(monkeypatch):
@@ -166,15 +180,18 @@ def test_multiline_sequences(monkeypatch):
     # Patch the open function to return our mock file
     monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
 
-    msa = MSA.from_a2m("dummy_path.a2m")
+    # Create an instance and call the method
+    instance = MSADataset()
+    records = MSADataset.from_a2m(instance, "dummy_path.a2m")
+    instance.msa = records
 
-    assert len(msa.sequences) == 2
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
+    assert len(instance.sequences) == 2
+    assert instance.sequences[0] == "ACGTACGT"
+    assert instance.sequences[1] == "ACGTA-GT"
 
-    assert len(msa.records) == 2
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
+    assert len(instance.msa) == 2
+    assert instance.msa["ABC123"] == "ACGTACGT"
+    assert instance.msa["Simple header"] == "ACGTA-GT"
 
 
 def test_real_file_io(tmp_path):
@@ -184,11 +201,14 @@ def test_real_file_io(tmp_path):
         ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n"
     )
 
-    msa = MSA.from_a2m(str(temp_file))
-    assert len(msa.sequences) == 2
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
+    # Create an instance and load the file
+    instance = MSADataset()
+    instance.msa = MSADataset.from_a2m(instance, str(temp_file))
 
-    assert len(msa.records) == 2
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
+    assert len(instance.sequences) == 2
+    assert instance.sequences[0] == "ACGTACGT"
+    assert instance.sequences[1] == "ACGTA-GT"
+
+    assert len(instance.msa) == 2
+    assert instance.msa["ABC123"] == "ACGTACGT"
+    assert instance.msa["Simple header"] == "ACGTA-GT"
