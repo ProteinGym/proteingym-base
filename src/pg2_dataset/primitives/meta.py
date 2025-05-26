@@ -1,4 +1,5 @@
 import tomllib
+from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
 from pathlib import Path
@@ -27,6 +28,9 @@ class RecordsMeta(BaseModel):
     engineering_round_feature: str = ""
     split_feature: str = ""
     assays: dict[str, AssayMeta] = Field(default_factory=dict)
+
+    def features_for_targets(self, targets: Collection[str]) -> list[str]:
+        return sorted(chain.from_iterable(self.assays[e].features for e in targets))
 
     @computed_field
     @cached_property

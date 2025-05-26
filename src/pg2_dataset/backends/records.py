@@ -11,9 +11,8 @@ from pydantic import ConfigDict, Field, PrivateAttr, computed_field
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives import Record, SplitKey, XAndY
 from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, RecordsMeta
-from pg2_dataset.primitives.record import Record
-from pg2_dataset.primitives.split_key import SplitKey
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
@@ -53,7 +52,7 @@ class RecordsDataset(AbstractDataset):
         targets: Collection[str] = (),
         round_num: int | None = None,
         strategy_name: str = "",
-    ) -> pd.DataFrame:
+    ) -> XAndY:
         if not self.split_map:
             raise ValueError("no split available / use add_split")
         if not targets:
@@ -75,17 +74,21 @@ class RecordsDataset(AbstractDataset):
             .loc[lambda d: d[SPLIT] == split_name][SEQUENCE]
             .values
         )
-        return self._internal_data_frame.filter(
+        df = self._internal_data_frame.filter(
             pl.col(SEQUENCE).is_in(sequences)
         ).to_pandas()
+        return XAndY(
+            x=df[[SEQUENCE] + self.meta.features_for_targets(targets)],
+            y=df[list(targets)],
+        )
 
-    def train(self, targets: Collection[str] = ()) -> pd.DataFrame:
+    def train(self, targets: Collection[str] = ()) -> XAndY:
         return self._get_split(TrainTestValid.train, targets=targets)
 
-    def valid(self, targets: Collection[str] = ()) -> pd.DataFrame:
+    def valid(self, targets: Collection[str] = ()) -> XAndY:
         return self._get_split(TrainTestValid.valid, targets=targets)
 
-    def test(self, targets: Collection[str] = ()) -> pd.DataFrame:
+    def test(self, targets: Collection[str] = ()) -> XAndY:
         return self._get_split(TrainTestValid.test, targets=targets)
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
