@@ -11,9 +11,7 @@ from pg2_dataset.primitives.meta import DatasetMeta
 
 
 class Dataset(BaseModel):
-    # FIXME: seems more natural to me to include this here
-    # dataset_meta: DatasetMeta
-    toml_file: str | None = None  # FIXME: why this property?
+    meta: DatasetMeta
     records: RecordsDataset | None = None
     structure: StructureDataset | None = None
 
@@ -25,7 +23,7 @@ class Dataset(BaseModel):
     def from_toml(cls, toml_file: Path | str) -> Self:
         meta = DatasetMeta.parse_toml(toml_file)
         return cls(
-            toml_file=toml_file,
+            meta=meta,
             records=RecordsDataset(file_path=meta.resources.records, meta=meta.records),
         )
 

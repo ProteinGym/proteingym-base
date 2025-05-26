@@ -1,25 +1,23 @@
 import io
 import uuid
+from collections.abc import Collection
 from functools import cached_property
+from itertools import chain
 from typing import Generator, Self
 
 import pandas as pd
 import polars as pl
-from loguru import logger
-from pydantic import (
-    ConfigDict,
-    PrivateAttr,
-    computed_field,
-    field_validator,
-)
+from pydantic import ConfigDict, Field, PrivateAttr, computed_field
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.io.bytes import read_bytes
 from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, RecordsMeta
 from pg2_dataset.primitives.record import Record
+from pg2_dataset.primitives.split_key import SplitKey
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
+    assign_split_map,
 )
 
 
@@ -27,10 +25,8 @@ class RecordsDataset(AbstractDataset):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     meta: RecordsMeta
+    split_map: dict[SplitKey, TrainTestValid] = Field(default_factory=dict)
 
-    split_strategy: AbstractSplitStrategy | None = None
-
-    _strategy_name: str = PrivateAttr()
     _internal_columns: list[str] = PrivateAttr(default_factory=list)
 
     @cached_property
@@ -51,37 +47,46 @@ class RecordsDataset(AbstractDataset):
 
         return valid_data_frame.to_pandas()
 
-    def _get_split(self, split_name: TrainTestValid) -> pd.DataFrame:
-        if self.split_strategy:
-            return self._internal_data_frame.filter(
-                pl.col(self._strategy_name) == split_name
-            ).to_pandas()
-
-        elif self.meta.split_feature:
-            return self._internal_data_frame.filter(
-                pl.col(SPLIT) == split_name
-            ).to_pandas()
-
-        else:
-            logger.warning(
-                "There is neither a split strategy nor a split column provided."
+    def _get_split(
+        self,
+        split_name: TrainTestValid,
+        targets: Collection[str] = (),
+        round_num: int | None = None,
+        strategy_name: str = "",
+    ) -> pd.DataFrame:
+        if not self.split_map:
+            raise ValueError("no split available / use add_split")
+        if not targets:
+            targets = self.targets
+        if not strategy_name:
+            # the most recently added split
+            strategy_name = list(self.split_map)[-1].strategy_name
+        if round_num is None:
+            # the most recent round
+            round_num = list(self.split_map)[-1].round_num
+        sequences = (
+            assign_split_map(
+                self._internal_data_frame.to_pandas(),
+                targets=targets,
+                round_num=round_num,
+                split_map=self.split_map,
+                strategy_name=strategy_name,
             )
-            return self._internal_data_frame.head(0).to_pandas()
+            .loc[lambda d: d[SPLIT] == split_name][SEQUENCE]
+            .values
+        )
+        return self._internal_data_frame.filter(
+            pl.col(SEQUENCE).is_in(sequences)
+        ).to_pandas()
 
-    @computed_field
-    @cached_property
-    def train(self) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.train)
+    def train(self, targets: Collection[str] = ()) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.train, targets=targets)
 
-    @computed_field
-    @cached_property
-    def valid(self) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.valid)
+    def valid(self, targets: Collection[str] = ()) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.valid, targets=targets)
 
-    @computed_field
-    @cached_property
-    def test(self) -> pd.DataFrame:
-        return self._get_split(TrainTestValid.test)
+    def test(self, targets: Collection[str] = ()) -> pd.DataFrame:
+        return self._get_split(TrainTestValid.test, targets=targets)
 
     def data_frame_by_target(self, target: str) -> pd.DataFrame | None:
         valid_data_frame = self._internal_data_frame.filter(
@@ -116,15 +121,6 @@ class RecordsDataset(AbstractDataset):
                 pl.col(ENGINEERING_ROUND) == current_round
             ).to_pandas()
 
-    @classmethod
-    @field_validator("split_strategy", mode="before")
-    def initialise_split_strategy(cls, v, info):
-        if isinstance(v, type) and issubclass(v, AbstractSplitStrategy):
-            kwargs = info.data.get("split_strategy_kwargs")
-            return v(**kwargs)
-
-        return v
-
     @staticmethod
     def _to_records(data: pl.DataFrame) -> list[Record]:
         records = []
@@ -158,30 +154,40 @@ class RecordsDataset(AbstractDataset):
                 return feature
 
     def _rename_columns(self, data: pl.DataFrame) -> pl.DataFrame:
-        if self.meta.sequence_feature:
-            data = data.rename(
-                {
-                    self.meta.sequence_feature: self._rename_column(
-                        self.meta.sequence_feature
-                    )
-                }
-            )
-
-        if self.meta.engineering_round_feature:
-            data = data.rename(
-                {
-                    self.meta.engineering_round_feature: self._rename_column(
-                        self.meta.engineering_round_feature
-                    )
-                }
-            )
-
-        if self.meta.split_feature:
-            data = data.rename(
-                {self.meta.split_feature: self._rename_column(self.meta.split_feature)}
-            )
+        for feature in [
+            self.meta.sequence_feature,
+            self.meta.engineering_round_feature,
+            self.meta.split_feature,
+        ]:
+            if feature:
+                data = data.rename({feature: self._rename_column(feature)})
 
         return data
+
+    @property
+    def features(self) -> list[str]:
+        return list(chain.from_iterable(e.features for e in self.meta.assays.values()))
+
+    @property
+    def targets(self) -> list[str]:
+        return list(self.meta.assays)
+
+    @property
+    def unique_cols(self) -> list[str]:
+        return [
+            ENGINEERING_ROUND,
+            SEQUENCE,
+        ] + self.features
+
+    def add_split(
+        self,
+        split_strategy: AbstractSplitStrategy,
+        targets: Collection[str] = (),
+        round_num: int = 1,
+    ):
+        self.split_map.update(
+            split_strategy.split(self.data_frame, targets or self.targets, round_num)
+        )
 
     def _from_csv(self) -> pl.DataFrame:
         data_str = read_bytes(self.file_path).decode("utf-8")
@@ -191,31 +197,33 @@ class RecordsDataset(AbstractDataset):
         else:
             data = pl.read_csv(io.StringIO(data_str))
 
-        if data[self.meta.sequence_feature].n_unique() != data.height:
-            raise ValueError(f"The column `{self.sequence_feature}` should be unique.")
-
-        valid_split_values = [member for member in TrainTestValid]
-        if (
-            self.meta.split_feature
-            and not data[self.meta.split_feature].is_in(valid_split_values).all()
-        ):
-            raise ValueError(
-                f"Split values must be one of: {', '.join(valid_split_values)}"
-            )
-
         data = self._rename_columns(data)
-
         if ENGINEERING_ROUND not in data.columns:
             data = data.with_columns(pl.lit(1).alias(ENGINEERING_ROUND))
 
         self._internal_columns = data.columns
 
-        if self.split_strategy:
-            self._strategy_name = self.split_strategy.__class__.__name__
-            split_map = self.split_strategy.split(data.to_pandas())
+        if data[self.unique_cols].n_unique() != data.height:
+            raise ValueError(f"The column `{self.sequence_feature}` should be unique.")
 
-            data = data.with_columns(
-                pl.col(SEQUENCE).replace_strict(split_map).alias(self._strategy_name)
-            )
+        valid_split_values = [member for member in TrainTestValid]
 
+        if self.meta.split_feature:
+            if not data[SPLIT].is_in(valid_split_values).all():
+                raise ValueError(
+                    f"Split values must be one of: {', '.join(valid_split_values)}"
+                )
+            else:
+                split_index = [ENGINEERING_ROUND, SEQUENCE]
+                # FIXME: polars native..?
+                dd = data.to_pandas().set_index(split_index)[SPLIT]
+                for (round_num, sequence), value in dd.items():
+                    self.split_map[
+                        SplitKey.make(
+                            round_num=round_num,
+                            sequence=sequence,
+                            strategy_name="source",
+                            targets=self.targets,
+                        )
+                    ] = value
         return data
