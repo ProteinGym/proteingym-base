@@ -1,5 +1,6 @@
 import os
 from typing import ClassVar, Generic, Self, TypeVar
+from warnings import warn
 
 from pydantic import Field, model_validator
 
@@ -126,7 +127,8 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
                 else:
                     raise ValueError(f"No (correct) structure file path provided: {fp}")
         else:
-            raise ValueError("No (correct) structure file path provided.")
+            warn("No (correct) structure file path provided.", stacklevel=2)
+            return None
 
     def train(self):
         """Get the training split of the dataset.

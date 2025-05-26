@@ -40,13 +40,13 @@ class Dataset(BaseModel):
         # from toml cannot assume: atleast some form of struc / msa
         # but this creates if not None lines for each modality
 
-        structure = None
-        if meta.resources.structure is not None:
-            structure = StructureDataset(file_path=meta.resources.structure)
+        # structure = None
+        # if meta.resources.structure:
+        #     structure = StructureDataset(file_path=meta.resources.structure)
         return cls(
             toml_file=toml_file,
             records=RecordsDataset(file_path=meta.resources.records, meta=meta.records),
-            structure=structure,
+            structure=StructureDataset(file_path=meta.resources.structure),
         )
 
     @computed_field
