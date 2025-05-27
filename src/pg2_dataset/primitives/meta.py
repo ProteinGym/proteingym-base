@@ -46,7 +46,7 @@ class RecordsMeta(BaseModel):
 
 
 class StructuresMeta(BaseModel):
-    structure_file_path: str = Field(default=str)
+    file_path: str = Field(default=str)
     structures: list[str] = Field(default_factory=list)
 
 

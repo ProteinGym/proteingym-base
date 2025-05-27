@@ -1,89 +1,64 @@
-import os
-from typing import ClassVar, Generic, Self, TypeVar
+from importlib.util import find_spec
+from pathlib import Path
+from typing import Generic, Optional, Self, TypeVar
 from warnings import warn
 
 from pydantic import Field, model_validator
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
 
-try:
+biotite_available = False
+biopython_available = False
+
+if find_spec("biotite"):
     import biotite.structure.io.pdb as pdb
     import biotite.structure.io.pdbx as pdbx
-except ImportError:
-    biotite = None
+    from biotite.structure import AtomArray
 
-try:
+    biotite_available = True
+
+if find_spec("Bio"):
     from Bio.PDB import MMCIFParser, PDBParser
     from Bio.PDB.binary_cif import BinaryCIFParser
-except ImportError:
-    biopython = None
+    from Bio.PDB.Structure import Structure
 
-STRUCTURE = TypeVar("STRUCTURE", bound=["biotite", "biopython"])
-SEARCH_ORDER = ("biopython", "biotite")
+    biopython_available = True
+
+STRUCTURE = TypeVar("STRUCTURE")
+SEARCH_ORDER = ["biopython", "biotite"]
 
 
-class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
-    """A dataset class for handling protein structure data.
+class StructureManager(Generic[STRUCTURE]):
+    """Base class for structure managers that handle loading protein structures."""
 
-    This class serves as a base for structure-specific dataset managers,
-    supporting both Biotite and Biopython backends for structure handling.
-    """
-
-    file_path: str | None = None
-    structures: dict = Field(default_factory=dict)
-    managers: ClassVar[dict[str, type]] = {}
-
-    def __init_subclass__(cls, **kwargs):
-        """Register manager classes automatically based on class name.
-
-        Requires a naming pattern of subclasses ending with StructureManager
-        """
-        if cls.__name__.endswith("StructureManager"):
-            manager_type = cls.__name__.removesuffix("StructureManager").lower()
-            cls.managers[manager_type] = cls
-
-    def _select_manager_class(self):
-        """Select appropriate manager class based on available libraries.
+    @classmethod
+    def get_available_manager(cls) -> type["StructureManager"]:
+        """Get an appropriate structure manager based on available libraries.
 
         Returns:
-            type: The selected manager class.
+            type[StructureManager]: The selected manager class.
 
         Raises:
             ImportError: If no suitable structure manager is found.
         """
-        for manager_type in SEARCH_ORDER:
-            manager_cls = self.managers.get(manager_type)
-            if manager_cls:
-                return manager_cls
-        raise ImportError(
-            "No suitable structure manager found. "
-            "Please install either biopython or biotite."
-        )
-
-    def __init__(self, **data):
-        """Initialize the StructureDataset.
-
-        If instantiated directly, selects and initializes appropriate manager subclass.
-        Otherwise, delegates to parent class initialization.
-
-        Args:
-            **data: Keyword arguments for dataset initialization.
-        """
-        if type(self) is StructureDataset:
-            manager_cls = self._select_manager_class()
-            self.__class__ = manager_cls
-            self.__init__(**data)
+        if biopython_available:
+            return BiopythonStructureManager
+        elif biotite_available:
+            return BiotiteStructureManager
         else:
-            super().__init__(**data)
+            raise ImportError(
+                "No suitable structure manager found. "
+                "Please install either biopython or biotite."
+            )
 
     def load_structures(
-        self, id_list: list[str], fn_list: list[str]
+        self, ids: list[str], file_names: list[str]
     ) -> dict[str, STRUCTURE]:
         """Load multiple structures from files.
 
         Args:
-            id_list: List of structure identifiers.
-            fn_list: List of file paths corresponding to the structures.
+            ids: List of structure identifiers.
+            file_names: List of file paths corresponding to the structures.
 
         Returns:
             dict[str, STRUCTURE]: Dictionary mapping structure IDs to loaded structures.
@@ -92,6 +67,29 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
             NotImplementedError: This method must be implemented by subclasses.
         """
         raise NotImplementedError("Subclasses must implement load_structures")
+
+
+class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
+    """A dataset class for handling protein structure data.
+
+    This class uses dependency injection for structure management,
+    supporting both Biotite and Biopython backends.
+    """
+
+    file_path: str | None = ""
+    structures: dict = Field(default_factory=dict)
+    _manager: Optional[StructureManager[STRUCTURE]] = None
+
+    def __init__(self, **data):
+        """Initialize the StructureDataset with an appropriate structure manager.
+
+        Args:
+            **data: Keyword arguments for dataset initialization.
+        """
+        super().__init__(**data)
+        if self._manager is None:
+            manager_cls = StructureManager.get_available_manager()
+            self._manager = manager_cls()
 
     @model_validator(mode="after")
     def configure_structures(self) -> Self:
@@ -107,28 +105,39 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
             ValueError: If no valid file path is provided or if the path is invalid.
         """
         if self.file_path:
-            fp = os.path.abspath(self.file_path)
-            if os.path.isdir(fp):
-                id_list = os.listdir(fp)
-                assert len(id_list) == len(set(id_list)), (
-                    "Multiple files with same name found"
+            if not any([biotite_available, biopython_available]):
+                raise ImportError(
+                    "Path to structure is provided,"
+                    "but neither biopython nor biotite is installed. "
+                    "Please install either biopython or biotite "
+                    "using 'uv sync --all-extras'"
                 )
 
-                fn_list = [os.path.join(self.file_path, file) for file in id_list]
-                self.structures = self.load_structures(id_list, fn_list)
+            # model validator runs before init is finished:
+            if self._manager is None:
+                manager_cls = StructureManager.get_available_manager()
+                self._manager = manager_cls()
+
+            fp = Path(self.file_path).resolve()
+            if fp.is_dir():
+                ids = [f.name for f in fp.iterdir()]
+                assert len(ids) == len(set(ids)), "Multiple files with same name found"
+
+                fn_list = [str(fp / file) for file in ids]
+                self.structures = self._manager.load_structures(ids, fn_list)
                 return self
             else:
-                if os.path.isfile(fp):
-                    structure_id = os.path.basename(self.file_path)
-                    self.structures = self.load_structures(
-                        [structure_id], [self.file_path]
+                if fp.is_file():
+                    structure_id = fp.name
+                    self.structures = self._manager.load_structures(
+                        [structure_id], [str(fp)]
                     )
                     return self
                 else:
                     raise ValueError(f"No (correct) structure file path provided: {fp}")
         else:
             warn("No (correct) structure file path provided.", stacklevel=2)
-            return None
+            return self
 
     def train(self):
         """Get the training split of the dataset.
@@ -155,7 +164,7 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
         raise NotImplementedError("StructureDataset has no split implemented yet")
 
 
-class BiotiteStructureManager(StructureDataset["biotite"]):
+class BiotiteStructureManager(StructureManager[AtomArray]):
     """Structure manager implementation using Biotite backend."""
 
     def load_structure(self, fn: str) -> any:
@@ -177,11 +186,12 @@ class BiotiteStructureManager(StructureDataset["biotite"]):
                 "did you mean to call .load_structures instead?"
             )
 
-        if fn.endswith(".pdb"):
+        fn_ext = Path(fn).suffix.lower()
+        if fn_ext.endswith(".pdb"):
             return pdb.PDBFile.read(fn).get_structure()
-        elif fn.endswith(".cif"):
+        elif fn_ext.endswith(".cif"):
             return pdbx.CIFFile.read(fn)
-        elif fn.endswith(".bcif"):
+        elif fn_ext.endswith(".bcif"):
             return pdbx.BinaryCIFFile.read(fn)
         else:
             raise ValueError(
@@ -190,7 +200,9 @@ class BiotiteStructureManager(StructureDataset["biotite"]):
                 "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
             )
 
-    def load_structures(self, id_list: list, fn_list: list) -> any:
+    def load_structures(
+        self, ids: list[str], file_names: list[str]
+    ) -> dict[str, AtomArray]:
         """Load multiple structures from files using Biotite.
 
         Args:
@@ -202,16 +214,18 @@ class BiotiteStructureManager(StructureDataset["biotite"]):
             structure objects.
         """
         structures = {}
-        for idn, fn in zip(id_list, fn_list, strict=True):
+        for idn, fn in zip(ids, file_names, strict=True):
             structures[idn] = self.load_structure(fn)
 
         return structures
 
 
-class BiopythonStructureManager(StructureDataset["biopython"]):
+class BiopythonStructureManager(StructureManager[Structure]):
     """Structure manager implementation using Biopython backend."""
 
-    def load_structures(self, id_list: list[str], fn_list: list[str]) -> dict[str, any]:
+    def load_structures(
+        self, ids: list[str], file_names: list[str]
+    ) -> dict[str, Structure]:
         """Load multiple structures from files using Biopython.
 
         Args:
@@ -223,11 +237,11 @@ class BiopythonStructureManager(StructureDataset["biopython"]):
             structure objects.
         """
         structures = {}
-        for idn, fn in zip(id_list, fn_list, strict=True):
+        for idn, fn in zip(ids, file_names, strict=True):
             structures[idn] = self.load_structure(idn, fn)
         return structures
 
-    def load_structure(self, idn, fn) -> any:
+    def load_structure(self, idn: str, fn: str) -> any:
         """Load a single structure from a file using Biopython.
 
         Args:
@@ -240,11 +254,12 @@ class BiopythonStructureManager(StructureDataset["biopython"]):
         Raises:
             ValueError: If file type is not supported (.cif, .pdb, .bcif).
         """
-        if fn.endswith(".pdb"):
+        fn_ext = Path(fn).suffix.lower()
+        if fn_ext.endswith(".pdb"):
             return PDBParser().get_structure(idn, fn)
-        elif fn.endswith(".cif"):
+        elif fn_ext.endswith(".cif"):
             return MMCIFParser().get_structure(idn, fn)
-        elif fn.endswith(".bcif"):
+        elif fn_ext.endswith(".bcif"):
             return BinaryCIFParser().get_structure(idn, fn)
         else:
             raise ValueError(
