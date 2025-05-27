@@ -12,7 +12,7 @@ from pydantic import ConfigDict, Field, PrivateAttr, computed_field
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.io.bytes import read_bytes
 from pg2_dataset.primitives import Record, SplitKey, XAndY
-from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, RecordsMeta
+from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, AssaysMeta
 from pg2_dataset.splits.abstract_split_strategy import (
     AbstractSplitStrategy,
     TrainTestValid,
@@ -20,10 +20,10 @@ from pg2_dataset.splits.abstract_split_strategy import (
 )
 
 
-class RecordsDataset(AbstractDataset):
+class AssaysDataset(AbstractDataset):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    meta: RecordsMeta
+    meta: AssaysMeta
     split_map: dict[SplitKey, TrainTestValid] = Field(default_factory=dict)
 
     _internal_columns: list[str] = PrivateAttr(default_factory=list)
@@ -193,7 +193,7 @@ class RecordsDataset(AbstractDataset):
         )
 
     def _from_csv(self) -> pl.DataFrame:
-        data_str = read_bytes(self.file_path).decode("utf-8")
+        data_str = read_bytes(self.meta.file_path).decode("utf-8")
 
         if self.meta.columns:
             data = pl.read_csv(io.StringIO(data_str), columns=self.meta.columns)

@@ -4,8 +4,6 @@ from pydantic import BaseModel
 
 
 class AbstractDataset(BaseModel, ABC):
-    file_path: str = ""
-
     def to_zip(self) -> None:
         raise NotImplementedError
 

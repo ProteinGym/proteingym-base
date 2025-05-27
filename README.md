@@ -80,7 +80,7 @@ ds = Dataset(
 )
 
 # load records
-records = ds.records
+records = ds.assays
 
 # load structure
 x = ds.structure.atom_site.cartn_x
