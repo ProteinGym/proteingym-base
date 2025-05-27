@@ -215,7 +215,7 @@ class TestRecordsDataset:
             meta=RecordsMeta(
                 sequence_feature="a_sequence",
                 split_feature="a_split",
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
+                assays={"a": AssayMeta(), "b": AssayMeta(features=["c"])},
             ),
         )
 
@@ -226,13 +226,17 @@ class TestRecordsDataset:
         assert len(dataset.valid()) == 1
         assert len(dataset.test()) == 2
 
+        x, y = dataset.train(targets=("a", "b"))
+        assert x.columns.to_list() == [SEQUENCE, "c"]
+        assert y.columns.to_list() == ["a", "b"]
+
     def test_add_split_by__random_strategy(self, split_csv_file_path):
         dataset = RecordsDataset(
             file_path=split_csv_file_path,
             meta=RecordsMeta(
                 sequence_feature="a_sequence",
                 split_feature="a_split",
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
+                assays={"a": AssayMeta(), "b": AssayMeta(features=["c"])},
             ),
         )
         dataset.add_split(
