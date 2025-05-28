@@ -18,6 +18,9 @@ class TestDataset:
     file_path = "records.csv"
     sequence_feature = "feature1"
 
+    [structures_meta]
+    file_path = "tests/test_data/structures/5kua_pdb.pdb"
+
     [assays_meta.assays.target1]
     features = ["feature1", "feature2"]
     description = "lorem ipsum"

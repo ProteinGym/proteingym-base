@@ -47,6 +47,10 @@ class AssaysMeta(BaseModel):
         )
 
 
+class StructuresMeta(BaseModel):
+    file_path: str = ""
+
+
 class DatasetMeta(BaseModel):
     name: str = ""
     description: str = ""
@@ -54,6 +58,7 @@ class DatasetMeta(BaseModel):
     source: str = ""
     xref: str = ""
     assays_meta: AssaysMeta | None = None
+    structures_meta: StructuresMeta | None = None
 
     @classmethod
     def from_toml(cls, toml_file: Path | str | IO["str"]) -> Self:

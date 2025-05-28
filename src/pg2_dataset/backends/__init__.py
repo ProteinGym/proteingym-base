@@ -4,7 +4,7 @@ from pg2_dataset.backends.assays_dataset import (
     SEQUENCE,
     AssaysDataset,
 )
-from pg2_dataset.backends.structure import StructureDataset
+from pg2_dataset.backends.structure_dataset import StructureDataset
 
 __all__ = [
     "ENGINEERING_ROUND",

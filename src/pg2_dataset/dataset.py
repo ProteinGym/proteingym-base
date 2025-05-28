@@ -15,7 +15,7 @@ class Dataset(BaseModel):
 
     meta: DatasetMeta
     assays: AssaysDataset | None = None
-    structure: StructureDataset | None = None
+    structures: StructureDataset | None = None
 
     @classmethod
     def from_zip(cls, zip_file: Path | str) -> None:
@@ -31,4 +31,5 @@ class Dataset(BaseModel):
         return cls(
             meta=meta,
             assays=AssaysDataset(meta=meta.assays_meta),
+            structures=StructureDataset(meta=meta.structures_meta),
         )

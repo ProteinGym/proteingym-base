@@ -4,13 +4,13 @@ doi = "DOI: 10.1000/xyz123"
 source = "DOI: 10.1000/xyz123"
 xref = ""
 
-[records]
-file_path = "https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv""
+[assays_meta]
+file_path = "https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv"
 columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"]
 sequence_feature = "mutated_sequence"
 
-[structures]
-file_path = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
+[structures_meta]
+file_path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/structures/5kua_cif.cif"
 
 [assays_meta.assays.DMS_score]
 description = "lorem ipsum"
