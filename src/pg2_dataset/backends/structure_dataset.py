@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Generic, Self, TypeVar
 from warnings import warn
 
-from pydantic import model_validator
+from pydantic import Field, PrivateAttr, model_validator
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.primitives.meta import StructuresMeta
@@ -34,7 +34,7 @@ SEARCH_ORDER = ["biopython", "biotite"]
 
 
 def create_backend_map():
-    """helper function for determining which backend to use accoring to search order
+    """helper function for determining which backend to use according to search order
 
     Returns:
         dict: Dictionary of StructureManagers with associated availability.
@@ -97,19 +97,10 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
     """
 
     meta: StructuresMeta
-    structures: dict[str, STRUCTURE] = {}
-    _manager: StructureManager[STRUCTURE] | None = None
-
-    def __init__(self, **data):
-        """Initialize the StructureDataset with an appropriate structure manager.
-
-        Args:
-            **data: Keyword arguments for dataset initialization.
-        """
-        super().__init__(**data)
-        if self._manager is None:
-            manager_cls = StructureManager.get_available_manager()
-            self._manager = manager_cls()
+    structures: dict[str, STRUCTURE] = Field(default_factory=dict)
+    _manager: StructureManager[STRUCTURE] | None = PrivateAttr(
+        default_factory=StructureManager.get_available_manager.__init__
+    )
 
     @model_validator(mode="after")
     def configure_structures(self) -> Self:
@@ -189,7 +180,7 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
         raise NotImplementedError("StructureDataset has no split implemented yet")
 
 
-class BiotiteStructureManager(StructureManager[AtomArray]):
+class BiotiteStructureManager(StructureManager["AtomArray"]):
     """Structure manager implementation using Biotite backend."""
 
     def load_structure(self, fn: str) -> any:
@@ -233,7 +224,7 @@ class BiotiteStructureManager(StructureManager[AtomArray]):
 
     def load_structures(
         self, ids: list[str], file_names: list[str]
-    ) -> dict[str, AtomArray]:
+    ) -> dict[str, "AtomArray"]:
         """Load multiple structures from files using Biotite.
 
         Args:
