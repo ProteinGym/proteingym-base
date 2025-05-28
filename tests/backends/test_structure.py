@@ -15,6 +15,9 @@ from pg2_dataset.primitives.meta import StructuresMeta
 TEST_DATA_DIR = str(Path(__file__).parent.parent / "test_data" / "structures")
 
 
+@pytest.mark.skipif(
+    not find_spec("Bio") and not find_spec("biotite"), reason="no structure backend"
+)
 class TestStructureDataset:
     @pytest.fixture
     def structure_files(self):

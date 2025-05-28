@@ -243,7 +243,9 @@ class BiopythonStructureManager(AbstractStructureManager["Structure"]):
     name: ClassVar[str] = "Bio"
 
     @staticmethod
-    def load_structures(ids: list[str], file_names: list[str]) -> dict[str, Structure]:
+    def load_structures(
+        ids: list[str], file_names: list[str]
+    ) -> dict[str, "Structure"]:
         """Load multiple structures from files using Biopython.
 
         Args:
