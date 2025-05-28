@@ -1,6 +1,7 @@
+from abc import abstractmethod
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Generic, Optional, Self, TypeVar
+from typing import Generic, Self, TypeVar
 from warnings import warn
 
 from pydantic import Field, model_validator
@@ -16,16 +17,31 @@ if find_spec("biotite"):
     from biotite.structure import AtomArray
 
     biotite_available = True
-
+else:
+    biotite_available = False
 if find_spec("Bio"):
     from Bio.PDB import MMCIFParser, PDBParser
     from Bio.PDB.binary_cif import BinaryCIFParser
     from Bio.PDB.Structure import Structure
 
     biopython_available = True
+else:
+    biotite_available = False
 
 STRUCTURE = TypeVar("STRUCTURE")
 SEARCH_ORDER = ["biopython", "biotite"]
+
+
+def create_backend_map():
+    """helper function for determining which backend to use accoring to search order
+
+    Returns:
+        dict: Dictionary of StructureManagers with associated availability.
+    """
+    return {
+        "biotite": (BiotiteStructureManager, biotite_available),
+        "biopython": (BiopythonStructureManager, biopython_available),
+    }
 
 
 class StructureManager(Generic[STRUCTURE]):
@@ -41,16 +57,19 @@ class StructureManager(Generic[STRUCTURE]):
         Raises:
             ImportError: If no suitable structure manager is found.
         """
-        if biopython_available:
-            return BiopythonStructureManager
-        elif biotite_available:
-            return BiotiteStructureManager
-        else:
-            raise ImportError(
-                "No suitable structure manager found. "
-                "Please install either biopython or biotite."
-            )
 
+        backend_map = create_backend_map()
+
+        for backend in SEARCH_ORDER:
+            manager_class, is_available = backend_map[backend]
+            if is_available:
+                return manager_class
+        raise ImportError(
+            "No suitable structure manager found. "
+            "Please install either biopython or biotite."
+        )
+
+    @abstractmethod
     def load_structures(
         self, ids: list[str], file_names: list[str]
     ) -> dict[str, STRUCTURE]:
@@ -78,7 +97,7 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
 
     file_path: str | None = ""
     structures: dict = Field(default_factory=dict)
-    _manager: Optional[StructureManager[STRUCTURE]] = None
+    _manager: StructureManager[STRUCTURE] | None = None
 
     def __init__(self, **data):
         """Initialize the StructureDataset with an appropriate structure manager.
@@ -110,7 +129,6 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
                     "Path to structure is provided,"
                     "but neither biopython nor biotite is installed. "
                     "Please install either biopython or biotite "
-                    "using 'uv sync --all-extras'"
                 )
 
             # model validator runs before init is finished:
@@ -121,7 +139,10 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
             fp = Path(self.file_path).resolve()
             if fp.is_dir():
                 ids = [f.name for f in fp.iterdir()]
-                assert len(ids) == len(set(ids)), "Multiple files with same name found"
+                if len(ids) != len(set(ids)):
+                    raise ValueError(
+                        "Directory contains multiple structures with same name"
+                    )
 
                 fn_list = [str(fp / file) for file in ids]
                 self.structures = self._manager.load_structures(ids, fn_list)
@@ -180,10 +201,16 @@ class BiotiteStructureManager(StructureManager[AtomArray]):
             TypeError: If file path is not a string.
             ValueError: If file type is not supported (.cif, .pdb, .bcif).
         """
-        if type(fn) is not str:
+        # if type(fn) is not str:
+        #     raise TypeError(
+        #         "File path must be a string,"
+        #         "did you mean to call .load_structures instead?"
+        #     )
+
+        if not Path(fn):
             raise TypeError(
-                "File path must be a string,"
-                "did you mean to call .load_structures instead?"
+                "File path must be a path to file."
+                "Did you mean to call .load_structures instead?"
             )
 
         fn_ext = Path(fn).suffix.lower()
@@ -254,6 +281,12 @@ class BiopythonStructureManager(StructureManager[Structure]):
         Raises:
             ValueError: If file type is not supported (.cif, .pdb, .bcif).
         """
+        if not Path(fn):
+            raise TypeError(
+                "File path must be a path to file."
+                "Did you mean to call .load_structures instead?"
+            )
+
         fn_ext = Path(fn).suffix.lower()
         if fn_ext.endswith(".pdb"):
             return PDBParser().get_structure(idn, fn)
