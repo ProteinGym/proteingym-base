@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Generic, Self, TypeVar
 from warnings import warn
 
-from pydantic import Field, model_validator
+from pydantic import model_validator
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
+from pg2_dataset.primitives.meta import StructuresMeta
 
 biotite_available = False
 biopython_available = False
@@ -95,8 +96,8 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
     supporting both Biotite and Biopython backends.
     """
 
-    file_path: str | None = ""
-    structures: dict = Field(default_factory=dict)
+    meta: StructuresMeta
+    structures: dict[str, STRUCTURE] = {}
     _manager: StructureManager[STRUCTURE] | None = None
 
     def __init__(self, **data):
@@ -123,7 +124,10 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
         Raises:
             ValueError: If no valid file path is provided or if the path is invalid.
         """
-        if self.file_path:
+        if self.meta:
+            file_path = self.meta.file_path
+
+        if file_path:
             if not any([biotite_available, biopython_available]):
                 raise ImportError(
                     "Path to structure is provided,"
@@ -136,7 +140,7 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
                 manager_cls = StructureManager.get_available_manager()
                 self._manager = manager_cls()
 
-            fp = Path(self.file_path).resolve()
+            fp = Path(file_path).resolve()
             if fp.is_dir():
                 ids = [f.name for f in fp.iterdir()]
                 if len(ids) != len(set(ids)):

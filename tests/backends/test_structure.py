@@ -3,12 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from pg2_dataset.backends.structure import (
+from pg2_dataset.backends.structure_dataset import (
     BiopythonStructureManager,
     BiotiteStructureManager,
     StructureDataset,
     StructureManager,
 )
+from pg2_dataset.primitives.meta import StructuresMeta
 
 TEST_DATA_DIR = str(Path(__file__).parent.parent / "test_data" / "structures")
 
@@ -53,7 +54,9 @@ class TestStructureDataset:
         # to ensure the validator doesn't override our choice
         with pytest.MonkeyPatch.context() as mp:
             mp.setattr(StructureManager, "get_available_manager", lambda: manager_class)
-            dataset = StructureDataset(file_path=structure_files["pdb"])
+            dataset = StructureDataset(
+                meta=StructuresMeta(file_path=structure_files["pdb"])
+            )
             assert isinstance(dataset._manager, manager_class)
             assert len(dataset.structures) == 1
 
@@ -118,7 +121,7 @@ class TestStructureDataset:
         if not any([find_spec("Bio"), find_spec("biotite")]):
             pytest.skip("neither biotite nor biopython installed")
 
-        dataset = StructureDataset(file_path=TEST_DATA_DIR)
+        dataset = StructureDataset(meta=StructuresMeta(file_path=TEST_DATA_DIR))
         assert len(dataset.structures) > 1
         assert all(
             isinstance(s, type(next(iter(dataset.structures.values()))))
@@ -145,4 +148,4 @@ class TestStructureDataset:
         )
 
         with pytest.raises(ImportError):
-            StructureDataset(file_path=structure_files["pdb"])
+            StructureDataset(meta=StructuresMeta(file_path=structure_files["pdb"]))

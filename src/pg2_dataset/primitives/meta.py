@@ -1,8 +1,12 @@
-import tomllib
+"""Models for data that we store in toml file."""
+
+from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
 from pathlib import Path
+from typing import IO, Self
 
+import toml
 from pydantic import BaseModel, Field, FiniteFloat, computed_field
 
 ENGINEERING_ROUND = "engineering_round"
@@ -10,23 +14,21 @@ SEQUENCE = "sequence"
 SPLIT = "split"
 
 
-class Resources(BaseModel):
-    records: str | None = None
-    structure: str | None = None
-    msa: str | None = None
-
-
-class AssayMeta(BaseModel, extra="allow"):
+class SingleAssayMeta(BaseModel, extra="allow"):
     description: str = ""
     features: list[str] = Field(default_factory=list)
     constants: dict[str, FiniteFloat | str] = Field(default_factory=dict)
 
 
-class RecordsMeta(BaseModel):
+class AssaysMeta(BaseModel):
+    file_path: str = ""
     sequence_feature: str = Field(default=SEQUENCE, min_length=1)
     engineering_round_feature: str = ""
     split_feature: str = ""
-    assays: dict[str, AssayMeta] = Field(default_factory=dict)
+    assays: dict[str, SingleAssayMeta] = Field(default_factory=dict)
+
+    def features_for_targets(self, targets: Collection[str]) -> list[str]:
+        return sorted(chain.from_iterable(self.assays[e].features for e in targets))
 
     @computed_field
     @cached_property
@@ -46,25 +48,20 @@ class RecordsMeta(BaseModel):
 
 
 class StructuresMeta(BaseModel):
-    file_path: str = Field(default=str)
-    structures: list[str] = Field(default_factory=list)
+    file_path: str = ""
 
 
-class Metadata(BaseModel):
+class DatasetMeta(BaseModel):
     name: str = ""
     description: str = ""
     doi: str = ""
     source: str = ""
     xref: str = ""
-
-
-class DatasetMeta(BaseModel):
-    resources: Resources | None = None
-    records: RecordsMeta | None = None
-    structures: StructuresMeta | None = None
-    metadata: Metadata | None = None
+    assays_meta: AssaysMeta | None = None
+    structures_meta: StructuresMeta | None = None
 
     @classmethod
-    def parse_toml(cls, toml_file: Path | str):
-        with open(toml_file, "rb") as fh:
-            return cls.model_validate(tomllib.load(fh))
+    def from_toml(cls, toml_file: Path | str | IO["str"]) -> Self:
+        if isinstance(toml_file, str):
+            toml_file = Path(toml_file)
+        return cls.model_validate(toml.load(toml_file))

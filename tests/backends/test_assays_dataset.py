@@ -4,8 +4,8 @@ import polars as pl
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.backends.records import ENGINEERING_ROUND, SEQUENCE, RecordsDataset
-from pg2_dataset.primitives.meta import AssayMeta, RecordsMeta
+from pg2_dataset.backends import ENGINEERING_ROUND, SEQUENCE, AssaysDataset
+from pg2_dataset.primitives.meta import AssaysMeta, SingleAssayMeta
 from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
 
@@ -53,7 +53,7 @@ def split_data():
 """
 
 
-class TestRecordsDataset:
+class TestAssaysDataset:
     @pytest.fixture
     def good_csv_file_path(self, good_data, tmpdir):
         file_path = tmpdir / "good.csv"
@@ -91,11 +91,12 @@ class TestRecordsDataset:
         return str(file_path)
 
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=any_csv_file_path,
-            meta=RecordsMeta(
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=any_csv_file_path,
                 sequence_feature="a_sequence",
                 engineering_round_feature="round",
+                assays={"a": SingleAssayMeta()},
             ),
         )
 
@@ -107,16 +108,20 @@ class TestRecordsDataset:
 
     def test_sequence_feature_should_exist(self, good_csv_file_path):
         with pytest.raises(ValidationError):
-            dataset = RecordsDataset(
-                file_path=good_csv_file_path,
-                meta=RecordsMeta(sequence_feature=""),
+            dataset = AssaysDataset(
+                meta=AssaysMeta(
+                    file_path=good_csv_file_path,
+                    sequence_feature="",
+                    assays={"a": SingleAssayMeta()},
+                ),
             )
             print(dataset)
 
     def test_engineering_round_feature_should_exist(self, good_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=good_csv_file_path,
-            meta=RecordsMeta(),
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=good_csv_file_path, assays={"a": SingleAssayMeta()}
+            ),
         )
 
         assert ENGINEERING_ROUND in dataset.data_frame.columns.to_list()
@@ -125,18 +130,20 @@ class TestRecordsDataset:
 
     def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
-            dataset = RecordsDataset(
-                file_path=good_csv_file_path,
-                meta=RecordsMeta(
+            dataset = AssaysDataset(
+                meta=AssaysMeta(
+                    file_path=good_csv_file_path,
                     sequence_feature="sequence",
-                    assays={"c": AssayMeta(), "e": AssayMeta()},
+                    assays={"c": SingleAssayMeta(), "e": SingleAssayMeta()},
                 ),
             )
             print(dataset)
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=good_csv_file_path, meta=RecordsMeta(assays={"c": AssayMeta()})
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=good_csv_file_path, assays={"c": SingleAssayMeta()}
+            ),
         )
 
         assert dataset.data_frame is not None, "dataset.data_frame is None."
@@ -147,10 +154,14 @@ class TestRecordsDataset:
             assert isinstance(record["c"], float)
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=null_csv_file_path,
-            meta=RecordsMeta(
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=null_csv_file_path,
+                assays={
+                    "a": SingleAssayMeta(),
+                    "b": SingleAssayMeta(),
+                    "c": SingleAssayMeta(),
+                },
             ),
         )
 
@@ -165,10 +176,14 @@ class TestRecordsDataset:
         }
 
     def test_get_records_correctly(self, null_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=null_csv_file_path,
-            meta=RecordsMeta(
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=null_csv_file_path,
+                assays={
+                    "a": SingleAssayMeta(),
+                    "b": SingleAssayMeta(),
+                    "c": SingleAssayMeta(),
+                },
             ),
         )
 
@@ -178,10 +193,14 @@ class TestRecordsDataset:
             assert record.engineering_round is not None
 
     def test_get_data_frame_correctly(self, null_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=null_csv_file_path,
-            meta=RecordsMeta(
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=null_csv_file_path,
+                assays={
+                    "a": SingleAssayMeta(),
+                    "b": SingleAssayMeta(),
+                    "c": SingleAssayMeta(),
+                },
             ),
         )
 
@@ -191,10 +210,14 @@ class TestRecordsDataset:
         )
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=null_csv_file_path,
-            meta=RecordsMeta(
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()}
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=null_csv_file_path,
+                assays={
+                    "a": SingleAssayMeta(),
+                    "b": SingleAssayMeta(),
+                    "c": SingleAssayMeta(),
+                },
             ),
         )
 
@@ -206,44 +229,53 @@ class TestRecordsDataset:
         )
 
     def test_split_data_frame_by_default_correctly(self, split_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=split_csv_file_path,
-            meta=RecordsMeta(
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=split_csv_file_path,
                 sequence_feature="a_sequence",
                 split_feature="a_split",
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
+                assays={"a": SingleAssayMeta(), "b": SingleAssayMeta(features=["c"])},
             ),
         )
 
         assert "split" in dataset.data_frame.columns.to_list()
         assert "a_split" not in dataset.data_frame.columns.to_list()
 
-        assert len(dataset.train) == 2
-        assert len(dataset.valid) == 1
-        assert len(dataset.test) == 2
+        assert len(dataset.train()) == 2
+        assert len(dataset.valid()) == 1
+        assert len(dataset.test()) == 2
 
-    def test_split_data_frame_by_random_strategy_correctly(self, split_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=split_csv_file_path,
-            split_strategy=RandomSplitStrategy(train_ratio=0.6, valid_ratio=0.2),
-            meta=RecordsMeta(
+        x, y = dataset.train(targets=("a", "b"))
+        assert x.columns.to_list() == [SEQUENCE, "c"]
+        assert y.columns.to_list() == ["a", "b"]
+
+    def test_add_split_by__random_strategy(self, split_csv_file_path):
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=split_csv_file_path,
                 sequence_feature="a_sequence",
                 split_feature="a_split",
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
+                assays={"a": SingleAssayMeta(), "b": SingleAssayMeta(features=["c"])},
             ),
         )
-
-        assert len(dataset.train) == 3
-        assert len(dataset.valid) == 1
-        assert len(dataset.test) == 1
+        dataset.add_split(
+            RandomSplitStrategy(train_ratio=0.6, valid_ratio=0.2),
+        )
+        assert len(dataset.train()) == 3
+        assert len(dataset.valid()) == 1
+        assert len(dataset.test()) == 1
 
     def test_iter_by_rounds(self, split_csv_file_path):
-        dataset = RecordsDataset(
-            file_path=split_csv_file_path,
-            meta=RecordsMeta(
+        dataset = AssaysDataset(
+            meta=AssaysMeta(
+                file_path=split_csv_file_path,
                 sequence_feature="a_sequence",
                 engineering_round_feature="round",
-                assays={"a": AssayMeta(), "b": AssayMeta(), "c": AssayMeta()},
+                assays={
+                    "a": SingleAssayMeta(),
+                    "b": SingleAssayMeta(),
+                    "c": SingleAssayMeta(),
+                },
             ),
         )
 
