@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pg2_dataset.backends.records import ENGINEERING_ROUND
+from pg2_dataset.backends import ENGINEERING_ROUND
 from pg2_dataset.splits.abstract_split_strategy import TrainTestValid
 from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
