@@ -125,8 +125,12 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
         if self.meta.file_path:
             # model post init runs before init is finished(?)
             if self._manager is None:
-                manager_cls = AbstractStructureManager.get_available_manager()
-                self._manager = manager_cls()
+                try:
+                    manager_cls = AbstractStructureManager.get_available_manager()
+                    self._manager = manager_cls()
+                except ImportError as e:
+                    logger.warning(str(e))
+                    return self
 
             fp = Path(self.meta.file_path).resolve()
             if fp.is_dir():
@@ -139,15 +143,14 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
                 fn_list = [str(fp / file) for file in ids]
                 self.structures = self._manager.load_structures(ids, fn_list)
                 return self
+            elif fp.is_file():
+                structure_id = fp.name
+                self.structures = self._manager.load_structures(
+                    [structure_id], [str(fp)]
+                )
+                return self
             else:
-                if fp.is_file():
-                    structure_id = fp.name
-                    self.structures = self._manager.load_structures(
-                        [structure_id], [str(fp)]
-                    )
-                    return self
-                else:
-                    raise ValueError(f"No (correct) structure file path provided: {fp}")
+                raise ValueError(f"No (correct) structure file path provided: {fp}")
         else:
             logger.warning("No (correct) structure file path provided.", stacklevel=2)
             return self

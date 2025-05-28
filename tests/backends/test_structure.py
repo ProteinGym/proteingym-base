@@ -104,4 +104,4 @@ class TestStructureDataset:
 
         with pytest.raises(ImportError):
             with BackendSearchOrder(["Foo"]):
-                StructureDataset(meta=StructuresMeta(file_path=structure_files["pdb"]))
+                AbstractStructureManager.get_available_manager()
