@@ -1,10 +1,11 @@
-from abc import abstractmethod
+import sys
+from abc import ABC, abstractmethod
 from importlib.util import find_spec
 from pathlib import Path
-from typing import Generic, Self, TypeVar
-from warnings import warn
+from typing import ClassVar, Generic, Self, TypeVar
 
-from pydantic import Field, PrivateAttr, model_validator
+from loguru import logger
+from pydantic import Field, PrivateAttr
 
 from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.primitives.meta import StructuresMeta
@@ -30,50 +31,52 @@ else:
     biotite_available = False
 
 STRUCTURE = TypeVar("STRUCTURE")
-SEARCH_ORDER = ["biopython", "biotite"]
+search_order = ["Bio", "biotite"]
 
 
-def create_backend_map():
-    """helper function for determining which backend to use according to search order
+class BackendSearchOrder:
+    def __init__(self, order: list[str]):
+        self.order = order
 
-    Returns:
-        dict: Dictionary of StructureManagers with associated availability.
-    """
-    return {
-        "biotite": (BiotiteStructureManager, biotite_available),
-        "biopython": (BiopythonStructureManager, biopython_available),
-    }
+    def __enter__(self):
+        sys.modules[__name__].search_order = self.order
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.modules[__name__].search_order = ["Bio", "biotite"]
 
 
-class StructureManager(Generic[STRUCTURE]):
+class AbstractStructureManager(ABC, Generic[STRUCTURE]):
     """Base class for structure managers that handle loading protein structures."""
 
+    name: ClassVar[str] = ""
+    backend_map: ClassVar[dict] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        cls.backend_map[cls.name] = cls, find_spec(cls.name)
+
     @classmethod
-    def get_available_manager(cls) -> type["StructureManager"]:
+    def get_available_manager(cls) -> type["AbstractStructureManager"]:
         """Get an appropriate structure manager based on available libraries.
 
         Returns:
-            type[StructureManager]: The selected manager class.
+            type[AbstractStructureManager]: The selected manager class.
 
         Raises:
             ImportError: If no suitable structure manager is found.
         """
 
-        backend_map = create_backend_map()
-
-        for backend in SEARCH_ORDER:
-            manager_class, is_available = backend_map[backend]
+        for backend in search_order:
+            manager_class, is_available = cls.backend_map[backend]
             if is_available:
                 return manager_class
         raise ImportError(
-            "No suitable structure manager found. "
-            "Please install either biopython or biotite."
+            "No suitable structure manager found. Please install either biopython "
+            "or biotite."
         )
 
+    @staticmethod
     @abstractmethod
-    def load_structures(
-        self, ids: list[str], file_names: list[str]
-    ) -> dict[str, STRUCTURE]:
+    def load_structures(ids: list[str], file_names: list[str]) -> dict[str, STRUCTURE]:
         """Load multiple structures from files.
 
         Args:
@@ -86,7 +89,11 @@ class StructureManager(Generic[STRUCTURE]):
         Raises:
             NotImplementedError: This method must be implemented by subclasses.
         """
-        raise NotImplementedError("Subclasses must implement load_structures")
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def load_structure(fn: str, idn: str = "") -> STRUCTURE: ...
 
 
 class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
@@ -98,12 +105,11 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
 
     meta: StructuresMeta
     structures: dict[str, STRUCTURE] = Field(default_factory=dict)
-    _manager: StructureManager[STRUCTURE] | None = PrivateAttr(
-        default_factory=StructureManager.get_available_manager.__init__
+    _manager: AbstractStructureManager[STRUCTURE] = PrivateAttr(
+        default_factory=AbstractStructureManager.get_available_manager.__init__
     )
 
-    @model_validator(mode="after")
-    def configure_structures(self) -> Self:
+    def model_post_init(self, *_, **__) -> Self:
         """Configure and load structures based on the provided file path.
 
         Validates and processes the file_path, loading either a single structure
@@ -115,23 +121,14 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
         Raises:
             ValueError: If no valid file path is provided or if the path is invalid.
         """
-        if self.meta:
-            file_path = self.meta.file_path
 
-        if file_path:
-            if not any([biotite_available, biopython_available]):
-                raise ImportError(
-                    "Path to structure is provided,"
-                    "but neither biopython nor biotite is installed. "
-                    "Please install either biopython or biotite "
-                )
-
-            # model validator runs before init is finished:
+        if self.meta.file_path:
+            # model post init runs before init is finished(?)
             if self._manager is None:
-                manager_cls = StructureManager.get_available_manager()
+                manager_cls = AbstractStructureManager.get_available_manager()
                 self._manager = manager_cls()
 
-            fp = Path(file_path).resolve()
+            fp = Path(self.meta.file_path).resolve()
             if fp.is_dir():
                 ids = [f.name for f in fp.iterdir()]
                 if len(ids) != len(set(ids)):
@@ -152,7 +149,7 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
                 else:
                     raise ValueError(f"No (correct) structure file path provided: {fp}")
         else:
-            warn("No (correct) structure file path provided.", stacklevel=2)
+            logger.warning("No (correct) structure file path provided.", stacklevel=2)
             return self
 
     def train(self):
@@ -180,10 +177,13 @@ class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
         raise NotImplementedError("StructureDataset has no split implemented yet")
 
 
-class BiotiteStructureManager(StructureManager["AtomArray"]):
+class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
     """Structure manager implementation using Biotite backend."""
 
-    def load_structure(self, fn: str) -> any:
+    name: ClassVar[str] = "biotite"
+
+    @staticmethod
+    def load_structure(fn: str, **_) -> STRUCTURE:
         """Load a single structure from a file using Biotite.
 
         Args:
@@ -196,12 +196,6 @@ class BiotiteStructureManager(StructureManager["AtomArray"]):
             TypeError: If file path is not a string.
             ValueError: If file type is not supported (.cif, .pdb, .bcif).
         """
-        # if type(fn) is not str:
-        #     raise TypeError(
-        #         "File path must be a string,"
-        #         "did you mean to call .load_structures instead?"
-        #     )
-
         if not Path(fn):
             raise TypeError(
                 "File path must be a path to file."
@@ -222,14 +216,15 @@ class BiotiteStructureManager(StructureManager["AtomArray"]):
                 "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
             )
 
+    @staticmethod
     def load_structures(
-        self, ids: list[str], file_names: list[str]
+        ids: list[str], file_names: list[str]
     ) -> dict[str, "AtomArray"]:
         """Load multiple structures from files using Biotite.
 
         Args:
-            id_list: List of structure identifiers.
-            fn_list: List of file paths to the structures.
+            ids: List of structure identifiers.
+            file_names: List of file paths to the structures.
 
         Returns:
             dict: Dictionary mapping structure IDs to their corresponding
@@ -237,22 +232,23 @@ class BiotiteStructureManager(StructureManager["AtomArray"]):
         """
         structures = {}
         for idn, fn in zip(ids, file_names, strict=True):
-            structures[idn] = self.load_structure(fn)
+            structures[idn] = BiotiteStructureManager.load_structure(fn)
 
         return structures
 
 
-class BiopythonStructureManager(StructureManager[Structure]):
+class BiopythonStructureManager(AbstractStructureManager["Structure"]):
     """Structure manager implementation using Biopython backend."""
 
-    def load_structures(
-        self, ids: list[str], file_names: list[str]
-    ) -> dict[str, Structure]:
+    name: ClassVar[str] = "Bio"
+
+    @staticmethod
+    def load_structures(ids: list[str], file_names: list[str]) -> dict[str, Structure]:
         """Load multiple structures from files using Biopython.
 
         Args:
-            id_list: List of structure identifiers.
-            fn_list: List of file paths to the structures.
+            ids: List of structure identifiers.
+            file_names: List of file paths to the structures.
 
         Returns:
             dict[str, any]: Dictionary mapping structure IDs to their corresponding
@@ -260,10 +256,11 @@ class BiopythonStructureManager(StructureManager[Structure]):
         """
         structures = {}
         for idn, fn in zip(ids, file_names, strict=True):
-            structures[idn] = self.load_structure(idn, fn)
+            structures[idn] = BiopythonStructureManager.load_structure(fn, idn)
         return structures
 
-    def load_structure(self, idn: str, fn: str) -> any:
+    @staticmethod
+    def load_structure(fn: str, idn: str = "") -> STRUCTURE:
         """Load a single structure from a file using Biopython.
 
         Args:
@@ -276,6 +273,9 @@ class BiopythonStructureManager(StructureManager[Structure]):
         Raises:
             ValueError: If file type is not supported (.cif, .pdb, .bcif).
         """
+        if not idn:
+            raise ValueError("Structure identifier must be provided.")
+
         if not Path(fn):
             raise TypeError(
                 "File path must be a path to file."
