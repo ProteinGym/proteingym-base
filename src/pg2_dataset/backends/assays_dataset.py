@@ -1,9 +1,10 @@
 import io
 import uuid
+from enum import Enum
 from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
-from typing import Generator, Self
+from typing import Generator, Self, Type
 
 import pandas as pd
 import polars as pl
@@ -18,6 +19,15 @@ from pg2_dataset.splits.abstract_split_strategy import (
     TrainTestValid,
     assign_split_map,
 )
+from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
+
+class SplitStrategyEnum(str, Enum):
+    random = "RandomSplitStrategy"
+
+
+SPLIT_STRATEGY_MAPPING: dict[SplitStrategyEnum, Type] = {
+    SplitStrategyEnum.random: RandomSplitStrategy,
+}
 
 
 class AssaysDataset(AbstractDataset):
