@@ -8,6 +8,7 @@ xref = ""
 file_path = "https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv"
 columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"]
 sequence_feature = "mutated_sequence"
+split_strategy = "RandomSplitStrategy"
 
 [structures_meta]
 file_path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/structures/5kua_cif.cif"

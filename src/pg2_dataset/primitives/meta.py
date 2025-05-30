@@ -25,6 +25,7 @@ class AssaysMeta(BaseModel):
     sequence_feature: str = Field(default=SEQUENCE, min_length=1)
     engineering_round_feature: str = ""
     split_feature: str = ""
+    split_strategy: str = ""
     assays: dict[str, SingleAssayMeta] = Field(default_factory=dict)
 
     def features_for_targets(self, targets: Collection[str]) -> list[str]:
