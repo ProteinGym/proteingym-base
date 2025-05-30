@@ -69,10 +69,7 @@ ds = Dataset.from_toml("example_data/dataset.toml")
 records = ds.assays.records
 
 # load structure
-x = ds.structure.atom_site.cartn_x
-y = ds.structure.atom_site.cartn_y
-z = ds.structure.atom_site.cartn_z
-atom_type = ds.structure.atom_site.id
+structure = ds.structure
 ```
 
 ## develop locally
