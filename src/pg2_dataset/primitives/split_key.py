@@ -3,6 +3,7 @@ from collections.abc import Collection
 from dataclasses import dataclass
 from typing import Self
 
+
 @dataclass(frozen=True)
 class SplitKey:
     round_num: int

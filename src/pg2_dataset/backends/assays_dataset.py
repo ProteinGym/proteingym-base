@@ -1,7 +1,7 @@
 import io
 import uuid
-from enum import Enum
 from collections.abc import Collection
+from enum import Enum
 from functools import cached_property
 from itertools import chain
 from typing import Generator, Self, Type
@@ -20,6 +20,7 @@ from pg2_dataset.splits.abstract_split_strategy import (
     assign_split_map,
 )
 from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
+
 
 class SplitStrategyEnum(str, Enum):
     random = "RandomSplitStrategy"

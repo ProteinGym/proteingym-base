@@ -1,8 +1,8 @@
+from functools import cached_property
 from pathlib import Path
 from typing import Self
 
 from pydantic import BaseModel, PrivateAttr
-from functools import cached_property
 
 from pg2_dataset.backends import AssaysDataset, StructureDataset
 from pg2_dataset.primitives.meta import DatasetMeta
@@ -25,14 +25,14 @@ class Dataset(BaseModel):
 
         else:
             return None
-        
+
     @cached_property
     def structure(self) -> StructureDataset:
         if self._structure:
             return self._structure
 
         elif self.meta.structures_meta:
-            self._structure = StructureDataset(meta=self.meta.structures_meta),
+            self._structure = (StructureDataset(meta=self.meta.structures_meta),)
 
             return self._structure
 
@@ -46,7 +46,7 @@ class Dataset(BaseModel):
     @classmethod
     def to_zip(cls, zip_file: Path | str) -> None:
         raise NotImplementedError
-    
+
     @classmethod
     def from_toml(cls, toml_file: Path | str) -> Self:
         meta = DatasetMeta.from_toml(toml_file)
