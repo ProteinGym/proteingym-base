@@ -8,11 +8,8 @@ from typing import IO, Self
 
 import toml
 from pydantic import BaseModel, Field, FiniteFloat, computed_field
-
-ENGINEERING_ROUND = "engineering_round"
-SEQUENCE = "sequence"
-SPLIT = "split"
-
+from pg2_dataset.primitives.split import SplitStrategyEnum
+from pg2_dataset.primitives.constants import SEQUENCE
 
 class SingleAssayMeta(BaseModel, extra="allow"):
     description: str = ""
@@ -29,6 +26,10 @@ class AssaysMeta(BaseModel):
 
     def features_for_targets(self, targets: Collection[str]) -> list[str]:
         return sorted(chain.from_iterable(self.assays[e].features for e in targets))
+    split_strategy_enum: SplitStrategyEnum = SplitStrategyEnum.random
+    split_strategy_kwargs: dict[str, float] = Field(default_factory=dict)
+
+    assays: dict[str, SingleAssayMeta] = Field(default_factory=dict)
 
     @computed_field
     @cached_property
@@ -41,7 +42,6 @@ class AssaysMeta(BaseModel):
                 self.engineering_round_feature,
                 self.split_feature,
                 *self.assays,
-                *chain.from_iterable(e.features for e in self.assays.values()),
             ]
             if e
         )

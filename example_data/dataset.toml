@@ -1,23 +1,13 @@
-name = "project name"
-description = "project description"
-doi = "DOI: 10.1000/xyz123"
-source = "DOI: 10.1000/xyz123"
-xref = ""
+[resources]
+records = "https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv"
 
-[assays_meta]
-file_path = "https://github.com/ProteinGym2/dvc-dataset-registry/protein_gym/A0A1I9GEU1_NEIME_Kennouche_2019.csv"
-columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin"]
+[records]
 sequence_feature = "mutated_sequence"
+split_strategy = "RandomSplitStrategy"
+split_strategy_kwargs = {train_ratio = 0.8, valid_ratio = 0.1}
 
-[structures_meta]
-file_path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/structures/5kua_cif.cif"
+[records.assays.DMS_score]
+features = ["mutated_sequence"]
 
-[assays_meta.assays.DMS_score]
-description = "lorem ipsum"
-
-[assays_meta.assays.DMS_score.constants]
-key_one = "1"
-key_two = 2
-
-[assays_meta.assays.DMS_score_bin]
-description = "dolor sit amet"
+[enums]
+split_strategies = ["RandomSplitStrategy"]

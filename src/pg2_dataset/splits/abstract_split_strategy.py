@@ -8,6 +8,7 @@ import pandas as pd
 
 from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT
 from pg2_dataset.primitives.split_key import SplitKey
+from pg2_dataset.primitives.constants import SEQUENCE
 
 
 class TrainTestValid(StrEnum):
