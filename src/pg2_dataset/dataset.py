@@ -14,14 +14,12 @@ class Dataset(BaseModel):
     _structure: StructureDataset | None = PrivateAttr(default=None)
 
     @cached_property
-    def records(self) -> AssaysDataset:
+    def assays(self) -> AssaysDataset:
         if self._assays:
             return self._assays
 
-        elif self.meta.resources and self.meta.resources.records and self.meta.records:
-            self._assays = AssaysDataset(
-                file_path=self.meta.resources.records, meta=self.meta.records
-            )
+        elif self.meta.assays_meta:
+            self._assays = AssaysDataset(meta=self.meta.assays_meta)
 
             return self._assays
 
@@ -33,10 +31,8 @@ class Dataset(BaseModel):
         if self._structure:
             return self._structure
 
-        elif self.meta.resources and self.meta.resources.structure:
-            self._structure = StructureDataset(
-                file_path=self.meta.resources.structure,
-            )
+        elif self.meta.structures_meta:
+            self._structure = StructureDataset(meta=self.meta.structures_meta),
 
             return self._structure
 
@@ -53,9 +49,8 @@ class Dataset(BaseModel):
     
     @classmethod
     def from_toml(cls, toml_file: Path | str) -> Self:
-        meta = DatasetMeta.parse_toml(toml_file)
+        meta = DatasetMeta.from_toml(toml_file)
 
         return cls(
-            toml_file=toml_file,
             meta=meta,
         )

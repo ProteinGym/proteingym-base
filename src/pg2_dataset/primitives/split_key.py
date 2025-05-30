@@ -1,8 +1,9 @@
 import hashlib
 from collections.abc import Collection
 from dataclasses import dataclass
-from typing import Self
-
+from typing import Self, Type
+from enum import Enum
+from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
 @dataclass(frozen=True)
 class SplitKey:
@@ -25,3 +26,11 @@ class SplitKey:
             strategy_name=strategy_name,
             targets="-".join(sorted(targets)),
         )
+    
+class SplitStrategyEnum(str, Enum):
+    random = "RandomSplitStrategy"
+
+
+SPLIT_STRATEGY_MAPPING: dict[SplitStrategyEnum, Type] = {
+    SplitStrategyEnum.random: RandomSplitStrategy,
+}
