@@ -11,7 +11,7 @@ dependencies = [
     "cloudpathlib>=0.21.0",
     "dvc[gs,s3]>=3.59.1",
     "loguru>=0.7.3",
-    "polars[all]>=1.28.1",
+    "polars[pyarrow]>=1.30.0",
     "pydantic>=2.11.4",
     "toml>=0.10.2",
 ]
