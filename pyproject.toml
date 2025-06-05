@@ -12,7 +12,7 @@ dependencies = [
     "dvc[gs,s3]>=3.59.1",
     "loguru>=0.7.3",
     "polars[pyarrow]>=1.30.0",
-    "pandas>=2.2.3",
+    "pandas==2.2.3",
     "pydantic>=2.11.4",
     "toml>=0.10.2",
 ]
