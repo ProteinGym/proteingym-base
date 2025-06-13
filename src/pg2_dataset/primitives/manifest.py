@@ -3,8 +3,9 @@ from typing import IO, Self
 
 import toml
 from pydantic import BaseModel
-from pg2_dataset.dataset import Dataset
+
 from pg2_dataset.backends import Assays, Structure
+from pg2_dataset.dataset import Dataset
 from pg2_dataset.primitives.meta import AssaysMeta, StructuresMeta
 
 
@@ -24,10 +25,11 @@ class Manifest(BaseModel):
         return cls.model_validate(toml.load(path))
 
     def ingest(self) -> Dataset:
-          
         dataset = Dataset(
             assays=Assays(meta=self.assays_meta) if self.assays_meta else None,
-            structure=Structure(meta=self.structures_meta) if self.structures_meta else None
+            structure=Structure(meta=self.structures_meta)
+            if self.structures_meta
+            else None,
         )
-         
+
         return dataset

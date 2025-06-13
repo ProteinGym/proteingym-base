@@ -10,6 +10,7 @@ ENGINEERING_ROUND = "engineering_round"
 SEQUENCE = "sequence"
 SPLIT = "split"
 
+
 class SingleAssayMeta(BaseModel, extra="allow"):
     description: str = ""
     features: list[str] = Field(default_factory=list)

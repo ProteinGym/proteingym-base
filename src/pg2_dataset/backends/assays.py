@@ -11,12 +11,16 @@ import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 
 from pg2_dataset.io.bytes import read_bytes
+from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, AssaysMeta
 from pg2_dataset.primitives.record import Record
 from pg2_dataset.primitives.split_key import SplitKey
 from pg2_dataset.primitives.x_and_y import XAndY
-
-from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, AssaysMeta
-from pg2_dataset.splits import AbstractSplitStrategy, RandomSplitStrategy, TrainTestValid, assign_split_map
+from pg2_dataset.splits import (
+    AbstractSplitStrategy,
+    RandomSplitStrategy,
+    TrainTestValid,
+    assign_split_map,
+)
 
 
 class SplitStrategyEnum(str, Enum):

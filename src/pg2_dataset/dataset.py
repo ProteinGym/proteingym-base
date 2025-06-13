@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from pydantic import BaseModel
+
 from pg2_dataset.backends import Assays, Structure
 
 
@@ -14,4 +16,3 @@ class Dataset(BaseModel):
     @classmethod
     def persist(cls, path: Path | str) -> None:
         raise NotImplementedError
-
