@@ -11,3 +11,4 @@ engineering_round_feature="engineering_round"
 file_path = "example_data/v1/A0A1I9GEU1_NEIME_Kennouche_2019/structure.cif"
 
 [assays_meta.assays.DMS_score]
+features = ["sequence"]
