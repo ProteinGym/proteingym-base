@@ -1,62 +1,112 @@
 # pg2 dataset
 ## schema
-
 ``` mermaid
 classDiagram
-    class ModelManifest{
-        train_entrypoint: Path|None
-        predict_entrypoint: Path
-        train_artifacts: list[Artifact]
+    class ModelMeta{
         hyper_parameters: list[HyperParameter]
+        train_entrypoint: Path | None
+        predict_entrypoint: Path
+        input_modalities: list[enum[MSA, Structure, Assay]]
+        higher_is_better: bool
+        support_multi_target: bool
+        license: str
     }
     class MeasurementWithUncertainty{
         value: float
         uncertainty: PositiveFloat
     }
     class Dataset{
-        +records: list[Record]
-        +structure: Structure
-        +msa: MSA
+        +name: str
+        +taxon: NCBITaxon
+        +description: str
+        +doi: Uri
+        +source: Uri
+        +uniprot: str
+        +xrefs: list[CrossReference]
+        +assays: AssaysDataset
+        +structures: StructuresDataset
         +alphabet: SequenceAlphabet
-        +assay_meta: list[AssayMeta]
         +reference_sequences: list[str]
-        +meta: DatasetMeta
-        +splits: dict[tuple[Round, Sequence, SplitStrategy], TrainValidTestEnum]
-        +add_split(strategy: Callable) None
-        +data_frame_by_target(target: str) pd.DataFrame
-        +data_frame() pd.DataFrame
-        +iter_by_rounds() Generator[Dataset]
-        +split() tuple[Dataset, Dataset, Dataset]
+        +licence: str
+        +msa: MSA
+        +save()
+        +load()
     }
-    Dataset <|-- Record
     class Record{
       +engineering_round: int
       +sequence: str
       +$key: float|str|MeasurementWithUncertainty
     }
-    class AssayMeta{
-        +target: str
-        +features: dict[str, type]
+    class AssaysDataset{
+        +assays: list[Assay]
+        +splits: dict[tuple[Round, Sequence, SplitStrategy, targets], enum[Train, Valid, Test]]
+        +add_split(strategy: Callable) None
+        +train(targets: list[str]) tuple[X, Y]
+        +valid(targets: list[str]) tuple[X, Y]
+        +test(targets: list[str]) tuple[X, Y]
+    }
+    class Assay{
+        +name: str
+        +file_path: Path
         +description: str
-        +$constant: any
+        +data: pl.DataFrame[Record]
+        +features: dict[str, NumericalOrCategorical]
+        +constants: dict[str, FiniteFloat | str]
+        +selection_assay: str
+        +selection_type: str
+        +higher_is_better: bool
+        +value_unit: str
+        +assay_type: enum[OrgnismalFitness, Activity, Stability, Expression, Binding]
     }
-    Dataset <|-- AssayMeta
-    Dataset <|-- DatasetMeta
+    class MSA{
+        +file_path: Path
+        +msa: Biotite|Biopython|..
+        +weights: np.array
+        +range: tuple[int, int]
+        +bitscore: float
+        +theta: float
+        +coverage: percent
+        +n_eff: float
+        +neff_l: float
+        +neff_l_category: enum[Medium, Low, High]
+        +num_significant: int
+        +num_significant_l: float
+    }
+    class StructuresDataset{
+        +structures: list[Structure]
+        +splits: dict[tuple[Round, Sequence, SplitStrategy], enum[Train, Valid, Test]]
+        +add_split(strategy: Callable) None
+        +train() tuple[X, Y]
+        +valid() tuple[X, Y]
+        +test() tuple[X, Y]
+    }
+    class Structure{
+        +structure: Biotite|Biopython
+        +file_path: Path
+        +range: tuple[int, int]
+    }
+    Dataset <|-- AssaysDataset
+    Dataset <|-- StructuresDataset
+    Dataset <|-- MSA
+    AssaysDataset <|-- Assay
+    StructuresDataset <|-- Structure
+    Assay <|-- Record
     Record <|-- MeasurementWithUncertainty
-    class DatasetMeta {
-        +doi: Uri
-        +source: Uri
-        +xref: CrossReference
-    }
 ```
 
-Validators
+[Meta data on assays in PG1](https://raw.githubusercontent.com/OATML-Markslab/ProteinGym/refs/heads/main/reference_files/DMS_substitutions.csv)
 
-- Every $target should have a corresponding AssayMeta
-- No missing values in records for listed features assay metadata for target
-- ...
 
-## getting started
+[Meta data on models in PG1](https://github.com/OATML-Markslab/ProteinGym/blob/main/config.json)
+
+Track only non-redundant information E.g.,
+
+- Can use [taxoniq](https://pypi.org/project/taxoniq/) to grab details about organism
+- Can use [doi2bib](https://github.com/bibcure/doi2bib) to grab details about articles
+- Can use [uniprot mapper](https://github.com/David-Araripe/UniProtMapper) to grab details about reference sequence
+- Sequence-length, MSA length etc, are computed fields
+
+## Getting Started
 
 You can load the dataset as below, then go ahead to use it to train a model:
 
@@ -72,7 +122,7 @@ records = ds.assays.records
 structure = ds.structure
 ```
 
-## develop locally
+## Develop Locally
 
 after the following commands, you are good to go:
 ```
@@ -82,13 +132,13 @@ source .venv/bin/activate
 pre-commit install
 ```
 
-## test locally
+## Test Locally
 
 ```shell
 uv run pytest
 ```
 
-## play around
+## Play Around
 
 ```shell
 uv run jupyter lab
