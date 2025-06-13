@@ -61,9 +61,9 @@ Validators
 You can load the dataset as below, then go ahead to use it to train a model:
 
 ```python
-from pg2_dataset.dataset import Dataset
+from pg2_dataset.primitives.manifest import Manifest
 
-ds = Dataset.from_toml("example_data/dataset.toml")
+ds = Manifest.from_path("example_data/dataset.toml").ingest()
 
 # load records
 records = ds.assays.records

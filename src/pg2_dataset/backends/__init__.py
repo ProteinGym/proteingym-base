@@ -1,15 +1,7 @@
-from pg2_dataset.backends.abstract_dataset import AbstractDataset
-from pg2_dataset.backends.assays_dataset import (
-    ENGINEERING_ROUND,
-    SEQUENCE,
-    AssaysDataset,
-)
-from pg2_dataset.backends.structure_dataset import StructureDataset
+from pg2_dataset.backends.assays import Assays
+from pg2_dataset.backends.structure import Structure
 
 __all__ = [
-    "ENGINEERING_ROUND",
-    "SEQUENCE",
-    "AbstractDataset",
-    "AssaysDataset",
-    "StructureDataset",
+    "Assays",
+    "Structure",
 ]

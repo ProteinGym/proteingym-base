@@ -3,10 +3,7 @@
 from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
-from pathlib import Path
-from typing import IO, Self
 
-import toml
 from pydantic import BaseModel, Field, FiniteFloat, computed_field
 
 ENGINEERING_ROUND = "engineering_round"
@@ -50,19 +47,3 @@ class AssaysMeta(BaseModel):
 
 class StructuresMeta(BaseModel):
     file_path: str = ""
-
-
-class DatasetMeta(BaseModel):
-    name: str = ""
-    description: str = ""
-    doi: str = ""
-    source: str = ""
-    xref: str = ""
-    assays_meta: AssaysMeta | None = None
-    structures_meta: StructuresMeta | None = None
-
-    @classmethod
-    def from_toml(cls, toml_file: Path | str | IO["str"]) -> Self:
-        if isinstance(toml_file, str):
-            toml_file = Path(toml_file)
-        return cls.model_validate(toml.load(toml_file))

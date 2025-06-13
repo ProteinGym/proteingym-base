@@ -3,6 +3,7 @@ import io
 import pytest
 
 from pg2_dataset.dataset import Dataset
+from pg2_dataset.primitives.manifest import Manifest
 
 
 class TestDataset:
@@ -34,5 +35,5 @@ class TestDataset:
     """
 
     def test_dataset_from_toml(self, example_toml):
-        ds = Dataset.from_toml(io.StringIO(example_toml))
+        ds = Manifest.from_path(io.StringIO(example_toml)).ingest()
         assert isinstance(ds, Dataset)
