@@ -3,18 +3,12 @@
 from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
-from pathlib import Path
-from typing import IO, Self
 
-import toml
 from pydantic import BaseModel, Field, FiniteFloat, computed_field
-from pg2_dataset.dataset import Dataset
-from pg2_dataset.backends import Assays, Structure
 
 ENGINEERING_ROUND = "engineering_round"
 SEQUENCE = "sequence"
 SPLIT = "split"
-
 
 class SingleAssayMeta(BaseModel, extra="allow"):
     description: str = ""
@@ -52,28 +46,3 @@ class AssaysMeta(BaseModel):
 
 class StructuresMeta(BaseModel):
     file_path: str = ""
-
-
-class Manifest(BaseModel):
-    name: str = ""
-    description: str = ""
-    doi: str = ""
-    source: str = ""
-    xref: str = ""
-    assays_meta: AssaysMeta | None = None
-    structures_meta: StructuresMeta | None = None
-
-    @classmethod
-    def from_path(cls, path: Path | str | IO["str"]) -> Self:
-        if isinstance(path, str):
-            path = Path(path)
-        return cls.model_validate(toml.load(path))
-
-    def ingest(self) -> Dataset:
-          
-        dataset = Dataset(
-            assays=Assays(meta=self.assays_meta),
-            structure=Structure(meta=self.structures_meta),
-        )
-         
-        return dataset

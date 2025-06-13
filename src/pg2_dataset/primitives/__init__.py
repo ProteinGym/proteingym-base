@@ -1,4 +1,4 @@
-from pg2_dataset.primitives.meta import Manifest
+from pg2_dataset.primitives.manifest import Manifest
 
 __all__ = [
     "Manifest",
