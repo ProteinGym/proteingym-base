@@ -1,8 +1,6 @@
-import io
-
 import pytest
 
-from pg2_dataset.primitives.meta import AssaysMeta, DatasetMeta, SingleAssayMeta
+from pg2_dataset.primitives.meta import AssaysMeta, SingleAssayMeta
 
 
 @pytest.fixture
@@ -29,31 +27,6 @@ key_two = 2
 features = ["feature1"]
 description = "dolor sit amet"
 """
-
-
-class TestDatasetMeta:
-    def test_dataset_from_toml_file_like(self, example_toml):
-        ds = DatasetMeta.from_toml(io.StringIO(example_toml))
-        assert isinstance(ds, DatasetMeta)
-
-    def test_dataset_from_toml_path(self, example_toml, tmpdir):
-        file_path = tmpdir / "example.toml"
-
-        with open(file_path, "w") as file:
-            file.write(example_toml)
-        ds = DatasetMeta.from_toml(file_path)
-        assert isinstance(ds, DatasetMeta)
-
-    def test_get_assays_correctly(self, example_toml):
-        meta = DatasetMeta.from_toml(io.StringIO(example_toml))
-
-        assert len(meta.assays_meta.assays) == 2
-
-        assert len(meta.assays_meta.assays["target1"].features) == 2
-        assert len(meta.assays_meta.assays["target2"].features) == 1
-
-        assert len(meta.assays_meta.assays["target1"].constants) == 2
-        assert len(meta.assays_meta.assays["target2"].constants) == 0
 
 
 class TestAssaysMeta:

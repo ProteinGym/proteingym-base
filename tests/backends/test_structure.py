@@ -4,11 +4,11 @@ from typing import ClassVar
 
 import pytest
 
-from pg2_dataset.backends.structure_dataset import (
+from pg2_dataset.backends.structure import (
     STRUCTURE,
     AbstractStructureManager,
     BackendSearchOrder,
-    StructureDataset,
+    Structure,
 )
 from pg2_dataset.primitives.meta import StructuresMeta
 
@@ -18,7 +18,7 @@ TEST_DATA_DIR = str(Path(__file__).parent.parent / "test_data" / "structures")
 @pytest.mark.skipif(
     not find_spec("Bio") and not find_spec("biotite"), reason="no structure backend"
 )
-class TestStructureDataset:
+class TestStructure:
     @pytest.fixture
     def structure_files(self):
         test_data_path = Path(TEST_DATA_DIR)
@@ -39,9 +39,7 @@ class TestStructureDataset:
             assert structures is not None
             assert len(structures) == 1
 
-            dataset = StructureDataset(
-                meta=StructuresMeta(file_path=structure_files["pdb"])
-            )
+            dataset = Structure(meta=StructuresMeta(file_path=structure_files["pdb"]))
             assert dataset._manager.name == backend
             assert len(dataset.structures) == 1
 
@@ -71,7 +69,7 @@ class TestStructureDataset:
         if not any([find_spec("Bio"), find_spec("biotite")]):
             pytest.skip("neither biotite nor biopython installed")
 
-        dataset = StructureDataset(meta=StructuresMeta(file_path=TEST_DATA_DIR))
+        dataset = Structure(meta=StructuresMeta(file_path=TEST_DATA_DIR))
         assert len(dataset.structures) > 1
         assert all(
             isinstance(s, type(next(iter(dataset.structures.values()))))
@@ -80,13 +78,13 @@ class TestStructureDataset:
 
     def test_invalid_file_path(self):
         with pytest.raises(ValueError):
-            StructureDataset(meta=StructuresMeta(file_path="nonexistent_file.pdb"))
+            Structure(meta=StructuresMeta(file_path="nonexistent_file.pdb"))
 
     def test_unsupported_file_format(self, tmpdir):
         invalid_file = tmpdir / "test.xyz"
         invalid_file.write("dummy content")
         with pytest.raises(ValueError):
-            dataset = StructureDataset(meta=StructuresMeta(file_path=str(invalid_file)))
+            dataset = Structure(meta=StructuresMeta(file_path=str(invalid_file)))
             print(dataset)
 
     def test_no_backend_available(self, structure_files, monkeypatch):
