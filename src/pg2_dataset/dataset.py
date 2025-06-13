@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Self
+from typing import IO, Self
 
 import toml
 from loguru import logger
@@ -11,9 +11,6 @@ from pydantic import BaseModel
 
 from pg2_dataset.backends import Assays, Structure
 from pg2_dataset.primitives.meta import AssaysMeta, StructuresMeta
-
-if TYPE_CHECKING:
-    from pg2_dataset.dataset import Dataset, Manifest
 
 
 class Dataset(BaseModel):
