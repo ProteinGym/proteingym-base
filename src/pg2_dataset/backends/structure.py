@@ -5,9 +5,8 @@ from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
 from loguru import logger
-from pydantic import Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr
 
-from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.primitives.meta import StructuresMeta
 
 biotite_available = False
@@ -96,7 +95,7 @@ class AbstractStructureManager(ABC, Generic[STRUCTURE]):
     def load_structure(fn: str, idn: str = "") -> STRUCTURE: ...
 
 
-class StructureDataset(AbstractDataset, Generic[STRUCTURE]):
+class Structure(BaseModel, Generic[STRUCTURE]):
     """A dataset class for handling protein structure data.
 
     This class uses dependency injection for structure management,
