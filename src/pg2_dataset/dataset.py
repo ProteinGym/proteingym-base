@@ -28,28 +28,20 @@ class Dataset(BaseModel):
         with tempfile.TemporaryDirectory() as temp_dir:
             file_paths = []
 
-            # 1. Write manifest
-            manifest_path = os.path.join(temp_dir, "manifest.toml")
-
-            manifest = Manifest(
-                name=self.name,
-                assays_meta=self.assays.meta,
-                structures_meta=self.structure.meta,
-            )
-
-            with open(manifest_path, "w") as f:
-                toml.dump(manifest.model_dump(), f)
-
-            file_paths.append(manifest_path)
-
-            # 2. Write assays
+            # 1. Write assays
             if self.assays and not self.assays._internal_data_frame.is_empty():
                 assays_path = os.path.join(temp_dir, "assays.csv")
                 self.assays._internal_data_frame.write_csv(assays_path)
 
                 file_paths.append(assays_path)
 
-            # 3. Write structures
+                assays_meta = AssaysMeta(
+                    file_path=os.path.basename(assays_path),
+                    split_strategy=self.assays.meta.split_strategy,
+                    assays=self.assays.meta.assays,
+                )
+
+            # 2. Write structures
             if self.structure and self.structure.meta.file_path:
                 source = self.structure.meta.file_path
                 structure_path = os.path.join(temp_dir, os.path.basename(source))
@@ -68,6 +60,24 @@ class Dataset(BaseModel):
 
                 else:
                     logger.error(f"Path does not exist: {source}")
+
+                structures_meta = StructuresMeta(
+                    file_path=os.path.basename(structure_path),
+                )
+
+            # 3. Write manifest
+            manifest_path = os.path.join(temp_dir, "manifest.toml")
+
+            manifest = Manifest(
+                name=self.name,
+                assays_meta=assays_meta,
+                structures_meta=structures_meta,
+            )
+
+            with open(manifest_path, "w") as f:
+                toml.dump(manifest.model_dump(), f)
+
+            file_paths.append(manifest_path)
 
             # 4. Create zip file
             with zipfile.ZipFile(path, "w", compression=compression) as zipf:
