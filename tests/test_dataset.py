@@ -1,4 +1,5 @@
 import io
+import zipfile
 
 import pytest
 
@@ -59,3 +60,18 @@ class TestDataset:
 
         assert len(meta.assays_meta.assays["target1"].constants) == 2
         assert len(meta.assays_meta.assays["target2"].constants) == 0
+
+    def test_persist(self, example_toml, tmpdir):
+        manifest = Manifest.from_path(io.StringIO(example_toml))
+        dataset = manifest.ingest()
+
+        zip_path = tmpdir / "dataset.zip"
+
+        dataset.persist(zip_path)
+
+        with zipfile.ZipFile(zip_path, "r") as zipf:
+            files = zipf.namelist()
+
+        assert len(files) == 2
+        assert "manifest.toml" in files
+        assert "structure/5kua_pdb.pdb" in files
