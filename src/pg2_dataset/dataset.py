@@ -1,16 +1,21 @@
 import os
-import shutil
 import tempfile
 import zipfile
 from pathlib import Path
 from typing import IO, Self
 
 import toml
-from loguru import logger
 from pydantic import BaseModel
 
 from pg2_dataset.backends import Assays, Structure
+from pg2_dataset.logger import get_logger
 from pg2_dataset.primitives.meta import AssaysMeta, StructuresMeta
+
+logger = get_logger(__name__)
+
+DEFAULT_ASSAYS_FILE = Path("assays.csv")
+DEFAULT_STRUCTURE_DIR = Path("structure")
+DEFAULT_MANIFEST_FILE = Path("manifest.toml")
 
 
 class Dataset(BaseModel):
@@ -22,70 +27,98 @@ class Dataset(BaseModel):
     def from_path(cls, path: Path | str) -> None:
         raise NotImplementedError
 
+    def _write_assays(
+        self, path: Path | str
+    ) -> tuple[AssaysMeta, Path] | tuple[None, None]:
+        """Write assays to a CSV file."""
+        path = Path(path)
+
+        if self.assays and self.assays.is_valid:
+            self.assays.data_frame.to_csv(path, index=False)
+
+            return AssaysMeta(
+                file_path=path.name,
+                split_strategy=self.assays.meta.split_strategy,
+                assays=self.assays.meta.assays,
+            ), path
+
+        else:
+            return None, None
+
+    def _write_structure(
+        self, path: Path | str
+    ) -> tuple[StructuresMeta, Path] | tuple[None, None]:
+        """Write structure to a path."""
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+
+        if self.structure and self.structure.is_valid:
+            self.structure.save(path)
+
+            return StructuresMeta(file_path=path.name), path
+        else:
+            return None, None
+
+    def _write_manifest(
+        self, path: Path | str, assays_meta: AssaysMeta, structures_meta: StructuresMeta
+    ) -> Path:
+        """Write manifest to a TOML file."""
+        path = Path(path)
+
+        manifest = Manifest(
+            name=self.name,
+            assays_meta=assays_meta,
+            structures_meta=structures_meta,
+        )
+
+        with open(path, "w") as f:
+            toml.dump(manifest.model_dump(), f)
+
+        return path
+
     def persist(
         self, path: Path | str, compression: int = zipfile.ZIP_DEFLATED
     ) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             file_paths = []
+            path = Path(path)
+            temp_dir = Path(temp_dir)
 
-            # 1. Write assays
-            if self.assays and not self.assays._internal_data_frame.is_empty():
-                assays_path = os.path.join(temp_dir, "assays.csv")
-                self.assays._internal_data_frame.write_csv(assays_path)
+            assays_meta, assays_path = self._write_assays(
+                path=temp_dir / DEFAULT_ASSAYS_FILE
+            )
+            file_paths.append(assays_path)
 
-                file_paths.append(assays_path)
+            structures_meta, structure_path = self._write_structure(
+                path=temp_dir / DEFAULT_STRUCTURE_DIR
+            )
+            file_paths.append(structure_path)
 
-                assays_meta = AssaysMeta(
-                    file_path=os.path.basename(assays_path),
-                    split_strategy=self.assays.meta.split_strategy,
-                    assays=self.assays.meta.assays,
-                )
-
-            # 2. Write structures
-            if self.structure and self.structure.meta.file_path:
-                source = self.structure.meta.file_path
-                structure_path = os.path.join(temp_dir, os.path.basename(source))
-
-                if os.path.isfile(source):
-                    shutil.copy2(source, structure_path)
-                    logger.info(f"Copied file: {source} -> {structure_path}")
-
-                    file_paths.append(structure_path)
-
-                elif os.path.isdir(source):
-                    shutil.copytree(source, structure_path)
-                    logger.info(f"Copied directory: {source} -> {structure_path}")
-
-                    file_paths.append(structure_path)
-
-                else:
-                    logger.error(f"Path does not exist: {source}")
-
-                structures_meta = StructuresMeta(
-                    file_path=os.path.basename(structure_path),
-                )
-
-            # 3. Write manifest
-            manifest_path = os.path.join(temp_dir, "manifest.toml")
-
-            manifest = Manifest(
-                name=self.name,
+            manifest_path = self._write_manifest(
+                path=temp_dir / DEFAULT_MANIFEST_FILE,
                 assays_meta=assays_meta,
                 structures_meta=structures_meta,
             )
-
-            with open(manifest_path, "w") as f:
-                toml.dump(manifest.model_dump(), f)
-
             file_paths.append(manifest_path)
 
-            # 4. Create zip file
+            file_paths = [
+                file_path for file_path in file_paths if file_path is not None
+            ]
+
             with zipfile.ZipFile(path, "w", compression=compression) as zipf:
                 for file_path in file_paths:
-                    archive_name = os.path.basename(file_path)
+                    if file_path.is_file():
+                        zipf.write(file_path, file_path.name)
+                        logger.info(f"Added: {file_path} -> {path}")
 
-                    zipf.write(file_path, archive_name)
-                    logger.info(f"Added: {file_path} -> {archive_name}")
+                    elif file_path.is_dir():
+                        for root, _, files in os.walk(file_path):
+                            for file in files:
+                                src_file = Path(root) / file
+                                zipf.write(
+                                    src_file, DEFAULT_STRUCTURE_DIR / src_file.name
+                                )
+                                logger.info(f"Added: {src_file} -> {path}")
 
             logger.info(f"Dataset persisted to: {path}")
 

@@ -4,10 +4,14 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
-from loguru import logger
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import Field, PrivateAttr
 
+from pg2_dataset.backends.base import Base
+from pg2_dataset.logger import get_logger
 from pg2_dataset.primitives.meta import StructuresMeta
+
+logger = get_logger(__name__)
+
 
 biotite_available = False
 biopython_available = False
@@ -16,12 +20,14 @@ if find_spec("biotite"):
     import biotite.structure.io.pdb as pdb
     import biotite.structure.io.pdbx as pdbx
     from biotite.structure import AtomArray
+    from biotite.structure.io import save_structure
+    from biotite.structure.io.pdbx import get_structure
 
     biotite_available = True
 else:
     biotite_available = False
 if find_spec("Bio"):
-    from Bio.PDB import MMCIFParser, PDBParser
+    from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser
     from Bio.PDB.binary_cif import BinaryCIFParser
     from Bio.PDB.Structure import Structure
 
@@ -94,8 +100,12 @@ class AbstractStructureManager(ABC, Generic[STRUCTURE]):
     @abstractmethod
     def load_structure(fn: str, idn: str = "") -> STRUCTURE: ...
 
+    @staticmethod
+    @abstractmethod
+    def save_structures(structure: "Structure", path: str | Path) -> None: ...
 
-class Structure(BaseModel, Generic[STRUCTURE]):
+
+class Structure(Base, Generic[STRUCTURE]):
     """A dataset class for handling protein structure data.
 
     This class uses dependency injection for structure management,
@@ -133,7 +143,7 @@ class Structure(BaseModel, Generic[STRUCTURE]):
 
             fp = Path(self.meta.file_path).resolve()
             if fp.is_dir():
-                ids = [f.name for f in fp.iterdir()]
+                ids = [f.name for f in fp.iterdir() if not f.name.startswith(".")]
                 if len(ids) != len(set(ids)):
                     raise ValueError(
                         "Directory contains multiple structures with same name"
@@ -178,6 +188,20 @@ class Structure(BaseModel, Generic[STRUCTURE]):
         """
         raise NotImplementedError("StructureDataset has no split implemented yet")
 
+    def save(self, path: str | Path) -> None:
+        """Save the structure dataset to a specified directory.
+
+        Args:
+            path: Directory path where the structures will be saved.
+
+        Raises:
+            ValueError: If the file type is not supported.
+        """
+        if not self.structures:
+            raise ValueError("No structures to save.")
+
+        self._manager.save_structures(self, path)
+
 
 class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
     """Structure manager implementation using Biotite backend."""
@@ -208,9 +232,9 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
         if fn_ext.endswith(".pdb"):
             return pdb.PDBFile.read(fn).get_structure()
         elif fn_ext.endswith(".cif"):
-            return pdbx.CIFFile.read(fn)
+            return get_structure(pdbx.CIFFile.read(fn))
         elif fn_ext.endswith(".bcif"):
-            return pdbx.BinaryCIFFile.read(fn)
+            return get_structure(pdbx.BinaryCIFFile.read(fn))
         else:
             raise ValueError(
                 "File type not supported. "
@@ -237,6 +261,26 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
             structures[idn] = BiotiteStructureManager.load_structure(fn)
 
         return structures
+
+    @staticmethod
+    def save_structures(structure: Structure, path: str | Path) -> None:
+        path = Path(path)
+
+        for idn, stack in structure.structures.items():
+            if idn.endswith(".pdb"):
+                pdb_file = pdb.PDBFile()
+                pdb_file.set_structure(stack)
+                pdb_file.write(path / idn)
+
+            elif idn.endswith(".cif") or idn.endswith(".bcif"):
+                save_structure(str(path / idn), stack)
+
+            else:
+                raise ValueError(
+                    "File type not supported. "
+                    "Biotite supports the following formats:"
+                    "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
+                )
 
 
 class BiopythonStructureManager(AbstractStructureManager["Structure"]):
@@ -299,3 +343,26 @@ class BiopythonStructureManager(AbstractStructureManager["Structure"]):
                 "Biopython supports the following formats:"
                 "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
             )
+
+    @staticmethod
+    def save_structures(structure: Structure, path: str | Path) -> None:
+        path = Path(path)
+
+        for idn, stack in structure.structures.items():
+            if idn.endswith(".pdb"):
+                io = PDBIO()
+                io.set_structure(stack)
+                io.save(str(path / idn))
+
+            elif idn.endswith(".cif"):
+                io = MMCIFIO()
+                io.set_structure(stack)
+                io.save(str(path / idn))
+
+            else:
+                raise ValueError(
+                    "File type not supported. "
+                    "Biopython supports the following formats:"
+                    "pdb (.pdb) and mmcif (.cif) for read and write,"
+                    "and binary cif (.bcif) for read only."
+                )

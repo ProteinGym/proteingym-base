@@ -1,26 +1,29 @@
+from pathlib import Path
+
 import dvc.api
 from cloudpathlib import CloudPath
-from loguru import logger
+
+from pg2_dataset.logger import get_logger
+
+logger = get_logger(__name__)
+
+DATASET_REGISTRY = "https://github.com/ProteinGym2/dvc-dataset-registry.git"
+DATASET_FOLDER = "dvc_pg2"
 
 
-def read_bytes(file_path: str) -> bytes:
+def read_bytes(file_path: str | Path) -> bytes:
     try:
-        dataset_registry = "https://github.com/ProteinGym2/dvc-dataset-registry"
+        file_path = str(file_path)
 
         match file_path:
-            # option 1: dvc file path
-            case _file_path if _file_path.startswith(dataset_registry):
-                with dvc.api.open(
-                    file_path[len(dataset_registry) + 1 :], dataset_registry, mode="rb"
-                ) as f:
+            case _file_path if _file_path.startswith(DATASET_FOLDER):
+                with dvc.api.open(file_path, repo=DATASET_REGISTRY, mode="rb") as f:
                     return f.read()
 
-            # option 2: google cloud storage
-            case _file_path if _file_path.startswith("gs://"):
+            case _file_path if _file_path.startswith("s3://"):
                 with CloudPath(file_path).open("rb") as f:
                     return f.read()
 
-            # option 3: local file storage
             case _:
                 with open(file_path, "rb") as f:
                     return f.read()
@@ -33,3 +36,22 @@ def read_bytes(file_path: str) -> bytes:
 def write_bytes(stream, filename):
     with open(filename, "wb") as f:
         f.write(stream)
+
+
+def exists(file_path: str | Path) -> bool:
+    try:
+        file_path = str(file_path)
+
+        match file_path:
+            case _file_path if _file_path.startswith(DATASET_FOLDER):
+                return dvc.api.DVCFileSystem(DATASET_REGISTRY).exists(file_path)
+
+            case _file_path if _file_path.startswith("s3://"):
+                return CloudPath(file_path).exists()
+
+            case _:
+                return Path(file_path).exists()
+
+    except Exception as exc:
+        logger.error(exc)
+        raise exc
