@@ -47,3 +47,7 @@ class AssaysMeta(BaseModel):
 
 class StructuresMeta(BaseModel):
     file_path: str = ""
+
+
+class MSAMeta(BaseModel):
+    file_path: str = ""
