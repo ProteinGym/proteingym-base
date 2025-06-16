@@ -65,8 +65,7 @@ Validators
 - No missing values in records for listed features assay metadata for target
 - ...
 
-## getting started
-
+## Getting Started
 ### develop locally
 
 after the following commands, you are good to go:

@@ -4,7 +4,8 @@ import polars as pl
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.backends import ENGINEERING_ROUND, SEQUENCE, AssaysDataset
+from pg2_dataset.backends import Assays
+from pg2_dataset.backends.assays import ENGINEERING_ROUND, SEQUENCE
 from pg2_dataset.primitives.meta import AssaysMeta, SingleAssayMeta
 from pg2_dataset.splits.random_split_strategy import RandomSplitStrategy
 
@@ -53,7 +54,7 @@ def split_data():
 """
 
 
-class TestAssaysDataset:
+class TestAssays:
     @pytest.fixture
     def good_csv_file_path(self, good_data, tmpdir):
         file_path = tmpdir / "good.csv"
@@ -91,7 +92,7 @@ class TestAssaysDataset:
         return str(file_path)
 
     def test_features_should_be_renamed_correctly(self, any_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=any_csv_file_path,
                 sequence_feature="a_sequence",
@@ -108,7 +109,7 @@ class TestAssaysDataset:
 
     def test_sequence_feature_should_exist(self, good_csv_file_path):
         with pytest.raises(ValidationError):
-            dataset = AssaysDataset(
+            dataset = Assays(
                 meta=AssaysMeta(
                     file_path=good_csv_file_path,
                     sequence_feature="",
@@ -118,7 +119,7 @@ class TestAssaysDataset:
             print(dataset)
 
     def test_engineering_round_feature_should_exist(self, good_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=good_csv_file_path, assays={"a": SingleAssayMeta()}
             ),
@@ -130,7 +131,7 @@ class TestAssaysDataset:
 
     def test_columns_should_exist_in_data_frame(self, good_csv_file_path):
         with pytest.raises(pl.exceptions.ColumnNotFoundError):
-            dataset = AssaysDataset(
+            dataset = Assays(
                 meta=AssaysMeta(
                     file_path=good_csv_file_path,
                     sequence_feature="sequence",
@@ -140,7 +141,7 @@ class TestAssaysDataset:
             print(dataset)
 
     def test_good_schema_should_be_parsed_correctly(self, good_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=good_csv_file_path, assays={"c": SingleAssayMeta()}
             ),
@@ -154,7 +155,7 @@ class TestAssaysDataset:
             assert isinstance(record["c"], float)
 
     def test_null_values_should_be_parsed_as_null(self, null_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=null_csv_file_path,
                 assays={
@@ -176,7 +177,7 @@ class TestAssaysDataset:
         }
 
     def test_get_records_correctly(self, null_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=null_csv_file_path,
                 assays={
@@ -193,7 +194,7 @@ class TestAssaysDataset:
             assert record.engineering_round is not None
 
     def test_get_data_frame_correctly(self, null_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=null_csv_file_path,
                 assays={
@@ -210,7 +211,7 @@ class TestAssaysDataset:
         )
 
     def test_get_data_frame_by_target_correctly(self, null_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=null_csv_file_path,
                 assays={
@@ -229,7 +230,7 @@ class TestAssaysDataset:
         )
 
     def test_split_data_frame_by_default_correctly(self, split_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=split_csv_file_path,
                 sequence_feature="a_sequence",
@@ -250,7 +251,7 @@ class TestAssaysDataset:
         assert y.columns.to_list() == ["a", "b"]
 
     def test_add_split_by__random_strategy(self, split_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=split_csv_file_path,
                 sequence_feature="a_sequence",
@@ -266,7 +267,7 @@ class TestAssaysDataset:
         assert len(dataset.test()) == 1
 
     def test_iter_by_rounds(self, split_csv_file_path):
-        dataset = AssaysDataset(
+        dataset = Assays(
             meta=AssaysMeta(
                 file_path=split_csv_file_path,
                 sequence_feature="a_sequence",

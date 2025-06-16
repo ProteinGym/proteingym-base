@@ -1,26 +1,38 @@
 import io
 import uuid
 from collections.abc import Collection
+from enum import Enum
 from functools import cached_property
 from itertools import chain
-from typing import Generator, Self
+from typing import Generator, Self, Type
 
 import pandas as pd
 import polars as pl
-from pydantic import ConfigDict, Field, PrivateAttr, computed_field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 
-from pg2_dataset.backends.abstract_dataset import AbstractDataset
 from pg2_dataset.io.bytes import read_bytes
-from pg2_dataset.primitives import Record, SplitKey, XAndY
 from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, AssaysMeta
-from pg2_dataset.splits.abstract_split_strategy import (
+from pg2_dataset.primitives.record import Record
+from pg2_dataset.primitives.split_key import SplitKey
+from pg2_dataset.primitives.x_and_y import XAndY
+from pg2_dataset.splits import (
     AbstractSplitStrategy,
+    RandomSplitStrategy,
     TrainTestValid,
     assign_split_map,
 )
 
 
-class AssaysDataset(AbstractDataset):
+class SplitStrategyEnum(str, Enum):
+    random = "RandomSplitStrategy"
+
+
+SPLIT_STRATEGY_MAPPING: dict[SplitStrategyEnum, Type] = {
+    SplitStrategyEnum.random: RandomSplitStrategy,
+}
+
+
+class Assays(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     meta: AssaysMeta

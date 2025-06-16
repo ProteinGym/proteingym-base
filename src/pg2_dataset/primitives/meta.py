@@ -3,10 +3,7 @@
 from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
-from pathlib import Path
-from typing import IO, Self
 
-import toml
 from pydantic import BaseModel, Field, FiniteFloat, computed_field
 
 ENGINEERING_ROUND = "engineering_round"
@@ -25,6 +22,7 @@ class AssaysMeta(BaseModel):
     sequence_feature: str = Field(default=SEQUENCE, min_length=1)
     engineering_round_feature: str = ""
     split_feature: str = ""
+    split_strategy: str = ""
     assays: dict[str, SingleAssayMeta] = Field(default_factory=dict)
 
     def features_for_targets(self, targets: Collection[str]) -> list[str]:
@@ -47,16 +45,5 @@ class AssaysMeta(BaseModel):
         )
 
 
-class DatasetMeta(BaseModel):
-    name: str = ""
-    description: str = ""
-    doi: str = ""
-    source: str = ""
-    xref: str = ""
-    assays_meta: AssaysMeta | None = None
-
-    @classmethod
-    def from_toml(cls, toml_file: Path | str | IO["str"]) -> Self:
-        if isinstance(toml_file, str):
-            toml_file = Path(toml_file)
-        return cls.model_validate(toml.load(toml_file))
+class StructuresMeta(BaseModel):
+    file_path: str = ""

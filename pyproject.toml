@@ -11,7 +11,8 @@ dependencies = [
     "cloudpathlib>=0.21.0",
     "dvc[gs,s3]>=3.59.1",
     "loguru>=0.7.3",
-    "polars[all]>=1.28.1",
+    "polars[pyarrow]>=1.30.0",
+    "pandas==2.2.3",
     "pydantic>=2.11.4",
     "toml>=0.10.2",
 ]
@@ -19,6 +20,10 @@ dependencies = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+biotite = ["biotite>=1.3.0"]
+biopython = ["biopython>=1.85.0", "msgpack>=1.1.0"]
 
 [dependency-groups]
 dev = [
