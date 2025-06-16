@@ -5,6 +5,8 @@
 [1. Schema Overview](#schema)
 [2. Getting Started](#getting-started)
 [3. Example Datasets](#example-data)
+[4. Example Manifests](#example-manifest)
+[5. Tutorials](#tutorials)
 
 ## schema
 
@@ -149,13 +151,12 @@ This dataset is stored in `example_data/NEIME_2019` and contains the following:
 │       │   └── msa.psi             #MSA file in .psi format
 │       └── Structures              #5 types of example structures with different
 │           │                       #file types and sources for testing:
-│           ├── structure_experimental.cif
-│           ├── structure_experimental.bcif
-│           ├── structure.experimental.pdb
-│           ├── structure_computational.cif
-│           └── structure_computational.pdb
+│           ├── experimental.cif
+│           ├── experimental.bcif
+│           ├── experimental.pdb
+│           ├── computational.cif
+│           └── computational.pdb
 ```
-
 
 For a full overview of available data see the following table:
 
@@ -163,4 +164,28 @@ For a full overview of available data see the following table:
 | :--- | :--- | :--- |
 | NEIME2019 | www.proteingym.org | manifests/neime2019.toml |
 
+## Example Manifest
 
+We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset for testing purposes.
+This manifest for this dataset is stored in `manifests/neime_2019.manifest` and contains the following:
+
+```shell
+name = "NEIME_2019"                                     # Name of the dataset
+
+[assays_meta]                                           # Meta data of the assay
+file_path = "example_data/NEIME_2019/Assays/Assay1.csv" # File path to Assay file
+columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin", "split", "engineering_round"] # Relevant columns to load
+sequence_feature = "mutated_sequence"                   # Column of the sequence
+split_feature="split"                                   # Column of the stored split information
+engineering_round_feature="engineering_round"           # Column of the engineering round
+
+[structures_meta]                                       # Meta data of the structures
+file_path = "example_data/NEIME_2019/experimental.cif"  # Path to structure file or directory containing multiple files.
+
+[assays_meta.assays.DMS_score]                          # Meta data of the DMS Score assay
+```
+
+## Tutorials
+
+>[!CAUTION]
+> Should add section with tutorials here. E.g. pointing to the CI/CD notebooks.
