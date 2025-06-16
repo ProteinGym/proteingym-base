@@ -76,6 +76,11 @@ source .venv/bin/activate
 pre-commit install
 ```
 
+to install all optional dependencies for Structures and MSA:
+```
+uv sync --all-extras
+```
+
 to test:
 ```shell
 uv run pytest
