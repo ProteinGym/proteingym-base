@@ -129,7 +129,7 @@ from pg2_dataset
 
 ## 1.4. Example Data
 
-We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset for testing purposes.
+We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset as example.
 This dataset is stored in `example_data/NEIME_2019` and contains the following:
 
 >[!CAUTION]
@@ -140,7 +140,7 @@ This dataset is stored in `example_data/NEIME_2019` and contains the following:
 
 >[!CAUTION]
 > In Assay.csv we also contain the split and engineer round column. 
-> Engineering round is randomly allocated to 1, 2 or 3 for testing purposed.
+> Engineering round is randomly allocated to 1, 2 or 3 for illustrative purposes.
 > Orginal assay belongs to a single engineering round.
 > Split column converted the fold_random_5 from a k-split to train/val/test split with kfolds 0, 1, 2 in train, 3 in val, 4 in test.
 
@@ -159,7 +159,7 @@ This dataset is stored in `example_data/NEIME_2019` and contains the following:
 │       │   ├── msa.a3m             #MSA file in .a3m format
 │       │   └── msa.psi             #MSA file in .psi format
 │       └── Structures              #5 types of example structures with different
-│           │                       #file types and sources for testing:
+│           │                       #file types and sources for examples:
 │           ├── experimental.cif
 │           ├── experimental.bcif
 │           ├── experimental.pdb
@@ -175,7 +175,7 @@ For a full overview of available data see the following table:
 
 ## 1.5. Example Manifest
 
-We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset for testing purposes.
+We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset as example.
 This manifest for this dataset is stored in `manifests/neime_2019.manifest` and contains the following:
 
 ```toml
