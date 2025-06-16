@@ -1,14 +1,19 @@
-# pg2 dataset
+# 1. pg2 dataset
 
-#### Table of Contents
+## 1.1. Table of Contents
+- [1. pg2 dataset](#1-pg2-dataset)
+  - [1.1. Table of Contents](#11-table-of-contents)
+  - [1.2. Schema](#12-schema)
+  - [1.3. Getting Started](#13-getting-started)
+    - [1.3.1. develop locally](#131-develop-locally)
+    - [1.3.2. load dataset](#132-load-dataset)
+    - [1.3.3. loading from non-local](#133-loading-from-non-local)
+  - [1.4. Example Data](#14-example-data)
+  - [1.5. Example Manifest](#15-example-manifest)
+  - [1.6. Tutorials](#16-tutorials)
 
-[1. Schema Overview](#schema)
-[2. Getting Started](#getting-started)
-[3. Example Datasets](#example-data)
-[4. Example Manifests](#example-manifest)
-[5. Tutorials](#tutorials)
 
-## schema
+## 1.2. Schema
 
 ``` mermaid
 classDiagram
@@ -65,8 +70,8 @@ Validators
 - No missing values in records for listed features assay metadata for target
 - ...
 
-## Getting Started
-### develop locally
+## 1.3. Getting Started
+### 1.3.1. develop locally
 
 after the following commands, you are good to go:
 ```
@@ -91,7 +96,7 @@ to play around:
 uv run jupyter lab
 ```
 
-### load dataset
+### 1.3.2. load dataset
 
 You can just load the dataset as below, then go ahead with using it for model training or prediction:
 
@@ -107,7 +112,7 @@ records = ds.assays.records
 structure = ds.structure
 ```
 
-### loading from non-local
+### 1.3.3. loading from non-local
 
 > [!CAUTION]
 > This is probably out of date but good to include nonetheless. What is the current status on this?
@@ -122,7 +127,7 @@ from pg2_dataset
 #fill out example here.
 ```
 
-## Example Data
+## 1.4. Example Data
 
 We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset for testing purposes.
 This dataset is stored in `example_data/NEIME_2019` and contains the following:
@@ -164,16 +169,16 @@ This dataset is stored in `example_data/NEIME_2019` and contains the following:
 
 For a full overview of available data see the following table:
 
-| Dataset name | Link to website | Relative path to manifest |
-| :--- | :--- | :--- |
-| NEIME2019 | www.proteingym.org | manifests/neime2019.toml |
+| | Dataset name | Link to website | Relative path to manifest |
+| :--- | :--- | :--- | :--- |
+| 1. | NEIME2019 | www.proteingym.org | [manifests/neime_2019.toml](manifests/neime_2019.toml) |
 
-## Example Manifest
+## 1.5. Example Manifest
 
 We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset for testing purposes.
 This manifest for this dataset is stored in `manifests/neime_2019.manifest` and contains the following:
 
-```shell
+```toml
 name = "NEIME_2019"                                     # Name of the dataset
 
 [assays_meta]                                           # Meta data of the assay
@@ -189,7 +194,7 @@ file_path = "example_data/NEIME_2019/experimental.cif"  # Path to structure file
 [assays_meta.assays.DMS_score]                          # Meta data of the DMS Score assay
 ```
 
-## Tutorials
+## 1.6. Tutorials
 
 >[!CAUTION]
 > Should add section with tutorials here. E.g. pointing to the CI/CD notebooks.
