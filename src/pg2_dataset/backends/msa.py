@@ -7,27 +7,18 @@ from typing import ClassVar, Generic, Self, TypeVar
 from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
 
-from pg2_dataset.primitives.meta import StructuresMeta
-
 biotite_available = False
 biopython_available = False
 
 if find_spec("biotite"):
-    import biotite.structure.io.pdb as pdb
-    import biotite.structure.io.pdbx as pdbx
-    from biotite.structure import AtomArray
+    import biotite.sequence.io.fasta as biotite_fasta
 
     biotite_available = True
-else:
-    biotite_available = False
+
 if find_spec("Bio"):
-    from Bio.PDB import MMCIFParser, PDBParser
-    from Bio.PDB.binary_cif import BinaryCIFParser
-    from Bio.PDB.Structure import Structure
+    from Bio.AlignIO import _FormatToIterator
 
     biopython_available = True
-else:
-    biotite_available = False
 
 MSA = TypeVar("MSA")
 search_order = ["Bio", "biotite"]
@@ -69,8 +60,7 @@ class AbstractMSAManager(ABC, Generic[STRUCTURE]):
             if is_available:
                 return manager_class
         raise ImportError(
-            "No suitable MSA manager found. Please install either biopython "
-            "or biotite."
+            "No suitable MSA manager found. Please install either biopython or biotite."
         )
 
     @staticmethod
@@ -94,9 +84,9 @@ class AbstractMSAManager(ABC, Generic[STRUCTURE]):
     def load_msa(file_name: str) -> MSA: ...
 
 
-
 class MSADataset(BaseModel, Generic[MSA]):
     """DocString"""
+
     meta: MSAMeta
     msa: dict[str, MSA] = Field(default_factory=dict)
     _manager: AbstractMSAManager = PrivateAttr(
@@ -166,25 +156,7 @@ class MSADataset(BaseModel, Generic[MSA]):
 
 
 class BiotiteMSAManager(AbstractMSAManager):
-
     name: ClassVar[str] = "biotite"
-
-
-    def load_msa(self, fp):
-        file_handlers = {
-            ".a3m": partial(self.from_a3m, self),
-            ".a2m": partial(self.from_a2m, self),
-            ".psi": partial(self.from_psi, self),
-        }
-
-        for extension, handler in file_handlers.items():
-            if fp.endswith(extension):
-                return handler(fp)
-
-        raise ValueError(
-            f"File {fp} is not a valid / supported MSA file. "
-            f"Currently supported formats are: {', '.join(file_handlers.keys())}"
-        )
 
     @staticmethod
     def load_msa(file_name: str) -> MSA:
@@ -197,121 +169,103 @@ class BiotiteMSAManager(AbstractMSAManager):
         Returns:
             MSA: The loaded MSA object.
         """
-        return BiotiteMSAManager.load_msa(file_name)
+        if not Path(fn):
+            raise TypeError(
+                "File path must be a path to file."
+                "Did you mean to call .load_msas instead?"
+            )
+
+        fn_ext = Path(fn).suffix.lower()
+        if (fn_ext == ".fa") or (fn_ext == ".fasta"):
+            msa_input = biotite_fasta.FastaFile.read(file_name)
+            alignment = msa_input.get_alignment(
+                msa_input, additional_gap_chars=self.meta.gap_chars
+            )
+            return alignment
+        else:
+            raise ValueError(
+                "Biotite contains limited support for MSA files."
+                "Currently we only support aligned fasta files "
+                "for biotite alignment loading"
+                "If you need support for different alignment types, "
+                "consider using the BioPython backend"
+            )
 
     @staticmethod
-    def load_msas(file_names: list[str]) -> MSA:
-    
+    def load_msas(file_names: list[str]) -> dict[str, MSA]:
+        """Load multiple MSAs from files using Biotite.
 
+        Args:
+            ids: List of structure identifiers.
+            file_names: List of file paths to the structures.
+
+        Returns:
+            dict: Dictionary mapping structure IDs to their corresponding
+            structure objects.
+        """
+        structures = {}
+        for fn in file_names:
+            idn = Path(fn).name
+            structures[idn] = BiotiteMSAManager.load_msa(fn)
+
+        return structures
+
+
+class BiopythonMSAManager(AbstractMSAManager):
+    name: ClassVar[str] = "biotite"
+
+    allowed_formats = list(_FormatToIterator.keys())
+    # Fasta is taken from other module by default, but its an allowed type.
+    allowed_formats.extend(["fasta"])
 
     @staticmethod
-    def _extract_record_name(header_line: str) -> str:
+    def load_msa(file_name: str) -> MSA:
         """
-        Extract the record name from a FASTA header line.
-        If the name is in the format >tr|NAME|DESCRIPTION, extract NAME.
-        Otherwise, use the full header (without the >).
+        Load an MSA from a file using Biopython.
 
         Args:
-            header_line: The FASTA header line starting with '>'
+            file_name: Path to the MSA file.
 
         Returns:
-            The extracted record name
+            MSA: The loaded MSA object.
         """
-        # Remove the '>' character
-        if header_line.startswith(">"):
-            header = header_line[1:].strip()
+        if not Path(fn):
+            raise TypeError(
+                "File path must be a path to file."
+                "Did you mean to call .load_msas instead?"
+            )
+
+        fn_ext = Path(fn).suffix.lower()
+        if (fn_ext == ".fa") or (fn_ext == ".fasta"):
+            msa_input = biotite_fasta.FastaFile.read(file_name)
+            alignment = msa_input.get_alignment(
+                msa_input, additional_gap_chars=self.meta.gap_chars
+            )
+            return alignment
         else:
-            header = header_line.strip()
+            raise ValueError(
+                "Biotite contains limited support for MSA files."
+                "Currently we only support aligned fasta files "
+                "for biotite alignment loading"
+                "If you need support for different alignment types, "
+                "consider using the BioPython backend"
+            )
 
-        # Check if the header has the format tr|NAME|DESCRIPTION
-        pipe_match = re.match(r".*\|(.*?)\|", header)
-        if pipe_match:
-            return pipe_match.group(1)
-        else:
-            return header
-
-    @classmethod
-    def from_a2m(cls, self, file_path: str) -> any:
-        """
-        Parse an A2M file and return an MSA object.
+    @staticmethod
+    def load_msas(file_names: list[str]) -> dict[str, MSA]:
+        """Load multiple MSAs from files using Biotite.
 
         Args:
-            file_path: Path to the A2M file
+            ids: List of structure identifiers.
+            file_names: List of file paths to the structures.
 
         Returns:
-            MSA object with sequences and records
+            dict: Dictionary mapping structure IDs to their corresponding
+            structure objects.
         """
-        records = {}
-        name = None
-        seq = ""
-        with open(file_path, "r") as file:
-            for line in file:
-                line = line.strip()
-                if line.startswith(">"):
-                    if name is not None:
-                        records[name] = seq
-                    name = self._extract_record_name(line)
-                    seq = ""
-                else:
-                    seq += line
+        structures = {}
+        for fn in file_names:
+            idn = Path(fn).name
+            structures[idn] = BiotiteMSAManager.load_msa(fn)
 
-            # save last entry
-            if name is not None:
-                records[name] = seq
-
-        if len({len(s) for s in records.values()}) > 1:
-            raise ValueError("All sequences in A2M format must be of same length")
-
-        return records
-
-    @classmethod
-    def from_a3m(cls, self, file_path: str) -> any:
-        """
-        Parse an A3M file and return an MSA object.
-
-        Args:
-            file_path: Path to the A3M file
-
-        Returns:
-            MSA object with sequences and records
-        """
-        records = {}
-        name = None
-        seq = ""
-        with open(file_path, "r") as file:
-            for line in file:
-                line = line.strip()
-                if line.startswith(">"):
-                    if name is not None:
-                        records[name] = seq
-                    name = self._extract_record_name(line)
-                    seq = ""
-                else:
-                    seq += line
-
-            # save last entry
-            if name is not None:
-                records[name] = seq
-
-        return records
-
-    @classmethod
-    def from_psi(cls, self, file_path: str) -> any:
-        """
-        Parse a PSI file and return an MSA object.
-
-        Args:
-            file_path: Path to the PSI file
-
-        Returns:
-            MSA object with sequences and records
-        """
-
-        records = {}
-        with open(file_path, "r") as file:
-            for line in file:
-                header, sequence = line.strip().split()
-                name = self._extract_record_name(header)
-                records[name] = sequence
-
-        return records
+        return structures

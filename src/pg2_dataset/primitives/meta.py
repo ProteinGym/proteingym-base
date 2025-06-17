@@ -51,3 +51,5 @@ class StructuresMeta(BaseModel):
 
 class MSAMeta(BaseModel):
     file_path: str = ""
+    file_format: str = ""
+    gap_chars: list[str] = Field(default_factory=list)
