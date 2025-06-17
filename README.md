@@ -8,6 +8,7 @@
     - [1.3.1. develop locally](#131-develop-locally)
     - [1.3.2. load dataset](#132-load-dataset)
     - [1.3.3. loading from non-local](#133-loading-from-non-local)
+  - [Engineering rounds](#engineering-rounds)
   - [1.4. Example Data](#14-example-data)
   - [1.5. Example Manifest](#15-example-manifest)
   - [1.6. Tutorials](#16-tutorials)
@@ -126,6 +127,12 @@ from pg2_dataset
 
 #fill out example here.
 ```
+
+## Engineering rounds
+
+PG2 will support the concept of engineering rounds. When IFF develops new enzymes, we do iterative design where the target might change every round. E.g. if the goal is engineering a better enzyme X for cleaning stain Y, we usually reach the wanted Y performance in a few rounds with different targets in different rounds. In the first round we could try to achieve maximum stability, second round might be after expression in the biological host or a third round for getting the best cleaning performance on a specific stain Y. 
+
+By supporting engineering rounds we allow for the easy modeling of methods where we can train on round 1, predict round 2 data, train round 1+2, predict round 3 data, etc. Or for benchmarking on older data and see if a tool would have been helpful along the round design.
 
 ## 1.4. Example Data
 
