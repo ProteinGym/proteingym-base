@@ -7,6 +7,8 @@ from typing import ClassVar, Generic, Self, TypeVar
 from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
 
+from pg2_dataset.primitives.meta import MSAMeta
+
 biotite_available = False
 biopython_available = False
 
@@ -16,12 +18,14 @@ if find_spec("biotite"):
     biotite_available = True
 
 if find_spec("Bio"):
+    from Bio import AlignIO
     from Bio.AlignIO import _FormatToIterator
 
     biopython_available = True
 
 MSA = TypeVar("MSA")
 search_order = ["Bio", "biotite"]
+# search_order = ["biotite", "Bio"]
 
 
 class BackendSearchOrder:
@@ -32,14 +36,17 @@ class BackendSearchOrder:
         sys.modules[__name__].search_order = self.order
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.modules[__name__].search_order = ["Bio", "biotite"]
+        sys.modules[__name__].search_order = ["biopython", "biotite"]
 
 
-class AbstractMSAManager(ABC, Generic[STRUCTURE]):
+class AbstractMSAManager(ABC, Generic[MSA]):
     """Base class for MSA managers that handle loading multiple sequence alignments."""
 
     name: ClassVar[str] = ""
     backend_map: ClassVar[dict] = {}
+
+    def __init__(self, meta: MSAMeta = None):
+        self.meta = meta
 
     def __init_subclass__(cls, **kwargs):
         cls.backend_map[cls.name] = cls, find_spec(cls.name)
@@ -60,12 +67,11 @@ class AbstractMSAManager(ABC, Generic[STRUCTURE]):
             if is_available:
                 return manager_class
         raise ImportError(
-            "No suitable MSA manager found. Please install either biopython or biotite."
+            "No suitable MSA manager found.Please install either biopython or biotite."
         )
 
-    @staticmethod
     @abstractmethod
-    def load_msas(file_names: list[str]) -> dict[str, MSA]:
+    def load_msas(self, file_names: list[str]) -> dict[str, MSA]:
         """Load MSA from file.
 
         Args:
@@ -79,23 +85,20 @@ class AbstractMSAManager(ABC, Generic[STRUCTURE]):
         """
         ...
 
-    @staticmethod
     @abstractmethod
-    def load_msa(file_name: str) -> MSA: ...
+    def load_msa(self, file_name: str) -> MSA: ...
 
 
-class MSADataset(BaseModel, Generic[MSA]):
+class MSA(BaseModel, Generic[MSA]):
     """DocString"""
 
     meta: MSAMeta
     msa: dict[str, MSA] = Field(default_factory=dict)
-    _manager: AbstractMSAManager = PrivateAttr(
-        default_factory=AbstractMSAManager.get_available_manager
-    )
+    _manager: AbstractMSAManager = PrivateAttr(default=None)
 
-    @property
-    def sequences(self) -> list[str]:
-        return list(self.msa.values())
+    # @property
+    # def alignments(self) -> list[str]:
+    #     return list(self.msa.values())
 
     def model_post_init(self, *_, **__) -> Self:
         """Configure and load MSA based on the provided file path.
@@ -114,7 +117,7 @@ class MSADataset(BaseModel, Generic[MSA]):
             if self._manager is None:
                 try:
                     manager_cls = AbstractMSAManager.get_available_manager()
-                    self._manager = manager_cls()
+                    self._manager = manager_cls(meta=self.meta)
                 except ImportError as e:
                     logger.warning(str(e))
                     return self
@@ -127,6 +130,8 @@ class MSADataset(BaseModel, Generic[MSA]):
             elif fp.is_file():
                 self.msa = self._manager.load_msa(str(fp))
                 return self
+            else:
+                raise ValueError(f"No (correct) MSA file path provided: {fp}")
         else:
             logger.warning("No (correct) MSA file path provided.", stacklevel=2)
 
@@ -158,8 +163,7 @@ class MSADataset(BaseModel, Generic[MSA]):
 class BiotiteMSAManager(AbstractMSAManager):
     name: ClassVar[str] = "biotite"
 
-    @staticmethod
-    def load_msa(file_name: str) -> MSA:
+    def load_msa(self, file_name: str) -> MSA:
         """
         Load an MSA from a file using Biotite.
 
@@ -169,16 +173,16 @@ class BiotiteMSAManager(AbstractMSAManager):
         Returns:
             MSA: The loaded MSA object.
         """
-        if not Path(fn):
+        if not Path(file_name):
             raise TypeError(
                 "File path must be a path to file."
                 "Did you mean to call .load_msas instead?"
             )
 
-        fn_ext = Path(fn).suffix.lower()
+        fn_ext = Path(file_name).suffix.lower()
         if (fn_ext == ".fa") or (fn_ext == ".fasta"):
             msa_input = biotite_fasta.FastaFile.read(file_name)
-            alignment = msa_input.get_alignment(
+            alignment = biotite_fasta.get_alignment(
                 msa_input, additional_gap_chars=self.meta.gap_chars
             )
             return alignment
@@ -191,8 +195,7 @@ class BiotiteMSAManager(AbstractMSAManager):
                 "consider using the BioPython backend"
             )
 
-    @staticmethod
-    def load_msas(file_names: list[str]) -> dict[str, MSA]:
+    def load_msas(self, file_names: list[str]) -> dict[str, MSA]:
         """Load multiple MSAs from files using Biotite.
 
         Args:
@@ -203,23 +206,22 @@ class BiotiteMSAManager(AbstractMSAManager):
             dict: Dictionary mapping structure IDs to their corresponding
             structure objects.
         """
-        structures = {}
+        alignments = {}
         for fn in file_names:
             idn = Path(fn).name
-            structures[idn] = BiotiteMSAManager.load_msa(fn)
+            alignments[idn] = self.load_msa(fn)
 
-        return structures
+        return alignments
 
 
 class BiopythonMSAManager(AbstractMSAManager):
-    name: ClassVar[str] = "biotite"
-
-    allowed_formats = list(_FormatToIterator.keys())
-    # Fasta is taken from other module by default, but its an allowed type.
+    name: ClassVar[str] = "Bio"
+    allowed_formats: list[str] = list(_FormatToIterator.keys())
+    # Fasta is taken from other module by default and not in OG list,
+    # but its an allowed type.
     allowed_formats.extend(["fasta"])
 
-    @staticmethod
-    def load_msa(file_name: str) -> MSA:
+    def load_msa(self, file_name: str) -> MSA:
         """
         Load an MSA from a file using Biopython.
 
@@ -229,30 +231,22 @@ class BiopythonMSAManager(AbstractMSAManager):
         Returns:
             MSA: The loaded MSA object.
         """
-        if not Path(fn):
+        if not Path(file_name):
             raise TypeError(
                 "File path must be a path to file."
                 "Did you mean to call .load_msas instead?"
             )
-
-        fn_ext = Path(fn).suffix.lower()
-        if (fn_ext == ".fa") or (fn_ext == ".fasta"):
-            msa_input = biotite_fasta.FastaFile.read(file_name)
-            alignment = msa_input.get_alignment(
-                msa_input, additional_gap_chars=self.meta.gap_chars
-            )
+        if self.meta.file_format in self.allowed_formats:
+            alignment = AlignIO.read(file_name, self.meta.file_format)
             return alignment
         else:
             raise ValueError(
-                "Biotite contains limited support for MSA files."
-                "Currently we only support aligned fasta files "
-                "for biotite alignment loading"
-                "If you need support for different alignment types, "
-                "consider using the BioPython backend"
+                f"Unexpected format, Biopython only allows: {self.allowed_formats}"
+                f"For more information see:"
+                f"https://biopython.org/wiki/AlignIO"
             )
 
-    @staticmethod
-    def load_msas(file_names: list[str]) -> dict[str, MSA]:
+    def load_msas(self, file_names: list[str]) -> dict[str, MSA]:
         """Load multiple MSAs from files using Biotite.
 
         Args:
@@ -263,9 +257,9 @@ class BiopythonMSAManager(AbstractMSAManager):
             dict: Dictionary mapping structure IDs to their corresponding
             structure objects.
         """
-        structures = {}
+        alignments = {}
         for fn in file_names:
             idn = Path(fn).name
-            structures[idn] = BiotiteMSAManager.load_msa(fn)
+            alignments[idn] = self.load_msa(fn)
 
-        return structures
+        return alignments

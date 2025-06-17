@@ -1,194 +1,150 @@
-from io import StringIO
+from importlib.util import find_spec
+from pathlib import Path
 
 import pytest
 
-from pg2_dataset.primitives.msa import MSA
+from pg2_dataset.backends.msa import (
+    MSA,
+    AbstractMSAManager,
+    BackendSearchOrder,
+    BiopythonMSAManager,
+    BiotiteMSAManager,
+)
+from pg2_dataset.primitives.meta import MSAMeta
+
+TEST_DATA_DIR = str(Path(__file__).parent.parent / "test_data" / "msa")
 
 
-@pytest.fixture
-def msa_data():
-    """Fixture providing test data for MSA tests."""
-    records = {"seq1": "ACGTACGT", "seq2": "ACGTA-GT", "seq3": "ACGT--GT"}
-    return {"records": records}
+@pytest.mark.skipif(
+    not find_spec("Bio") and not find_spec("biotite"), reason="no MSA backend"
+)
+class TestMSA:
+    @pytest.fixture
+    def msa_files(self, tmpdir):
+        fasta_file = Path(tmpdir) / "test_alignment.fasta"
+        fasta_content = ">seq1\nACGTACGT\n>seq2\nACGTA-GT\n>seq3\nACGT--GT\n"
+        with open(fasta_file, "w") as f:
+            f.write(fasta_content)
+        return {"fasta": str(fasta_file)}
 
+    def _check_backend(self, backend):
+        if not find_spec(backend):
+            pytest.skip(f"{backend} is not installed")
 
-@pytest.fixture
-def msa_instance(msa_data):
-    """Fixture providing an MSA instance for tests."""
-    return MSA(records=msa_data["records"])
+    def _create_msa_meta(self, msa_files):
+        return MSAMeta(file_path=msa_files["fasta"], file_format="fasta")
 
+    @pytest.mark.parametrize("backend", ["Bio", "biotite"])
+    def test_msa_manager_initialization(self, msa_files, backend):
+        self._check_backend(backend)
+        with BackendSearchOrder([backend]):
+            manager_cls = AbstractMSAManager.get_available_manager()
+            assert manager_cls.name == backend
 
-def test_init(msa_instance, msa_data):
-    """Test the initialization of the MSA class."""
-    assert msa_instance.sequences == list(msa_data["records"].values())
-    assert msa_instance.records == msa_data["records"]
+            manager = manager_cls(meta=self._create_msa_meta(msa_files))
+            alignment = manager.load_msa(msa_files["fasta"])
+            assert alignment is not None
 
+    @pytest.mark.parametrize("backend", ["Bio", "biotite"])
+    def test_msa_class_initialization(self, msa_files, backend):
+        self._check_backend(backend)
+        with BackendSearchOrder([backend]):
+            dataset = MSA(meta=self._create_msa_meta(msa_files))
+            assert dataset._manager.name == backend
+            assert dataset.msa is not None
 
-def test_get_sequence_by_name_error(msa_instance):
-    """Test error handling when a record name is not found."""
-    with pytest.raises(KeyError):
-        msa_instance.records["nonexistent"]
+    @pytest.mark.parametrize("backend", ["Bio", "biotite"])
+    def test_load_directory_of_msas(self, tmpdir, backend):
+        self._check_backend(backend)
 
+        test_dir = Path(tmpdir) / "msa_dir"
+        test_dir.mkdir()
 
-def test_get_sequence_by_index(msa_instance):
-    """Test retrieving a sequence by its index."""
-    assert msa_instance.sequences[0] == "ACGTACGT"
-    assert msa_instance.sequences[1] == "ACGTA-GT"
-    assert msa_instance.sequences[2] == "ACGT--GT"
+        msa_files = [
+            (test_dir / "alignment1.fasta", ">seq1\nACGTACGT\n>seq2\nACGTA-GT\n"),
+            (test_dir / "alignment2.fasta", ">seq3\nTGCATGCA\n>seq4\nTGCA-GCA\n"),
+        ]
+        for file_path, content in msa_files:
+            with open(file_path, "w") as f:
+                f.write(content)
 
+        with BackendSearchOrder([backend]):
+            dataset = MSA(meta=MSAMeta(file_path=str(test_dir), file_format="fasta"))
+            assert len(dataset.msa) == 2
 
-def test_get_sequence_by_index_error(msa_instance):
-    """Test error handling when an index is out of range."""
-    with pytest.raises(IndexError):
-        msa_instance.sequences[3]
-    with pytest.raises(IndexError):
-        msa_instance.sequences[4]
+    @pytest.mark.parametrize("backend", ["Bio", "biotite"])
+    def test_invalid_file_path(self, backend):
+        self._check_backend(backend)
+        with pytest.raises(ValueError):
+            with BackendSearchOrder([backend]):
+                dataset = MSA(
+                    meta=MSAMeta(
+                        file_path="nonexistent_file.fasta", file_format="fasta"
+                    )
+                )
+                print(dataset)
 
+    def test_unsupported_file_format(self, tmpdir):
+        invalid_file = tmpdir / "test.xyz"
+        with open(invalid_file, "w") as f:
+            f.write("dummy content")
 
-def test_extract_record_name():
-    """Test the _extract_record_name static method."""
-    # Test with tr|NAME|DESCRIPTION format
-    assert MSA._extract_record_name(">tr|ABC123|Some description") == "ABC123"
+        for backend in ["Bio", "biotite"]:
+            if find_spec(backend):
+                with BackendSearchOrder([backend]):
+                    with pytest.raises(ValueError):
+                        dataset = MSA(
+                            meta=MSAMeta(file_path=str(invalid_file), file_format="xyz")
+                        )
+                        print(dataset)
 
-    # Test with sp|NAME|DESCRIPTION format
-    assert MSA._extract_record_name(">sp|XYZ789|Another description") == "XYZ789"
+    def test_no_backend_available(self):
+        with pytest.raises(KeyError):
+            with BackendSearchOrder(["nonexistent_backend"]):
+                AbstractMSAManager.get_available_manager()
 
-    # Test with simple format
-    assert MSA._extract_record_name(">Simple header") == "Simple header"
+    @pytest.mark.skipif(not find_spec("biotite"), reason="biotite not installed")
+    def test_biotite_manager(self, msa_files):
+        with BackendSearchOrder(["biotite"]):
+            manager = BiotiteMSAManager(meta=self._create_msa_meta(msa_files))
+            alignment = manager.load_msa(msa_files["fasta"])
+            assert alignment is not None
 
-    # Test with other pipe formats
-    assert MSA._extract_record_name(">db|ACC|Name") == "ACC"
+            alignments = manager.load_msas([msa_files["fasta"]])
+            assert len(alignments) == 1
+            assert Path(msa_files["fasta"]).name in alignments
 
+    @pytest.mark.skipif(not find_spec("Bio"), reason="biopython not installed")
+    def test_biopython_manager(self, msa_files):
+        with BackendSearchOrder(["Bio"]):
+            manager = BiopythonMSAManager(meta=self._create_msa_meta(msa_files))
+            alignment = manager.load_msa(msa_files["fasta"])
+            assert alignment is not None
 
-class MockFile:
-    def __init__(self, content):
-        self.content = content
+            alignments = manager.load_msas([msa_files["fasta"]])
+            assert len(alignments) == 1
+            assert Path(msa_files["fasta"]).name in alignments
 
-    def __enter__(self):
-        return StringIO(self.content)
+            assert "fasta" in manager.allowed_formats
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+    @pytest.mark.skipif(not find_spec("Bio"), reason="biopython not installed")
+    def test_biopython_unsupported_format(self, msa_files):
+        with BackendSearchOrder(["Bio"]):
+            manager = BiopythonMSAManager(
+                meta=MSAMeta(file_path=msa_files["fasta"], file_format="invalid_format")
+            )
+            with pytest.raises(ValueError):
+                manager.load_msa(msa_files["fasta"])
 
+    @pytest.mark.skipif(not find_spec("biotite"), reason="biotite not installed")
+    def test_biotite_unsupported_format(self, tmpdir):
+        invalid_file = tmpdir / "test.xyz"
+        with open(invalid_file, "w") as f:
+            f.write("dummy content")
 
-def test_from_a2m(monkeypatch):
-    """Test the from_a2m static method."""
-    a2m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
-
-    # Create a mock file object
-    mock_file = MockFile(a2m_content)
-
-    # Patch the open function to return our mock file
-    monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
-
-    msa = MSA.from_a2m("dummy_path.a2m")
-
-    assert len(msa.sequences) == 3
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-    assert msa.sequences[2] == "ACGT--GT"
-
-    assert len(msa.records) == 3
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
-    assert msa.records["XYZ789"] == "ACGT--GT"
-
-
-def test_from_a2m_different_lengths(monkeypatch):
-    """Test the from_a2m method with sequences of different lengths."""
-    a2m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
-
-    # Create a mock file object
-    mock_file = MockFile(a2m_content)
-
-    # Patch the open function to return our mock file
-    monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
-
-    with pytest.raises(ValueError):
-        MSA.from_a2m("dummy_path.a2m")
-
-
-def test_from_a3m(monkeypatch):
-    """Test the from_a3m static method."""
-    a3m_content = ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n>sp|XYZ789|Description2\nACGT--GT\n"  # noqa: E501
-
-    # Create a mock file object
-    mock_file = MockFile(a3m_content)
-
-    # Patch the open function to return our mock file
-    monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
-
-    msa = MSA.from_a3m("dummy_path.a3m")
-
-    assert len(msa.sequences) == 3
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-    assert msa.sequences[2] == "ACGT--GT"
-
-    assert len(msa.records) == 3
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
-    assert msa.records["XYZ789"] == "ACGT--GT"
-
-
-def test_from_psi(monkeypatch):
-    """Test the from_psi static method."""
-    psi_content = "tr|ABC123|Description1 ACGTACGT\nSimpleHeader ACGTA-GT\n>sp|XYZ789|Description2 ACGT--GT\n"  # noqa: E501
-
-    # Create a mock file object
-    mock_file = MockFile(psi_content)
-
-    # Patch the open function to return our mock file
-    monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
-
-    msa = MSA.from_psi("dummy_path.psi")
-
-    assert len(msa.sequences) == 3
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-    assert msa.sequences[2] == "ACGT--GT"
-
-    assert len(msa.records) == 3
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["SimpleHeader"] == "ACGTA-GT"
-    assert msa.records["XYZ789"] == "ACGT--GT"
-
-
-def test_multiline_sequences(monkeypatch):
-    """Test parsing files with sequences split across multiple lines."""
-    multiline_content = (
-        ">tr|ABC123|Description1\nACGT\nACGT\n>Simple header\nACGT\nA-GT\n"
-    )
-
-    # Create a mock file object
-    mock_file = MockFile(multiline_content)
-
-    # Patch the open function to return our mock file
-    monkeypatch.setattr("builtins.open", lambda *args, **kwargs: mock_file)
-
-    msa = MSA.from_a2m("dummy_path.a2m")
-
-    assert len(msa.sequences) == 2
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-
-    assert len(msa.records) == 2
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
-
-
-def test_real_file_io(tmp_path):
-    """Test reading from an actual temporary file."""
-    temp_file = tmp_path / "temp_file.a2m"
-    temp_file.write_text(
-        ">tr|ABC123|Description1\nACGTACGT\n>Simple header\nACGTA-GT\n"
-    )
-
-    msa = MSA.from_a2m(str(temp_file))
-    assert len(msa.sequences) == 2
-    assert msa.sequences[0] == "ACGTACGT"
-    assert msa.sequences[1] == "ACGTA-GT"
-
-    assert len(msa.records) == 2
-    assert msa.records["ABC123"] == "ACGTACGT"
-    assert msa.records["Simple header"] == "ACGTA-GT"
+        with BackendSearchOrder(["biotite"]):
+            manager = BiotiteMSAManager(
+                meta=MSAMeta(file_path=str(invalid_file), file_format="xyz")
+            )
+            with pytest.raises(ValueError):
+                manager.load_msa(str(invalid_file))

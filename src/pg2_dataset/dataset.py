@@ -4,14 +4,15 @@ from typing import IO, Self
 import toml
 from pydantic import BaseModel
 
-from pg2_dataset.backends import Assays, Structure
-from pg2_dataset.primitives.meta import AssaysMeta, StructuresMeta
+from pg2_dataset.backends import MSA, Assays, Structure
+from pg2_dataset.primitives.meta import AssaysMeta, MSAMeta, StructuresMeta
 
 
 class Dataset(BaseModel):
     name: str = ""
     assays: Assays | None = None
     structure: Structure | None = None
+    msa: MSA | None = None
 
     @classmethod
     def from_path(cls, path: Path | str) -> None:
@@ -30,6 +31,7 @@ class Manifest(BaseModel):
     xref: str = ""
     assays_meta: AssaysMeta | None = None
     structures_meta: StructuresMeta | None = None
+    msa_meta: MSAMeta | None = None
 
     @classmethod
     def from_path(cls, path: Path | str | IO["str"]) -> Self:
@@ -44,6 +46,7 @@ class Manifest(BaseModel):
             structure=Structure(meta=self.structures_meta)
             if self.structures_meta
             else None,
+            msa=MSA(meta=self.msa_meta) if self.msa_meta else None,
         )
 
         return dataset
