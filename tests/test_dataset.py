@@ -1,5 +1,6 @@
 import io
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -81,3 +82,13 @@ class TestDataset:
         assert len(files) == 2
         assert "manifest.toml" in files
         assert "structure/5kua_pdb.pdb" in files
+
+    def test_from_path(self, example_toml, tmpdir):
+        manifest = Manifest.from_path(io.StringIO(example_toml))
+
+        zip_path = Path(tmpdir) / "dataset.zip"
+        manifest.ingest().persist(zip_path)
+
+        dataset = Dataset.from_path(zip_path)
+
+        assert "5kua_pdb.pdb" in dataset.structure.structures

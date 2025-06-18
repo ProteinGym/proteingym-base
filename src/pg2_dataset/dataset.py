@@ -1,6 +1,7 @@
 import os
 import tempfile
 import zipfile
+from contextlib import contextmanager
 from pathlib import Path
 from typing import IO, Self
 
@@ -23,9 +24,42 @@ class Dataset(BaseModel):
     assays: Assays | None = None
     structure: Structure | None = None
 
+    @contextmanager
+    def _change_dir(dest_dir: Path | str):
+        curr_dir = os.getcwd()
+        try:
+            os.chdir(dest_dir)
+            yield
+        finally:
+            os.chdir(curr_dir)
+
     @classmethod
-    def from_path(cls, path: Path | str) -> None:
-        raise NotImplementedError
+    def from_path(cls, path: Path | str) -> Self:
+        try:
+            with zipfile.ZipFile(path, "r") as zipf:
+                logger.info(f"Files in {path}: {zipf.namelist()}")
+
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    with cls._change_dir(temp_dir):
+                        zipf.extractall(temp_dir)
+
+                        manifest = Manifest.from_path(DEFAULT_MANIFEST_FILE)
+
+                        if manifest.assays_meta:
+                            manifest.assays_meta.file_path = DEFAULT_ASSAYS_FILE
+
+                        if manifest.structures_meta:
+                            manifest.structures_meta.file_path = DEFAULT_STRUCTURE_DIR
+
+                        return cls.model_validate(manifest.ingest())
+
+        except FileNotFoundError as exc:
+            logger.error(exc)
+            return None
+
+        except zipfile.BadZipFile:
+            logger.error(f"Invalid ZIP file: {path}")
+            return None
 
     def _dump_assays(
         self, path: Path | str
