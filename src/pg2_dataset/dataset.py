@@ -55,11 +55,11 @@ class Dataset(BaseModel):
 
         except FileNotFoundError as exc:
             logger.error(exc)
-            return None
+            raise (exc)
 
-        except zipfile.BadZipFile:
+        except zipfile.BadZipFile as exc:
             logger.error(f"Invalid ZIP file: {path}")
-            return None
+            raise (exc)
 
     def _dump_assays(
         self, path: Path | str
