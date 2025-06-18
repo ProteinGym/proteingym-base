@@ -60,7 +60,7 @@ class TestDataset:
         assert len(meta.assays_meta.assays["target1"].constants) == 2
         assert len(meta.assays_meta.assays["target2"].constants) == 0
 
-    def test_assays_is_valid(self, example_toml):
+    def test_backends_are_valid(self, example_toml):
         dataset = Manifest.from_path(io.StringIO(example_toml)).ingest()
 
         assert not dataset.assays.is_valid
