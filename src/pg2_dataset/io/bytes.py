@@ -1,6 +1,9 @@
 import dvc.api
 from cloudpathlib import CloudPath
-from loguru import logger
+
+from pg2_dataset.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def read_bytes(file_path: str) -> bytes:
