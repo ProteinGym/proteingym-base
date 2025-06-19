@@ -1,13 +1,15 @@
+import logging
 import sys
 from abc import ABC, abstractmethod
 from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
-from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
 
 from pg2_dataset.primitives.meta import StructuresMeta
+
+logger = logging.getLogger(__name__)
 
 biotite_available = False
 biopython_available = False

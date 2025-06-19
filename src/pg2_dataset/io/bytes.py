@@ -1,6 +1,9 @@
+import logging
+
 import dvc.api
 from cloudpathlib import CloudPath
-from loguru import logger
+
+logger = logging.getLogger(__name__)
 
 
 def read_bytes(file_path: str) -> bytes:

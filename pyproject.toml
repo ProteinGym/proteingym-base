@@ -10,7 +10,6 @@ requires-python = ">=3.12"
 dependencies = [
     "cloudpathlib>=0.21.0",
     "dvc[gs,s3]>=3.59.1",
-    "loguru>=0.7.3",
     "polars[pyarrow]>=1.30.0",
     "pandas==2.2.3",
     "pydantic>=2.11.4",
