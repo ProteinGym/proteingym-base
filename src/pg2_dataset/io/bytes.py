@@ -4,7 +4,7 @@ from pathlib import Path
 import dvc.api
 from botocore.exceptions import ClientError, NoCredentialsError
 from cloudpathlib import CloudPath
-from dvc.exceptions import DVCError
+from dvc.exceptions import DvcException
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def read_bytes(file_path: Path) -> bytes:
                 with open(file_path, "rb") as f:
                     return f.read()
 
-    except (DVCError, ClientError, NoCredentialsError) as exc:
+    except (DvcException, ClientError, NoCredentialsError) as exc:
         logger.error(f"Service error: {exc}")
         raise exc
 
@@ -91,7 +91,7 @@ def exists(file_path: Path) -> bool:
             case _:
                 return Path(file_path).exists()
 
-    except (DVCError, ClientError, NoCredentialsError) as exc:
+    except (DvcException, ClientError, NoCredentialsError) as exc:
         logger.error(f"Service error: {exc}")
         raise exc
 
