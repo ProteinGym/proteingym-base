@@ -44,8 +44,16 @@ def read_bytes(file_path: Path) -> bytes:
                 with open(file_path, "rb") as f:
                     return f.read()
 
-    except Exception as exc:
-        logger.error(exc)
+    except (DVCError, ClientError, NoCredentialsError) as exc:
+        logger.error(f"Service error: {exc}")
+        raise exc
+    
+    except (ConnectionError, OSError, PermissionError, FileNotFoundError) as exc:
+        logger.error(f"Network / IO error: {exc}")
+        raise exc
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         raise exc
 
 
