@@ -12,9 +12,25 @@ _DATASET_FOLDER = "dvc_pg2"
 
 
 def read_bytes(file_path: Path) -> bytes:
-    try:
-        file_path = str(file_path)
+    """
+    Read bytes from a file, supporting multiple storage backends.
+    
+    This function can read from three different storage backends:
+    1. DVC-managed datasets (files starting with _DATASET_FOLDER path)
+    2. S3 cloud storage (files with s3:// prefix)
+    3. Local filesystem (all other paths)
+    
+    Args:
+        file_path: Path to the file to read. Can be a local path,
+                         S3 URI (s3://bucket/key), or dataset path.
+    
+    Returns:
+        bytes: The complete file content as bytes.
+    """
 
+    file_path = str(file_path)
+
+    try:
         match file_path:
             case _file_path if _file_path.startswith(_DATASET_FOLDER):
                 with dvc.api.open(file_path, repo=_DATASET_REGISTRY, mode="rb") as f:
@@ -40,28 +56,24 @@ def write_bytes(stream, filename):
 
 def exists(file_path: Path) -> bool:
     """
-   Check if a file or directory exists across different storage backends.
-   
-   This function provides a unified interface to check file existence across
-   local filesystem, DVC-managed datasets, and S3 cloud storage. It automatically
-   determines the appropriate backend based on the file path prefix.
-   
-   Args:
-       file_path: The path to the file or directory to check.
-                              Can be a local path, DVC dataset path (starting with
-                              DATASET_FOLDER), or S3 URL (starting with "s3://").
-   
-   Returns:
-       bool: True if the file or directory exists, False otherwise.
-   
-   Raises:
-       Exception: Re-raises any exception that occurs during the existence check,
-                 after logging the error.
-   """
+    Check if a file or directory exists across different storage backends.
+    
+    This function provides a unified interface to check file existence across
+    local filesystem, DVC-managed datasets, and S3 cloud storage. It automatically
+    determines the appropriate backend based on the file path prefix.
+    
+    Args:
+        file_path: The path to the file or directory to check.
+                                Can be a local path, DVC dataset path (starting with
+                                DATASET_FOLDER), or S3 URL (starting with "s3://").
+    
+    Returns:
+        bool: True if the file or directory exists, False otherwise.
+    """
+    
+    file_path = str(file_path)
 
     try:
-        file_path = str(file_path)
-
         match file_path:
             case _file_path if _file_path.startswith(_DATASET_FOLDER):
                 return dvc.api.DVCFileSystem(_DATASET_REGISTRY).exists(file_path)
