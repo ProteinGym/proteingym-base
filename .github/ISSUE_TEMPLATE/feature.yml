@@ -1,0 +1,26 @@
+# See https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
+# and https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema
+name: Feature Request
+description: Change in functionality
+labels: ["refine"]
+projects: ["ProteinGym2/1"]
+type: Feature
+body:
+  - type: textarea
+    attributes:
+      label: Summary
+      description: A concise summary of what functionality needs to change.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Requirements
+      description: The requirement to be met for closing this issue. 
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Proposed solution
+      description: A proposed solution, preferably with example code, to show case requested feature.
+    validations:
+      required: false

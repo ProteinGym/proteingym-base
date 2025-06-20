@@ -1,16 +1,15 @@
+import logging
 import sys
 from abc import ABC, abstractmethod
 from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
-from pydantic import Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr
 
-from pg2_dataset.backends.base import Base
-from pg2_dataset.logger import get_logger
 from pg2_dataset.primitives.meta import StructuresMeta
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 biotite_available = False
 biopython_available = False
@@ -104,7 +103,7 @@ class AbstractStructureManager(ABC, Generic[STRUCTURE]):
     def dump_structure(structure: STRUCTURE, path: str | Path) -> None: ...
 
 
-class Structure(Base, Generic[STRUCTURE]):
+class Structure(BaseModel, Generic[STRUCTURE]):
     """A dataset class for handling protein structure data.
 
     This class uses dependency injection for structure management,

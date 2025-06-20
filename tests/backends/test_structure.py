@@ -1,4 +1,3 @@
-import tempfile
 from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar
@@ -105,10 +104,8 @@ class TestStructure:
             with BackendSearchOrder(["Foo"]):
                 AbstractStructureManager.get_available_manager()
 
-    def test_dump(self, structure_files):
+    def test_dump(self, structure_files, tmpdir):
         dataset = Structure(meta=StructuresMeta(file_path=structure_files["pdb"]))
+        dataset.dump(path=tmpdir)
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            dataset.dump(path=temp_dir)
-
-            assert (Path(temp_dir) / "5kua_pdb.pdb").exists()
+        assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
