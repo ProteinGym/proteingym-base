@@ -1,7 +1,7 @@
+import logging
 from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
-from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
 
 from pg2_dataset.primitives.managers import AbstractMSAManager
@@ -19,6 +19,7 @@ except ImportError:
     pass
 
 MSA = TypeVar("MSA")
+logger = logging.getLogger(__name__)
 
 
 class MSA(BaseModel, Generic[MSA]):

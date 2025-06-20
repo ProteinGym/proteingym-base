@@ -1,11 +1,13 @@
+import logging
 from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
-from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
 
 from pg2_dataset.primitives.managers import AbstractStructureManager
 from pg2_dataset.primitives.meta import StructuresMeta
+
+logger = logging.getLogger(__name__)
 
 try:
     import biotite.structure.io.pdb as pdb
