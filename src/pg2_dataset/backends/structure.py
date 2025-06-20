@@ -265,16 +265,16 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
         path = Path(path)
 
         for idn, stack in structure.structures.items():
-            if idn.endswith(".pdb"):
+            if Path(idn).suffix == ".pdb":
                 pdb_file = pdb.PDBFile()
                 pdb_file.set_structure(stack)
                 pdb_file.write(path / idn)
 
-            elif idn.endswith(".cif") or idn.endswith(".bcif"):
+            elif Path(idn).suffix in {".cif", ".bcif"}:
                 save_structure(str(path / idn), stack)
 
             else:
-                raise ValueError(
+                raise NotImplementedError(
                     "File type not supported. "
                     "Biotite supports the following formats:"
                     "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
@@ -358,7 +358,7 @@ class BiopythonStructureManager(AbstractStructureManager["Structure"]):
                 io.save(str(path / idn))
 
             else:
-                raise ValueError(
+                raise NotImplementedError(
                     "File type not supported. "
                     "Biopython supports the following formats:"
                     "pdb (.pdb) and mmcif (.cif) for read and write,"
