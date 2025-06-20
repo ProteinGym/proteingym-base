@@ -8,9 +8,8 @@ from typing import Generator, Self, Type
 
 import pandas as pd
 import polars as pl
-from pydantic import ConfigDict, Field, PrivateAttr, computed_field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 
-from pg2_dataset.backends.base import Base
 from pg2_dataset.io.bytes import read_bytes
 from pg2_dataset.primitives.meta import ENGINEERING_ROUND, SEQUENCE, SPLIT, AssaysMeta
 from pg2_dataset.primitives.record import Record
@@ -33,7 +32,7 @@ SPLIT_STRATEGY_MAPPING: dict[SplitStrategyEnum, Type] = {
 }
 
 
-class Assays(Base):
+class Assays(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     meta: AssaysMeta
