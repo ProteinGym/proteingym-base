@@ -66,7 +66,7 @@ class Dataset(BaseModel):
         with open(path, "w") as f:
             toml.dump(manifest.model_dump(), f)
 
-    def _zip_all(self, from_dir: Path, path: Path, compression):
+    def _zip_all(self, from_dir: Path, path: Path, compression) -> None:
         with zipfile.ZipFile(path, "w", compression=compression) as zipf:
             file_paths = list(from_dir.iterdir())
 
