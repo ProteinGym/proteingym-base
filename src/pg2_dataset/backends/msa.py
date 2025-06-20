@@ -1,104 +1,44 @@
-import sys
-from abc import ABC, abstractmethod
-from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
 from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
 
+from pg2_dataset.primitives.managers import AbstractMSAManager
 from pg2_dataset.primitives.meta import MSAMeta
 
-biotite_available = False
-biopython_available = False
-
-if find_spec("biotite"):
+try:
     import biotite.sequence.io.fasta as biotite_fasta
+except ImportError:
+    pass
 
-    biotite_available = True
-
-if find_spec("Bio"):
+try:
     from Bio import AlignIO
     from Bio.AlignIO import _FormatToIterator
-
-    biopython_available = True
+except ImportError:
+    pass
 
 MSA = TypeVar("MSA")
-search_order = ["Bio", "biotite"]
-# search_order = ["biotite", "Bio"]
-
-
-class BackendSearchOrder:
-    def __init__(self, order: list[str]):
-        self.order = order
-
-    def __enter__(self):
-        sys.modules[__name__].search_order = self.order
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.modules[__name__].search_order = ["biopython", "biotite"]
-
-
-class AbstractMSAManager(ABC, Generic[MSA]):
-    """Base class for MSA managers that handle loading multiple sequence alignments."""
-
-    name: ClassVar[str] = ""
-    backend_map: ClassVar[dict] = {}
-
-    def __init__(self, meta: MSAMeta = None):
-        self.meta = meta
-
-    def __init_subclass__(cls, **kwargs):
-        cls.backend_map[cls.name] = cls, find_spec(cls.name)
-
-    @classmethod
-    def get_available_manager(cls) -> type["AbstractMSAManager"]:
-        """Get an appropriate MSA manager based on available libraries.
-
-        Returns:
-            type[AbstractMSAManager]: The selected manager class.
-
-        Raises:
-            ImportError: If no suitable MSA manager is found.
-        """
-
-        for backend in search_order:
-            manager_class, is_available = cls.backend_map[backend]
-            if is_available:
-                return manager_class
-        raise ImportError(
-            "No suitable MSA manager found.Please install either biopython or biotite."
-        )
-
-    @abstractmethod
-    def load_msas(self, file_names: list[str]) -> dict[str, MSA]:
-        """Load MSA from file.
-
-        Args:
-            file_names: List of file paths corresponding to the MSA.
-
-        Returns:
-            dict[str, STRUCTURE]: Dictionary mapping msa IDs to loaded structures.
-
-        Raises:
-            NotImplementedError: This method must be implemented by subclasses.
-        """
-        ...
-
-    @abstractmethod
-    def load_msa(self, file_name: str) -> MSA: ...
 
 
 class MSA(BaseModel, Generic[MSA]):
-    """DocString"""
+    """MSA loading class which takes the correct backend manager for
+    specific request package according to search order in managers.py
+
+    Args:
+        Generic (MSA): Generic backend manager for MSA
+
+    Raises:
+        ValueError: When an incorrect filepath is provided
+        NotImplementedError: When trying to call train/valid/test
+
+    Returns:
+        _type_: _description_
+    """
 
     meta: MSAMeta
     msa: dict[str, MSA] = Field(default_factory=dict)
     _manager: AbstractMSAManager = PrivateAttr(default=None)
-
-    # @property
-    # def alignments(self) -> list[str]:
-    #     return list(self.msa.values())
 
     def model_post_init(self, *_, **__) -> Self:
         """Configure and load MSA based on the provided file path.
@@ -161,6 +101,9 @@ class MSA(BaseModel, Generic[MSA]):
 
 
 class BiotiteMSAManager(AbstractMSAManager):
+    def __init__(self, meta: MSAMeta = None):
+        self.meta = meta
+
     name: ClassVar[str] = "biotite"
 
     def load_msa(self, file_name: str) -> MSA:
@@ -215,6 +158,9 @@ class BiotiteMSAManager(AbstractMSAManager):
 
 
 class BiopythonMSAManager(AbstractMSAManager):
+    def __init__(self, meta: MSAMeta = None):
+        self.meta = meta
+
     name: ClassVar[str] = "Bio"
     allowed_formats: list[str] = list(_FormatToIterator.keys())
     # Fasta is taken from other module by default and not in OG list,

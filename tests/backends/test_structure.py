@@ -7,9 +7,9 @@ import pytest
 from pg2_dataset.backends.structure import (
     STRUCTURE,
     AbstractStructureManager,
-    BackendSearchOrder,
     Structure,
 )
+from pg2_dataset.primitives.managers import BackendSearchOrder
 from pg2_dataset.primitives.meta import StructuresMeta
 
 TEST_DATA_DIR = str(Path(__file__).parent.parent / "test_data" / "structures")

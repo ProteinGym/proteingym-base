@@ -8,10 +8,10 @@ split_feature="split"
 engineering_round_feature="engineering_round"
 
 [structures_meta]
-file_path = "example_data/NEIME_2019/experimental.cif"
+file_path = "/Users/vanderweg/Projects/PG2/pg2-dataset/example_data/NEIME_2019/Structures/experimental.cif"
 
 [msa_meta]
-file_path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/msa.fasta"
+file_path = "/Users/vanderweg/Projects/PG2/pg2-dataset/example_data/NEIME_2019/MSA/msa.a2m"
 file_format = "fasta"
 gap_chars = ["."]
 

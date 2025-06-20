@@ -6,10 +6,10 @@ import pytest
 from pg2_dataset.backends.msa import (
     MSA,
     AbstractMSAManager,
-    BackendSearchOrder,
     BiopythonMSAManager,
     BiotiteMSAManager,
 )
+from pg2_dataset.primitives.managers import BackendSearchOrder
 from pg2_dataset.primitives.meta import MSAMeta
 
 TEST_DATA_DIR = str(Path(__file__).parent.parent / "test_data" / "msa")
