@@ -4,7 +4,9 @@ import zipfile
 import pytest
 from pydantic import ValidationError
 
+from pg2_dataset.backends.structure import Structure
 from pg2_dataset.dataset import Dataset, Manifest
+from pg2_dataset.primitives.meta import StructuresMeta
 
 
 class TestDataset:
@@ -90,3 +92,10 @@ class TestDataset:
         assert len(files) == 2
         assert "manifest.toml" in files
         assert "structure/5kua_pdb.pdb" in files
+
+        manifest = Manifest.from_path("manifest.toml")
+        assert manifest.name == "test_name"
+        assert manifest.structures_meta.file_path == "structure"
+
+        dataset = Structure(meta=StructuresMeta(file_path="structure/5kua_pdb.pdb"))
+        assert len(dataset.structures) == 1
