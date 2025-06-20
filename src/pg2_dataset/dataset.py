@@ -66,6 +66,22 @@ class Dataset(BaseModel):
         with open(path, "w") as f:
             toml.dump(manifest.model_dump(), f)
 
+    def _zip_all(self, from_dir: Path, path: Path, compression):
+        with zipfile.ZipFile(path, "w", compression=compression) as zipf:
+            file_paths = list(from_dir.iterdir())
+
+            for file_path in file_paths:
+                if file_path.is_file():
+                    zipf.write(file_path, file_path.name)
+                    logger.info(f"Added: {file_path} -> {path}")
+
+                elif file_path.is_dir():
+                    for root, _, files in os.walk(file_path):
+                        for file in files:
+                            src_file = Path(root) / file
+                            zipf.write(src_file, DEFAULT_STRUCTURE_DIR / src_file.name)
+                            logger.info(f"Added: {src_file} -> {path}")
+
     def persist(self, path: Path, compression: int = zipfile.ZIP_DEFLATED) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
@@ -74,22 +90,7 @@ class Dataset(BaseModel):
             self._dump_structure(path=temp_dir / DEFAULT_STRUCTURE_DIR)
             self._dump_manifest(path=temp_dir / DEFAULT_MANIFEST_FILE)
 
-            with zipfile.ZipFile(path, "w", compression=compression) as zipf:
-                file_paths = list(temp_dir.iterdir())
-
-                for file_path in file_paths:
-                    if file_path.is_file():
-                        zipf.write(file_path, file_path.name)
-                        logger.info(f"Added: {file_path} -> {path}")
-
-                    elif file_path.is_dir():
-                        for root, _, files in os.walk(file_path):
-                            for file in files:
-                                src_file = Path(root) / file
-                                zipf.write(
-                                    src_file, DEFAULT_STRUCTURE_DIR / src_file.name
-                                )
-                                logger.info(f"Added: {src_file} -> {path}")
+            self._zip_all(from_dir=temp_dir, path=path, compression=compression)
 
             logger.info(f"Dataset persisted to: {path}")
 
