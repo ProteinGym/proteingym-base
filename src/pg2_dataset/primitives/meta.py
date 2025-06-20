@@ -4,7 +4,9 @@ from collections.abc import Collection
 from functools import cached_property
 from itertools import chain
 
-from pydantic import BaseModel, Field, FiniteFloat, computed_field
+from pydantic import BaseModel, Field, FiniteFloat, computed_field, field_validator
+
+from pg2_dataset.io import exists
 
 ENGINEERING_ROUND = "engineering_round"
 SEQUENCE = "sequence"
@@ -28,6 +30,12 @@ class AssaysMeta(BaseModel):
     def features_for_targets(self, targets: Collection[str]) -> list[str]:
         return sorted(chain.from_iterable(self.assays[e].features for e in targets))
 
+    @field_validator("file_path", mode="before")
+    def file_path_must_be_valid(cls, v):
+        if not exists(v):
+            raise ValueError(f"file_path: {v} does not exist")
+        return v
+
     @computed_field
     @cached_property
     def columns(self) -> list[str]:
@@ -47,3 +55,9 @@ class AssaysMeta(BaseModel):
 
 class StructuresMeta(BaseModel):
     file_path: str = ""
+
+    @field_validator("file_path", mode="before")
+    def file_path_must_be_valid(cls, v):
+        if not exists(v):
+            raise ValueError(f"file_path: {v} does not exist")
+        return v

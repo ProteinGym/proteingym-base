@@ -1,6 +1,7 @@
 import io
 
 import pytest
+from pydantic import ValidationError
 
 from pg2_dataset.dataset import Dataset, Manifest
 
@@ -13,10 +14,6 @@ class TestDataset:
     description = "test_description"
     doi = "test_doi"
     source = "test_source"
-
-    [assays_meta]
-    file_path = "records.csv"
-    sequence_feature = "feature1"
 
     [structures_meta]
     file_path = "tests/test_data/structures/5kua_pdb.pdb"
@@ -31,6 +28,19 @@ class TestDataset:
     [assays_meta.assays.target2]
     features = ["feature1"]
     description = "dolor sit amet"
+    """
+
+    @pytest.fixture
+    def invalid_toml(self):
+        return """
+    name = "test_name"
+    description = "test_description"
+    doi = "test_doi"
+    source = "test_source"
+
+    [assays_meta]
+    file_path = "records.csv"
+    sequence_feature = "feature1"
     """
 
     def test_dataset_from_toml(self, example_toml):
@@ -60,8 +70,8 @@ class TestDataset:
         assert len(meta.assays_meta.assays["target1"].constants) == 2
         assert len(meta.assays_meta.assays["target2"].constants) == 0
 
-    def test_backends_are_valid(self, example_toml):
-        dataset = Manifest.from_path(io.StringIO(example_toml)).ingest()
+    def test_invalid_assays_should_raise_exception(self, invalid_toml):
+        with pytest.raises(ValidationError) as exc:
+            Manifest.from_path(io.StringIO(invalid_toml)).ingest()
 
-        assert not dataset.assays.is_valid
-        assert dataset.structure.is_valid
+        assert "file_path: records.csv does not exist" in str(exc.value)
