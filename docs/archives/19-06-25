@@ -1,0 +1,47 @@
+----
+
+version = "v1"    # Data contract version (start with v1)
+name = "<name>"   # Unique name of the dataset -> identifier?
+
+[[ sequence ]]
+file_path = "/path/to/sequence.fasta"
+
+[[ structure ]]
+file_path = "/path/to/structure1.pdb"
+
+[[ structure ]]
+file_path = "/path/to/structure2.pdb"
+
+[[ msa ]]  # ? Write this out instead of abbreviation ?
+file_path = "/path/to/msa.a2m"
+
+[[ assays ]]
+file_path = "/path/to/assay1.csv"
+engineering_round = 1
+
+[ assays.specs ]
+seperator = ","
+header = true
+columns = ["x1", "x2", ...]    # 
+
+[[ assays.targets ]]
+name = "DMS_score"
+features = ["x1", "x2"]
+
+[[ assays.targets ]]
+name = "DMS_score_bin"
+features = ["x2", "x3"]
+
+[[ assays ]]
+file_path = "/path/to/assay2.csv"
+engineering_round = 2  # Extra undefined field (lookup in pydantic docs)
+
+# Questions:
+# Do we support directory or glob for file paths?
+
+# Per field
+# Documentation
+# What is optional and what not? What are the defaults if optional?
+# Conditions/validation, e.g. for file paths we check if they exists?
+
+# Map the above to dataclasses or pydantic basemodels
