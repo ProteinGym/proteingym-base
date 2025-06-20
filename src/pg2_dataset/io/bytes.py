@@ -13,8 +13,7 @@ _DATASET_FOLDER = "dvc_pg2"
 
 
 def read_bytes(file_path: Path) -> bytes:
-    """
-    Read bytes from a file, supporting multiple storage backends.
+    """Read bytes from a file, supporting multiple storage locations.
 
     This function can read from three different storage backends:
     1. DVC-managed datasets (files starting with _DATASET_FOLDER path)
@@ -44,17 +43,17 @@ def read_bytes(file_path: Path) -> bytes:
                 with open(file_path, "rb") as f:
                     return f.read()
 
-    except (DvcException, ClientError, NoCredentialsError) as exc:
-        logger.error(f"Service error: {exc}")
-        raise exc
+    except (DvcException, ClientError, NoCredentialsError) as e:
+        logger.error(f"Service error while reading: {file_path}", exc_info=e)
+        raise e
 
-    except (ConnectionError, OSError, PermissionError, FileNotFoundError) as exc:
-        logger.error(f"Network / IO error: {exc}")
-        raise exc
+    except (ConnectionError, OSError, PermissionError, FileNotFoundError) as e:
+        logger.error(f"Network / IO error while reading: {file_path}", exc_info=e)
+        raise e
 
-    except Exception as exc:
-        logger.error(f"Unexpected error: {exc}")
-        raise exc
+    except Exception as e:
+        logger.error(f"Unexpected error while reading: {file_path}", exc_info=e)
+        raise e
 
 
 def write_bytes(stream, filename):
@@ -63,8 +62,7 @@ def write_bytes(stream, filename):
 
 
 def exists(file_path: Path) -> bool:
-    """
-    Check if a file or directory exists across different storage backends.
+    """Check if a file or directory exists across different storage locations.
 
     This function can read from three different storage backends:
     1. DVC-managed datasets (files starting with _DATASET_FOLDER path)
@@ -91,14 +89,14 @@ def exists(file_path: Path) -> bool:
             case _:
                 return Path(file_path).exists()
 
-    except (DvcException, ClientError, NoCredentialsError) as exc:
-        logger.error(f"Service error: {exc}")
-        raise exc
+    except (DvcException, ClientError, NoCredentialsError) as e:
+        logger.error(f"Service error while checking: {file_path}", exc_info=e)
+        raise e
 
-    except (ConnectionError, OSError, PermissionError, FileNotFoundError) as exc:
-        logger.error(f"Network / IO error: {exc}")
-        raise exc
+    except (ConnectionError, OSError, PermissionError, FileNotFoundError) as e:
+        logger.error(f"Network / IO error while checking: {file_path}", exc_info=e)
+        raise e
 
-    except Exception as exc:
-        logger.error(f"Unexpected error: {exc}")
-        raise exc
+    except Exception as e:
+        logger.error(f"Unexpected error while checking: {file_path}", exc_info=e)
+        raise e
