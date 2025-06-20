@@ -11,8 +11,8 @@ classDiagram
         support_multi_target: bool
         license: str
     }
-    class MeasurementWithUncertainty{
-        value: float
+    class ValueWithUncertainty{
+        value: ValueWithUnit
         uncertainty: PositiveFloat
     }
     class Dataset{
@@ -23,7 +23,7 @@ classDiagram
         +source: Uri
         +uniprot: str
         +xrefs: list[CrossReference]
-        +assays: AssaysDataset
+        +assays: list[Assays]
         +structures: StructuresDataset
         +alphabet: SequenceAlphabet
         +reference_sequences: list[str]
@@ -33,29 +33,22 @@ classDiagram
         +load()
     }
     class Record{
-      +engineering_round: int
       +sequence: str
-      +$key: float|str|MeasurementWithUncertainty
-    }
-    class AssaysDataset{
-        +assays: list[Assay]
-        +splits: dict[tuple[Round, Sequence, SplitStrategy, targets], enum[Train, Valid, Test]]
-        +add_split(strategy: Callable) None
-        +train(targets: list[str]) tuple[X, Y]
-        +valid(targets: list[str]) tuple[X, Y]
-        +test(targets: list[str]) tuple[X, Y]
+      +$key: float|str
+      +value: ValueWithUncertainty
     }
     class Assay{
         +name: str
+        +target_name: str
         +file_path: Path
         +description: str
         +data: pl.DataFrame[Record]
-        +features: dict[str, NumericalOrCategorical]
-        +constants: dict[str, FiniteFloat | str]
+        +conditions: dict[str, NumericalOrCategorical]
         +selection_assay: str
         +selection_type: str
         +higher_is_better: bool
         +value_unit: str
+        +engineering_round: int
         +assay_type: enum[OrgnismalFitness, Activity, Stability, Expression, Binding]
     }
     class MSA{
@@ -85,13 +78,12 @@ classDiagram
         +file_path: Path
         +range: tuple[int, int]
     }
-    Dataset <|-- AssaysDataset
+    Dataset <|-- Assay
     Dataset <|-- StructuresDataset
     Dataset <|-- MSA
-    AssaysDataset <|-- Assay
     StructuresDataset <|-- Structure
     Assay <|-- Record
-    Record <|-- MeasurementWithUncertainty
+    Record <|-- ValueWithUncertainty
 ```
 
 [Meta data on assays in PG1](https://raw.githubusercontent.com/OATML-Markslab/ProteinGym/refs/heads/main/reference_files/DMS_substitutions.csv)
