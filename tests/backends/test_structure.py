@@ -83,7 +83,7 @@ class TestStructure:
     def test_unsupported_file_format(self, tmpdir):
         invalid_file = tmpdir / "test.xyz"
         invalid_file.write("dummy content")
-        with pytest.raises(ValueError):
+        with pytest.raises(NotImplementedError, match="File type not supported"):
             dataset = Structure(meta=StructuresMeta(file_path=str(invalid_file)))
             print(dataset)
 
@@ -120,6 +120,6 @@ class TestStructure:
 
             case "bcif":
                 with pytest.raises(
-                    NotImplementedError, match="File type not supported."
+                    NotImplementedError, match="File type not supported"
                 ):
                     dataset.dump(path=tmpdir)
