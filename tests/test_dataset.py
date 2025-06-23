@@ -1,4 +1,5 @@
 import io
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -92,7 +93,7 @@ class TestDataset:
         assert "manifest.toml" in files
         assert "structure/5kua_pdb.pdb" in files
 
-    def test_from_path(self, example_toml, tmpdir):
+    def test_from_path_with_correct_file(self, example_toml, tmpdir):
         manifest = Manifest.from_path(io.StringIO(example_toml))
 
         zip_path = Path(tmpdir) / "dataset.zip"
@@ -101,3 +102,18 @@ class TestDataset:
         dataset = Dataset.from_path(zip_path)
 
         assert "5kua_pdb.pdb" in dataset.structure.structures
+
+    def test_from_path_with_invalid_file_should_raise_exceptions(self, tmpdir):
+        invalid_zip_path = Path(tmpdir) / "invalid_dataset.zip"
+
+        with pytest.raises(
+            FileNotFoundError,
+            match=f"No such file or directory: '{str(invalid_zip_path)}'",
+        ):
+            Dataset.from_path(invalid_zip_path)
+
+        with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmpfile:
+            Path(tmpfile.name).touch()
+
+            with pytest.raises(zipfile.BadZipFile, match="File is not a zip file"):
+                Dataset.from_path(tmpfile.name)

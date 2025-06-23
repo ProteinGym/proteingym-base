@@ -36,11 +36,11 @@ class Dataset(BaseModel):
                 return manifest.ingest()
 
         except FileNotFoundError as exc:
-            logger.error(exc)
+            logger.error(f"File does not exist: path={path}")
             raise (exc)
 
         except zipfile.BadZipFile as exc:
-            logger.error(f"Invalid ZIP file: {path}")
+            logger.error(f"Invalid ZIP file: path={path}")
             raise (exc)
 
     def _dump_assays(self, path: Path) -> None:
