@@ -1,4 +1,14 @@
 ### Data Manifest Schema
+This schema defines the structure of a dataset that is required to be compatible with the ProteinGYM2 framework. The datasets are comprised of four types of data: sequences, structures, multiple sequence alignments (MSAs), and assays. Each dataset is represented by a `Dataset` class that contains metadata and references to the various components. The datatypes (sequences, structures, MSAs, and assays) are defined as separate classes with their own metadata and file handling methods.
+
+#### Motivation
+The schema is designed for enabling:
+1. Consistency: Ensure all the datasets follow the same structure.
+2. Compatibility: Allow the framework to load and process datasets automatically.
+3. Extensibility: Allow for future additions without breaking existing datasets.
+4. Clarity: Provide a clear understanding of the dataset components.
+
+
 
 ```mermaid
 classDiagram
@@ -10,17 +20,11 @@ classDiagram
         +Structures structures
         +MSAs msas
         +Assays assays
-        +SplitStrategy[] split_strategy
         +string doi
         +string creator   
         +string xref
         +dict metadata
         +func loader() 
-    }
-    class SplitStrategy {
-        +string name
-        +string description
-        +func split()
     }
     class DatasetType {
         <<enumeration>>
@@ -38,8 +42,7 @@ classDiagram
 
 
     class Sequences {
-        +DatasetDir[] dir_path
-        +SequenceFile[] file_path
+        +SequenceFiles file_path
         +string description
         +SequenceType sequence_type
         +string doi
@@ -55,8 +58,9 @@ classDiagram
         +string AA
         +func type_handler()
     }
-    class SequenceFile {
-        +string file_path
+    class SequenceFiles {
+        +DatasetDir dir_path
+        +string[] file_path
         +SequenceFileType file_type
         +func file_handler()
     }
@@ -67,16 +71,15 @@ classDiagram
     }
 
     class Structures {
-        +DatasetDir[] dir_path 
-        +StructureFile[] file_path
+        +StructureFiles file_path
         +string description
         +string doi
         +dict metadata
         +func biopython_loader()
     }
-    class StructureFile {
+    class StructureFiles {
         +DatasetDir dir_path
-        +string file_path
+        +string[] file_path
         +StructureFileType file_type
         +func file_handler()
     }
@@ -90,18 +93,14 @@ classDiagram
 
 
     class MSAs {
-        +MSAFile[] file_path
+        +MSAFiles file_path
         +string description
-        +MSAMetadata metadata
+        +dict metadata
         +func biopython_loader()
     }
-    class MSAMetadata {
-        +string doi
-        +dict metadata
-    }
-    class MSAFile {
+    class MSAFiles {
         +DatasetDir dir_path
-        +string file_path
+        +string[] file_path
         +MSAFileType file_type
         +func file_handler()
     }
@@ -115,7 +114,7 @@ classDiagram
 
 
     class Assays {
-        +AssayFile[] file_path
+        +AssayFiles file_path
         +string description
         +AssayMetadata metadata
         +AssayTarget[] targets
@@ -130,9 +129,9 @@ classDiagram
         +string doi
         +dict metadata
     }
-    class AssayFile {
+    class AssayFiles {
         +DatasetDir dir_path
-        +string file_path
+        +string[] file_path
         +AssayFileType file_type
         +func file_handler()
         }
@@ -147,21 +146,24 @@ classDiagram
         +func validator()
     }
 
-    Dataset "1" o-- "1" Sequence
+    Dataset "1" o-- "1" Sequences
     Dataset "1" o-- "0..*" Structures
     Dataset "1" o-- "0..*" MSAs
     Dataset "1" o-- "0..*" Assays
-    Dataset "1" o-- "0..*" SplitStrategy
     Sequences o-- SequenceType
-    Sequences "1" o-- "*" SequenceFile
-    SequenceFile o-- SequenceFileType
-    Structures o-- StructureMetadata
-    Structures "1" o-- "*" StructureFile
-    StructureFile o-- StructureFileType
-    MSAs "1" o-- "*" MSAFile
-    MSAFile o-- MSAFileType
+    Sequences "1" o-- "*" SequenceFiles
+    Structures "1" o-- "*" StructureFiles
+    MSAs "1" o-- "*" MSAFiles
     Assays o-- AssayMetadata
-    Assays "1" o-- "*" AssayFile
+    Assays "1" o-- "*" AssayFiles
+    StructureFiles o-- StructureFileType
+    SequenceFiles o-- SequenceFileType
+    AssayFiles o-- AssayFileType
+    MSAFiles o-- MSAFileType
     Assays "1" o-- "*" AssayTarget
-    AssayFile o-- AssayFileType
+    AssayFiles o-- DatasetDir
+    SequenceFiles o-- DatasetDir
+    StructureFiles o-- DatasetDir
+    MSAFiles o-- DatasetDir
+    DatasetDir o-- DatasetType
 ```
