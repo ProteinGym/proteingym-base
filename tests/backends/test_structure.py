@@ -105,7 +105,14 @@ class TestStructure:
                 AbstractStructureManager.get_available_manager()
 
     def test_dump(self, structure_files, tmpdir):
-        dataset = Structure(meta=StructuresMeta(file_path=structure_files["pdb"]))
-        dataset.dump(path=tmpdir)
+        for suffix, file_path in structure_files.items():
+            dataset = Structure(meta=StructuresMeta(file_path=file_path))
+            dataset.dump(path=tmpdir)
 
-        assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
+            match suffix:
+                case "pdb":
+                    assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
+                case "cif":
+                    assert (Path(tmpdir) / "5kua_cif.cif").exists()
+                case "bcif":
+                    assert (Path(tmpdir) / "5kua_bcif.bcif").exists()
