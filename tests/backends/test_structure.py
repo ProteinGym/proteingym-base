@@ -133,7 +133,7 @@ class TestStructure:
         dataset = Structure(meta=StructuresMeta(file_path=file_path))
 
         with caplog.at_level(logging.WARNING):
-            dataset.dump(path="invalid.txt")
+            dataset.dump(path=Path("invalid.txt"))
 
         assert (
             "Cannot dump structures into a single file; provide a directory instead"
