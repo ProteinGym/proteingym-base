@@ -31,7 +31,7 @@ class TestExists:
 
         file_path = "/path/to/dataset/file.txt"
 
-        with pytest.raises(DvcException):
+        with pytest.raises(DvcException, match="^DVC error$"):
             exists(Path(file_path))
 
     @patch("pg2_dataset.io.bytes.CloudPath")
