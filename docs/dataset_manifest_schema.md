@@ -5,13 +5,16 @@ classDiagram
     class Dataset {
         +string name
         +string description
-        +DatasetMetadata metadata
         +string version
-        +Sequence sequence
-        +Structures structure
-        +MSAs msa
+        +Sequences sequences
+        +Structures structures
+        +MSAs msas
         +Assays assays
         +SplitStrategy[] split_strategy
+        +string doi
+        +string creator   
+        +string xref
+        +dict metadata
         +func loader() 
     }
     class SplitStrategy {
@@ -19,19 +22,30 @@ classDiagram
         +string description
         +func split()
     }
-    class DatasetMetadata {
-        +string doi
-        +string creator   
-        +string xref
-        +dict additional_metadata
+    class DatasetType {
+        <<enumeration>>
+        +string sequence
+        +string structure
+        +string msa
+        +string assay
+        +func type_handler()
+    }
+    class DatasetDir {
+        +string dir_path
+        +DatasetType data_type
+        +func get_files()
     }
 
 
-    class Sequence {
+    class Sequences {
+        +DatasetDir[] dir_path
         +SequenceFile[] file_path
         +string description
         +SequenceType sequence_type
-        +SequenceMetadata metadata
+        +string doi
+        +dict metadata
+        +func dir_or_file_exists()
+        +func validate_sequence_type()
         +func biopython_loader()
     }
     class SequenceType {
@@ -40,10 +54,6 @@ classDiagram
         +string RNA
         +string AA
         +func type_handler()
-    }
-    class SequenceMetadata {
-        +string doi
-        +dict additional_metadata
     }
     class SequenceFile {
         +string file_path
@@ -57,16 +67,15 @@ classDiagram
     }
 
     class Structures {
+        +DatasetDir[] dir_path 
         +StructureFile[] file_path
         +string description
-        +StructureMetadata metadata
+        +string doi
+        +dict metadata
         +func biopython_loader()
     }
-    class StructureMetadata {
-        +string doi
-        +dict additional_metadata
-    }
     class StructureFile {
+        +DatasetDir dir_path
         +string file_path
         +StructureFileType file_type
         +func file_handler()
@@ -88,9 +97,10 @@ classDiagram
     }
     class MSAMetadata {
         +string doi
-        +dict additional_metadata
+        +dict metadata
     }
     class MSAFile {
+        +DatasetDir dir_path
         +string file_path
         +MSAFileType file_type
         +func file_handler()
@@ -118,9 +128,10 @@ classDiagram
         +string split_feature_name
         +string engineering_round_feature_name
         +string doi
-        +dict additional_metadata
+        +dict metadata
     }
     class AssayFile {
+        +DatasetDir dir_path
         +string file_path
         +AssayFileType file_type
         +func file_handler()
@@ -141,16 +152,13 @@ classDiagram
     Dataset "1" o-- "0..*" MSAs
     Dataset "1" o-- "0..*" Assays
     Dataset "1" o-- "0..*" SplitStrategy
-    Dataset o-- DatasetMetadata
-    Sequence o-- SequenceType
-    Sequence o-- SequenceMetadata
-    Sequence "1" o-- "*" SequenceFile 
+    Sequences o-- SequenceType
+    Sequences "1" o-- "*" SequenceFile
     SequenceFile o-- SequenceFileType
     Structures o-- StructureMetadata
-    Structures "1" o-- "*" StructureFile  
-    StructureFile o--  StructureFileType
-    MSAs o-- MSAMetadata
-    MSAs "1" o-- "*" MSAFile 
+    Structures "1" o-- "*" StructureFile
+    StructureFile o-- StructureFileType
+    MSAs "1" o-- "*" MSAFile
     MSAFile o-- MSAFileType
     Assays o-- AssayMetadata
     Assays "1" o-- "*" AssayFile
