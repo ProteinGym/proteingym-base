@@ -81,8 +81,8 @@ class TestStructure:
         with pytest.raises(ValueError):
             Structure(meta=StructuresMeta(file_path="nonexistent_file.pdb"))
 
-    def test_unsupported_file_format(self, tmpdir):
-        invalid_file = tmpdir / "test.xyz"
+    def test_unsupported_file_format(self, tmp_path):
+        invalid_file = tmp_path / "test.xyz"
         invalid_file.write("dummy content")
         with pytest.raises(NotImplementedError, match="File type not supported"):
             dataset = Structure(meta=StructuresMeta(file_path=str(invalid_file)))
@@ -106,26 +106,26 @@ class TestStructure:
                 AbstractStructureManager.get_available_manager()
 
     @pytest.mark.parametrize("suffix", ["pdb", "cif"])
-    def test_dump_pdb_and_cif(self, suffix, structure_files, tmpdir):
+    def test_dump_pdb_and_cif(self, suffix, structure_files, tmp_path):
         file_path = structure_files[suffix]
 
         dataset = Structure(meta=StructuresMeta(file_path=file_path))
-        dataset.dump(path=tmpdir)
+        dataset.dump(path=tmp_path)
 
         match suffix:
             case "pdb":
-                assert (Path(tmpdir) / f"5kua_{suffix}.{suffix}").exists()
+                assert (Path(tmp_path) / f"5kua_{suffix}.{suffix}").exists()
 
             case "cif":
-                assert (Path(tmpdir) / f"5kua_{suffix}.{suffix}").exists()
+                assert (Path(tmp_path) / f"5kua_{suffix}.{suffix}").exists()
 
     @pytest.mark.parametrize("suffix", ["bcif"])
-    def test_dump_bcif(self, suffix, structure_files, tmpdir):
+    def test_dump_bcif(self, suffix, structure_files, tmp_path):
         file_path = structure_files[suffix]
         dataset = Structure(meta=StructuresMeta(file_path=file_path))
 
         with pytest.raises(NotImplementedError, match="File type not supported"):
-            dataset.dump(path=tmpdir)
+            dataset.dump(path=tmp_path)
 
     @pytest.mark.parametrize("suffix", ["pdb"])
     def test_dump_not_to_directory(self, suffix, structure_files, caplog):
