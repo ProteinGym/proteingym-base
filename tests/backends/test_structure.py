@@ -81,8 +81,8 @@ class TestStructure:
         with pytest.raises(ValueError):
             Structure(meta=StructuresMeta(file_path="nonexistent_file.pdb"))
 
-    def test_unsupported_file_format(self, tmp_path):
-        invalid_file = tmp_path / "test.xyz"
+    def test_unsupported_file_format(self, tmpdir):
+        invalid_file = tmpdir / "test.xyz"
         invalid_file.write("dummy content")
         with pytest.raises(NotImplementedError, match="File type not supported"):
             dataset = Structure(meta=StructuresMeta(file_path=str(invalid_file)))
