@@ -25,29 +25,14 @@ class Dataset(BaseModel):
 
     @classmethod
     def from_path(cls, path: Path) -> Self:
-        try:
-            with zipfile.ZipFile(path, "r") as zipf:
-                logger.info(f"Files in {path}: {zipf.namelist()}")
+        with zipfile.ZipFile(path, "r") as zipf:
+            logger.info(f"Files in {path}: {zipf.namelist()}")
 
-                zipf.extractall()
+            zipf.extractall()
 
-                manifest = Manifest.from_path(DEFAULT_MANIFEST_FILE)
+            manifest = Manifest.from_path(DEFAULT_MANIFEST_FILE)
 
-                return manifest.ingest()
-
-        except FileNotFoundError as e:
-            logger.error(f"File does not exist: path={path}", exc_info=e)
-            raise e
-
-        except zipfile.BadZipFile as e:
-            logger.error(f"Invalid ZIP file: path={path}", exc_info=e)
-            raise e
-
-        except Exception as e:
-            logger.error(
-                f"Unexpected error while loading from path: path={path}", exc_info=e
-            )
-            raise e
+            return manifest.ingest()
 
     def _dump_assays(self, path: Path) -> None:
         """Write assays to a CSV file."""
