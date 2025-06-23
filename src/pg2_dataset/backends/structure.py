@@ -200,7 +200,7 @@ class Structure(BaseModel, Generic[STRUCTURE]):
             path: Directory path where the structures will be saved.
         """
         if not self.structures:
-            logger.error(f"No structures to save from the path: {path}")
+            logger.warning(f"No structures to dump in: {path}")
 
         self._manager.dump_structure(self, path)
 
