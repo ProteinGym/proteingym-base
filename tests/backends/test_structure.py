@@ -107,12 +107,16 @@ class TestStructure:
     def test_dump(self, structure_files, tmpdir):
         for suffix, file_path in structure_files.items():
             dataset = Structure(meta=StructuresMeta(file_path=file_path))
-            dataset.dump(path=tmpdir)
 
             match suffix:
                 case "pdb":
+                    dataset.dump(path=tmpdir)
                     assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
                 case "cif":
+                    dataset.dump(path=tmpdir)
                     assert (Path(tmpdir) / "5kua_cif.cif").exists()
                 case "bcif":
-                    assert (Path(tmpdir) / "5kua_bcif.bcif").exists()
+                    with pytest.raises(
+                        NotImplementedError, match="File type not supported."
+                    ):
+                        dataset.dump(path=tmpdir)
