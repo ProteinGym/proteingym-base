@@ -13,9 +13,9 @@ from pg2_dataset.primitives.meta import AssaysMeta, StructuresMeta
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_ASSAYS_FILE = Path("assays.csv")
-DEFAULT_STRUCTURE_DIR = Path("structure")
-DEFAULT_MANIFEST_FILE = Path("manifest.toml")
+_DEFAULT_ASSAYS_FILE = Path("assays.csv")
+_DEFAULT_STRUCTURE_DIR = Path("structure")
+_DEFAULT_MANIFEST_FILE = Path("manifest.toml")
 
 
 class Dataset(BaseModel):
@@ -30,7 +30,7 @@ class Dataset(BaseModel):
 
             zipf.extractall()
 
-            manifest = Manifest.from_path(DEFAULT_MANIFEST_FILE)
+            manifest = Manifest.from_path(_DEFAULT_MANIFEST_FILE)
 
             return manifest.ingest()
 
@@ -48,29 +48,36 @@ class Dataset(BaseModel):
 
     def _dump_manifest(self, path: Path) -> None:
         """Write manifest to a TOML file."""
-        manifest = Manifest(
-            name=self.name,
-            assays_meta=AssaysMeta(
-                file_path=str(path.parent / DEFAULT_ASSAYS_FILE),
+
+        if self.assays:
+            assays_meta = AssaysMeta(
+                file_path=str(path.parent / _DEFAULT_ASSAYS_FILE),
                 split_strategy=self.assays.meta.split_strategy,
                 assays=self.assays.meta.assays,
             )
-            if self.assays
-            else None,
-            structures_meta=StructuresMeta(
-                file_path=str(path.parent / DEFAULT_STRUCTURE_DIR)
-            )
-            if self.structure
-            else None,
-        )
 
-        if self.assays:
-            manifest.assays_meta.file_path = str(DEFAULT_ASSAYS_FILE)
+            assays_meta.file_path = str(_DEFAULT_ASSAYS_FILE)
+
+        else:
+            assays_meta = None
 
         if self.structure:
-            manifest.structures_meta.file_path = str(DEFAULT_STRUCTURE_DIR)
+            structures_meta = StructuresMeta(
+                file_path=str(path.parent / _DEFAULT_STRUCTURE_DIR)
+            )
 
-        with open(path, "w") as f:
+            structures_meta.file_path = str(_DEFAULT_STRUCTURE_DIR)
+
+        else:
+            structures_meta = None
+
+        manifest = Manifest(
+            name=self.name,
+            assays_meta=assays_meta,
+            structures_meta=structures_meta,
+        )
+
+        with path.open("w") as f:
             toml.dump(manifest.model_dump(), f)
 
     def _zip_all(self, from_dir: Path, path: Path, compression) -> None:
@@ -80,22 +87,34 @@ class Dataset(BaseModel):
             for file_path in file_paths:
                 if file_path.is_file():
                     zipf.write(file_path, file_path.name)
-                    logger.info(f"Added: {file_path} -> {path}")
+                    logger.debug(f"Added: {file_path} -> {path}")
 
                 elif file_path.is_dir():
                     for root, _, files in os.walk(file_path):
                         for file in files:
                             src_file = Path(root) / file
-                            zipf.write(src_file, DEFAULT_STRUCTURE_DIR / src_file.name)
-                            logger.info(f"Added: {src_file} -> {path}")
+                            zipf.write(src_file, _DEFAULT_STRUCTURE_DIR / src_file.name)
+                            logger.debug(f"Added: {src_file} -> {path}")
 
     def persist(self, path: Path, compression: int = zipfile.ZIP_DEFLATED) -> None:
+        """Persist the dataset to a compressed archive at the specified path.
+
+        This method serializes internal dataset components: assays, structure, manifest,
+        into a temporary directory and compresses them into a single ZIP archive.
+
+        Args:
+            path: The target file path where the ZIP archive will be saved.
+            compression: Compression method to use when creating the ZIP archive.
+
+        Returns:
+            None
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
 
-            self._dump_assays(path=temp_dir / DEFAULT_ASSAYS_FILE)
-            self._dump_structure(path=temp_dir / DEFAULT_STRUCTURE_DIR)
-            self._dump_manifest(path=temp_dir / DEFAULT_MANIFEST_FILE)
+            self._dump_assays(temp_dir / _DEFAULT_ASSAYS_FILE)
+            self._dump_structure(temp_dir / _DEFAULT_STRUCTURE_DIR)
+            self._dump_manifest(temp_dir / _DEFAULT_MANIFEST_FILE)
 
             self._zip_all(from_dir=temp_dir, path=path, compression=compression)
 
@@ -118,14 +137,20 @@ class Manifest(BaseModel):
         return cls.model_validate(toml.load(path))
 
     def ingest(self) -> Dataset:
+        if self.assays_meta and self.assays_meta.file_path:
+            assays = Assays(meta=self.assays_meta)
+        else:
+            assays = None
+
+        if self.structures_meta and self.structures_meta.file_path:
+            structure = Structure(meta=self.structures_meta)
+        else:
+            structure = None
+
         dataset = Dataset(
             name=self.name,
-            assays=Assays(meta=self.assays_meta)
-            if self.assays_meta and self.assays_meta.file_path
-            else None,
-            structure=Structure(meta=self.structures_meta)
-            if self.structures_meta and self.structures_meta.file_path
-            else None,
+            assays=assays,
+            structure=structure,
         )
 
         return dataset

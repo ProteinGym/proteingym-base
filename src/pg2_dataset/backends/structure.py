@@ -100,7 +100,13 @@ class AbstractStructureManager(ABC, Generic[STRUCTURE]):
 
     @staticmethod
     @abstractmethod
-    def dump_structure(structure: STRUCTURE, path: str | Path) -> None: ...
+    def dump_structure(structure: STRUCTURE, path: Path) -> None:
+        """Save the structure dataset to a specified directory.
+
+        Args:
+            structure: Structure object
+            path: Directory path where the structures will be saved.
+        """
 
 
 class Structure(BaseModel, Generic[STRUCTURE]):
@@ -188,15 +194,13 @@ class Structure(BaseModel, Generic[STRUCTURE]):
         """
         raise NotImplementedError("StructureDataset has no split implemented yet")
 
-    def dump(self, path: str | Path) -> None:
+    def dump(self, path: Path) -> None:
         """Save the structure dataset to a specified directory.
         Args:
             path: Directory path where the structures will be saved.
-        Raises:
-            ValueError: If the file type is not supported.
         """
         if not self.structures:
-            raise ValueError("No structures to save.")
+            logger.warning(f"No structures to dump in: {path}")
 
         self._manager.dump_structure(self, path)
 
@@ -218,7 +222,7 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
 
         Raises:
             TypeError: If file path is not a string.
-            ValueError: If file type is not supported (.cif, .pdb, .bcif).
+            NotImplementedError: If file type is not supported (.cif, .pdb, .bcif).
         """
         if not Path(fn):
             raise TypeError(
@@ -226,19 +230,19 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
                 "Did you mean to call .load_structures instead?"
             )
 
-        fn_ext = Path(fn).suffix.lower()
-        if fn_ext.endswith(".pdb"):
-            return pdb.PDBFile.read(fn).get_structure()
-        elif fn_ext.endswith(".cif"):
-            return get_structure(pdbx.CIFFile.read(fn))
-        elif fn_ext.endswith(".bcif"):
-            return get_structure(pdbx.BinaryCIFFile.read(fn))
-        else:
-            raise ValueError(
-                "File type not supported. "
-                "Biotite supports the following formats:"
-                "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
-            )
+        match Path(fn).suffix.lower():
+            case ".pdb":
+                return pdb.PDBFile.read(fn).get_structure()
+            case ".cif":
+                return get_structure(pdbx.CIFFile.read(fn))
+            case ".bcif":
+                return get_structure(pdbx.BinaryCIFFile.read(fn))
+            case _:
+                raise NotImplementedError(
+                    "File type not supported. "
+                    "Biotite supports the following formats:"
+                    "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
+                )
 
     @staticmethod
     def load_structures(
@@ -261,24 +265,34 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
         return structures
 
     @staticmethod
-    def dump_structure(structure: Structure, path: str | Path) -> None:
-        path = Path(path)
+    def dump_structure(structure: Structure, path: Path) -> None:
+        """Implements AbstractStructureManager.dump_structure().
+
+        See AbstractStructureManager.dump_structure for complete documentation.
+        """
+
+        if not path.is_dir():
+            logger.warning(
+                "Cannot dump structures into a single file; provide a directory instead"
+            )
+            return
 
         for idn, stack in structure.structures.items():
-            if idn.endswith(".pdb"):
-                pdb_file = pdb.PDBFile()
-                pdb_file.set_structure(stack)
-                pdb_file.write(path / idn)
+            match Path(idn).suffix.lower():
+                case ".pdb":
+                    pdb_file = pdb.PDBFile()
+                    pdb_file.set_structure(stack)
+                    pdb_file.write(path / idn)
 
-            elif idn.endswith(".cif") or idn.endswith(".bcif"):
-                save_structure(str(path / idn), stack)
+                case ".cif" | ".bcif":
+                    save_structure(str(path / idn), stack)
 
-            else:
-                raise ValueError(
-                    "File type not supported. "
-                    "Biotite supports the following formats:"
-                    "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
-                )
+                case _:
+                    raise NotImplementedError(
+                        "File type not supported. "
+                        "Biotite supports the following formats:"
+                        "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
+                    )
 
 
 class BiopythonStructureManager(AbstractStructureManager["Structure"]):
@@ -317,7 +331,7 @@ class BiopythonStructureManager(AbstractStructureManager["Structure"]):
             any: Loaded structure object.
 
         Raises:
-            ValueError: If file type is not supported (.cif, .pdb, .bcif).
+            NotImplementedError: If file type is not supported (.cif, .pdb, .bcif).
         """
         if not idn:
             raise ValueError("Structure identifier must be provided.")
@@ -328,39 +342,49 @@ class BiopythonStructureManager(AbstractStructureManager["Structure"]):
                 "Did you mean to call .load_structures instead?"
             )
 
-        fn_ext = Path(fn).suffix.lower()
-        if fn_ext.endswith(".pdb"):
-            return PDBParser().get_structure(idn, fn)
-        elif fn_ext.endswith(".cif"):
-            return MMCIFParser().get_structure(idn, fn)
-        elif fn_ext.endswith(".bcif"):
-            return BinaryCIFParser().get_structure(idn, fn)
-        else:
-            raise ValueError(
-                "File type not supported. "
-                "Biopython supports the following formats:"
-                "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
-            )
-
-    @staticmethod
-    def dump_structure(structure: Structure, path: str | Path) -> None:
-        path = Path(path)
-
-        for idn, stack in structure.structures.items():
-            if idn.endswith(".pdb"):
-                io = PDBIO()
-                io.set_structure(stack)
-                io.save(str(path / idn))
-
-            elif idn.endswith(".cif"):
-                io = MMCIFIO()
-                io.set_structure(stack)
-                io.save(str(path / idn))
-
-            else:
-                raise ValueError(
+        match Path(fn).suffix.lower():
+            case ".pdb":
+                return PDBParser().get_structure(idn, fn)
+            case ".cif":
+                return MMCIFParser().get_structure(idn, fn)
+            case ".bcif":
+                return BinaryCIFParser().get_structure(idn, fn)
+            case _:
+                raise NotImplementedError(
                     "File type not supported. "
                     "Biopython supports the following formats:"
-                    "pdb (.pdb) and mmcif (.cif) for read and write,"
-                    "and binary cif (.bcif) for read only."
+                    "pdb (.pdb), mmcif (.cif) and binary cif (.bcif)"
                 )
+
+    @staticmethod
+    def dump_structure(structure: Structure, path: Path) -> None:
+        """Implements AbstractStructureManager.dump_structure().
+
+        See AbstractStructureManager.dump_structure for complete documentation.
+        """
+
+        if not path.is_dir():
+            logger.warning(
+                "Cannot dump structures into a single file; provide a directory instead"
+            )
+            return
+
+        for idn, stack in structure.structures.items():
+            match Path(idn).suffix.lower():
+                case ".pdb":
+                    io = PDBIO()
+                    io.set_structure(stack)
+                    io.save(str(path / idn))
+
+                case ".cif":
+                    io = MMCIFIO()
+                    io.set_structure(stack)
+                    io.save(str(path / idn))
+
+                case _:
+                    raise NotImplementedError(
+                        "File type not supported. "
+                        "Biopython supports the following formats:"
+                        "pdb (.pdb) and mmcif (.cif) for read and write,"
+                        "and binary cif (.bcif) for read only."
+                    )

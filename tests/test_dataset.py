@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from pg2_dataset.backends.structure import Structure
 from pg2_dataset.dataset import Dataset, Manifest
+from pg2_dataset.primitives.meta import StructuresMeta
 
 
 class TestDataset:
@@ -31,19 +33,6 @@ class TestDataset:
     [assays_meta.assays.target2]
     features = ["feature1"]
     description = "dolor sit amet"
-    """
-
-    @pytest.fixture
-    def invalid_toml(self):
-        return """
-    name = "test_name"
-    description = "test_description"
-    doi = "test_doi"
-    source = "test_source"
-
-    [assays_meta]
-    file_path = "records.csv"
-    sequence_feature = "feature1"
     """
 
     def test_dataset_from_toml(self, example_toml):
@@ -73,11 +62,22 @@ class TestDataset:
         assert len(meta.assays_meta.assays["target1"].constants) == 2
         assert len(meta.assays_meta.assays["target2"].constants) == 0
 
-    def test_invalid_assays_should_raise_exception(self, invalid_toml):
-        with pytest.raises(ValidationError) as exc:
-            Manifest.from_path(io.StringIO(invalid_toml)).ingest()
+    def test_invalid_assays_should_raise_exception(self):
+        invalid_toml = """
+        name = "test_name"
+        description = "test_description"
+        doi = "test_doi"
+        source = "test_source"
 
-        assert "file_path: records.csv does not exist" in str(exc.value)
+        [assays_meta]
+        file_path = "records.csv"
+        sequence_feature = "feature1"
+        """
+
+        with pytest.raises(
+            ValidationError, match="File path does not exists: file_path=records.csv"
+        ):
+            Manifest.from_path(io.StringIO(invalid_toml)).ingest()
 
     def test_persist(self, example_toml, tmpdir):
         ds = Manifest.from_path(io.StringIO(example_toml)).ingest()
@@ -88,10 +88,18 @@ class TestDataset:
 
         with zipfile.ZipFile(zip_path, "r") as zipf:
             files = zipf.namelist()
+            zipf.extractall()
 
-        assert len(files) == 2
-        assert "manifest.toml" in files
-        assert "structure/5kua_pdb.pdb" in files
+            assert len(files) == 2
+            assert "manifest.toml" in files
+            assert "structure/5kua_pdb.pdb" in files
+
+            manifest = Manifest.from_path("manifest.toml")
+            assert manifest.name == "test_name"
+            assert manifest.structures_meta.file_path == "structure"
+
+            dataset = Structure(meta=StructuresMeta(file_path="structure/5kua_pdb.pdb"))
+            assert len(dataset.structures) == 1
 
     def test_from_path_with_correct_file(self, example_toml, tmpdir):
         manifest = Manifest.from_path(io.StringIO(example_toml))
