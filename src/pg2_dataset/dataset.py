@@ -25,6 +25,17 @@ class Dataset(BaseModel):
 
     @classmethod
     def from_path(cls, path: Path) -> Self:
+        """Create dataset from a zip file path.
+
+        Extracts the contents of a zip file to the current directory and creates
+        the dataset by reading the manifest file and ingesting its contents.
+
+        Args:
+            path: Path to the zip file to extract and process.
+
+        Returns:
+            Self: Dataset created from the manifest found in the extracted zip.
+        """
         with zipfile.ZipFile(path, "r") as zipf:
             logger.info(f"Files in {path}: {zipf.namelist()}")
 
