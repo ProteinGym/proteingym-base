@@ -33,7 +33,7 @@ class AssaysMeta(BaseModel):
     @field_validator("file_path", mode="before")
     def file_path_must_be_valid(cls, v):
         if not exists(v):
-            raise ValueError(f"file_path: {v} does not exist")
+            raise ValueError(f"File path does not exists: file_path={v}")
         return v
 
     @computed_field
@@ -59,5 +59,5 @@ class StructuresMeta(BaseModel):
     @field_validator("file_path", mode="before")
     def file_path_must_be_valid(cls, v):
         if not exists(v):
-            raise ValueError(f"file_path: {v} does not exist")
+            raise ValueError(f"File path does not exists: file_path={v}")
         return v
