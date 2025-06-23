@@ -48,6 +48,9 @@ class Dataset(BaseModel):
                 split_strategy=self.assays.meta.split_strategy,
                 assays=self.assays.meta.assays,
             )
+
+            assays_meta.file_path = str(_DEFAULT_ASSAYS_FILE)
+
         else:
             assays_meta = None
 
@@ -55,6 +58,9 @@ class Dataset(BaseModel):
             structures_meta = StructuresMeta(
                 file_path=str(path.parent / _DEFAULT_STRUCTURE_DIR)
             )
+
+            structures_meta.file_path = str(_DEFAULT_STRUCTURE_DIR)
+
         else:
             structures_meta = None
 
@@ -63,12 +69,6 @@ class Dataset(BaseModel):
             assays_meta=assays_meta,
             structures_meta=structures_meta,
         )
-
-        if self.assays:
-            manifest.assays_meta.file_path = str(_DEFAULT_ASSAYS_FILE)
-
-        if self.structure:
-            manifest.structures_meta.file_path = str(_DEFAULT_STRUCTURE_DIR)
 
         with path.open("w") as f:
             toml.dump(manifest.model_dump(), f)
