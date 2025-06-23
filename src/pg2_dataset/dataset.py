@@ -24,8 +24,26 @@ class Dataset(BaseModel):
     structure: Structure | None = None
 
     @classmethod
-    def from_path(cls, path: Path | str) -> None:
-        raise NotImplementedError
+    def from_path(cls, path: Path) -> Self:
+        """Create dataset from a zip file path.
+
+        Extracts the contents of a zip file to the current directory and creates
+        the dataset by reading the manifest file and ingesting its contents.
+
+        Args:
+            path: Path to the zip file to extract and process.
+
+        Returns:
+            Self: Dataset created from the manifest found in the extracted zip.
+        """
+        with zipfile.ZipFile(path, "r") as zipf:
+            logger.info(f"Files in {path}: {zipf.namelist()}")
+
+            zipf.extractall()
+
+            manifest = Manifest.from_path(_DEFAULT_MANIFEST_FILE)
+
+            return manifest.ingest()
 
     def _dump_assays(self, path: Path) -> None:
         """Write assays to a CSV file."""
