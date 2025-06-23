@@ -100,13 +100,14 @@ class AbstractStructureManager(ABC, Generic[STRUCTURE]):
 
     @staticmethod
     @abstractmethod
-    def dump_structure(structure: STRUCTURE, path: Path) -> None: ...
+    def dump_structure(structure: STRUCTURE, path: Path) -> None:
+        """Save the structure dataset to a specified directory.
 
-    """Save the structure dataset to a specified directory.
-
-    Args:
-        path: Directory path where the structures will be saved.
-    """
+        Args:
+            structure: Structure object
+            path: Directory path where the structures will be saved.
+        """
+        ...
 
 
 class Structure(BaseModel, Generic[STRUCTURE]):
@@ -200,7 +201,7 @@ class Structure(BaseModel, Generic[STRUCTURE]):
             path: Directory path where the structures will be saved.
         """
         if not self.structures:
-            logger.error(f"No structures to save from the path: path={path}")
+            logger.error(f"No structures to save from the path: {path}")
 
         self._manager.dump_structure(self, path)
 
@@ -266,7 +267,16 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
 
     @staticmethod
     def dump_structure(structure: Structure, path: Path) -> None:
-        path = Path(path)
+        """Implements AbstractStructureManager.dump_structure().
+
+        See AbstractStructureManager.dump_structure for complete documentation.
+        """
+
+        if not path.is_dir():
+            logger.warning(
+                "Cannot dump structures into a single file; provide a directory instead"
+            )
+            return
 
         for idn, stack in structure.structures.items():
             match Path(idn).suffix.lower():
@@ -349,7 +359,16 @@ class BiopythonStructureManager(AbstractStructureManager["Structure"]):
 
     @staticmethod
     def dump_structure(structure: Structure, path: Path) -> None:
-        path = Path(path)
+        """Implements AbstractStructureManager.dump_structure().
+
+        See AbstractStructureManager.dump_structure for complete documentation.
+        """
+
+        if not path.is_dir():
+            logger.warning(
+                "Cannot dump structures into a single file; provide a directory instead"
+            )
+            return
 
         for idn, stack in structure.structures.items():
             match Path(idn).suffix.lower():

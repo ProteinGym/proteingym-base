@@ -1,3 +1,4 @@
+import logging
 from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar
@@ -104,22 +105,38 @@ class TestStructure:
             with BackendSearchOrder(["Foo"]):
                 AbstractStructureManager.get_available_manager()
 
-    @pytest.mark.parametrize("suffix", ["pdb", "cif", "bcif"])
-    def test_dump_pdb(self, suffix, structure_files, tmpdir):
+    @pytest.mark.parametrize("suffix", ["pdb", "cif"])
+    def test_dump_pdb_and_cif(self, suffix, structure_files, tmpdir):
         file_path = structure_files[suffix]
+
         dataset = Structure(meta=StructuresMeta(file_path=file_path))
+        dataset.dump(path=tmpdir)
 
         match suffix:
             case "pdb":
-                dataset.dump(path=tmpdir)
-                assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
+                assert (Path(tmpdir) / f"5kua_{suffix}.{suffix}").exists()
 
             case "cif":
-                dataset.dump(path=tmpdir)
-                assert (Path(tmpdir) / "5kua_cif.cif").exists()
+                assert (Path(tmpdir) / f"5kua_{suffix}.{suffix}").exists()
 
-            case "bcif":
-                with pytest.raises(
-                    NotImplementedError, match="File type not supported"
-                ):
-                    dataset.dump(path=tmpdir)
+    @pytest.mark.parametrize("suffix", ["bcif"])
+    def test_dump_bcif(self, suffix, structure_files, tmpdir):
+        file_path = structure_files[suffix]
+        dataset = Structure(meta=StructuresMeta(file_path=file_path))
+
+        with pytest.raises(NotImplementedError, match="File type not supported"):
+            dataset.dump(path=tmpdir)
+
+    @pytest.mark.parametrize("suffix", ["pdb"])
+    def test_dump_not_to_directory(self, suffix, structure_files, tmpdir, caplog):
+        file_path = structure_files[suffix]
+        dataset = Structure(meta=StructuresMeta(file_path=file_path))
+
+        with caplog.at_level(logging.WARNING):
+            dataset.dump(path="invalid.txt")
+
+        assert (
+            "Cannot dump structures into a single file; provide a directory instead"
+            in caplog.text
+        )
+        assert caplog.records[0].levelname == "WARNING"
