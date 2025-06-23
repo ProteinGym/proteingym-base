@@ -88,14 +88,15 @@ class TestDataset:
 
         with zipfile.ZipFile(zip_path, "r") as zipf:
             files = zipf.namelist()
+            zipf.extractall()
 
-        assert len(files) == 2
-        assert "manifest.toml" in files
-        assert "structure/5kua_pdb.pdb" in files
+            assert len(files) == 2
+            assert "manifest.toml" in files
+            assert "structure/5kua_pdb.pdb" in files
 
-        manifest = Manifest.from_path("manifest.toml")
-        assert manifest.name == "test_name"
-        assert manifest.structures_meta.file_path == "structure"
+            manifest = Manifest.from_path("manifest.toml")
+            assert manifest.name == "test_name"
+            assert manifest.structures_meta.file_path == "structure"
 
-        dataset = Structure(meta=StructuresMeta(file_path="structure/5kua_pdb.pdb"))
-        assert len(dataset.structures) == 1
+            dataset = Structure(meta=StructuresMeta(file_path="structure/5kua_pdb.pdb"))
+            assert len(dataset.structures) == 1
