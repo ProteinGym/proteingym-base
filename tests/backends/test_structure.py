@@ -104,29 +104,22 @@ class TestStructure:
             with BackendSearchOrder(["Foo"]):
                 AbstractStructureManager.get_available_manager()
 
-    @pytest.mark.parametrize("suffix", "pdb")
+    @pytest.mark.parametrize("suffix", ["pdb", "cif", "bcif"])
     def test_dump_pdb(self, suffix, structure_files, tmpdir):
         file_path = structure_files[suffix]
-
-        dataset = Structure(meta=StructuresMeta(file_path=file_path))
-        dataset.dump(path=tmpdir)
-
-        assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
-
-    @pytest.mark.parametrize("suffix", "cif")
-    def test_dump_cif(self, suffix, structure_files, tmpdir):
-        file_path = structure_files[suffix]
-
-        dataset = Structure(meta=StructuresMeta(file_path=file_path))
-        dataset.dump(path=tmpdir)
-
-        assert (Path(tmpdir) / "5kua_cif.cif").exists()
-
-    @pytest.mark.parametrize("suffix", "bcif")
-    def test_dump_bcif(self, suffix, structure_files, tmpdir):
-        file_path = structure_files[suffix]
-
         dataset = Structure(meta=StructuresMeta(file_path=file_path))
 
-        with pytest.raises(NotImplementedError, match="File type not supported."):
-            dataset.dump(path=tmpdir)
+        match suffix:
+            case "pdb":
+                dataset.dump(path=tmpdir)
+                assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
+
+            case "cif":
+                dataset.dump(path=tmpdir)
+                assert (Path(tmpdir) / "5kua_cif.cif").exists()
+
+            case "bcif":
+                with pytest.raises(
+                    NotImplementedError, match="File type not supported."
+                ):
+                    dataset.dump(path=tmpdir)
