@@ -107,7 +107,6 @@ class AbstractStructureManager(ABC, Generic[STRUCTURE]):
             structure: Structure object
             path: Directory path where the structures will be saved.
         """
-        ...
 
 
 class Structure(BaseModel, Generic[STRUCTURE]):
