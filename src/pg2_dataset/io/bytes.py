@@ -2,9 +2,7 @@ import logging
 from pathlib import Path
 
 import dvc.api
-from botocore.exceptions import ClientError, NoCredentialsError
 from cloudpathlib import CloudPath
-from dvc.exceptions import DvcException
 
 logger = logging.getLogger(__name__)
 
@@ -29,31 +27,18 @@ def read_bytes(file_path: Path) -> bytes:
 
     file_path = str(file_path)
 
-    try:
-        match file_path:
-            case _file_path if _file_path.startswith(_DATASET_FOLDER):
-                with dvc.api.open(file_path, repo=_DATASET_REGISTRY, mode="rb") as f:
-                    return f.read()
+    match file_path:
+        case _file_path if _file_path.startswith(_DATASET_FOLDER):
+            with dvc.api.open(file_path, repo=_DATASET_REGISTRY, mode="rb") as f:
+                return f.read()
 
-            case _file_path if _file_path.startswith("s3://"):
-                with CloudPath(file_path).open("rb") as f:
-                    return f.read()
+        case _file_path if _file_path.startswith("s3://"):
+            with CloudPath(file_path).open("rb") as f:
+                return f.read()
 
-            case _:
-                with open(file_path, "rb") as f:
-                    return f.read()
-
-    except (DvcException, ClientError, NoCredentialsError) as e:
-        logger.error(f"Service error while reading: {file_path}", exc_info=e)
-        raise e
-
-    except (ConnectionError, OSError, PermissionError, FileNotFoundError) as e:
-        logger.error(f"Network / IO error while reading: {file_path}", exc_info=e)
-        raise e
-
-    except Exception as e:
-        logger.error(f"Unexpected error while reading: {file_path}", exc_info=e)
-        raise e
+        case _:
+            with open(file_path, "rb") as f:
+                return f.read()
 
 
 def write_bytes(stream, filename):
@@ -78,25 +63,12 @@ def exists(file_path: Path) -> bool:
 
     file_path = str(file_path)
 
-    try:
-        match file_path:
-            case _file_path if _file_path.startswith(_DATASET_FOLDER):
-                return dvc.api.DVCFileSystem(_DATASET_REGISTRY).exists(file_path)
+    match file_path:
+        case _file_path if _file_path.startswith(_DATASET_FOLDER):
+            return dvc.api.DVCFileSystem(_DATASET_REGISTRY).exists(file_path)
 
-            case _file_path if _file_path.startswith("s3://"):
-                return CloudPath(file_path).exists()
+        case _file_path if _file_path.startswith("s3://"):
+            return CloudPath(file_path).exists()
 
-            case _:
-                return Path(file_path).exists()
-
-    except (DvcException, ClientError, NoCredentialsError) as e:
-        logger.error(f"Service error while checking: {file_path}", exc_info=e)
-        raise e
-
-    except (ConnectionError, OSError, PermissionError, FileNotFoundError) as e:
-        logger.error(f"Network / IO error while checking: {file_path}", exc_info=e)
-        raise e
-
-    except Exception as e:
-        logger.error(f"Unexpected error while checking: {file_path}", exc_info=e)
-        raise e
+        case _:
+            return Path(file_path).exists()
