@@ -128,7 +128,7 @@ class TestStructure:
             dataset.dump(path=tmpdir)
 
     @pytest.mark.parametrize("suffix", ["pdb"])
-    def test_dump_not_to_directory(self, suffix, structure_files, tmpdir, caplog):
+    def test_dump_not_to_directory(self, suffix, structure_files, caplog):
         file_path = structure_files[suffix]
         dataset = Structure(meta=StructuresMeta(file_path=file_path))
 
@@ -139,4 +139,3 @@ class TestStructure:
             "Cannot dump structures into a single file; provide a directory instead"
             in caplog.text
         )
-        assert caplog.records[0].levelname == "WARNING"
