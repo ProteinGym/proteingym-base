@@ -1,3 +1,4 @@
+import logging
 from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar
@@ -83,7 +84,7 @@ class TestStructure:
     def test_unsupported_file_format(self, tmpdir):
         invalid_file = tmpdir / "test.xyz"
         invalid_file.write("dummy content")
-        with pytest.raises(ValueError):
+        with pytest.raises(NotImplementedError, match="File type not supported"):
             dataset = Structure(meta=StructuresMeta(file_path=str(invalid_file)))
             print(dataset)
 
@@ -104,8 +105,37 @@ class TestStructure:
             with BackendSearchOrder(["Foo"]):
                 AbstractStructureManager.get_available_manager()
 
-    def test_dump(self, structure_files, tmpdir):
-        dataset = Structure(meta=StructuresMeta(file_path=structure_files["pdb"]))
-        dataset.dump(path=tmpdir)
+    @pytest.mark.parametrize("suffix", ["pdb", "cif"])
+    def test_dump_pdb_and_cif(self, suffix, structure_files, tmp_path):
+        file_path = structure_files[suffix]
 
-        assert (Path(tmpdir) / "5kua_pdb.pdb").exists()
+        dataset = Structure(meta=StructuresMeta(file_path=file_path))
+        dataset.dump(path=tmp_path)
+
+        match suffix:
+            case "pdb":
+                assert (Path(tmp_path) / f"5kua_{suffix}.{suffix}").exists()
+
+            case "cif":
+                assert (Path(tmp_path) / f"5kua_{suffix}.{suffix}").exists()
+
+    @pytest.mark.parametrize("suffix", ["bcif"])
+    def test_dump_bcif(self, suffix, structure_files, tmp_path):
+        file_path = structure_files[suffix]
+        dataset = Structure(meta=StructuresMeta(file_path=file_path))
+
+        with pytest.raises(NotImplementedError, match="File type not supported"):
+            dataset.dump(path=tmp_path)
+
+    @pytest.mark.parametrize("suffix", ["pdb"])
+    def test_dump_not_to_directory(self, suffix, structure_files, caplog):
+        file_path = structure_files[suffix]
+        dataset = Structure(meta=StructuresMeta(file_path=file_path))
+
+        with caplog.at_level(logging.WARNING):
+            dataset.dump(path=Path("invalid.txt"))
+
+        assert (
+            "Cannot dump structures into a single file; provide a directory instead"
+            in caplog.text
+        )

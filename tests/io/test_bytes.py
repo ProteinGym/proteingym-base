@@ -8,8 +8,6 @@ from dvc.exceptions import DvcException
 from pg2_dataset.io import exists
 
 
-@patch("pg2_dataset.io.bytes._DATASET_FOLDER", "/path/to/dataset")
-@patch("pg2_dataset.io.bytes._DATASET_REGISTRY", "registry_url")
 class TestExists:
     @patch("pg2_dataset.io.bytes.dvc.api.DVCFileSystem")
     def test_dvc_file_exists_false(self, mock_dvc_filesystem):
@@ -29,9 +27,9 @@ class TestExists:
         mock_path_instance.exists.side_effect = DvcException("DVC error")
         mock_dvc_filesystem.return_value = mock_path_instance
 
-        file_path = "/path/to/dataset/file.txt"
+        file_path = "dvc_pg2/file.txt"
 
-        with pytest.raises(DvcException):
+        with pytest.raises(DvcException, match="^DVC error$"):
             exists(Path(file_path))
 
     @patch("pg2_dataset.io.bytes.CloudPath")
