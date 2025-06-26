@@ -101,11 +101,14 @@ uv run jupyter lab
 
 You can load the data using the manifest:
 
-```python
+``` python
 >>> from pg2_dataset.dataset import Manifest
->>> manifest = Manifest.from_path("example_data/A0A1I9GEU1_NEIME_Kennouche_2019.toml").ingest()
+>>> manifest = Manifest.from_path("example_data/A0A1I9GEU1_NEIME_Kennouche_2019.toml")
 >>> manifest.name
 'NEIME_2019'
+>>> dataset = manifest.ingest()
+>>> dataset.assays is not None and dataset.structure is not None 
+True
 
 ```
 
