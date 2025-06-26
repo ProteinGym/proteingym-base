@@ -9,6 +9,7 @@
     - [1.3.2. Load data](#132-load-data)
     - [1.3.3. loading from non-local](#133-loading-from-non-local)
     - [1.3.3. Persist data](#133-persist-data)
+    - [1.3.3. Load persisted data](#133-load-persisted-data)
   - [1.4. Engineering rounds](#14-engineering-rounds)
   - [1.5. Example Data](#15-example-data)
   - [1.6. Example Manifest](#16-example-manifest)
@@ -144,11 +145,20 @@ You can persist data in ProteinGym2's standardized format as follows
 >>>
 >>> file_path.is_file() and file_path.stat().st_size > 0  # The file contains the dataset
 True
->>> file.close()  # Test clean up
 
 ```
 
-After loading the manifest, go ahead with using its data for model training or prediction.
+### 1.3.3. Load persisted data
+
+You can quickly load the persisted data instead of re-ingesting it:
+
+``` python
+>>> from pg2_dataset.dataset import Dataset
+>>> persisted_dataset = Dataset.from_path(file_path)  
+>>> persisted_dataset.name
+'NEIME_2019'
+
+```
 
 ## 1.4. Engineering rounds
 
