@@ -7,11 +7,6 @@ The schema is designed for enabling:
 3. Extensibility: Allow for future additions without breaking existing datasets.
 4. Clarity: Provide a clear understanding of the dataset components.
 
-#### Definitions
-- **Dataset**: The main class representing a dataset, that has four data types: sequences, structures, MSAs, and assays. The data 
-
-The dataset can be loaded using a loader function and schema .toml file.
-
 
 Class Diagram:
 
@@ -25,7 +20,7 @@ classDiagram
         +Structure[] structures
         +MSA[] msas
         +Assay[] assays
-        +string doi
+        +AssayCondition[] assay_conditions
         +string creator   
         +string xref
         +dict metadata
@@ -68,10 +63,12 @@ classDiagram
         +string UniProt
         +string Benchling
         +string RCSB
+        +string doi
         +func type_handler()
     }
 
     class Sequence {
+        +string value
         +string description
         +SequenceType sequence_type
         +SequenceAlphabet alphabet
@@ -144,24 +141,34 @@ classDiagram
 
 
     class Assay {
+        +AssayRecord[] row_data 
         +string description
-        +AssayMetadata metadata
-        +AssayTarget[] targets
+        +dict AssayCondition.AssayDataType: condition_values
+        +AssayTarget target
         +func biopython_loader()
         +func dataset_by_assay_target(target)
+    }
+    class AssayRecord {
+        +Sequence sequence
+        +AssayTarget.DataType value
+    }
+    class AssayCondition {
+        +string name
+        +string unit
+        +AssayDataType data_type
+        +string description
+        +func validate_condition()
+    }
+    class AssayDataType {
+        <<enumeration>>
+        +string Categorical
+        +string Numerical
+        +string Boolean
     }
     class AssayFactory {
         +DataGetter loader
         +func validate()
         +func generate_assays()
-    }
-    class AssayMetadata {
-        +string[] feature_names
-        +string modified_sequence_feature_name
-        +string split_feature_name
-        +string engineering_round_feature_name
-        +string doi
-        +dict metadata
     }
     class AssayFileType {
         <<enumeration>>
@@ -170,7 +177,9 @@ classDiagram
     }
     class AssayTarget {
         +string target_name
-        +string[] feature_names
+        +string unit
+        +string description
+        +DataType data_type
         +func validator()
     }
 
@@ -178,7 +187,7 @@ classDiagram
     Dataset "1" o-- "0..*" Structure
     Dataset "1" o-- "0..*" MSA
     Dataset "1" o-- "0..*" Assay
-
+    Dataset "1" o-- "0..*" AssayCondition
     Sequence o-- SequenceFactory
     Sequence o-- SequenceAlphabet
     Sequence o-- SequenceType
@@ -187,25 +196,26 @@ classDiagram
     Structure "1" o-- "*" StructureFactory
     StructureFactory "1" o-- "*" DataGetter
 
-    Assay o-- AssayMetadata
-    Assay o-- AssayFactory
-    AssayFactory "1" o-- "*" DataGetter
-    Assay "1" o-- "*" AssayTarget
-
     MSA "1" o-- "*" MSAFactory
     MSAFactory "1" o-- "*" DataGetter
 
+    Assay o-- AssayFactory
+    AssayFactory "1" o-- "*" DataGetter
+    Assay o-- AssayTarget
+    Assay o-- AssayRecord
+    Assay o-- AssayCondition
+    AssayCondition o-- AssayDataType
+    DataGetter o-- DataType
     DataGetter o-- CrossRef
     DataGetter o-- DataDir
-    DataGetter o-- DataType
-
     DataDir o-- DirType
+
     CrossRef o-- CrossRefType
 
-    AssayFileType o-- DataDir
-    SequenceFileType o-- DataDir
-    StructureFileType o-- DataDir
-    MSAFileType o-- DataDir    
+    DataDir o-- SequenceFileType
+    DataDir o-- StructureFileType
+    DataDir o-- MSAFileType
+    DataDir o-- AssayFileType
 ```
 **Note**
 
