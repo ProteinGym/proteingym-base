@@ -1,14 +1,19 @@
 ### Data Manifest Schema
 This schema defines the structure of a dataset that is required to be compatible with the ProteinGYM2 framework. The datasets are comprised of four types of data: sequences, structures, multiple sequence alignments (MSAs), and assays. Each dataset is represented by a `Dataset` class that contains metadata and references to the various components. The datatypes (sequences, structures, MSAs, and assays) are defined as separate classes with their own metadata and file handling methods.
 
-#### Motivation
 The schema is designed for enabling:
 1. Consistency: Ensure all the datasets follow the same structure.
 2. Compatibility: Allow the framework to load and process datasets automatically.
 3. Extensibility: Allow for future additions without breaking existing datasets.
 4. Clarity: Provide a clear understanding of the dataset components.
 
+#### Definitions
+- **Dataset**: The main class representing a dataset, that has four data types: sequences, structures, MSAs, and assays. The data 
 
+The dataset can be loaded using a loader function and schema .toml file.
+
+
+Class Diagram:
 
 ```mermaid
 classDiagram
@@ -16,17 +21,24 @@ classDiagram
         +string name
         +string description
         +string version
-        +Sequences sequences
-        +Structures structures
-        +MSAs msas
-        +Assays assays
+        +Sequence[] sequences
+        +Structure[] structures
+        +MSA[] msas
+        +Assay[] assays
         +string doi
         +string creator   
         +string xref
         +dict metadata
         +func loader() 
     }
-    class DatasetType {
+    class DataGetter {
+        +DataDir dir_path
+        +CrossRef xref
+        +DataType data_type
+        +func datadir_or_xref_exists()
+        +func get_data()
+    }
+    class DataType {
         <<enumeration>>
         +string sequence
         +string structure
@@ -34,35 +46,57 @@ classDiagram
         +string assay
         +func type_handler()
     }
-    class DatasetDir {
+    class DataDir {
         +string dir_path
-        +DatasetType data_type
+        +DirType dir_type
         +func get_files()
     }
+    class DirType {
+        <<enumeration>>
+        +string s3
+        +string local
+        +func type_handler()
+    }
+    class CrossRef {
+        +string xref
+        +string description
+        +CrossRefType xref_type
+        +func xref_handler()
+    }
+    class CrossRefType {
+        <<enumeration>>
+        +string UniProt
+        +string Benchling
+        +string RCSB
+        +func type_handler()
+    }
 
-
-    class Sequences {
-        +SequenceFiles file_path
+    class Sequence {
         +string description
         +SequenceType sequence_type
-        +string doi
+        +SequenceAlphabet alphabet
         +dict metadata
-        +func dir_or_file_exists()
-        +func validate_sequence_type()
+        +func validate_sequence()
         +func biopython_loader()
     }
-    class SequenceType {
+    class SequenceFactory {
+        +DataGetter loader
+        +func validate()
+        +func generate_sequences()
+    }
+    class SequenceAlphabet {
         <<enumeration>>
         +string DNA
         +string RNA
         +string AA
         +func type_handler()
     }
-    class SequenceFiles {
-        +DatasetDir dir_path
-        +string[] file_path
-        +SequenceFileType file_type
-        +func file_handler()
+    class SequenceType {
+        <<enumeration>>
+        +string WILD_TYPE
+        +string STARTING_SEQUENCE
+        +string ENGINEERED_SEQUENCE
+        +func type_handler()
     }
     class SequenceFileType {
         <<enumeration>>
@@ -70,18 +104,16 @@ classDiagram
         +func type_handler()
     }
 
-    class Structures {
-        +StructureFiles file_path
+    class Structure {
         +string description
-        +string doi
         +dict metadata
+        +func validate_structure()
         +func biopython_loader()
     }
-    class StructureFiles {
-        +DatasetDir dir_path
-        +string[] file_path
-        +StructureFileType file_type
-        +func file_handler()
+    class StructureFactory {
+        +DataGetter loader
+        +func validate()
+        +func generate_structures()
     }
     class StructureFileType {
         <<enumeration>>
@@ -92,17 +124,15 @@ classDiagram
     }
 
 
-    class MSAs {
-        +MSAFiles file_path
+    class MSA {
         +string description
         +dict metadata
         +func biopython_loader()
     }
-    class MSAFiles {
-        +DatasetDir dir_path
-        +string[] file_path
-        +MSAFileType file_type
-        +func file_handler()
+    class MSAFactory {
+        +DataGetter loader
+        +func validate()
+        +func generate_msas()
     }
     class MSAFileType {
         <<enumeration>>
@@ -113,13 +143,17 @@ classDiagram
     }
 
 
-    class Assays {
-        +AssayFiles file_path
+    class Assay {
         +string description
         +AssayMetadata metadata
         +AssayTarget[] targets
         +func biopython_loader()
         +func dataset_by_assay_target(target)
+    }
+    class AssayFactory {
+        +DataGetter loader
+        +func validate()
+        +func generate_assays()
     }
     class AssayMetadata {
         +string[] feature_names
@@ -129,12 +163,6 @@ classDiagram
         +string doi
         +dict metadata
     }
-    class AssayFiles {
-        +DatasetDir dir_path
-        +string[] file_path
-        +AssayFileType file_type
-        +func file_handler()
-        }
     class AssayFileType {
         <<enumeration>>
         +string CSV
@@ -146,24 +174,44 @@ classDiagram
         +func validator()
     }
 
-    Dataset "1" o-- "1" Sequences
-    Dataset "1" o-- "0..*" Structures
-    Dataset "1" o-- "0..*" MSAs
-    Dataset "1" o-- "0..*" Assays
-    Sequences o-- SequenceType
-    Sequences "1" o-- "*" SequenceFiles
-    Structures "1" o-- "*" StructureFiles
-    MSAs "1" o-- "*" MSAFiles
-    Assays o-- AssayMetadata
-    Assays "1" o-- "*" AssayFiles
-    StructureFiles o-- StructureFileType
-    SequenceFiles o-- SequenceFileType
-    AssayFiles o-- AssayFileType
-    MSAFiles o-- MSAFileType
-    Assays "1" o-- "*" AssayTarget
-    AssayFiles o-- DatasetDir
-    SequenceFiles o-- DatasetDir
-    StructureFiles o-- DatasetDir
-    MSAFiles o-- DatasetDir
-    DatasetDir o-- DatasetType
+    Dataset "1" o-- "1" Sequence
+    Dataset "1" o-- "0..*" Structure
+    Dataset "1" o-- "0..*" MSA
+    Dataset "1" o-- "0..*" Assay
+
+    Sequence o-- SequenceFactory
+    Sequence o-- SequenceAlphabet
+    Sequence o-- SequenceType
+    SequenceFactory "1" o-- "*" DataGetter
+
+    Structure "1" o-- "*" StructureFactory
+    StructureFactory "1" o-- "*" DataGetter
+
+    Assay o-- AssayMetadata
+    Assay o-- AssayFactory
+    AssayFactory "1" o-- "*" DataGetter
+    Assay "1" o-- "*" AssayTarget
+
+    MSA "1" o-- "*" MSAFactory
+    MSAFactory "1" o-- "*" DataGetter
+
+    DataGetter o-- CrossRef
+    DataGetter o-- DataDir
+    DataGetter o-- DataType
+
+    DataDir o-- DirType
+    CrossRef o-- CrossRefType
+
+    AssayFileType o-- DataDir
+    SequenceFileType o-- DataDir
+    StructureFileType o-- DataDir
+    MSAFileType o-- DataDir    
 ```
+**Note**
+
+1. Biopython can be replaced with Biotite
+
+Future To-Do:
+1. Sequences can be constructed from public databases like https://www.rcsb.org/, https://www.uniprot.org/, Benchling, etc.
+2. Out of Scope: Connecting to internal IFF databases like LIMS, IFF-Benchling etc.
+
