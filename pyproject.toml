@@ -36,9 +36,8 @@ dev = [
 packages = ["src/pg2_dataset"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_functions = "test_*"
+testpaths = ["tests", "README.md"]
+addopts = "--doctest-modules --doctest-glob='*.md'" 
 
 [tool.ruff]
 line-length = 88
