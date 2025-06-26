@@ -14,8 +14,8 @@ body:
       required: true
   - type: textarea
     attributes:
-      label: Requirements
-      description: The requirement to be met for closing this issue. 
+      label: Motivation
+      description: Explain why this functionality needs changing.
     validations:
       required: true
   - type: textarea
