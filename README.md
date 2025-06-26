@@ -6,7 +6,7 @@
   - [1.2. Schema](#12-schema)
   - [1.3. Getting Started](#13-getting-started)
     - [1.3.1. develop locally](#131-develop-locally)
-    - [1.3.2. load dataset](#132-load-dataset)
+    - [1.3.2. Load data](#132-load-data)
     - [1.3.3. loading from non-local](#133-loading-from-non-local)
   - [1.4. Engineering rounds](#14-engineering-rounds)
   - [1.5. Example Data](#15-example-data)
@@ -97,21 +97,19 @@ to play around:
 uv run jupyter lab
 ```
 
-### 1.3.2. load dataset
+### 1.3.2. Load data
 
-You can just load the dataset as below, then go ahead with using it for model training or prediction:
+You can load the data using the manifest:
 
 ```python
-from pg2_dataset.dataset import Manifest
+>>> from pg2_dataset.dataset import Manifest
+>>> manifest = Manifest.from_path("example_data/A0A1I9GEU1_NEIME_Kennouche_2019.toml").ingest()
+>>> manifest.name
+'NEIME_2019'
 
-ds = Manifest.from_path("example_data/A0A1I9GEU1_NEIME_Kennouche_2019.toml").ingest()
-
-# load records
-records = ds.assays.records
-
-# load structure
-structure = ds.structure
 ```
+
+After loading the manifest, go ahead with using its data for model training or prediction.
 
 ### 1.3.3. loading from non-local
 
