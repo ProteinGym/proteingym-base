@@ -3,17 +3,16 @@ from abc import ABC
 from importlib.util import find_spec
 from typing import ClassVar, Generic, TypeVar
 
-biotite_available = False
-biopython_available = False
-
-if find_spec("biotite"):
-    biotite_available = True
+packages = {
+    "biotite": find_spec("biotite") is not None,
+    "biopython": find_spec("Bio") is not None,
+}
+if packages["biotite"]:
+    pass  # biotite installed
+elif packages["biopython"]:
+    pass  # biopython installed
 else:
-    biotite_available = False
-if find_spec("Bio"):
-    biopython_available = True
-else:
-    biotite_available = False
+    raise ImportError("Neither Biopython nor Biotite is installed.")
 
 T = TypeVar("T")
 search_order = ["Bio", "biotite"]
