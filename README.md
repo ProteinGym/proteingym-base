@@ -157,7 +157,8 @@ You can quickly load the persisted data instead of re-ingesting it:
 >>> persisted_dataset = Dataset.from_path(file_path)  
 >>> persisted_dataset.name
 'NEIME_2019'
-
+>>> file.close()
+>>>
 ```
 
 ## 1.4. Engineering rounds
