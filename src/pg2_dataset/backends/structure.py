@@ -1,29 +1,98 @@
-import logging
+import sys
+from abc import ABC, abstractmethod
+from importlib.util import find_spec
 from pathlib import Path
 from typing import ClassVar, Generic, Self, TypeVar
 
+from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
 
-from pg2_dataset.primitives.managers import AbstractStructureManager
 from pg2_dataset.primitives.meta import StructuresMeta
 
-logger = logging.getLogger(__name__)
+biotite_available = False
+biopython_available = False
 
-try:
+if find_spec("biotite"):
     import biotite.structure.io.pdb as pdb
     import biotite.structure.io.pdbx as pdbx
     from biotite.structure import AtomArray
-except ImportError:
-    pass
 
-try:
+    biotite_available = True
+else:
+    biotite_available = False
+if find_spec("Bio"):
     from Bio.PDB import MMCIFParser, PDBParser
     from Bio.PDB.binary_cif import BinaryCIFParser
     from Bio.PDB.Structure import Structure
-except ImportError:
-    pass
+
+    biopython_available = True
+else:
+    biotite_available = False
 
 STRUCTURE = TypeVar("STRUCTURE")
+search_order = ["Bio", "biotite"]
+
+
+class BackendSearchOrder:
+    def __init__(self, order: list[str]):
+        self.order = order
+
+    def __enter__(self):
+        sys.modules[__name__].search_order = self.order
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.modules[__name__].search_order = ["Bio", "biotite"]
+
+
+class AbstractStructureManager(ABC, Generic[STRUCTURE]):
+    """Base class for structure managers that handle loading protein structures."""
+
+    name: ClassVar[str] = ""
+    backend_map: ClassVar[dict] = {}
+
+    def __init_subclass__(cls, **kwargs):
+        cls.backend_map[cls.name] = cls, find_spec(cls.name)
+
+    @classmethod
+    def get_available_manager(cls) -> type["AbstractStructureManager"]:
+        """Get an appropriate structure manager based on available libraries.
+
+        Returns:
+            type[AbstractStructureManager]: The selected manager class.
+
+        Raises:
+            ImportError: If no suitable structure manager is found.
+        """
+
+        for backend in search_order:
+            manager_class, is_available = cls.backend_map[backend]
+            if is_available:
+                return manager_class
+        raise ImportError(
+            "No suitable structure manager found. Please install either biopython "
+            "or biotite."
+        )
+
+    @staticmethod
+    @abstractmethod
+    def load_structures(ids: list[str], file_names: list[str]) -> dict[str, STRUCTURE]:
+        """Load multiple structures from files.
+
+        Args:
+            ids: List of structure identifiers.
+            file_names: List of file paths corresponding to the structures.
+
+        Returns:
+            dict[str, STRUCTURE]: Dictionary mapping structure IDs to loaded structures.
+
+        Raises:
+            NotImplementedError: This method must be implemented by subclasses.
+        """
+        ...
+
+    @staticmethod
+    @abstractmethod
+    def load_structure(fn: str, idn: str = "") -> STRUCTURE: ...
 
 
 class Structure(BaseModel, Generic[STRUCTURE]):
@@ -35,7 +104,9 @@ class Structure(BaseModel, Generic[STRUCTURE]):
 
     meta: StructuresMeta
     structures: dict[str, STRUCTURE] = Field(default_factory=dict)
-    _manager: AbstractStructureManager[STRUCTURE] = PrivateAttr(default=None)
+    _manager: AbstractStructureManager[STRUCTURE] = PrivateAttr(
+        default_factory=AbstractStructureManager.get_available_manager.__init__
+    )
 
     def model_post_init(self, *_, **__) -> Self:
         """Configure and load structures based on the provided file path.
@@ -55,7 +126,7 @@ class Structure(BaseModel, Generic[STRUCTURE]):
             if self._manager is None:
                 try:
                     manager_cls = AbstractStructureManager.get_available_manager()
-                    self._manager = manager_cls(meta=self.meta)
+                    self._manager = manager_cls()
                 except ImportError as e:
                     logger.warning(str(e))
                     return self
@@ -110,9 +181,6 @@ class Structure(BaseModel, Generic[STRUCTURE]):
 
 class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
     """Structure manager implementation using Biotite backend."""
-
-    def __init__(self, meta: StructuresMeta = None):
-        self.meta = meta
 
     name: ClassVar[str] = "biotite"
 
@@ -173,9 +241,6 @@ class BiotiteStructureManager(AbstractStructureManager["AtomArray"]):
 
 class BiopythonStructureManager(AbstractStructureManager["Structure"]):
     """Structure manager implementation using Biopython backend."""
-
-    def __init__(self, meta: StructuresMeta = None):
-        self.meta = meta
 
     name: ClassVar[str] = "Bio"
 
