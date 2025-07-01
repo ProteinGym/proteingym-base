@@ -105,7 +105,7 @@ You can load the data using the manifest:
 
 ``` python
 >>> from pg2_dataset.dataset import Manifest
->>> manifest = Manifest.from_path("example_data/A0A1I9GEU1_NEIME_Kennouche_2019.toml")
+>>> manifest = Manifest.from_path("manifests/neime_2019.toml")
 >>> manifest.name
 'NEIME_2019'
 >>> dataset = manifest.ingest()
