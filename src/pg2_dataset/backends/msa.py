@@ -32,9 +32,6 @@ class MSA(BaseModel, Generic[MSA]):
     Raises:
         ValueError: When an incorrect filepath is provided
         NotImplementedError: When trying to call train/valid/test
-
-    Returns:
-        _type_: _description_
     """
 
     meta: MSAMeta

@@ -132,7 +132,11 @@ from pg2_dataset
 ### 1.3.4 Loading MSA data
 
 When loading MSA data either [biopython](https://biopython.org/) or [biotite](https://www.biotite-python.org/latest/index.html) is required to be installed.
-We recommend the use of biopython as it has support for alignments outside the fasta format.
+We recommend the use of biopython as it has support for alignments outside the fasta format. To install either biopython or biotite as optional packages run the following in your command line:
+
+`uv sync --extra biotite` for biotite
+
+`uv sync --extra biopython` for biopython
 
 >[!CAUTION]
 >Biotite only supports loading from fasta. So any aligment outside the fasta format (ending with .fa or .fasta) will throw an error
@@ -144,51 +148,43 @@ file_path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/msa.fasta"
 file_format = "fasta"
 gap_chars = ["."]
 ```
+| Field | Description | Example Value | 
+| ----- | ----------- | ------------- |
+| `file_path` | Path to MSA file or directory. If a directory is provided, all MSA files inside will be loaded. | `"example_data/NEIME_2019/MSA/msa.a2m"` or `"example_data;/NEIME_2019/MSA/"` |
+| `file_format` | Required by biopython to determine the MSA file format. See [supported formats](https://biopython.org/wiki/AlignIO).
+| `gap_chars` | Characters used to represent gaps in the alignment. Can be list ofmultiple values. | `["."]`, `["-", "."]`
 
-`file_path` can be a file to a single msa or a directory.
 
-`file_format` is required for biopython to know which format to select for loading. See a [full list of supported formats here.](https://biopython.org/wiki/AlignIO)
-
-`gap_chars` can be set to identify which characters are used to represent gaps in the alignment, a list of multiple characters can be written here.
-
-The MSA will either return an Alignment, [biopython](https://biopython.org/docs/latest/api/Bio.AlignIO.html) or [biotite](https://www.biotite-python.org/latest/apidoc/biotite.sequence.io.fasta.get_alignment.html), depending on your backend.
-
----
-
-Biopython will return a list of [SeqRecord](https://biopython.org/docs/latest/api/Bio.SeqRecord.html#module-Bio.SeqRecord) objects:
-```python
-from pg2_dataset.dataset import Manifest
-
-ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
-alignment = ds.msa.msa
-
-list(aligment)[0:2]
-```
-returns
-
-> [SeqRecord(seq=Seq('FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNH...sas'), id='A0A1I9GEU1_NEIME/1-161', name='A0A1I9GEU1_NEIME/1-161', description='A0A1I9GEU1_NEIME/1-161', dbxrefs=[]), <br>
-> SeqRecord(seq=Seq('----------------------------ARAQVSEAILLAEGQKSAVTEYYLNH...sa.'), id='UniRef100_UPI0018A25760/3-135', name='UniRef100_UPI0018A25760/3-135', description='UniRef100_UPI0018A25760/3-135', dbxrefs=[])]
+What Alignment object will be returned by the MSA depends on the backend used. See the examples below for [biopython](https://biopython.org/docs/latest/api/Bio.AlignIO.html) or [biotite](https://www.biotite-python.org/latest/apidoc/biotite.sequence.io.fasta.get_alignment.html).
 
 ---
 
-Biotite will return a Alignment:
+Biopython will return a list of `SeqRecord` [objects](https://biopython.org/docs/latest/api/Bio.SeqRecord.html#module-Bio.SeqRecord):
 ```python
-from pg2_dataset.dataset import Manifest
-
-ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
-alignment = ds.msa.msa
-print(alignment)
+>>> from pg2_dataset.dataset import Manifest
+>>> ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
+>>> alignment = ds.msa.msa
+>>> list(aligment)[0:2]
+[SeqRecord(seq=Seq('FTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNH...sas'), id='A0A1I9GEU1_NEIME/1-161', name='A0A1I9GEU1_NEIME/1-161', description='A0A1I9GEU1_NEIME/1-161', dbxrefs=[]), <br>
+SeqRecord(seq=Seq('----------------------------ARAQVSEAILLAEGQKSAVTEYYLNH...sa.'), id='UniRef100_UPI0018A25760/3-135', name='UniRef100_UPI0018A25760/3-135', description='UniRef100_UPI0018A25760/3-135', dbxrefs=[])]
 ```
-returns
+---
 
-> Alignment([ProteinSequence("FTLIELMIVIA....."), ProteinSequence("ARAQV....."), ...., <br>
-> [  1,  -1,  -1, ...,   1,   1,  -1], <br>
-> [  2,  -1,  -1, ...,   2,   2,  -1], <br>
-> ..., <br>
-> [158, 130,  -1, ...,  -1,  -1, 118], <br>
-> [159, 131,  -1, ...,  -1,  -1,  -1], <br>
-> [160,  -1,  -1, ...,  -1,  -1,  -1]], shape=(161, 5553)), score=None) <br>
+Biotite will return a `Alignment` [object](https://biopython.org/docs/latest/api/Bio.AlignIO.html):
+```python
+>>> from pg2_dataset.dataset import Manifest
+>>> ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
+>>> alignment = ds.msa.msa
+>>> print(alignment)
 
+Alignment([ProteinSequence("FTLIELMIVIA....."), ProteinSequence("ARAQV....."), ...., <br>
+[  1,  -1,  -1, ...,   1,   1,  -1], <br>
+[  2,  -1,  -1, ...,   2,   2,  -1], <br>
+..., <br>
+[158, 130,  -1, ...,  -1,  -1, 118], <br>
+[159, 131,  -1, ...,  -1,  -1,  -1], <br>
+[160,  -1,  -1, ...,  -1,  -1,  -1]], shape=(161, 5553)), score=None) <br>
+```
 ---
 
 ## 1.4. Engineering rounds
