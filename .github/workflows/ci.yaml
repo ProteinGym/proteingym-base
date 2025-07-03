@@ -27,7 +27,7 @@ jobs:
       - name: Ruff check
         run: uv run ruff check src tests
 
-  build:
+  test:
     name: test
     runs-on: ubuntu-latest
 
@@ -46,4 +46,4 @@ jobs:
         run: uv sync --locked --all-extras --dev
   
       - name: Run tests
-        run: uv run pytest tests
+        run: uv run pytest

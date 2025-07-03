@@ -1,26 +1,32 @@
 # See https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms
 # and https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema
-name: Feature Request
-description: Change in functionality
+name: Bug report
+description: Unexpected behaviour
 labels: ["refine"]
 projects: ["ProteinGym2/1"]
-type: Feature
+type: Bug
 body:
   - type: textarea
     attributes:
-      label: Summary
-      description: A concise summary of what functionality needs to change.
+      label: Current behaviour
+      description: Describe the current behaviour
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Motivation
-      description: Explain why this functionality needs changing.
+      label: Desired behaviour
+      description: Describe the desired behaviour
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: Explain how to reproduce the bug
     validations:
       required: true
   - type: textarea
     attributes:
       label: Proposed solution
-      description: A proposed solution, preferably with example code, to show case requested feature.
+      description: A proposed solution, preferably with example code, to showcase requested feature.
     validations:
       required: false
