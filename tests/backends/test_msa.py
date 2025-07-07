@@ -77,7 +77,10 @@ class TestMSA:
             f.write("dummy content")
 
         with BackendSearchOrder([backend]):
-            with pytest.raises(ValueError, match="Biotite contains limited support|Unexpected format"):
+            with pytest.raises(
+                ValueError,
+                match="Biotite contains limited support|Unexpected format"
+            ):
                 MSA(
                     meta=MSAMeta(file_path=str(invalid_file), file_format="xyz")
                 )
@@ -117,7 +120,8 @@ class TestMSA:
             manager = BiopythonMSAManager(
                 meta=MSAMeta(file_path=msa_file, file_format="invalid_format")
             )
-            with pytest.raises(ValueError, match="Unexpected format.*Biopython only allows"):
+            with pytest.raises(
+                ValueError, match="Unexpected format.*Biopython only allows"):
                 manager.load_msa(msa_file)
 
     @pytest.mark.skipif(not find_spec("biotite"), reason="biotite not installed")
