@@ -61,3 +61,9 @@ class StructuresMeta(BaseModel):
         if not exists(v):
             raise ValueError(f"File path does not exists: file_path={v}")
         return v
+
+
+class MSAMeta(BaseModel):
+    file_path: str = ""
+    file_format: str = ""
+    gap_chars: list[str] = Field(default_factory=list)

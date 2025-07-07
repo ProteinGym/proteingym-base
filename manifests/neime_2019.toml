@@ -10,4 +10,9 @@ engineering_round_feature="engineering_round"
 [structures_meta]
 file_path = "example_data/NEIME_2019/Structures/experimental.cif"
 
+[msa_meta]
+file_path = "example_data/NEIME_2019/MSA/msa.a2m"
+file_format = "fasta"
+gap_chars = ["."]
+
 [assays_meta.assays.DMS_score]
