@@ -8,7 +8,7 @@ split_feature="split"
 engineering_round_feature="engineering_round"
 
 [structures_meta]
-file_path = "example_data/NEIME_2019/Structures/experimental.cif"
+file_path = "example_data/NEIME_2019/Structures/Structures/experimental.cif"
 
 [msa_meta]
 file_path = "example_data/NEIME_2019/MSA/msa.a2m"
