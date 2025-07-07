@@ -25,21 +25,20 @@ if find_spec("biotite"):
 )
 class TestMSA:
     @pytest.fixture
-    def msa_files(self, tmpdir):
-        fasta_file = tmpdir / "test_alignment.fasta"
+    def msa_file(self, tmp_path) -> list[Path]:
+        fasta_file = tmp_path / "test_alignment.fasta"
         fasta_content = ">seq1\nACGTACGT\n>seq2\nACGTA-GT\n>seq3\nACGT--GT\n"
         with open(fasta_file, "w") as f:
             f.write(fasta_content)
-        # return {"fasta": str(fasta_file)}
-        return str(fasta_file)
+        return fasta_file.as_posix()
 
-    def _create_msa_meta(self, msa_files):
-        return MSAMeta(file_path=msa_files, file_format="fasta")
+    def _create_msa_meta(self, msa_file):
+        return MSAMeta(file_path=msa_file, file_format="fasta")
 
     @pytest.mark.parametrize("backend", backends)
-    def test_msa_class_initialization(self, msa_files, backend):
+    def test_msa_class_initialization(self, msa_file, backend):
         with BackendSearchOrder([backend]):
-            dataset = MSA(meta=self._create_msa_meta(msa_files))
+            dataset = MSA(meta=self._create_msa_meta(msa_file))
             assert dataset._manager.name == backend
             assert dataset.msa is not None
 
@@ -62,7 +61,7 @@ class TestMSA:
 
     @pytest.mark.parametrize("backend", backends)
     def test_invalid_file_path(self, backend):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"No \(correct\) MSA file path provided"):
             with BackendSearchOrder([backend]):
                 dataset = MSA(
                     meta=MSAMeta(
@@ -78,49 +77,48 @@ class TestMSA:
             f.write("dummy content")
 
         with BackendSearchOrder([backend]):
-            with pytest.raises(ValueError):
-                dataset = MSA(
+            with pytest.raises(ValueError, match="Biotite contains limited support|Unexpected format"):
+                MSA(
                     meta=MSAMeta(file_path=str(invalid_file), file_format="xyz")
                 )
-                print(dataset)
 
     def test_no_backend_available(self):
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError, match="nonexistent_backend"):
             with BackendSearchOrder(["nonexistent_backend"]):
                 AbstractMSAManager.get_available_manager()
 
     @pytest.mark.skipif(not find_spec("biotite"), reason="biotite not installed")
-    def test_biotite_manager(self, msa_files):
+    def test_biotite_manager(self, msa_file):
         with BackendSearchOrder(["biotite"]):
-            manager = BiotiteMSAManager(meta=self._create_msa_meta(msa_files))
-            alignment = manager.load_msa(msa_files)
+            manager = BiotiteMSAManager(meta=self._create_msa_meta(msa_file))
+            alignment = manager.load_msa(msa_file)
             assert alignment
 
-            alignments = manager.load_msas([msa_files])
+            alignments = manager.load_msas([msa_file])
             assert len(alignments) == 1
-            assert Path(msa_files).name in alignments
+            assert Path(msa_file).name in alignments
 
     @pytest.mark.skipif(not find_spec("Bio"), reason="biopython not installed")
-    def test_biopython_manager(self, msa_files):
+    def test_biopython_manager(self, msa_file):
         with BackendSearchOrder(["Bio"]):
-            manager = BiopythonMSAManager(meta=self._create_msa_meta(msa_files))
-            alignment = manager.load_msa(msa_files)
+            manager = BiopythonMSAManager(meta=self._create_msa_meta(msa_file))
+            alignment = manager.load_msa(msa_file)
             assert alignment
 
-            alignments = manager.load_msas([msa_files])
+            alignments = manager.load_msas([msa_file])
             assert len(alignments) == 1
-            assert Path(msa_files).name in alignments
+            assert Path(msa_file).name in alignments
 
             assert "fasta" in manager.allowed_formats
 
     @pytest.mark.skipif(not find_spec("Bio"), reason="biopython not installed")
-    def test_biopython_unsupported_format(self, msa_files):
+    def test_biopython_unsupported_format(self, msa_file):
         with BackendSearchOrder(["Bio"]):
             manager = BiopythonMSAManager(
-                meta=MSAMeta(file_path=msa_files, file_format="invalid_format")
+                meta=MSAMeta(file_path=msa_file, file_format="invalid_format")
             )
-            with pytest.raises(ValueError):
-                manager.load_msa(msa_files)
+            with pytest.raises(ValueError, match="Unexpected format.*Biopython only allows"):
+                manager.load_msa(msa_file)
 
     @pytest.mark.skipif(not find_spec("biotite"), reason="biotite not installed")
     def test_biotite_unsupported_format(self, tmpdir):
@@ -132,5 +130,5 @@ class TestMSA:
             manager = BiotiteMSAManager(
                 meta=MSAMeta(file_path=str(invalid_file), file_format="xyz")
             )
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="Biotite contains limited support"):
                 manager.load_msa(str(invalid_file))
