@@ -154,7 +154,6 @@ classDiagram
         +dict AssayCondition.AssayDataType: condition_values
         +AssayTarget target
         +func biopython_loader()
-        +func dataset_by_assay_target(target)
     }
     class AssayRecord {
         +Sequence sequence
