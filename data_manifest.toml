@@ -1,0 +1,23 @@
+name = "PG2-Dataset"
+description = "This is an example dataset"
+version = "1.0"
+creator = "First and Last Name"
+[ metadata ]
+key = "value"
+
+[ xref ]
+xref = "id"
+description = "CrossRef Details"
+xref_type = "IFF"
+
+[[ sequences ]]
+sequence_type = "wild_type"
+sequence_alphabet = "DNA"
+
+[ sequences.sources.dirs ]
+local = ["/Users/prashant/Documents/Projects/iff/codebase/pg2-dataset/example_data/NEIME_2019/"]
+s3 = []
+
+[sequences.sources.xref ]
+uniprot = ["id1", "id2"]
+
