@@ -6,8 +6,11 @@
   - [1.2. Schema](#12-schema)
   - [1.3. Getting Started](#13-getting-started)
     - [1.3.1. develop locally](#131-develop-locally)
-    - [1.3.2. load dataset](#132-load-dataset)
+    - [1.3.2. Load data](#132-load-data)
     - [1.3.3. loading from non-local](#133-loading-from-non-local)
+    - [1.3.3. Persist data](#133-persist-data)
+    - [1.3.3. Load persisted data](#133-load-persisted-data)
+    - [1.3.4 Loading MSA data](#134-loading-msa-data)
   - [1.4. Engineering rounds](#14-engineering-rounds)
   - [1.5. Example Data](#15-example-data)
   - [1.6. Example Manifest](#16-example-manifest)
@@ -97,21 +100,22 @@ to play around:
 uv run jupyter lab
 ```
 
-### 1.3.2. load dataset
+### 1.3.2. Load data
 
-You can just load the dataset as below, then go ahead with using it for model training or prediction:
+You can load the data using the manifest:
 
-```python
-from pg2_dataset.dataset import Manifest
+``` python
+>>> from pg2_dataset.dataset import Manifest
+>>> manifest = Manifest.from_path("manifests/neime_2019.toml")
+>>> manifest.name
+'NEIME_2019'
+>>> dataset = manifest.ingest()
+>>> dataset.assays is not None and dataset.structure is not None 
+True
 
-ds = Manifest.from_path("example_data/A0A1I9GEU1_NEIME_Kennouche_2019.toml").ingest()
-
-# load records
-records = ds.assays.records
-
-# load structure
-structure = ds.structure
 ```
+
+After loading the manifest, go ahead with using its data for model training or prediction.
 
 ### 1.3.3. loading from non-local
 
@@ -127,6 +131,84 @@ from pg2_dataset
 
 #fill out example here.
 ```
+
+### 1.3.3. Persist data
+
+You can persist data in ProteinGym2's standardized format as follows
+
+``` python
+>>> import tempfile
+>>> from pathlib import Path
+>>> file = tempfile.NamedTemporaryFile()  # Temporary file is used here for testing purposes
+>>>
+>>> file_path = Path(file.name)  # Use any (non-temporary) location where you want to persist the data
+>>> dataset.persist(file_path)  
+>>>
+>>> file_path.is_file() and file_path.stat().st_size > 0  # The file contains the dataset
+True
+
+```
+
+### 1.3.3. Load persisted data
+
+You can quickly load the persisted data instead of re-ingesting it:
+
+``` python
+>>> from pg2_dataset.dataset import Dataset
+>>> persisted_dataset = Dataset.from_path(file_path)  
+>>> persisted_dataset.name
+'NEIME_2019'
+>>> file.close()
+>>>
+```
+
+### 1.3.4 Loading MSA data
+
+When loading MSA data either [biopython](https://biopython.org/) or [biotite](https://www.biotite-python.org/latest/index.html) is required to be installed.
+We recommend the use of biopython as it has support for alignments outside the fasta format. To install either biopython or biotite as optional packages run the following in your command line:
+
+`uv sync --extra biotite` for biotite
+
+`uv sync --extra biopython` for biopython
+
+>[!CAUTION]
+>Biotite only supports loading from fasta. So any aligment outside the fasta format (ending with .fa or .fasta) will throw an error
+
+When loading MSA data configure the following section in the toml:
+```toml
+[msa_meta]
+file_path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/msa.fasta"
+file_format = "fasta"
+gap_chars = ["."]
+```
+| Field | Description | Example Value | Required |
+| ----- | ----------- | ------------- | -------- |
+| `file_path` | Path to MSA file or directory. If a directory is provided, all MSA files inside will be loaded. | `"example_data/NEIME_2019/MSA/msa.a2m"` or `"example_data;/NEIME_2019/MSA/"` | Yes
+| `file_format` | Required by biopython to determine the MSA file format. See [supported formats](https://biopython.org/wiki/AlignIO). | Biopython only
+| `gap_chars` | Characters used to represent gaps in the alignment. Can be list ofmultiple values. | `["."]`, `["-", "."]` | Biotite only
+
+
+What `Alignment` object will be returned by the MSA depends on the backend used. See the examples below for [biopython](https://biopython.org/docs/latest/api/Bio.AlignIO.html) or [biotite](https://www.biotite-python.org/latest/apidoc/biotite.sequence.io.fasta.get_alignment.html).
+
+---
+
+Biopython will return a list of `SeqRecord` [objects](https://biopython.org/docs/latest/api/Bio.SeqRecord.html#module-Bio.SeqRecord):
+```python
+>>> from pg2_dataset.dataset import Manifest
+>>> ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
+>>> alignment = ds.msa.msa
+
+```
+---
+
+Biotite will return a `Alignment` [object](https://biopython.org/docs/latest/api/Bio.AlignIO.html):
+```python
+>>> from pg2_dataset.dataset import Manifest
+>>> ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
+>>> alignment = ds.msa.msa
+
+```
+---
 
 ## 1.4. Engineering rounds
 
