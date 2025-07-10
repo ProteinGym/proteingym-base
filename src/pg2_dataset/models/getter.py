@@ -1,11 +1,11 @@
 from pathlib import Path
-import glob
-import io
-from Bio import SeqIO
-from pydantic import BaseModel, Field, AfterValidator, computed_field
-from typing import Annotated, List, Dict
+from typing import Annotated, Dict, List
 
-from pg2_dataset.models.constants import DirType, DataType
+from Bio import SeqIO
+from pydantic import AfterValidator, BaseModel
+
+from pg2_dataset.models.constants import DirType
+
 
 def exists_non_empty(path: Path) -> str:
     if not path.is_dir():
@@ -16,15 +16,23 @@ def exists_non_empty(path: Path) -> str:
         raise ValueError(f"Path {path} is empty.")
     return path
 
+
 class DataFile(BaseModel):
-    path: Annotated[Path, AfterValidator(lambda p: p if p.exists() and p.is_file() else ValueError(f"File {p} does not exist or is not a file."))]
-    
+    path: Annotated[
+        Path,
+        AfterValidator(
+            lambda p: p
+            if p.exists() and p.is_file()
+            else ValueError(f"File {p} does not exist or is not a file.")
+        ),
+    ]
+
     @property
     def file_type(self) -> str:
         """Returns the file type based on the file extension."""
         if not self.path.suffix:
             raise ValueError(f"File {self.path} has no extension.")
-        return self.path.suffix.lstrip('.').lower()
+        return self.path.suffix.lstrip(".").lower()
 
     def read(self) -> str:
         return SeqIO.read(self.path, self.file_type)
@@ -36,11 +44,10 @@ class DataDir(BaseModel):
     files: List[DataFile] = []
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'DataDir':
+    def from_dict(cls, data: Dict) -> "DataDir":
         print(f"Creating DataDir from dict: {data}")
         return cls(
-            path=data.get("path", None),
-            dir_type=DirType[data.get("dir_type", None)]
+            path=data.get("path", None), dir_type=DirType[data.get("dir_type", None)]
         )
 
     def get_files(self, file_types: List[str] = None) -> List[Path]:
@@ -63,17 +70,16 @@ class DataGetter(BaseModel):
     data_dirs: List[DataDir]
 
     @classmethod
-    def from_sources(cls, data: List[Dict]) -> 'DataGetter':
-
+    def from_sources(cls, data: List[Dict]) -> "DataGetter":
         print(f"Creating DataGetter from sources: {data}")
-        dirs, xrefs = data.get('dirs', []), data.get('xrefs', [])
+        dirs = data.get("dirs", [])
 
         data_dirs = []
         for dir_type, dir_list in dirs.items():
             for dir in dir_list:
-                data_dir = DataDir(path = Path(dir), dir_type = dir_type)
+                data_dir = DataDir(path=Path(dir), dir_type=dir_type)
                 data_dirs.append(data_dir)
-        
+
         return cls(
             data_dirs=data_dirs,
         )

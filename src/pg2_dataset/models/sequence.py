@@ -1,10 +1,8 @@
-from pydantic import BaseModel, Field
 from typing import Any
-import logging
-logger = logging.getLogger(__name__)
+
+from pydantic import BaseModel, Field
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
-
 
 
 class Sequence(BaseModel):

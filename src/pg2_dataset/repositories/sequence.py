@@ -1,11 +1,14 @@
-from pydantic import BaseModel, Field, AfterValidator
-from typing import List, Dict, Optional, Any, Annotated
 import logging
+from typing import Dict, List
+
+from pydantic import BaseModel, Field
+
+from pg2_dataset.models.constants import SequenceFileType
+from pg2_dataset.models.sequence import Sequence
+from pg2_dataset.models.getter import DataGetter
+
 logger = logging.getLogger(__name__)
 
-from pg2_dataset.models.constants import SequenceFileTypes
-from pg2_dataset.repositories.data_getter import DataGetter
-from pg2_dataset.models.sequence import Sequence
 
 class SequenceFactory(BaseModel):
     data_getters: List[DataGetter] = None
@@ -14,9 +17,9 @@ class SequenceFactory(BaseModel):
 
     @classmethod
     def create_from_list_of_dict(
-        self,
+        cls,
         data: List[Dict],
-        ) -> 'SequenceFactory':
+    ) -> "SequenceFactory":
         sequence_types = []
         sequence_alphabets = []
         data_getters = []
@@ -24,7 +27,9 @@ class SequenceFactory(BaseModel):
             sequence_type = item.get("sequence_type")
             sequence_alphabet = item.get("sequence_alphabet")
             sequence_sources = item.get("sources")
-            data_getter = DataGetter.from_sources(sequence_sources) if sequence_sources else []
+            data_getter = (
+                DataGetter.from_sources(sequence_sources) if sequence_sources else []
+            )
 
             sequence_types.append(sequence_type)
             sequence_alphabets.append(sequence_alphabet)
@@ -42,7 +47,11 @@ class SequenceFactory(BaseModel):
         """
         sequences = []
         for data_getter in self.data_getters:
-            data = data_getter.get_data(SequenceFileTypes.get_all_values()) if data_getter else None
+            data = (
+                data_getter.get_data([ft.value for ft in SequenceFileType])
+                if data_getter
+                else None
+            )
             print(f"Data retrieved: {data}")
             for record in data:
                 sequences.append(

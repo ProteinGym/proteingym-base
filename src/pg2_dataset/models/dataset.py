@@ -7,7 +7,7 @@ import toml
 
 from pg2_dataset.models.manifest import DatasetManifest
 from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
-from pg2_dataset.repositories.data_getter import DataGetter, DataDir
+from pg2_dataset.models.getter import DataGetter, DataDir
 
 class Dataset(BaseModel):
     name: str
