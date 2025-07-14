@@ -81,14 +81,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
-
       - name: Get version
         id: get_version
         run: echo ::set-output name=VERSION::$(hatch version)
