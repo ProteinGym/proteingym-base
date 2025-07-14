@@ -6,6 +6,7 @@ readme = "README.md"
 authors = [
     { name = "tintinrevient", email = "zhaobenben007@googlemail.com" }
 ]
+classifiers = ["Private :: Do Not Upload"]  # Do not upload to public PYPI (by accident)
 requires-python = ">=3.12"
 dependencies = [
     "cloudpathlib[gs,s3]>=0.21.0",
