@@ -287,3 +287,5 @@ file_path = "example_data/NEIME_2019/experimental.cif"  # Path to structure file
 
 >[!CAUTION]
 > Should add section with tutorials here. E.g. pointing to the CI/CD notebooks.
+
+## 2. Developer documen
