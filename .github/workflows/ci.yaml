@@ -70,7 +70,7 @@ jobs:
         run: uv build --no-sources
 
       - name: Test release can be imported
-        run: uv run --with pg2_dataset --no-project -- python -c "import pg2_dataset" 
+        run: uv run --directory dist/ --with pg2_dataset --no-project -- python -c "import pg2_dataset" 
 
   github-release:
     runs-on: ubuntu-latest
