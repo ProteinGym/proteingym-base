@@ -3,9 +3,8 @@ from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
-from pg2_dataset.models.constants import SequenceFileType
-from pg2_dataset.models.sequence import Sequence
 from pg2_dataset.models.getter import DataGetter
+from pg2_dataset.models.sequence import Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +46,7 @@ class SequenceFactory(BaseModel):
         """
         sequences = []
         for data_getter in self.data_getters:
-            data = (
-                data_getter.get_data([ft.value for ft in SequenceFileType])
-                if data_getter
-                else None
-            )
+            data = data_getter.get_data() if data_getter else None
             print(f"Data retrieved: {data}")
             for record in data:
                 sequences.append(

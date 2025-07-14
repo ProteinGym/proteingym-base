@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Annotated, Dict, List
 
-from Bio import SeqIO
 from pydantic import AfterValidator, BaseModel
 
+from pg2_dataset.io import DataFile, DataFileAdapter
 from pg2_dataset.models.constants import DirType
 
 
@@ -15,27 +15,6 @@ def exists_non_empty(path: Path) -> str:
     if list(path.rglob("*")) == []:
         raise ValueError(f"Path {path} is empty.")
     return path
-
-
-class DataFile(BaseModel):
-    path: Annotated[
-        Path,
-        AfterValidator(
-            lambda p: p
-            if p.exists() and p.is_file()
-            else ValueError(f"File {p} does not exist or is not a file.")
-        ),
-    ]
-
-    @property
-    def file_type(self) -> str:
-        """Returns the file type based on the file extension."""
-        if not self.path.suffix:
-            raise ValueError(f"File {self.path} has no extension.")
-        return self.path.suffix.lstrip(".").lower()
-
-    def read(self) -> str:
-        return SeqIO.read(self.path, self.file_type)
 
 
 class DataDir(BaseModel):
@@ -50,19 +29,18 @@ class DataDir(BaseModel):
             path=data.get("path", None), dir_type=DirType[data.get("dir_type", None)]
         )
 
-    def get_files(self, file_types: List[str] = None) -> List[Path]:
-        if self.files == []:
-            if file_types:
-                file_names = []
-                for f in file_types:
-                    file_names.extend(self.path.rglob(f"*.{f}"))
-            else:
-                file_names = self.path.rglob("*.*")
-
-            all_files = []
-            for file in file_names:
-                all_files.append(DataFile(path=file))
-            self.files = all_files
+    def get_files(self) -> List[DataFile]:
+        file_names = self.path.rglob("*.*")
+        all_files = []
+        for file in file_names:
+            data_file_instance = DataFileAdapter.validate_python(
+                {
+                    "path": file,
+                    "file_type": file.suffix.lstrip(".").lower(),
+                }
+            )
+            all_files.append(data_file_instance)
+        self.files = all_files
         return self.files
 
 
@@ -84,18 +62,18 @@ class DataGetter(BaseModel):
             data_dirs=data_dirs,
         )
 
-    def get_files(self, file_types: List[str] = None) -> List[Path]:
+    def get_files(self) -> List[Path]:
         all_files = []
         for data_dir in self.data_dirs:
             print(f"Getting data from directory: {data_dir.path}")
-            files = data_dir.get_files(file_types)
+            files = data_dir.get_files()
             all_files = all_files + files
         return all_files
 
-    def get_data(self, file_types: List[str] = None) -> str:
-        files = self.get_files(file_types)
+    def get_data(self) -> list:
+        files = self.get_files()
         data = []
         for file in files:
             content = file.read()
-        data.append(content)
+            data.append(content)
         return data

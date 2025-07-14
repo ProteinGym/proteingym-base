@@ -11,9 +11,6 @@ sequence_type = "wild_type"
 sequence_alphabet = "DNA"
 
 [ sequences.sources.dirs ]
-local = ["./example_data/NEIME_2019/"]
+local = ["./example_data/NEIME_2019/sequences/"]
 s3 = []
-
-[sequences.sources.xref ]
-uniprot = ["id1", "id2"]
 

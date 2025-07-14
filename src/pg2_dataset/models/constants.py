@@ -19,14 +19,3 @@ class SequenceAlphabet(str, Enum):
 
 class DirType(str, Enum):
     LOCAL = "local"
-
-
-class GenomeDataType(str, Enum):
-    SEQUENCE = "sequence"
-    STRUCTURE = "structure"
-    MSA = "msa"
-    ASSAY = "assay"
-
-
-class SequenceFileType(str, Enum):
-    FASTA = "fasta"
