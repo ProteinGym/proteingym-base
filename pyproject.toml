@@ -1,11 +1,11 @@
 [project]
 name = "pg2-dataset"
-version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
     { name = "tintinrevient", email = "zhaobenben007@googlemail.com" }
 ]
+dynamic = ["version"]  # Dynamically set hatch version using git tags
 classifiers = ["Private :: Do Not Upload"]  # Do not upload to public PYPI (by accident)
 requires-python = ">=3.12"
 dependencies = [
@@ -32,6 +32,9 @@ dev = [
     "pytest>=8.3.5",
     "ruff>=0.11.7",
 ]
+
+[tool.hatch.version]
+path = "src/pg2_dataset/__about__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pg2_dataset"]
