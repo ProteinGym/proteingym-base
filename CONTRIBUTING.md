@@ -4,7 +4,7 @@ This file contains documentation about contributing to this project.
 
 ## How to release
 
-This section describes how to rlease the package in this project.
+This section describes how to release the package in this project.
 
 ### Prerequisites
 
@@ -17,7 +17,7 @@ This section describes how to rlease the package in this project.
 ### Release
 
 We use hatch to [version](https://hatch.pypa.io/latest/version/) the project.
-Before releasing, you decide which semantic version segement you want to
+Before releasing, you decide which semantic version segment you want to
 release, like:
 
 | Segement | New version | 
