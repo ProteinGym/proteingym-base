@@ -3,7 +3,7 @@ from typing import Literal
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
-from pg2_dataset.io.base import DataFile
+from pg2_dataset.io.files.base import DataFile
 
 
 class SequenceDataFile(DataFile):

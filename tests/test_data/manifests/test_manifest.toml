@@ -1,0 +1,12 @@
+name = "test_dataset"
+version = "1.0.0"
+description = "A test dataset used for testing manifest read"
+creator = "Jane Doe <jane.doe@iff.com>"
+[[sequences]]
+sequence_type = "example_type"
+sequence_alphabet = "example_alphabet"
+
+[sequences.sources]
+local = [ "path/to/local/dir1", "path/to/local/dir2",]
+
+[metadata]

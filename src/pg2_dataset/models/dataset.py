@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Annotated, Dict, List
 
-from pydantic import AfterValidator, BaseModel
+from pydantic import BaseModel
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
@@ -10,33 +10,38 @@ from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
 from pg2_dataset.settings import datasets_dir
 
 
+def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
+    if len(v) == 0:
+        raise ValueError("At least one sequence is required.")
+    return v
+
+
 class Dataset(BaseModel):
     name: str
     description: str
     version: str
     sequences: Annotated[
         List[Sequence],
-        AfterValidator(
-            lambda seqs: seqs if all(isinstance(seq, Sequence) for seq in seqs) else []
-        ),
+        lambda v: assert_non_empty_sequence_list(v),
     ]
-
     creator: str = None
     metadata: Dict[str, str] = None
     manifest: DatasetManifest = None
 
     @classmethod
     def from_manifest(cls, manifest: DatasetManifest) -> "Dataset":
-        sequence_factory = SequenceFactory.create_from_list_of_dict(
-            data=manifest.sequences
-        )
+        sequences = []
+        for sequence_manifest in manifest.sequences:
+            sequence_factory = SequenceFactory.from_manifest(manifest=sequence_manifest)
+            sequences = sequences + sequence_factory.generate_sequences()
+
         return cls(
             name=manifest.name,
             description=manifest.description,
             version=manifest.version,
             creator=manifest.creator,
             metadata=manifest.metadata,
-            sequences=sequence_factory.generate_sequences(),
+            sequences=sequences,
             manifest=manifest,
         )
 
