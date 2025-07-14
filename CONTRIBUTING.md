@@ -39,7 +39,7 @@ $ git checkout -b release/release-$VERSION
 $ git add src/pg2_dataset/__about__.py
 $ git commit -m "Bump version to $VERSION"
 $ git tag $VERSION
-$ git push
+$ git push --set-upstream origin release/release-$VERSION
 $ git push --tags
 ```
 
