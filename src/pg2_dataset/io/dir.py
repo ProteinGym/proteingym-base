@@ -1,9 +1,11 @@
-from pydantic import BaseModel, AfterValidator
-from typing import Annotated, Dict, List
 from pathlib import Path
+from typing import Annotated, List
 
+from pydantic import AfterValidator, BaseModel
+
+from pg2_dataset.io.files import DataFile, DataFileAdapter
 from pg2_dataset.models.constants import DirType
-from pg2_dataset.io.files import DataFileAdapter, DataFile
+
 
 def exists_non_empty(path: Path) -> str:
     if not path.is_dir():
@@ -13,6 +15,7 @@ def exists_non_empty(path: Path) -> str:
     if list(path.rglob("*")) == []:
         raise ValueError(f"Path {path} is empty.")
     return path
+
 
 class DataDir(BaseModel):
     path: Annotated[Path, AfterValidator(exists_non_empty)]
@@ -31,7 +34,6 @@ class DataDir(BaseModel):
             data_file_instance = DataFileAdapter.validate_python(
                 {
                     "path": file,
-                    "file_type": file.suffix.lstrip(".").lower(),
                 }
             )
             all_files.append(data_file_instance)

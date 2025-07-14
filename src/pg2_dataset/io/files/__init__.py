@@ -1,7 +1,10 @@
 from typing import Union
-from .sequence import SequenceDataFile
+
 from pydantic import TypeAdapter
+
 from .base import DataFile
+from .sequence import SequenceDataFile
+
 DataFileUnion = Union[SequenceDataFile]
 DataFileAdapter = TypeAdapter(DataFileUnion)
 

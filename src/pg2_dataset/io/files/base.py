@@ -1,25 +1,34 @@
-from typing import Annotated
 from pathlib import Path
-from pydantic import BaseModel
+from typing import Annotated
+
+from pydantic import AfterValidator, model_validator, BaseModel
+
 
 def assert_path_instance(v):
     if not isinstance(v, Path):
-        raise TypeError(f"Expected Path instance, got {type(v)}")
-    return v
+        v = Path(v)
+    return v    
 
 
 class DataFile(BaseModel):
-    path: Annotated[Path, assert_path_instance]
+    path: Annotated[Path, AfterValidator(assert_path_instance)]
     file_type: str = None
 
-    def _exists(self) -> bool:
-        return self.path.exists() and self.path.is_file()
+    @model_validator(mode="before")
+    @classmethod
+    def infer_file_type(cls, values):
+        if "file_type" not in values or values["file_type"] is None:
+            path = values.get("path")
+            if path:
+                ext = Path(path).suffix.lstrip(".").lower()
+                values["file_type"] = ext
+        return values
 
+    def _exists(self):
+        return self.path.exists()
+    
     def read(self):
         raise NotImplementedError()
 
     def dump(self):
         raise NotImplementedError()
-
-
-

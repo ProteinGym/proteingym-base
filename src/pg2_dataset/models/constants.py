@@ -19,3 +19,8 @@ class SequenceAlphabet(str, Enum):
 
 class DirType(str, Enum):
     LOCAL = "local"
+
+
+class SequenceFileType(str, Enum):
+    FASTA = "fasta"
+    FASTQ = "fastq"

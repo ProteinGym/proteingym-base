@@ -1,16 +1,25 @@
+from pathlib import Path
+
 import pytest
 from Bio import Seq, SeqIO, SeqRecord
+
+from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.sequence import Sequence
-from pg2_dataset.models.constants import SequenceType, SequenceAlphabet
-from pathlib import Path
+
 
 @pytest.mark.parametrize(
     "name, value, description, type, alphabet",
     [
         ("seq1", Seq.Seq("ATCG"), "Test sequence 1", SequenceType("wild_type"), "DNA"),
         ("seq2", Seq.Seq("AUGC"), "Test sequence 2", "starting_sequence", "RNA"),
-        ("seq3", Seq.Seq("MKTAYIAKQRQISF"), "Test sequence 3", "engineered_sequence", SequenceAlphabet("AA")),
-    ]
+        (
+            "seq3",
+            Seq.Seq("MKTAYIAKQRQISF"),
+            "Test sequence 3",
+            "engineered_sequence",
+            SequenceAlphabet("AA"),
+        ),
+    ],
 )
 def test_sequence(name, value, description, type, alphabet):
     seq = Sequence(
@@ -18,7 +27,7 @@ def test_sequence(name, value, description, type, alphabet):
         value=value,
         description=description,
         type=SequenceType(type),
-        alphabet=SequenceAlphabet(alphabet)
+        alphabet=SequenceAlphabet(alphabet),
     )
     assert isinstance(seq.value, Seq.Seq)
     assert isinstance(seq.type, SequenceType)
@@ -32,7 +41,7 @@ def test_sequence(name, value, description, type, alphabet):
         ("seq1", "ATCG", "Test sequence 1", "invalid_type", "DNA"),
         ("seq2", "AUGC", "Test sequence 2", "wild_type", "invalid_alphabet"),
         ("seq3", "", "Test sequence 3", "engineered_sequence", "AA"),
-    ]
+    ],
 )
 def test_invalid_sequence(name, value, description, type, alphabet):
     seq = Sequence(
@@ -40,7 +49,7 @@ def test_invalid_sequence(name, value, description, type, alphabet):
         value=value,
         description=description,
         type=SequenceType(type),
-        alphabet=SequenceAlphabet(alphabet)
+        alphabet=SequenceAlphabet(alphabet),
     )
     assert isinstance(seq.value, Seq.Seq)
     assert isinstance(seq.type, SequenceType)
@@ -53,7 +62,7 @@ def test_sequence_dump(tmp_path):
         value=Seq.Seq("ATCG"),
         description="Test sequence for dumping",
         type=SequenceType("wild_type"),
-        alphabet=SequenceAlphabet("DNA")
+        alphabet=SequenceAlphabet("DNA"),
     )
     dir = Path(tmp_path)
     seq.dump(dir)
