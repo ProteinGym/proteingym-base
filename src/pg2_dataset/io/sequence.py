@@ -1,7 +1,10 @@
-from pg2_dataset.io.base import DataFile
-from Bio.SeqRecord import SeqRecord
-from Bio import SeqIO
 from typing import Literal
+
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+
+from pg2_dataset.io.base import DataFile
+
 
 class SequenceDataFile(DataFile):
     file_type: Literal["fasta", "fastq"]

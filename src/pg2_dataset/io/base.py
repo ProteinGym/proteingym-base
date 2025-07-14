@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Annotated
+
 from pydantic import BaseModel
+
 
 def assert_path_instance(v):
     if not isinstance(v, Path):
@@ -13,7 +15,7 @@ class DataFile(BaseModel):
 
     def _exists(self) -> bool:
         return self.path.exists() and self.path.is_file()
-    
+
     def read(self):
         raise NotImplementedError()
 
