@@ -87,6 +87,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Hatch
+        uses: pypa/hatch@install
+
       - name: Get version
         id: get_version
         run: echo ::set-output name=VERSION::$(hatch version)
