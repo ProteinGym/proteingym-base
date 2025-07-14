@@ -93,6 +93,7 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          name: v${{ steps.get_version.outputs.VERSION }}
           body: ${{ github.event.head_commit.message }}
           prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'rc') ||  contains(steps.get_version.outputs.VERSION, 'b') }}
           token: ${{ secrets.GITHUB_TOKEN }}

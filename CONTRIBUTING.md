@@ -35,11 +35,11 @@ Then, you run the following
 ``` bash
 $ hatch version release|major|minor|release|patch|rc
 $ VERSION=$(hatch version)
-$ git checkout -b release/release-$VERSION
+$ git checkout -b release/release-v$VERSION
 $ git add src/pg2_dataset/__about__.py
 $ git commit -m "Bump version to $VERSION"
-$ git tag $VERSION
-$ git push --set-upstream origin release/release-$VERSION
+$ git tag v$VERSION
+$ git push --set-upstream origin release/release-v$VERSION
 $ git push --tags
 ```
 
