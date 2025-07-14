@@ -5,6 +5,12 @@ on:
   pull_request:
   merge_group:
 
+  push:
+    branches:
+      - main 
+    tags:
+      - v*
+
 jobs:
   lint:
     name: lint
