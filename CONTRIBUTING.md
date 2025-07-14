@@ -43,6 +43,6 @@ $ git push --set-upstream origin release/release-v$VERSION
 $ git push --tags
 ```
 
-Create a pull request and wait until it the CI passes. Now make sure you merge
-the PR and delete the release branch. The CI will automatically pick the tag up
-and release it, wait to appear in PyPI. Only merge if the later happens.
+Create a pull request and wait until the CI passes. The CI will automatically
+pick the tag up to create a release. When the release appears on Github close
+the PR.
