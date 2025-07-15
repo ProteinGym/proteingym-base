@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import IO, Self
 
 import toml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from pg2_dataset.backends import MSA, Assays, Structure
 from pg2_dataset.primitives.meta import AssaysMeta, MSAMeta, StructuresMeta
@@ -148,6 +148,14 @@ class Manifest(BaseModel):
     change indicates breaking changes, while a minor version change indicates
     backward-compatible additions or changes.
     """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the dataset."""
