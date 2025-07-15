@@ -57,7 +57,7 @@ version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[assay_conditions]
+[[assay_conditions]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
@@ -81,16 +81,16 @@ file_path = "assays.csv"
 The top-level of the manifest contains the dataset metadata and references to
 the protein data types.
 
-| **Field**          | **Type**                         | **Required** | **Default** | **Description**                                                                                                                                                                                                                    |
-| ------------------ | -------------------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`          | `string`                         | Yes          | `"1.0"`     | The version of the manifest schema. The version follows the semantic format `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
-| `name`             | `string`                         | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                           |
-| `description`      | `string \| None`                 | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                |
-| `assay_conditions` | `map[str, map[str, str \| None]` | No           | Empty map   | The conditions for the assays defined in the dataset.                                                                                                                                                                              |
-| `sequences`        | `list[map[str, str]]`            | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                             |
-| `structures`       | `list[map[str, str]]`            | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                            |
-| `msas`             | `list[map[str, str]]`            | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                          |
-| `assays`           | `list[map[str, str]]`            | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                          |
+| **Field**          | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                    |
+| ------------------ | --------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`          | `string`              | Yes          | `"1.0"`     | The version of the manifest schema. The version follows the semantic format `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
+| `name`             | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                           |
+| `description`      | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                |
+| `assay_conditions` | `list[map[str, str]]` | No           | Empty list  | The conditions for the assays defined in the dataset.                                                                                                                                                                              |
+| `sequences`        | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                             |
+| `structures`       | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                            |
+| `msas`             | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                          |
+| `assays`           | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                          |
 
 ### Assay Conditions
 
