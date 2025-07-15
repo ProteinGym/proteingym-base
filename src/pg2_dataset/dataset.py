@@ -2,15 +2,15 @@ import logging
 import os
 import tempfile
 import zipfile
-from packaging.version import Version as PackagingVersion
 from pathlib import Path
-from typing import Annotated, IO, Self
+from typing import IO, Annotated, Self
 
 import toml
+from packaging.version import Version as PackagingVersion
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from pg2_dataset.backends import MSA, Assays, Structure
-from pg2_dataset.primitives.meta import AssaysMeta, MSAMeta, StructuresMeta
+from pg2_dataset.primitives.meta import AssaysMeta, StructuresMeta
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class Dataset(BaseModel):
         else:
             structures_meta = None
 
-        # TODO: Map all fields to the Manifest model, add a `Manifest.from_dataset` classmethod
+        # TODO: Map all fields to the Manifest model
         manifest = Manifest(name=self.name)
 
         with path.open("w") as f:
@@ -136,17 +136,17 @@ class Version(BaseModel):
 
     Could not reuse `packaging.version.Version` directly without loosing
     serializaiton as Pydantic requires a dataclass or Pydantic model for that.
-    
+
     Docs:
         See https://packaging.pypa.io/en/stable/version.html#packaging.version.Version
     """
-    
+
     major: int
     minor: int
     micro: int = 0
 
     @classmethod
-    def from_string(cls, version_string: str) -> 'Version':
+    def from_string(cls, version_string: str) -> "Version":
         """Initialize Version from a string in the format 'major.minor[.patch]'."""
         version = PackagingVersion(version_string)
         return cls(
@@ -182,9 +182,11 @@ class Manifest(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    version: Annotated[Version, BeforeValidator(_try_coerce_version)] = Version(major=1, minor=0)
+    version: Annotated[Version, BeforeValidator(_try_coerce_version)] = Version(
+        major=1, minor=0
+    )
     """The version of the manifest schema.
-     
+
     The version follows the semantic version format: `<major>.<minor>`. A major
     version change indicates breaking changes, while a minor version change
     indicates backward-compatible additions or changes.
@@ -198,7 +200,7 @@ class Manifest(BaseModel):
 
     assay_conditions: list[dict[str, str]] = Field(default_factory=dict)
     """The conditions for the assays defined in the dataset."""
-    
+
     sequences: list[dict[str, str]] = Field(default_factory=list)
     """The sequences included in the dataset."""
 
@@ -212,7 +214,7 @@ class Manifest(BaseModel):
     """The assays included in the dataset."""
 
     @classmethod
-    def from_path(cls, path: Path | IO["str"]) -> 'Manifest':
+    def from_path(cls, path: Path | IO["str"]) -> "Manifest":
         """Create a Manifest instance from a TOML file or string."""
         return cls(**toml.load(path))
 

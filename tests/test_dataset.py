@@ -6,9 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.backends.structure import Structure
 from pg2_dataset.dataset import Dataset, Manifest
-from pg2_dataset.primitives.meta import StructuresMeta
 
 
 @pytest.fixture
@@ -48,17 +46,21 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
 
 def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     """Check if the manifest contents are present in the documentation.
-    
+
     If this tests fails, it indicates that the documentation is not up-to-date
     with the tested manifest contents, or vice versa. Solve this by updating
     outdated contents.
-    
+
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
     documenation_path = Path(__file__).parent.parent / Path("docs/manifest.md")
 
-    assert documenation_path.exists(), f"Documentation file does not exist: {documenation_path}"
-    assert manifest_contents in documenation_path.read_text(), "Test manifest contents not found in documentation."
+    assert documenation_path.exists(), (
+        f"Documentation file does not exist: {documenation_path}"
+    )
+    assert manifest_contents in documenation_path.read_text(), (
+        "Test manifest contents not found in documentation."
+    )
 
 
 def test_manifest_from_path_like(manifest_contents: str) -> None:
@@ -66,7 +68,7 @@ def test_manifest_from_path_like(manifest_contents: str) -> None:
     try:
         Manifest.from_path(io.StringIO(manifest_contents))
     except ValidationError as e:
-        assert False, f"ValidationError raised: {e}"
+        raise AssertionError("ValidationError raised") from e
     else:
         assert True, "Manifest loaded successfully from path-like object."
 
@@ -78,7 +80,7 @@ def test_manifest_from_path_like_minimal_contents() -> None:
     try:
         Manifest.from_path(manifest_contents_minimal)
     except ValidationError as e:
-        assert False, f"ValidationError raised: {e}"
+        raise AssertionError("ValidationError raised") from e
     else:
         assert True, "Manifest loaded successfully from path-like object."
 
@@ -87,7 +89,9 @@ def test_manifest_from_path_like_requires_name_field() -> None:
     """The manifest name is a required field."""
     manifest_contents_without_name = io.StringIO("description = 'example description'")
 
-    with pytest.raises(ValidationError, match="validation error for Manifest\nname\n  Field required"):
+    with pytest.raises(
+        ValidationError, match="validation error for Manifest\nname\n  Field required"
+    ):
         Manifest.from_path(manifest_contents_without_name)
 
 
@@ -95,15 +99,24 @@ def test_manifest_from_path_like_requires_name_field_with_non_zero_length() -> N
     """The manifest name is required to have non-zero length."""
     manifest_contents_without_name = io.StringIO("name = ''")
 
-    with pytest.raises(ValidationError, match="validation error for Manifest\nname\n  String should have at least 1 character"):
+    match = (
+        "validation error for Manifest\nname\n  String should have at least 1 character"
+    )
+    with pytest.raises(ValidationError, match=match):
         Manifest.from_path(manifest_contents_without_name)
 
 
 def test_manifest_from_path_like_version_field_is_semantic() -> None:
     """The manifest version is required to have a semantic version."""
-    manifest_contents_with_date_version = io.StringIO("name = 'd'\nversion = '2023-10-05'")  # Try date version format
+    manifest_contents_with_date_version = io.StringIO(
+        "name = 'd'\nversion = '2023-10-05'"
+    )  # Try date version format
 
-    with pytest.raises(ValidationError, match="validation error for Manifest\nversion\n  Value error, Invalid version: '2023-10-05'"):
+    match = (
+        "validation error for Manifest\nversion\n  "
+        "Value error, Invalid version: '2023-10-05'"
+    )
+    with pytest.raises(ValidationError, match=match):
         Manifest.from_path(manifest_contents_with_date_version)
 
 
@@ -112,7 +125,7 @@ def test_manifest_from_path(manifest_path: Path) -> None:
     try:
         Manifest.from_path(manifest_path)
     except ValidationError as e:
-        assert False, f"ValidationError raised: {e}"
+        raise ValidationError("ValidationError raised") from e
     else:
         assert True, "Manifest loaded successfully from path-like object."
 
@@ -120,7 +133,10 @@ def test_manifest_from_path(manifest_path: Path) -> None:
 def test_manifest_from_non_existing_path(tmp_path: Path) -> None:
     """The manifest cannot be loaded from a non-existing path."""
     non_existing_path = tmp_path / "non_existing_manifest.toml"
-    with pytest.raises(FileNotFoundError, match=f"No such file or directory: '{non_existing_path.as_posix()}'"):
+    with pytest.raises(
+        FileNotFoundError,
+        match=f"No such file or directory: '{non_existing_path.as_posix()}'",
+    ):
         Manifest.from_path(non_existing_path)
 
 
