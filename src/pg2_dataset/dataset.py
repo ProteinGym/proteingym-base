@@ -145,7 +145,7 @@ class Manifest(BaseModel):
 
     @classmethod
     def from_path(cls, path: Path | IO["str"]) -> 'Manifest':
-        return cls.model_validate(toml.load(path))
+        return cls(**toml.load(path))
 
     def ingest(self) -> Dataset:
         if self.assays_meta and self.assays_meta.file_path:
