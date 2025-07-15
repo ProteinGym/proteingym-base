@@ -177,14 +177,6 @@ class Manifest(BaseModel):
     Gym data types are constructed while loading the dataset.
     """
 
-    version: Annotated[Version, BeforeValidator(_try_coerce_version)] = Version(major=1, minor=0)
-    """The version of the manifest schema.
-     
-    The version follows the semantic version format: `<major>.<minor>`. A major
-    version change indicates breaking changes, while a minor version change
-    indicates backward-compatible additions or changes.
-    """
-
     model_config = ConfigDict(
         extra="forbid",
         frozen=True,
@@ -192,6 +184,14 @@ class Manifest(BaseModel):
         str_min_length=1,
     )
     """Configuration for the Pydantic model."""
+
+    version: Annotated[Version, BeforeValidator(_try_coerce_version)] = Version(major=1, minor=0)
+    """The version of the manifest schema.
+     
+    The version follows the semantic version format: `<major>.<minor>`. A major
+    version change indicates breaking changes, while a minor version change
+    indicates backward-compatible additions or changes.
+    """
 
     name: str
     """The name of the dataset."""
