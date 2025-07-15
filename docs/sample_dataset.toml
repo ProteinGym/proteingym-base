@@ -1,0 +1,20 @@
+
+[resources]
+records = "../example_data/sample_data.csv"  # Path to a CSV file
+
+[records]
+columns = ["sequence", "score", "label"]
+sequence_feature = "sequence"
+
+[metadata]
+name = "Sample Dataset"
+description = "A sample dataset for demonstration purposes"
+doi = "DOI: 10.1000/example"
+source = "Example Source"
+xref = ""
+
+[assays.score]
+description = "Example score measurement"
+
+[assays.label]
+description = "Binary classification label"
