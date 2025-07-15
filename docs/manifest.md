@@ -56,7 +56,6 @@ followed by the schema definition.
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
-maintainer = "John Doe"
 
 [assay_conditions]
 name = "PH"
