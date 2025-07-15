@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import AfterValidator, model_validator, BaseModel
+from pydantic import AfterValidator, BaseModel, model_validator
 
 
 def assert_path_instance(v):
     if not isinstance(v, Path):
         v = Path(v)
-    return v    
+    return v
 
 
 class DataFile(BaseModel):
@@ -26,7 +26,7 @@ class DataFile(BaseModel):
 
     def _exists(self):
         return self.path.exists()
-    
+
     def read(self):
         raise NotImplementedError()
 

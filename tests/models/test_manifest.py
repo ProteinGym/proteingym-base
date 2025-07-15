@@ -111,6 +111,8 @@ def test_dataset_manifest(name, version, description, creator, metadata, sequenc
         metadata=metadata,
         sequences=[sequence_manifest],
     )
+    assert len(manifest.name) >= 4
+    assert len(manifest.description) >= 20
 
 
 @pytest.mark.parametrize(
@@ -160,8 +162,12 @@ def test_dataset_manifest_invalid(
         metadata=metadata,
         sequences=[sequence_manifest],
     )
+    assert len(manifest.name) >= 4
+    assert len(manifest.description) >= 20
 
 
 def test_dataset_manifest_from_toml():
     toml_path = TEST_MANIFEST_FILE
     manifest = DatasetManifest.from_toml(toml_path)
+    assert len(manifest.name) >= 4
+    assert len(manifest.description) >= 20

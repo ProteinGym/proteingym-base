@@ -1,7 +1,7 @@
 from pg2_dataset.io.bytes import exists, read_bytes
 
-from .files import DataFile, DataFileAdapter
 from .dir import DataDir
+from .files import DataFile, DataFileAdapter
 
 __all__ = [
     "exists",
