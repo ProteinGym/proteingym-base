@@ -58,7 +58,7 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     assert manifest_contents in documenation_path.read_text(), "Test manifest contents not found in documentation."
 
 
-def test_manifest_from_path_like(manifest_contents):
+def test_manifest_from_path_like(manifest_contents: str) -> None:
     """Happy flow for loading a Manifest from a path-like object."""
     try:
         Manifest.from_path(io.StringIO(manifest_contents))
