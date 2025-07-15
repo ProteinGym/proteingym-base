@@ -12,7 +12,7 @@ from pg2_dataset.primitives.meta import StructuresMeta
 
 
 @pytest.fixture
-def example_toml() -> str:
+def manifest_contents() -> str:
     return """
 name = "test_name"
 description = "test_description"
@@ -37,24 +37,24 @@ description = "dolor sit amet"
 
 class TestDataset:
 
-    def test_dataset_from_toml(self, example_toml):
-        ds = Manifest.from_path(io.StringIO(example_toml)).ingest()
+    def test_dataset_from_toml(self, manifest_contents):
+        ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
         assert isinstance(ds, Dataset)
 
-    def test_manifest_from_toml_path_like(self, example_toml):
-        manifest = Manifest.from_path(io.StringIO(example_toml))
+    def test_manifest_from_toml_path_like(self, manifest_contents):
+        manifest = Manifest.from_path(io.StringIO(manifest_contents))
         assert isinstance(manifest, Manifest)
 
-    def test_manifest_from_toml_path(self, example_toml, tmpdir):
+    def test_manifest_from_toml_path(self, manifest_contents, tmpdir):
         file_path = tmpdir / "example.toml"
 
         with open(file_path, "w") as file:
-            file.write(example_toml)
+            file.write(manifest_contents)
         manifest = Manifest.from_path(file_path)
         assert isinstance(manifest, Manifest)
 
-    def test_get_assays_correctly(self, example_toml):
-        meta = Manifest.from_path(io.StringIO(example_toml))
+    def test_get_assays_correctly(self, manifest_contents):
+        meta = Manifest.from_path(io.StringIO(manifest_contents))
 
         assert len(meta.assays_meta.assays) == 2
 
@@ -81,8 +81,8 @@ class TestDataset:
         ):
             Manifest.from_path(io.StringIO(invalid_toml)).ingest()
 
-    def test_persist(self, example_toml, tmpdir):
-        ds = Manifest.from_path(io.StringIO(example_toml)).ingest()
+    def test_persist(self, manifest_contents, tmpdir):
+        ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
 
         zip_path = tmpdir / "dataset.zip"
 
@@ -103,8 +103,8 @@ class TestDataset:
             dataset = Structure(meta=StructuresMeta(file_path="structure/5kua_pdb.pdb"))
             assert len(dataset.structures) == 1
 
-    def test_from_path_with_correct_file(self, example_toml, tmpdir):
-        manifest = Manifest.from_path(io.StringIO(example_toml))
+    def test_from_path_with_correct_file(self, manifest_contents, tmpdir):
+        manifest = Manifest.from_path(io.StringIO(manifest_contents))
 
         zip_path = Path(tmpdir) / "dataset.zip"
         manifest.ingest().persist(zip_path)
