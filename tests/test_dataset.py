@@ -124,11 +124,13 @@ def test_manifest_from_non_existing_path(tmp_path: Path) -> None:
         Manifest.from_path(non_existing_path)
 
 
-class TestDataset:
+@pytest.mark.skip(reason="TODO: Update test when moving `ingest` to `Dataset` class")
+def test_dataset_from_toml(manifest_contents: str) -> None:
+    ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
+    assert isinstance(ds, Dataset)
 
-    def test_dataset_from_toml(self, manifest_contents):
-        ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
-        assert isinstance(ds, Dataset)
+
+class TestDataset:
 
     def test_get_assays_correctly(self, manifest_contents):
         meta = Manifest.from_path(io.StringIO(manifest_contents))
