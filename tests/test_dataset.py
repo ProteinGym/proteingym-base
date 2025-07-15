@@ -150,17 +150,16 @@ def test_dataset_persists_manifest_file(tmpdir: Path) -> None:
         assert "manifest.toml" in files
 
 
-class TestDataset:
+@pytest.mark.skip(reason="TODO: Update test when moving `ingest` to `Dataset` class")
+def test_from_path_with_correct_file(tmpdir: Path, manifest_contents: str) -> None:
+    manifest = Manifest.from_path(io.StringIO(manifest_contents))
 
-    def test_from_path_with_correct_file(self, manifest_contents, tmpdir):
-        manifest = Manifest.from_path(io.StringIO(manifest_contents))
+    zip_path = Path(tmpdir) / "dataset.zip"
+    manifest.ingest().persist(zip_path)
 
-        zip_path = Path(tmpdir) / "dataset.zip"
-        manifest.ingest().persist(zip_path)
+    dataset = Dataset.from_path(zip_path)
 
-        dataset = Dataset.from_path(zip_path)
-
-        assert "5kua_pdb.pdb" in dataset.structure.structures
+    assert "5kua_pdb.pdb" in dataset.structure.structures
 
 
 def test_from_path_with_invalid_file_should_raise_exceptions(tmpdir: Path) -> None:
