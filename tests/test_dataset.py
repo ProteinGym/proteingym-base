@@ -14,24 +14,28 @@ from pg2_dataset.primitives.meta import StructuresMeta
 @pytest.fixture
 def manifest_contents() -> str:
     return """
-name = "test_name"
-description = "test_description"
-doi = "test_doi"
-source = "test_source"
+version = "1.0.0"
+name = "Example Dataset"
+description = "This is an example dataset for demonstration purposes."
+maintainer = "John Doe"
 
-[structures_meta]
-file_path = "tests/test_data/structures/5kua_pdb.pdb"
+[assay_conditions]
+name = "PH"
+description = "pH level of the samples"
+unit = "pH"
+data_type = "float"
 
-[assays_meta.assays.target1]
-features = ["feature1", "feature2"]
-description = "lorem ipsum"
-[assays_meta.assays.target1.constants]
-key_one = "1"
-key_two = 2
+[[sequences]]
+file_path = "sequences.fasta"
 
-[assays_meta.assays.target2]
-features = ["feature1"]
-description = "dolor sit amet"
+[[structures]]
+file_path = "structures.pdb"
+
+[[msas]]
+file_path = "msas.a3m"
+
+[[assays]]
+file_path = "assays.csv"
 """
 
 
