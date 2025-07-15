@@ -68,6 +68,18 @@ def test_manifest_from_path_like(manifest_contents: str) -> None:
         assert True, "Manifest loaded successfully from path-like object."
 
 
+def test_manifest_from_path_like_minimal_contents() -> None:
+    """The manifest requires only a name at minimum."""
+    manifest_contents_minimal = io.StringIO("name = 'dataset'")
+
+    try:
+        Manifest.from_path(manifest_contents_minimal)
+    except ValidationError as e:
+        assert False, f"ValidationError raised: {e}"
+    else:
+        assert True, "Manifest loaded successfully from path-like object."
+
+
 def test_manifest_from_path_like_requires_name_field() -> None:
     """The manifest name is a required field."""
     manifest_contents_without_name = io.StringIO("description = 'example description'")
