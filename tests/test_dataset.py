@@ -98,6 +98,13 @@ def test_manifest_from_path(manifest_path: Path) -> None:
         assert True, "Manifest loaded successfully from path-like object."
 
 
+def test_manifest_from_non_existing_path(tmp_path: Path) -> None:
+    """The manifest cannot be loaded from a non-existing path."""
+    non_existing_path = tmp_path / "non_existing_manifest.toml"
+    with pytest.raises(FileNotFoundError, match=f"No such file or directory: '{non_existing_path.as_posix()}'"):
+        Manifest.from_path(non_existing_path)
+
+
 class TestDataset:
 
     def test_dataset_from_toml(self, manifest_contents):
