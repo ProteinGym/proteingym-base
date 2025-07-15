@@ -28,8 +28,7 @@ classDiagram
         +MSA[] msas
         +Assay[] assays
         +AssayCondition[] assay_conditions
-        +string creator   
-        +string xref
+        +string maintainer   
         +dict metadata
         +func loader() 
     }
