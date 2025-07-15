@@ -34,6 +34,15 @@ features = ["feature1"]
 description = "dolor sit amet"
 """
 
+
+@pytest.fixture
+def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
+    """A (temporary) manifest file."""
+    manifest_file = tmp_path / "manifest.toml"
+    manifest_file.write_text(manifest_contents, encoding="utf-8")
+    return manifest_file
+
+
 def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     """Check if the manifest contents are present in the documentation.
     
@@ -59,11 +68,8 @@ def test_manifest_from_path_like(manifest_contents):
         assert True, "Manifest loaded successfully from path-like object."
 
 
-def test_manifest_from_path(manifest_contents: str, tmp_path: Path) -> None:
+def test_manifest_from_path(manifest_path: Path) -> None:
     """Happy flow for loading a Manifest from a file path."""
-    manifest_path = tmp_path / "manifest.toml"
-    manifest_path.write_text(manifest_contents, encoding="utf-8")
-
     try:
         Manifest.from_path(manifest_path)
     except ValidationError as e:
