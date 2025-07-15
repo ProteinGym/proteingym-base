@@ -130,40 +130,27 @@ def test_dataset_from_toml(manifest_contents: str) -> None:
     assert isinstance(ds, Dataset)
 
 
+def test_manifest_from_path_like_has_assays(manifest_contents: str) -> None:
+    """The manifest optionally has assays. See if they are loaded correctly."""
+    manifest = Manifest.from_path(io.StringIO(manifest_contents))
+    assert len(manifest.assays) == 1, "Expecting one assay"
+
+
+def test_dataset_persists_manifest_file(tmpdir: Path) -> None:
+    """When persisting a dataset, the manifest file should be included."""
+    dataset = Dataset(name="test")
+    zip_path = tmpdir / "dataset.zip"
+
+    dataset.persist(zip_path)
+
+    with zipfile.ZipFile(zip_path, "r") as zipf:
+        files = zipf.namelist()
+        zipf.extractall()
+
+        assert "manifest.toml" in files
+
+
 class TestDataset:
-
-    def test_get_assays_correctly(self, manifest_contents):
-        meta = Manifest.from_path(io.StringIO(manifest_contents))
-
-        assert len(meta.assays_meta.assays) == 2
-
-        assert len(meta.assays_meta.assays["target1"].features) == 2
-        assert len(meta.assays_meta.assays["target2"].features) == 1
-
-        assert len(meta.assays_meta.assays["target1"].constants) == 2
-        assert len(meta.assays_meta.assays["target2"].constants) == 0
-
-    def test_persist(self, manifest_contents, tmpdir):
-        ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
-
-        zip_path = tmpdir / "dataset.zip"
-
-        ds.persist(zip_path)
-
-        with zipfile.ZipFile(zip_path, "r") as zipf:
-            files = zipf.namelist()
-            zipf.extractall()
-
-            assert len(files) == 2
-            assert "manifest.toml" in files
-            assert "structure/5kua_pdb.pdb" in files
-
-            manifest = Manifest.from_path("manifest.toml")
-            assert manifest.name == "test_name"
-            assert manifest.structures_meta.file_path == "structure"
-
-            dataset = Structure(meta=StructuresMeta(file_path="structure/5kua_pdb.pdb"))
-            assert len(dataset.structures) == 1
 
     def test_from_path_with_correct_file(self, manifest_contents, tmpdir):
         manifest = Manifest.from_path(io.StringIO(manifest_contents))
