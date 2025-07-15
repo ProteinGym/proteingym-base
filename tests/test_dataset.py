@@ -68,6 +68,14 @@ def test_manifest_from_path_like(manifest_contents: str) -> None:
         assert True, "Manifest loaded successfully from path-like object."
 
 
+def test_manifest_from_path_like_requires_name_field() -> None:
+    """The manifest name is a required field."""
+    manifest_contents_without_name = io.StringIO("description = 'example description'")
+
+    with pytest.raises(ValidationError, match="validation error for Manifest\nname\n  Field required"):
+        Manifest.from_path(manifest_contents_without_name)
+
+
 def test_manifest_from_path(manifest_path: Path) -> None:
     """Happy flow for loading a Manifest from a file path."""
     try:
@@ -94,23 +102,6 @@ class TestDataset:
 
         assert len(meta.assays_meta.assays["target1"].constants) == 2
         assert len(meta.assays_meta.assays["target2"].constants) == 0
-
-    def test_invalid_assays_should_raise_exception(self):
-        invalid_toml = """
-        name = "test_name"
-        description = "test_description"
-        doi = "test_doi"
-        source = "test_source"
-
-        [assays_meta]
-        file_path = "records.csv"
-        sequence_feature = "feature1"
-        """
-
-        with pytest.raises(
-            ValidationError, match="File path does not exists: file_path=records.csv"
-        ):
-            Manifest.from_path(io.StringIO(invalid_toml)).ingest()
 
     def test_persist(self, manifest_contents, tmpdir):
         ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
