@@ -82,17 +82,17 @@ file_path = "assays.csv"
 The top-level of the manifest contains the dataset metadata and references to
 the protein data types.
 
-| **Field**          | **Type**           | **Required** | **Default** | **Description**                                                 |
-| ------------------ | ------------------ | ------------ | ----------- | --------------------------------------------------------------- |
-| `version`          | `string`           | Yes          | `"1.0"`         | The version of the manifest schema following the semantic format `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
-| `name`             | `string`           | Yes          | N/A         | The name of the dataset.                                        |
-| `description`      | `string \| None`   | No           | `None`      | A brief description of the dataset.                             |
-| `maintainer`       | `string \| None`   | No           | `None`      | The name of the person or organization maintaining the dataset. |
-| `assay_conditions` | `map \| None`      | No           | `None`      | A list of assay conditions defined in the dataset.              |
-| `sequences`        | `list[map] \| None`| No           | `None`      | A list of sequences included in the dataset.                    |
-| `structures`       | `list[map] \| None`| No           | `None`      | A list of structures included in the dataset.                   |
-| `msas`             | `list[map] \| None`| No           | `None`      | A list of multiple sequence alignments included in the dataset. |
-| `assays`           | `list[map] \| None`| No           | `None`      | A list of assays included in the dataset.                       |
+| **Field**          | **Type**            | **Required** | **Default** | **Description**                                                                                                                                                                                                         |
+| ------------------ | ------------------- | ------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version`          | `string`            | Yes          | `"1.0"`     | The version of the manifest schema following the semantic format `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
+| `name`             | `string`            | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                |
+| `description`      | `string \| None`    | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                     |
+| `maintainer`       | `string \| None`    | No           | `None`      | The name of the person or organization maintaining the dataset.                                                                                                                                                         |
+| `assay_conditions` | `map \| None`       | No           | `None`      | A list of assay conditions defined in the dataset.                                                                                                                                                                      |
+| `sequences`        | `list[map] \| None` | No           | `None`      | A list of sequences included in the dataset.                                                                                                                                                                            |
+| `structures`       | `list[map] \| None` | No           | `None`      | A list of structures included in the dataset.                                                                                                                                                                           |
+| `msas`             | `list[map] \| None` | No           | `None`      | A list of multiple sequence alignments included in the dataset.                                                                                                                                                         |
+| `assays`           | `list[map] \| None` | No           | `None`      | A list of assays included in the dataset.                                                                                                                                                                               |
 
 ### Assay Conditions
 
