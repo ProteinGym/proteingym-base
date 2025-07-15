@@ -34,6 +34,20 @@ features = ["feature1"]
 description = "dolor sit amet"
 """
 
+def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
+    """Check if the manifest contents are present in the documentation.
+    
+    If this tests fails, it indicates that the documentation is not up-to-date
+    with the tested manifest contents, or vice versa. Solve this by updating
+    outdated contents.
+    
+    Or, the documentation or test file is moved. Solve this by updating the path.
+    """
+    documenation_path = Path(__file__).parent.parent / Path("docs/manifest.md")
+
+    assert documenation_path.exists(), f"Documentation file does not exist: {documenation_path}"
+    assert manifest_contents in documenation_path.read_text(), "Test manifest contents not found in documentation."
+
 
 def test_manifest_from_toml_path_like(manifest_contents):
     manifest = Manifest.from_path(io.StringIO(manifest_contents))
