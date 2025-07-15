@@ -140,29 +140,35 @@ class Manifest(BaseModel):
     and loading data. The fields have Python built-in data types, the Protein
     Gym data types are constructed while loading the dataset.
     """
+
     version: str = "1.0"
-    """Version of the manifest data model."""
+    """The version of the manifest schema.
+     
+    The version follows the semantic format `<major>.<minor>`. A major version
+    change indicates breaking changes, while a minor version change indicates
+    backward-compatible additions or changes.
+    """
 
     name: str
-    """Name of the dataset."""
+    """The name of the dataset."""
 
-    description: str
-    """Description of the dataset."""
+    description: str | None = None
+    """A brief description of the dataset."""
 
     assay_conditions: dict[str, dict[str, str]] = Field(default_factory=dict)
-    """Conditions for assays in the dataset."""
+    """The conditions for the assays defined in the dataset."""
     
     sequences: list[dict[str, str]] = Field(default_factory=list)
-    """List of sequences in the dataset."""
+    """The sequences included in the dataset."""
 
     structures: list[dict[str, str]] = Field(default_factory=list)
-    """List of structures in the dataset."""
+    """The structures included in the dataset."""
 
     msas: list[dict[str, str]] = Field(default_factory=list)
-    """List of multiple sequence alignments in the dataset."""
+    """The multiple sequence alignments included in the dataset."""
 
     assays: list[dict[str, str]] = Field(default_factory=list)
-    """List of assays in the dataset."""
+    """The assays included in the dataset."""
 
     @classmethod
     def from_path(cls, path: Path | IO["str"]) -> 'Manifest':
