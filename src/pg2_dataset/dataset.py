@@ -144,9 +144,7 @@ class Manifest(BaseModel):
     msa_meta: MSAMeta | None = None
 
     @classmethod
-    def from_path(cls, path: Path | str | IO["str"]) -> Self:
-        if isinstance(path, str):
-            path = Path(path)
+    def from_path(cls, path: Path | IO["str"]) -> Self:
         return cls.model_validate(toml.load(path))
 
     def ingest(self) -> Dataset:
