@@ -64,16 +64,16 @@ unit = "pH"
 data_type = "float"
 
 [[sequences]]
-file_path = "sequences.fasta"
+path = "sequences.fasta"
 
 [[structures]]
-file_path = "structures.pdb"
+path = "structures.pdb"
 
 [[msas]]
-file_path = "msas.a3m"
+path = "msas.a3m"
 
 [[assays]]
-file_path = "assays.csv"
+path = "assays.csv"
 ```
 
 ### Top-level
@@ -81,16 +81,16 @@ file_path = "assays.csv"
 The top-level of the manifest contains the dataset metadata and references to
 the protein data types.
 
-| **Field**          | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                    |
-| ------------------ | --------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Field**          | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                                |
+| ------------------ | --------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `version`          | `string`              | Yes          | `"1.0"`     | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
-| `name`             | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                           |
-| `description`      | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                |
-| `assay_conditions` | `list[map[str, str]]` | No           | Empty list  | The conditions for the assays defined in the dataset.                                                                                                                                                                              |
-| `sequences`        | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                             |
-| `structures`       | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                            |
-| `msas`             | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                          |
-| `assays`           | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                          |
+| `name`             | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                       |
+| `description`      | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                            |
+| `assay_conditions` | `list[map[str, str]]` | No           | Empty list  | The conditions for the assays defined in the dataset.                                                                                                                                                                                          |
+| `sequences`        | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                         |
+| `structures`       | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                        |
+| `msas`             | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                                      |
+| `assays`           | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                      |
 
 ### Assay Conditions
 
@@ -107,30 +107,30 @@ The assay conditions section contains a list of assay conditions defined in the 
 
 The sequences section contains a list of sequences included in the dataset.
 
-| **Field**   | **Type** | **Required** | **Default** | **Description**                                                                                                                                                       |
-| ----------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `file_path` | `string` | Yes          | N/A         | The file path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fa`. |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                       |
+| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`    | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fa`. |
 
 ### Structures
 
 The structures section contains a list of structures included in the dataset.
 
-| **Field**   | **Type** | **Required** | **Default** | **Description**                                                                                                                                                                |
-| ----------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `file_path` | `string` | Yes          | N/A         | The file path to the structure data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.pdb`, `.cif`, `.bcif`. |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                                |
+| --------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `path`    | `string` | Yes          | N/A         | The path to the structure data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.pdb`, `.cif`, `.bcif`. |
 
 ### MSAs
 
 The MSAs section contains a list of multiple sequence alignments included in the dataset.
 
-| **Field**   | **Type** | **Required** | **Default** | **Description**                                                                                                                                                 |
-| ----------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `file_path` | `string` | Yes          | N/A         | The file path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                 |
+| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`    | `string` | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
 
 ### Assays
 
 The assays section contains a list of assays included in the dataset.
 
-| **Field**   | **Type** | **Required** | **Default** | **Description**                                                                                                                                           |
-| ----------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `file_path` | `string` | Yes          | N/A         | The file path to the assay data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.csv`. |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                           |
+| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`    | `string` | Yes          | N/A         | The path to the assay data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.csv`. |
