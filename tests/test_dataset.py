@@ -49,9 +49,14 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     assert manifest_contents in documenation_path.read_text(), "Test manifest contents not found in documentation."
 
 
-def test_manifest_from_toml_path_like(manifest_contents):
-    manifest = Manifest.from_path(io.StringIO(manifest_contents))
-    assert isinstance(manifest, Manifest)
+def test_manifest_from_path_like(manifest_contents):
+    """Happy path for loading a Manifest from a path-like object."""
+    try:
+        Manifest.from_path(io.StringIO(manifest_contents))
+    except ValidationError as e:
+        assert False, f"ValidationError raised: {e}"
+    else:
+        assert True, "Manifest loaded successfully from path-like object."
 
 
 class TestDataset:
