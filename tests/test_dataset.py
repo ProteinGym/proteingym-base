@@ -35,15 +35,16 @@ description = "dolor sit amet"
 """
 
 
+def test_manifest_from_toml_path_like(manifest_contents):
+    manifest = Manifest.from_path(io.StringIO(manifest_contents))
+    assert isinstance(manifest, Manifest)
+
+
 class TestDataset:
 
     def test_dataset_from_toml(self, manifest_contents):
         ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
         assert isinstance(ds, Dataset)
-
-    def test_manifest_from_toml_path_like(self, manifest_contents):
-        manifest = Manifest.from_path(io.StringIO(manifest_contents))
-        assert isinstance(manifest, Manifest)
 
     def test_manifest_from_toml_path(self, manifest_contents, tmpdir):
         file_path = tmpdir / "example.toml"
