@@ -5,6 +5,12 @@ on:
   pull_request:
   merge_group:
 
+  push:
+    branches:
+      - main 
+    tags:
+      - v*
+
 jobs:
   lint:
     name: lint
@@ -47,3 +53,52 @@ jobs:
   
       - name: Run tests
         run: uv run pytest
+
+  test-release:
+    if: contains(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    needs:
+    - lint
+    - test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Build
+        run: uv build --no-sources
+
+      - name: Test release can be installed and imported
+        run: |
+          uv venv
+          uv pip install dist/pg2_dataset-*.whl
+          uv run --with pg2_dataset --no-project --no-cache -- python -c "import pg2_dataset" 
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: test-release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Hatch
+        uses: pypa/hatch@install
+
+      - name: Get version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(hatch version)
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.get_version.outputs.VERSION }}
+          body: ${{ github.event.head_commit.message }}
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'rc') ||  contains(steps.get_version.outputs.VERSION, 'b') }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generate_release_notes: true
