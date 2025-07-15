@@ -88,6 +88,14 @@ def test_manifest_from_path_like_requires_name_field() -> None:
         Manifest.from_path(manifest_contents_without_name)
 
 
+def test_manifest_from_path_like_requires_name_with_non_zero_length() -> None:
+    """The manifest name is required to have non-zero length."""
+    manifest_contents_without_name = io.StringIO("name = ''")
+
+    with pytest.raises(ValidationError, match="validation error for Manifest\nname\n  String should have at least 1 character"):
+        Manifest.from_path(manifest_contents_without_name)
+
+
 def test_manifest_from_path(manifest_path: Path) -> None:
     """Happy flow for loading a Manifest from a file path."""
     try:
