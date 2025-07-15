@@ -50,9 +50,22 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
 
 
 def test_manifest_from_path_like(manifest_contents):
-    """Happy path for loading a Manifest from a path-like object."""
+    """Happy flow for loading a Manifest from a path-like object."""
     try:
         Manifest.from_path(io.StringIO(manifest_contents))
+    except ValidationError as e:
+        assert False, f"ValidationError raised: {e}"
+    else:
+        assert True, "Manifest loaded successfully from path-like object."
+
+
+def test_manifest_from_path(manifest_contents: str, tmp_path: Path) -> None:
+    """Happy flow for loading a Manifest from a file path."""
+    manifest_path = tmp_path / "manifest.toml"
+    manifest_path.write_text(manifest_contents, encoding="utf-8")
+
+    try:
+        Manifest.from_path(manifest_path)
     except ValidationError as e:
         assert False, f"ValidationError raised: {e}"
     else:
@@ -64,14 +77,6 @@ class TestDataset:
     def test_dataset_from_toml(self, manifest_contents):
         ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
         assert isinstance(ds, Dataset)
-
-    def test_manifest_from_toml_path(self, manifest_contents, tmpdir):
-        file_path = tmpdir / "example.toml"
-
-        with open(file_path, "w") as file:
-            file.write(manifest_contents)
-        manifest = Manifest.from_path(file_path)
-        assert isinstance(manifest, Manifest)
 
     def test_get_assays_correctly(self, manifest_contents):
         meta = Manifest.from_path(io.StringIO(manifest_contents))
