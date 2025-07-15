@@ -101,10 +101,10 @@ def test_manifest_from_path_like_requires_name_field_with_non_zero_length() -> N
 
 def test_manifest_from_path_like_version_field_is_semantic() -> None:
     """The manifest version is required to have a semantic version."""
-    manifest_contents_without_patch = io.StringIO("name = 'd'\nversion = '2023-10-05'")  # Try date version format
+    manifest_contents_with_date_version = io.StringIO("name = 'd'\nversion = '2023-10-05'")  # Try date version format
 
-    with pytest.raises(ValidationError, match="foo"):
-        Manifest.from_path(manifest_contents_without_patch)
+    with pytest.raises(ValidationError, match="validation error for Manifest\nversion\n  Value error, Invalid version: '2023-10-05'"):
+        Manifest.from_path(manifest_contents_with_date_version)
 
 
 def test_manifest_from_path(manifest_path: Path) -> None:
