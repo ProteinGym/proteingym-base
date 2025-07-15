@@ -26,9 +26,8 @@ def test_data_dir_bad_path(path, dir_type):
 
 
 def test_data_dir_get_files(tmp_path):
-    # Create a temp dir with files
-    (tmp_path / "file1.txt").write_text("Content of file 1")
-    (tmp_path / "file2.txt").write_text("Content of file 2")
+    (tmp_path / "file1.fasta").write_text("Content of file 1")
+    (tmp_path / "file2.fasta").write_text("Content of file 2")
 
     data_dir = DataDir(path=tmp_path, dir_type="local")
     files = data_dir.get_files()
@@ -36,4 +35,4 @@ def test_data_dir_get_files(tmp_path):
     assert len(files) == 2
     assert all(isinstance(file, DataFile) for file in files)
     assert all(file.path.is_file() for file in files)
-    assert all(file.file_type == "txt" for file in files)
+    assert all(file.file_type == "fasta" for file in files)

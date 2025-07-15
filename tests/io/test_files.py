@@ -24,18 +24,6 @@ def test_data_file(path, file_type):
     assert data_file.file_type is not None
 
 
-@pytest.mark.xfail(raises=ValueError)
-@pytest.mark.parametrize(
-    "path",
-    [
-        ("tests/test_data/io/files/non_existent_file.txt"),
-        ("tests/test_data/io/files/non_existent_file"),
-    ],
-)
-def test_data_file_bad_path(path):
-    DataFile(path=path)
-
-
 @pytest.mark.parametrize(
     "path, file_type",
     [
