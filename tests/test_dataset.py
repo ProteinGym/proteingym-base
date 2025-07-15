@@ -98,11 +98,12 @@ def test_manifest_from_path_like_requires_name_field_with_non_zero_length() -> N
     with pytest.raises(ValidationError, match="validation error for Manifest\nname\n  String should have at least 1 character"):
         Manifest.from_path(manifest_contents_without_name)
 
-def test_manifest_from_path_like_requires_version_field_without_patch() -> None:
-    """The manifest version is required to have a patch version."""
-    manifest_contents_without_patch = io.StringIO("version = '1.0.0'")
 
-    with pytest.raises(ValidationError, match="validation error for Manifest\nversion\n  String should have at least 1 character"):
+def test_manifest_from_path_like_version_field_is_semantic() -> None:
+    """The manifest version is required to have a semantic version."""
+    manifest_contents_without_patch = io.StringIO("name = 'd'\nversion = '2023-10-05'")  # Try date version format
+
+    with pytest.raises(ValidationError, match="foo"):
         Manifest.from_path(manifest_contents_without_patch)
 
 

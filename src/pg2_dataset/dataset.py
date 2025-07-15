@@ -2,11 +2,12 @@ import logging
 import os
 import tempfile
 import zipfile
+from packaging.version import Version as PackagingVersion
 from pathlib import Path
-from typing import IO, Self
+from typing import Annotated, IO, Self
 
 import toml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from pg2_dataset.backends import MSA, Assays, Structure
 from pg2_dataset.primitives.meta import AssaysMeta, MSAMeta, StructuresMeta
@@ -133,6 +134,41 @@ class Dataset(BaseModel):
             logger.info(f"Dataset persisted to: {path}")
 
 
+class Version(BaseModel):
+    """A version class to represent semantic versions.
+
+    Could not reuse `packaging.version.Version` directly without loosing
+    serializaiton as Pydantic requires a dataclass or Pydantic model for that.
+    
+    Docs:
+        See https://packaging.pypa.io/en/stable/version.html#packaging.version.Version
+    """
+    
+    major: int
+    minor: int
+    micro: int = 0
+
+    @classmethod
+    def from_string(cls, version_string: str) -> 'Version':
+        """Initialize Version from a string in the format 'major.minor[.patch]'."""
+        version = PackagingVersion(version_string)
+        return cls(
+            major=version.major,
+            minor=version.minor,
+            micro=version.micro,
+        )
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}.{self.micro}"
+
+
+def _try_coerce_version(version: Version | str) -> Version:
+    """Try to coercea a Version object."""
+    if isinstance(version, str):
+        return Version.from_string(version)
+    return version
+
+
 class Manifest(BaseModel):
     """Dataset manifest representing a dataset's metadata and resources.
 
@@ -141,12 +177,12 @@ class Manifest(BaseModel):
     Gym data types are constructed while loading the dataset.
     """
 
-    version: str = "1.0"
+    version: Annotated[Version, BeforeValidator(_try_coerce_version)] = Version(major=1, minor=0)
     """The version of the manifest schema.
      
-    The version follows the semantic format `<major>.<minor>`. A major version
-    change indicates breaking changes, while a minor version change indicates
-    backward-compatible additions or changes.
+    The version follows the semantic version format: `<major>.<minor>`. A major
+    version change indicates breaking changes, while a minor version change
+    indicates backward-compatible additions or changes.
     """
 
     model_config = ConfigDict(
