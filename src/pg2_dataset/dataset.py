@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import IO, Self
 
 import toml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from pg2_dataset.backends import MSA, Assays, Structure
 from pg2_dataset.primitives.meta import AssaysMeta, MSAMeta, StructuresMeta
@@ -134,20 +134,43 @@ class Dataset(BaseModel):
 
 
 class Manifest(BaseModel):
-    name: str = ""
-    description: str = ""
-    doi: str = ""
-    source: str = ""
-    xref: str = ""
-    assays_meta: AssaysMeta | None = None
-    structures_meta: StructuresMeta | None = None
-    msa_meta: MSAMeta | None = None
+    """Dataset manifest representing a dataset's metadata and resources.
+
+    A programmatic representation of a dataset's manifest used for validation
+    and loading data. The fields have Python built-in data types, the Protein
+    Gym data types are constructed while loading the dataset.
+    """
+    version: str = "1.0"
+    """Version of the manifest data model."""
+
+    name: str
+    """Name of the dataset."""
+
+    description: str
+    """Description of the dataset."""
+
+    assay_conditions: dict[str, dict[str, str]] = Field(default_factory=dict)
+    """Conditions for assays in the dataset."""
+    
+    sequences: list[dict[str, str]] = Field(default_factory=list)
+    """List of sequences in the dataset."""
+
+    structures: list[dict[str, str]] = Field(default_factory=list)
+    """List of structures in the dataset."""
+
+    msas: list[dict[str, str]] = Field(default_factory=list)
+    """List of multiple sequence alignments in the dataset."""
+
+    assays: list[dict[str, str]] = Field(default_factory=list)
+    """List of assays in the dataset."""
 
     @classmethod
     def from_path(cls, path: Path | IO["str"]) -> 'Manifest':
+        """Create a Manifest instance from a TOML file or string."""
         return cls(**toml.load(path))
 
     def ingest(self) -> Dataset:
+        """TODO: Move this to the Dataset.from_manifest method."""
         if self.assays_meta and self.assays_meta.file_path:
             assays = Assays(meta=self.assays_meta)
         else:
