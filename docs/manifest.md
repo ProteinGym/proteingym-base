@@ -84,7 +84,7 @@ the protein data types.
 
 | **Field**          | **Type**    | **Description**                                                 |
 | ------------------ | ----------- | --------------------------------------------------------------- |
-| `version`          | `string`    | The version of the manifest schema.                             |
+| `version`          | `string`    | The version of the manifest schema following the semantic format `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
 | `name`             | `string`    | The name of the dataset.                                        |
 | `description`      | `string`    | A brief description of the dataset.                             |
 | `maintainer`       | `string`    | The name of the person or organization maintaining the dataset. |
