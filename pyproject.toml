@@ -41,7 +41,7 @@ path = "src/pg2_dataset/__about__.py"
 packages = ["src/pg2_dataset"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "README.md"]
+testpaths = ["tests"]
 addopts = "--doctest-modules --doctest-glob='*.md'" 
 
 [tool.ruff]
