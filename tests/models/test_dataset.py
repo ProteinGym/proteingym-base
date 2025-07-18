@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.dataset import Dataset, Manifest
+from pg2_dataset.models.dataset import Dataset, Manifest
 
 
 @pytest.fixture

@@ -1,13 +1,103 @@
 from pathlib import Path
-from typing import Annotated, Dict, List
+from typing import IO, Annotated, Dict, List
 
-from pydantic import BaseModel
+import toml
+from packaging.version import Version as PackagingVersion
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
 from pg2_dataset.models.manifest import DatasetManifest
 from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
 from pg2_dataset.settings import datasets_dir
+
+
+class Version(BaseModel):
+    """A version class to represent semantic versions.
+
+    Could not reuse `packaging.version.Version` directly without loosing
+    serializaiton as Pydantic requires a dataclass or Pydantic model for that.
+
+    Docs:
+        See https://packaging.pypa.io/en/stable/version.html#packaging.version.Version
+    """
+
+    major: int
+    minor: int
+    micro: int = 0
+
+    @classmethod
+    def from_string(cls, version_string: str) -> "Version":
+        """Initialize Version from a string in the format 'major.minor[.patch]'."""
+        version = PackagingVersion(version_string)
+        return cls(
+            major=version.major,
+            minor=version.minor,
+            micro=version.micro,
+        )
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}.{self.micro}"
+
+
+def _try_coerce_version(version: Version | str) -> Version:
+    """Try to coercea a Version object."""
+    if isinstance(version, str):
+        return Version.from_string(version)
+    return version
+
+
+class Manifest(BaseModel):
+    """Dataset manifest representing a dataset's metadata and resources.
+
+    A programmatic representation of a dataset's manifest used for validation
+    and loading data. The fields have Python built-in data types, the Protein
+    Gym data types are constructed while loading the dataset.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
+    version: Annotated[Version, BeforeValidator(_try_coerce_version)] = Version(
+        major=1, minor=0
+    )
+    """The version of the manifest schema.
+
+    The version follows the semantic version format: `<major>.<minor>`. A major
+    version change indicates breaking changes, while a minor version change
+    indicates backward-compatible additions or changes.
+    """
+
+    name: str
+    """The name of the dataset."""
+
+    description: str | None = None
+    """A brief description of the dataset."""
+
+    assay_conditions: list[dict[str, str]] = Field(default_factory=dict)
+    """The conditions for the assays defined in the dataset."""
+
+    assays: list[dict[str, str]] = Field(default_factory=list)
+    """The assays included in the dataset."""
+
+    sequences: list[dict[str, str]] = Field(default_factory=list)
+    """The sequences included in the dataset."""
+
+    structures: list[dict[str, str]] = Field(default_factory=list)
+    """The structures included in the dataset."""
+
+    msas: list[dict[str, str]] = Field(default_factory=list)
+    """The multiple sequence alignments included in the dataset."""
+
+    @classmethod
+    def from_path(cls, path: Path | IO["str"]) -> "Manifest":
+        """Create a Manifest instance from a TOML file or string."""
+        return cls(**toml.load(path))
 
 
 def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
