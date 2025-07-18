@@ -22,7 +22,7 @@ _DEFAULT_MANIFEST_FILE = Path("manifest.toml")
 class Dataset(BaseModel):
     """DEPRECATED: Use models.dataset.Dataset instead."""
 
-    name: str
+    name: str = ""
     assays: Assays | None = None
     structure: Structure | None = None
     msa: MSA | None = None
@@ -86,7 +86,11 @@ class Dataset(BaseModel):
         else:
             structures_meta = None
 
-        manifest = Manifest(name=self.name)
+        manifest = Manifest(
+            name=self.name,
+            assays_meta=assays_meta,
+            structures_meta=structures_meta,
+        )
 
         with path.open("w") as f:
             toml.dump(manifest.model_dump(), f)
