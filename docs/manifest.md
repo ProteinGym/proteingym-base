@@ -63,6 +63,9 @@ description = "pH level of the samples"
 unit = "pH"
 data_type = "float"
 
+[[assays]]
+path = "assays.csv"
+
 [[sequences]]
 path = "sequences.fasta"
 
@@ -71,9 +74,6 @@ path = "structures.pdb"
 
 [[msas]]
 path = "msas.a3m"
-
-[[assays]]
-path = "assays.csv"
 ```
 
 ### Top-level
@@ -87,10 +87,10 @@ the protein data types.
 | `name`             | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                       |
 | `description`      | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                            |
 | `assay_conditions` | `list[map[str, str]]` | No           | Empty list  | The conditions for the assays defined in the dataset.                                                                                                                                                                                          |
+| `assays`           | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                      |
 | `sequences`        | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                         |
 | `structures`       | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                        |
 | `msas`             | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                                      |
-| `assays`           | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                      |
 
 ### Assay Conditions
 
@@ -102,6 +102,14 @@ The assay conditions section contains a list of assay conditions defined in the 
 | `description` | `string \| None` | No           | `None`      | A brief description.                               |
 | `unit`        | `string \| None` | No           | `None`      | The unit of measurement.                           |
 | `data_type`   | `string`         | Yes          | N/A         | The data type: `float`, `int`, `string` or `bool`. |
+
+### Assays
+
+The assays section contains a list of assays included in the dataset.
+
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                           |
+| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`    | `string` | Yes          | N/A         | The path to the assay data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.csv`. |
 
 ### Sequences
 
@@ -126,11 +134,3 @@ The MSAs section contains a list of multiple sequence alignments included in the
 | **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                 |
 | --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `path`    | `string` | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
-
-### Assays
-
-The assays section contains a list of assays included in the dataset.
-
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                           |
-| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the assay data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.csv`. |

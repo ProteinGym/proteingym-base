@@ -201,6 +201,9 @@ class Manifest(BaseModel):
     assay_conditions: list[dict[str, str]] = Field(default_factory=dict)
     """The conditions for the assays defined in the dataset."""
 
+    assays: list[dict[str, str]] = Field(default_factory=list)
+    """The assays included in the dataset."""
+
     sequences: list[dict[str, str]] = Field(default_factory=list)
     """The sequences included in the dataset."""
 
@@ -209,9 +212,6 @@ class Manifest(BaseModel):
 
     msas: list[dict[str, str]] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
-
-    assays: list[dict[str, str]] = Field(default_factory=list)
-    """The assays included in the dataset."""
 
     @classmethod
     def from_path(cls, path: Path | IO["str"]) -> "Manifest":
