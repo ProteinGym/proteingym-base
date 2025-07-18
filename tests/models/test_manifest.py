@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.models.manifest import DatasetManifest, SequenceManifest, Sources
+from pg2_dataset.models.manifest import Manifest, SequenceManifest, Sources
 
 TEST_MANIFEST_FILE = "tests/test_data/manifests/test_manifest.toml"
 
@@ -103,7 +103,7 @@ def test_dataset_manifest(name, version, description, creator, metadata, sequenc
     sequence_manifest = SequenceManifest(
         sequence_type=sequences[0], sequence_alphabet=sequences[1], sources=sources
     )
-    manifest = DatasetManifest(
+    manifest = Manifest(
         name=name,
         version=version,
         description=description,
@@ -154,7 +154,7 @@ def test_dataset_manifest_invalid(
     sequence_manifest = SequenceManifest(
         sequence_type=sequences[0], sequence_alphabet=sequences[1], sources=sources
     )
-    manifest = DatasetManifest(
+    manifest = Manifest(
         name=name,
         version=version,
         description=description,
@@ -168,6 +168,6 @@ def test_dataset_manifest_invalid(
 
 def test_dataset_manifest_from_toml():
     toml_path = TEST_MANIFEST_FILE
-    manifest = DatasetManifest.from_toml(toml_path)
+    manifest = Manifest.from_toml(toml_path)
     assert len(manifest.name) >= 4
     assert len(manifest.description) >= 20

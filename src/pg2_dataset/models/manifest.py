@@ -33,7 +33,7 @@ class SequenceManifest(BaseModel):
     sources: Sources = Field(required=True)
 
 
-class DatasetManifest(BaseModel):
+class Manifest(BaseModel):
     name: Annotated[str, AfterValidator(lambda v: length_validator(v, 4))]
     version: str = Field(description="Version of the dataset", required=True)
     description: Annotated[str, AfterValidator(lambda v: length_validator(v, 20))]
@@ -44,7 +44,7 @@ class DatasetManifest(BaseModel):
     )
 
     @classmethod
-    def from_toml(cls, path: str) -> "DatasetManifest":
+    def from_toml(cls, path: str) -> "Manifest":
         data = toml.load(path)
         return cls(**data)
 

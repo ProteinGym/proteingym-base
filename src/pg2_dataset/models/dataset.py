@@ -7,7 +7,6 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
-from pg2_dataset.models.manifest import DatasetManifest
 from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
 from pg2_dataset.settings import datasets_dir
 
@@ -134,10 +133,10 @@ class Dataset(BaseModel):
     ]
     creator: str = None
     metadata: Dict[str, str] = None
-    manifest: DatasetManifest = None
+    manifest: Manifest = None
 
     @classmethod
-    def from_manifest(cls, manifest: DatasetManifest) -> "Dataset":
+    def from_manifest(cls, manifest: Manifest) -> "Dataset":
         sequences = []
         for sequence_manifest in manifest.sequences:
             sequence_factory = SequenceFactory.from_manifest(manifest=sequence_manifest)
