@@ -22,17 +22,17 @@ description = "pH level of the samples"
 unit = "pH"
 data_type = "float"
 
+[[assays]]
+path = "assays.csv"
+
 [[sequences]]
-file_path = "sequences.fasta"
+path = "sequences.fasta"
 
 [[structures]]
-file_path = "structures.pdb"
+path = "structures.pdb"
 
 [[msas]]
-file_path = "msas.a3m"
-
-[[assays]]
-file_path = "assays.csv"
+path = "msas.a3m"
 """
 
 
@@ -53,7 +53,7 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
 
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
-    documenation_path = Path(__file__).parent.parent / Path("docs/manifest.md")
+    documenation_path = Path(__file__).parent.parent.parent / Path("docs/manifest.md")
 
     assert documenation_path.exists(), (
         f"Documentation file does not exist: {documenation_path}"
