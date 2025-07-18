@@ -12,6 +12,7 @@ from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
 from pg2_dataset.settings import datasets_dir
 from pg2_dataset.utils import zip_context
 
+
 class _Version(BaseModel):
     """A version class to represent semantic versions.
 
@@ -139,9 +140,10 @@ def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
 
 
 class Dataset(BaseModel):
-    """A Dataset class representing a PG2 Dataset consisting of sequences, structures, 
+    """A Dataset class representing a PG2 Dataset consisting of sequences, structures,
     msas, and assays. This is the main entry point for loading the datasets in PG2.
     """
+
     name: str
     """The name of the dataset."""
     description: str
@@ -195,7 +197,7 @@ class Dataset(BaseModel):
         """
         if isinstance(path, str):
             path = Path(path)
-        dataset_manifest = DatasetManifest.from_toml(path)
+        dataset_manifest = Manifest.from_toml(path)
         return cls.from_manifest(dataset_manifest)
 
     @classmethod
@@ -228,11 +230,11 @@ class Dataset(BaseModel):
 
             dataset_manifest = DatasetManifest.from_toml(manifest_file)
             return cls.from_manifest(dataset_manifest)
-        
-    def dump(self, path: str| Path = None):
+
+    def dump(self, path: str | Path = None):
         """Dump the dataset to a specified path or directory.
         If the path is not specified, it defaults to the dataset's name in the
-        datasets directory. 
+        datasets directory.
         Args:
             path (str | Path, optional): The path to dump the dataset. Defaults to None.
         Returns:
