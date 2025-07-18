@@ -107,30 +107,30 @@ The assay conditions section contains a list of assay conditions defined in the 
 
 The assays section contains a list of assays included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                           |
-| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the assay data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.csv`. |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                |
+| --------- | -------- | ------------ | ----------- | -------------------------------------------------------------- |
+| `path`    | `string` | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
 
 ### Sequences
 
 The sequences section contains a list of sequences included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                       |
-| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                  |
+| --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `path`    | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fa`. |
 
 ### Structures
 
 The structures section contains a list of structures included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                                |
-| --------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                           |
+| --------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `path`    | `string` | Yes          | N/A         | The path to the structure data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.pdb`, `.cif`, `.bcif`. |
 
 ### MSAs
 
 The MSAs section contains a list of multiple sequence alignments included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                 |
-| --------- | -------- | ------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                            |
+| --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `path`    | `string` | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
