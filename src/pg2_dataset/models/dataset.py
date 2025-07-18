@@ -126,7 +126,7 @@ class Manifest(BaseModel):
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
         include = {key for key, value in self.model_dump().items() if value}
-        with path.open("w") as f:
+        with path.open("w", encoding="utf-8") as f:
             toml.dump(self.model_dump(include=include), f)
 
 
