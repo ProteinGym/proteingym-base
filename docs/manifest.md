@@ -107,9 +107,29 @@ The assay conditions section contains a list of assay conditions defined in the 
 
 The assays section contains a list of assays included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                |
-| --------- | -------- | ------------ | ----------- | -------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
+| **Field**    | **Type**    | **Required** | **Default**  | **Description**                                                |
+| ------------ | ----------- | ------------ | ------------ | -------------------------------------------------------------- |
+| `path`       | `string`    | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
+| `target`     | `string`    | Yes          | N/A          | The target (column) in the assay.                              |
+| `sequence`   | `string`    | No           | `"sequence"` | The sequence (column) in the assay.                            |
+| `conditions` | `list[str]` | No           | Empty list   | The conditions (columns) in the assay.                         |
+
+Example of an assay file:
+
+``` csv
+mutated_sequence,DMS_score,engineering_round
+ITLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNHGEWPGDNSSAGVATSADIKGKYVQSVTVANGVITAQMASSNVNNEIKSKKLSLWAKRQNGSVKWFCGQPVTRTTATATDVAAANGKTDDKINTKHLPSTCRDDSSAS,-3.5980000000000003,3
+LTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNHGEWPGDNSSAGVATSADIKGKYVQSVTVANGVITAQMASSNVNNEIKSKKLSLWAKRQNGSVKWFCGQPVTRTTATATDVAAANGKTDDKINTKHLPSTCRDDSSAS,-0.6779999999999999,1
+```
+
+This would be represented in the manifest as:
+
+``` toml
+[[assays]]
+path = "path/to/assay.csv"
+target = "DMS_score"
+sequence = "mutated_sequence"
+```
 
 ### Sequences
 
