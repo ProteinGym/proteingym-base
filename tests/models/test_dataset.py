@@ -140,12 +140,6 @@ def test_manifest_from_non_existing_path(tmp_path: Path) -> None:
         Manifest.from_path(non_existing_path)
 
 
-@pytest.mark.skip(reason="TODO: Update test when moving `ingest` to `Dataset` class")
-def test_dataset_from_toml(manifest_contents: str) -> None:
-    ds = Manifest.from_path(io.StringIO(manifest_contents)).ingest()
-    assert isinstance(ds, Dataset)
-
-
 def test_manifest_from_path_like_has_assays(manifest_contents: str) -> None:
     """The manifest optionally has assays. See if they are loaded correctly."""
     manifest = Manifest.from_path(io.StringIO(manifest_contents))
@@ -167,18 +161,6 @@ def test_dataset_dump_manifest_file(tmpdir: Path) -> None:
         zipf.extractall()
 
         assert "manifest.toml" in files
-
-
-@pytest.mark.skip(reason="TODO: Update test when moving `ingest` to `Dataset` class")
-def test_from_path_with_correct_file(tmpdir: Path, manifest_contents: str) -> None:
-    manifest = Manifest.from_path(io.StringIO(manifest_contents))
-
-    zip_path = Path(tmpdir) / "dataset.zip"
-    manifest.ingest().persist(zip_path)
-
-    dataset = Dataset.from_path(zip_path)
-
-    assert "5kua_pdb.pdb" in dataset.structure.structures
 
 
 @pytest.mark.skip(reason="TODO: Add a `from_path` method to the Dataset class")
