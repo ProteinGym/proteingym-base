@@ -12,7 +12,7 @@ from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
 from pg2_dataset.settings import datasets_dir
 
 
-class Version(BaseModel):
+class _Version(BaseModel):
     """A version class to represent semantic versions.
 
     Could not reuse `packaging.version.Version` directly without loosing
@@ -27,7 +27,7 @@ class Version(BaseModel):
     micro: int = 0
 
     @classmethod
-    def from_string(cls, version_string: str) -> "Version":
+    def from_string(cls, version_string: str) -> "_Version":
         """Initialize Version from a string in the format 'major.minor[.patch]'."""
         version = PackagingVersion(version_string)
         return cls(
@@ -39,29 +39,29 @@ class Version(BaseModel):
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.micro}"
 
-    def __eq__(self, other: "Version") -> bool:
+    def __eq__(self, other: "_Version") -> bool:
         return PackagingVersion(str(self)) == PackagingVersion(str(other))
 
-    def __ne__(self, other: "Version") -> bool:
+    def __ne__(self, other: "_Version") -> bool:
         return PackagingVersion(str(self)) != PackagingVersion(str(other))
 
-    def __lt__(self, other: "Version") -> bool:
+    def __lt__(self, other: "_Version") -> bool:
         return PackagingVersion(str(self)) < PackagingVersion(str(other))
 
-    def __le__(self, other: "Version") -> bool:
+    def __le__(self, other: "_Version") -> bool:
         return PackagingVersion(str(self)) <= PackagingVersion(str(other))
 
-    def __gt__(self, other: "Version") -> bool:
+    def __gt__(self, other: "_Version") -> bool:
         return PackagingVersion(str(self)) > PackagingVersion(str(other))
 
-    def __ge__(self, other: "Version") -> bool:
+    def __ge__(self, other: "_Version") -> bool:
         return PackagingVersion(str(self)) >= PackagingVersion(str(other))
 
 
-def _try_coerce_version(version: Version | str) -> Version:
+def _try_coerce_version(version: _Version | str) -> _Version:
     """Try to coercea a Version object."""
     if isinstance(version, str):
-        return Version.from_string(version)
+        return _Version.from_string(version)
     return version
 
 
@@ -81,7 +81,7 @@ class Manifest(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    version: Annotated[Version, BeforeValidator(_try_coerce_version)] = Version(
+    version: Annotated[_Version, BeforeValidator(_try_coerce_version)] = _Version(
         major=1, minor=0
     )
     """The version of the manifest schema.
