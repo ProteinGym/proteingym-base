@@ -1,11 +1,13 @@
-### Data Manifest Schema
-This schema defines the structure of a dataset that is required to create ProteinGym2 datasets for the ProteinGYM2 framework. The datasets are comprised of four types of data: 
+# Data Model
+
+This document described the dataset used by Protein Gym 2. The dataset allows
+users to access four collections of protein data:
 1. Sequence(s)
 2. Structure(s) 
 3. multiple sequence alignment(s), MSA(s)
 4. Assay(s) 
 
-When creating a new ProteinGym2 dataset, dataset creator will supply as .toml manifest file which contains the information required to load the data objects. The datatypes (sequences, structures, MSAs, and assays) are defined as separate sub-classes with their own metadata and file handling methods.
+Additionally, the dataset contains metadata, like a name and description, and can be created from a [manifest](manifest.md).
 
 The schema is designed for enabling:
 1. Consistency: Ensure all the datasets follow the same structure.
