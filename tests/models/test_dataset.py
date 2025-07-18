@@ -146,6 +146,22 @@ def test_manifest_from_path_like_has_assays(manifest_contents: str) -> None:
     assert len(manifest.assays) == 1, "Expecting one assay"
 
 
+def test_manifest_version() -> None:
+    """The manifest version should support comparisions."""
+    manifest_v1 = Manifest(name="test", version="1.0.0")
+    manifest_v2 = Manifest(name="test", version="2.0.0")
+
+    assert manifest_v1.version == manifest_v1.version
+    assert manifest_v1.version <= manifest_v1.version
+    assert manifest_v1.version >= manifest_v1.version
+
+    assert manifest_v1.version != manifest_v2.version
+    assert manifest_v1.version < manifest_v2.version
+    assert manifest_v2.version > manifest_v1.version
+    assert manifest_v1.version <= manifest_v2.version
+    assert manifest_v2.version >= manifest_v1.version
+
+
 @pytest.mark.skip(
     reason="TODO: Update the test when adding defaults to the Dataset class"
 )

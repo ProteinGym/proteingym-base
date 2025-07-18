@@ -39,6 +39,24 @@ class Version(BaseModel):
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.micro}"
 
+    def __eq__(self, other: "Version") -> bool:
+        return PackagingVersion(str(self)) == PackagingVersion(str(other))
+
+    def __ne__(self, other: "Version") -> bool:
+        return PackagingVersion(str(self)) != PackagingVersion(str(other))
+
+    def __lt__(self, other: "Version") -> bool:
+        return PackagingVersion(str(self)) < PackagingVersion(str(other))
+
+    def __le__(self, other: "Version") -> bool:
+        return PackagingVersion(str(self)) <= PackagingVersion(str(other))
+
+    def __gt__(self, other: "Version") -> bool:
+        return PackagingVersion(str(self)) > PackagingVersion(str(other))
+
+    def __ge__(self, other: "Version") -> bool:
+        return PackagingVersion(str(self)) >= PackagingVersion(str(other))
+
 
 def _try_coerce_version(version: Version | str) -> Version:
     """Try to coercea a Version object."""
