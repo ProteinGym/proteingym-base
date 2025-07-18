@@ -3,13 +3,14 @@ import os
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import IO, Self
+from typing import Self
 
 import toml
 from pydantic import BaseModel
 
 from pg2_dataset.backends import MSA, Assays, Structure
-from pg2_dataset.primitives.meta import AssaysMeta, MSAMeta, StructuresMeta
+from pg2_dataset.models.dataset import Manifest
+from pg2_dataset.primitives.meta import AssaysMeta, StructuresMeta
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,8 @@ _DEFAULT_MANIFEST_FILE = Path("manifest.toml")
 
 
 class Dataset(BaseModel):
+    """DEPRECATED: Use models.dataset.Dataset instead."""
+
     name: str = ""
     assays: Assays | None = None
     structure: Structure | None = None
@@ -131,45 +134,3 @@ class Dataset(BaseModel):
             self._zip_all(from_dir=temp_dir, path=path, compression=compression)
 
             logger.info(f"Dataset persisted to: {path}")
-
-
-class Manifest(BaseModel):
-    name: str = ""
-    description: str = ""
-    doi: str = ""
-    source: str = ""
-    xref: str = ""
-    assays_meta: AssaysMeta | None = None
-    structures_meta: StructuresMeta | None = None
-    msa_meta: MSAMeta | None = None
-
-    @classmethod
-    def from_path(cls, path: Path | str | IO["str"]) -> Self:
-        if isinstance(path, str):
-            path = Path(path)
-        return cls.model_validate(toml.load(path))
-
-    def ingest(self) -> Dataset:
-        if self.assays_meta and self.assays_meta.file_path:
-            assays = Assays(meta=self.assays_meta)
-        else:
-            assays = None
-
-        if self.structures_meta and self.structures_meta.file_path:
-            structure = Structure(meta=self.structures_meta)
-        else:
-            structure = None
-
-        if self.msa_meta and self.msa_meta.file_path:
-            msa = MSA(meta=self.msa_meta)
-        else:
-            msa = None
-
-        dataset = Dataset(
-            name=self.name,
-            assays=assays,
-            structure=structure,
-            msa=msa,
-        )
-
-        return dataset
