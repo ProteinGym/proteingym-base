@@ -173,6 +173,25 @@ def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
     assert path.stat().st_size > 0, "Dumped manifest file is empty."
 
 
+def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
+    """The manifest dump creates a file that can be loaded back with same content."""
+    manifest = Manifest(name="test")
+    path = tmp_path / "manifest.toml"
+
+    manifest.dump(path)
+
+    try:
+        loaded_manifest = Manifest.from_path(path)
+    except ValidationError as e:
+        raise AssertionError(
+            f"Loading manifest failed:``` toml\n{path.read_text()}```"
+        ) from e
+    else:
+        assert loaded_manifest == manifest, (
+            f"Loaded manifest does not match dumped manifest: {path.read_text()}"
+        )
+
+
 @pytest.mark.skip(
     reason="TODO: Update the test when adding defaults to the Dataset class"
 )

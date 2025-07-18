@@ -119,7 +119,7 @@ class Manifest(BaseModel):
     def dump(self, path: Path) -> None:
         """Dump the manifest to a TOML file."""
         with path.open("w") as f:
-            toml.dump(self.model_dump(), f)
+            toml.dump(self.model_dump(exclude_defaults=True), f)
 
 
 def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
