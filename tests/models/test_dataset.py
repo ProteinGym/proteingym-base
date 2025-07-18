@@ -216,6 +216,16 @@ def test_manifest_dump_from_path_unit_docs_example(
         )
 
 
+def test_manifest_dump_version_string(tmp_path: Path) -> None:
+    """The version should be dumped as a string."""
+    manifest = Manifest(name="test", version="1.0.0")
+    path = tmp_path / "manifest.toml"
+
+    manifest.dump(path)
+
+    assert 'version = "1.0.0"' in path.read_text()
+
+
 @pytest.mark.skip(
     reason="TODO: Update the test when adding defaults to the Dataset class"
 )

@@ -3,7 +3,7 @@ from typing import IO, Annotated, Dict, List
 
 import toml
 from packaging.version import Version as PackagingVersion
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_serializer
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
@@ -116,10 +116,18 @@ class Manifest(BaseModel):
         """Create a Manifest instance from a TOML file or string."""
         return cls(**toml.load(path))
 
+    @field_serializer("version")
+    def serialize_version(self, version: _Version) -> str:
+        """Serialize the version to a string."""
+        return str(version)
+
     def dump(self, path: Path) -> None:
         """Dump the manifest to a TOML file."""
+        # Empty or None values indicate the fields were not set, hence excluded
+        # them from the dump.
+        include = {key for key, value in self.model_dump().items() if value}
         with path.open("w") as f:
-            toml.dump(self.model_dump(exclude_defaults=True), f)
+            toml.dump(self.model_dump(include=include), f)
 
 
 def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
