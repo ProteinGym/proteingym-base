@@ -116,6 +116,11 @@ class Manifest(BaseModel):
         """Create a Manifest instance from a TOML file or string."""
         return cls(**toml.load(path))
 
+    def dump(self, path: Path) -> None:
+        """Dump the manifest to a TOML file."""
+        with path.open("w") as f:
+            toml.dump(self.model_dump(), f)
+
 
 def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
     if len(v) == 0:

@@ -162,6 +162,17 @@ def test_manifest_version() -> None:
     assert manifest_v2.version >= manifest_v1.version
 
 
+def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
+    """The manifest dump should create a file with content."""
+    manifest = Manifest(name="test")
+    path = tmp_path / "manifest.toml"
+
+    manifest.dump(path)
+
+    assert path.exists(), "Dumped manifest file does not exist."
+    assert path.stat().st_size > 0, "Dumped manifest file is empty."
+
+
 @pytest.mark.skip(
     reason="TODO: Update the test when adding defaults to the Dataset class"
 )
