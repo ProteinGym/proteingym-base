@@ -4,9 +4,9 @@ import pytest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
+from pg2_dataset.constants import SequenceFileType
 from pg2_dataset.io import DataFile, DataFileAdapter
 from pg2_dataset.io.files.sequence import SequenceDataFile
-from pg2_dataset.models.constants import SequenceFileType
 
 TEST_SEQUENCE_FILE = "tests/test_data/io/files/seq.fasta"
 

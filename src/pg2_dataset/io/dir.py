@@ -3,22 +3,20 @@ from typing import Annotated, List
 
 from pydantic import AfterValidator, BaseModel
 
+from pg2_dataset.constants import DirType
 from pg2_dataset.io.files import DataFile, DataFileAdapter
-from pg2_dataset.models.constants import DirType
 
 
-def exists_non_empty(path: Path) -> str:
+def exists_ok(path: Path) -> str:
     if not path.is_dir():
         raise ValueError(f"Path {path} is not a directory.")
     if not path.exists():
         raise ValueError(f"Path {path} does not exist.")
-    if list(path.rglob("*")) == []:
-        raise ValueError(f"Path {path} is empty.")
     return path
 
 
 class DataDir(BaseModel):
-    path: Annotated[Path, AfterValidator(exists_non_empty)]
+    path: Annotated[Path, AfterValidator(exists_ok)]
     dir_type: DirType
     files: List[DataFile] = []
 

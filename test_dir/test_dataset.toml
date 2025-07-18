@@ -1,0 +1,13 @@
+name = "test_dataset"
+version = "1.0"
+description = "A test dataset which contains sequences."
+creator = ""
+[[sequences]]
+sequence_type = "wild_type"
+sequence_alphabet = "DNA"
+
+[sequences.sources]
+local = [ "test_dir/sequences",]
+s3 = []
+
+[metadata]

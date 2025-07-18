@@ -1,27 +1,19 @@
 from pathlib import Path
-from typing import Annotated, Dict, List
+from typing import Dict, List
 
 import toml
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import BaseModel, Field
 
 
-def length_validator(v, length: int):
-    if len(v) < length:
-        raise ValueError(f"Must be at least {length} characters long.")
-    return v
-
-
-# Create manifest for sequence, currently supports only local and S3 directories.
+# Create manifest for sequence, currently supports only local directories.
 # It can be extended to support xrefs.
 class Sources(BaseModel):
     local: List[str] = Field(default_factory=list)
     s3: List[str] = Field(default_factory=list)
 
     def model_post_init(self, __context):
-        if not self.local and not self.s3:
-            raise ValueError(
-                "At least one of 'local' or 's3' must be provided in sources"
-            )
+        if not self.local:
+            raise ValueError("At least one of 'local' must be provided in sources")
 
 
 class SequenceManifest(BaseModel):
@@ -34,18 +26,21 @@ class SequenceManifest(BaseModel):
 
 
 class DatasetManifest(BaseModel):
-    name: Annotated[str, AfterValidator(lambda v: length_validator(v, 4))]
+    name: str
     version: str = Field(description="Version of the dataset", required=True)
-    description: Annotated[str, AfterValidator(lambda v: length_validator(v, 20))]
-    creator: str = Field(description="John Doe <john.doe@iff.com>")
+    description: str
+    creator: str = Field(default_factory=str)
     metadata: Dict[str, str] = Field(default_factory=dict)
     sequences: List[SequenceManifest] = Field(
         description="List of sequences dicts", required=True
     )
+    _path: Path = None
 
     @classmethod
-    def from_toml(cls, path: str) -> "DatasetManifest":
+    def from_toml(cls, path: str | Path) -> "DatasetManifest":
         data = toml.load(path)
+        # Add the path to the manifest
+        data["_path"] = Path(path)
         return cls(**data)
 
     def dump(self, path: Path, name: str = None) -> None:

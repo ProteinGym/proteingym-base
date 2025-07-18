@@ -11,7 +11,6 @@ TEST_MANIFEST_FILE = "tests/test_data/manifests/test_manifest.toml"
     [
         (["/some/path"], []),
         (["/some/path"], ["s3://bucket"]),
-        ([], ["s3://bucket"]),
     ],
 )
 def test_source_dirs(local, s3):
@@ -111,63 +110,10 @@ def test_dataset_manifest(name, version, description, creator, metadata, sequenc
         metadata=metadata,
         sequences=[sequence_manifest],
     )
-    assert len(manifest.name) >= 4
-    assert len(manifest.description) >= 20
-
-
-@pytest.mark.parametrize(
-    "name, version, description, creator, metadata, sequences",
-    [
-        (
-            "T",
-            "1.0",
-            "A test dataset for validation",
-            "John Doe",
-            {"key": "value"},
-            (
-                "wild_type",
-                "DNA",
-                ["path/"],
-                [],
-            ),
-        ),
-        (
-            "Test",
-            "1.0",
-            "Short",
-            "John Doe",
-            {"key": "value"},
-            (
-                "wild_type",
-                "DNA",
-                ["path/"],
-                [],
-            ),
-        ),
-    ],
-)
-@pytest.mark.xfail(raises=ValidationError)
-def test_dataset_manifest_invalid(
-    name, version, description, creator, metadata, sequences
-):
-    sources = Sources(local=sequences[2], s3=sequences[3])
-    sequence_manifest = SequenceManifest(
-        sequence_type=sequences[0], sequence_alphabet=sequences[1], sources=sources
-    )
-    manifest = DatasetManifest(
-        name=name,
-        version=version,
-        description=description,
-        creator=creator,
-        metadata=metadata,
-        sequences=[sequence_manifest],
-    )
-    assert len(manifest.name) >= 4
-    assert len(manifest.description) >= 20
+    assert all(isinstance(seq, SequenceManifest) for seq in manifest.sequences)
 
 
 def test_dataset_manifest_from_toml():
     toml_path = TEST_MANIFEST_FILE
     manifest = DatasetManifest.from_toml(toml_path)
-    assert len(manifest.name) >= 4
-    assert len(manifest.description) >= 20
+    assert all(isinstance(seq, SequenceManifest) for seq in manifest.sequences)
