@@ -6,7 +6,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import BaseModel, BeforeValidator, ConfigDict
 
-from pg2_dataset.constants import SequenceAlphabet, SequenceType
+from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 
 
 def parse_sequence_value(value: str | Seq) -> Seq:

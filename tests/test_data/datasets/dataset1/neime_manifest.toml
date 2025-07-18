@@ -11,4 +11,4 @@ sequence_type = "wild_type"
 sequence_alphabet = "DNA"
 
 [ sequences.sources ]
-local = ["tests/test_data/datasets/dataset1/sequences/"]
+local = ["/Users/prashant/Documents/Projects/iff/codebase/pg2-dataset/example_data/NEIME_2019/sequences"]

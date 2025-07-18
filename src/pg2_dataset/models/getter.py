@@ -3,8 +3,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from pg2_dataset.constants import DirType
 from pg2_dataset.io import DataDir, DataFile
+from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.manifest import Sources
 
 

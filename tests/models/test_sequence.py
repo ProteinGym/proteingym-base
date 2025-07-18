@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from Bio import Seq, SeqIO, SeqRecord
 
-from pg2_dataset.constants import SequenceAlphabet, SequenceType
+from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.sequence import Sequence
 
 
