@@ -1,8 +1,8 @@
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+from pg2_dataset.constants import SequenceFileType
 from pg2_dataset.io.files.base import DataFile
-from pg2_dataset.models.constants import SequenceFileType
 
 
 class SequenceDataFile(DataFile):
