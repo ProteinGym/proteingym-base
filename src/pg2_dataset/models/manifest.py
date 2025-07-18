@@ -1,14 +1,8 @@
 from pathlib import Path
-from typing import Annotated, Dict, List
+from typing import Dict, List
 
 import toml
-from pydantic import AfterValidator, BaseModel, Field
-
-
-def length_validator(v, length: int):
-    if len(v) < length:
-        raise ValueError(f"Must be at least {length} characters long.")
-    return v
+from pydantic import BaseModel, Field
 
 
 # Create manifest for sequence, currently supports only local and S3 directories.
@@ -34,9 +28,9 @@ class SequenceManifest(BaseModel):
 
 
 class Manifest(BaseModel):
-    name: Annotated[str, AfterValidator(lambda v: length_validator(v, 4))]
+    name: str
     version: str = Field(description="Version of the dataset", required=True)
-    description: Annotated[str, AfterValidator(lambda v: length_validator(v, 20))]
+    description: str
     creator: str = Field(description="John Doe <john.doe@iff.com>")
     metadata: Dict[str, str] = Field(default_factory=dict)
     sequences: List[SequenceManifest] = Field(
