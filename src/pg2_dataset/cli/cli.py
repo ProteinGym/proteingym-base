@@ -1,7 +1,6 @@
 import typer
 
-from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.manifest import Manifest
+from pg2_dataset.models.dataset import Dataset, Manifest
 
 app = typer.Typer()
 create_app = typer.Typer()
