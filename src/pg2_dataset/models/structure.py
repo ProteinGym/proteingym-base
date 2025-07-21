@@ -63,7 +63,11 @@ class Structure(BaseModel):
 
     @classmethod
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
-        """Create a Structure instance from a manifest section."""
+        """Create a Structure instance from a manifest section.
+
+        Raises :
+            NotImplementedError if the file type is not supported.
+        """
         match section.path.suffix.lower():
             case ".pdb":
                 parser = PDBParser()
@@ -71,6 +75,10 @@ class Structure(BaseModel):
                 parser = MMCIFParser()
             case ".bcif":
                 parser = BinaryCIFParser()
+            case _:
+                raise NotImplementedError(
+                    f"Unsupported file type: {section.path.suffix}"
+                )
         value = parser.get_structure(section.path.name, section.path)
         return Structure(
             name=section.name or section.path.stem,
