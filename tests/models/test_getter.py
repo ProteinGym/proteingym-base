@@ -1,10 +1,37 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from pg2_dataset.io import DataDir, DataFile
-from pg2_dataset.models.getter import DataGetter
-from pg2_dataset.models.manifest import Sources
+from pg2_dataset.models.getter import DataGetter, Sources
+
+
+@pytest.mark.parametrize(
+    "local,s3",
+    [
+        (["/some/path"], []),
+        (["/some/path"], ["s3://bucket"]),
+        ([], ["s3://bucket"]),
+    ],
+)
+def test_source_dirs(local, s3):
+    sources = Sources(local=local, s3=s3)
+    if local or s3:
+        assert sources.local == local
+        assert sources.s3 == s3
+    else:
+        with pytest.raises(ValidationError) as e:
+            Sources(local=local, s3=s3)
+        assert "At least one of 'local' or 's3' must be provided in sources" in str(
+            e.value
+        )
+
+
+@pytest.mark.parametrize("local,s3", [([], [])])
+@pytest.mark.xfail(raises=ValidationError)
+def test_source_dirs_empty(local, s3):
+    Sources(local=local, s3=s3)
 
 
 @pytest.mark.parametrize(

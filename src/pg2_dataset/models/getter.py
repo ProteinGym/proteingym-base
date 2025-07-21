@@ -1,11 +1,21 @@
 from pathlib import Path
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from pg2_dataset.io import DataDir, DataFile
 from pg2_dataset.models.constants import DirType
-from pg2_dataset.models.manifest import Sources
+
+
+class Sources(BaseModel):
+    local: List[str] = Field(default_factory=list)
+    s3: List[str] = Field(default_factory=list)
+
+    def model_post_init(self, __context):
+        if not self.local and not self.s3:
+            raise ValueError(
+                "At least one of 'local' or 's3' must be provided in sources"
+            )
 
 
 class DataGetter(BaseModel):

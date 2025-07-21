@@ -4,8 +4,7 @@ from typing import List
 from pydantic import BaseModel, Field
 
 from pg2_dataset.models.getter import DataGetter
-from pg2_dataset.models.manifest import SequenceManifest
-from pg2_dataset.models.sequence import Sequence
+from pg2_dataset.models.sequence import Sequence, SequenceManifest
 
 logger = logging.getLogger(__name__)
 

@@ -3,11 +3,10 @@ from typing import IO, Annotated, Dict, List
 
 import toml
 from packaging.version import Version as PackagingVersion
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_serializer
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
-from pg2_dataset.models.manifest import DatasetManifest
 from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
 from pg2_dataset.settings import datasets_dir
 
@@ -117,6 +116,19 @@ class Manifest(BaseModel):
         """Create a Manifest instance from a TOML file or string."""
         return cls(**toml.load(path))
 
+    @field_serializer("version")
+    def serialize_version(self, version: _Version) -> str:
+        """Serialize the version to a string."""
+        return str(version)
+
+    def dump(self, path: Path) -> None:
+        """Dump the manifest to a TOML file."""
+        # Empty or None values indicate the fields were not set, hence excluded
+        # them from the dump.
+        include = {key for key, value in self.model_dump().items() if value}
+        with path.open("w", encoding="utf-8") as f:
+            toml.dump(self.model_dump(include=include), f)
+
 
 def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
     if len(v) == 0:
@@ -134,10 +146,10 @@ class Dataset(BaseModel):
     ]
     creator: str = None
     metadata: Dict[str, str] = None
-    manifest: DatasetManifest = None
+    manifest: Manifest = None
 
     @classmethod
-    def from_manifest(cls, manifest: DatasetManifest) -> "Dataset":
+    def from_manifest(cls, manifest: Manifest) -> "Dataset":
         sequences = []
         for sequence_manifest in manifest.sequences:
             sequence_factory = SequenceFactory.from_manifest(manifest=sequence_manifest)
