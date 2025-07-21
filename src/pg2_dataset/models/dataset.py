@@ -1,15 +1,21 @@
 from pathlib import Path
-from typing import IO, Annotated, Dict, List
+from typing import IO, Annotated, List
 
 import toml
 from packaging.version import Version as PackagingVersion
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_serializer, AfterValidator
-
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_serializer,
+)
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
-from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
+from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.settings import _DEFAULT_MANIFEST_FILE
 from pg2_dataset.utils import zip_context
 
@@ -71,7 +77,6 @@ def length_validator(v, length: int):
     if len(v) < length:
         raise ValueError(f"Must be at least {length} characters long.")
     return v
-
 
 
 class Manifest(BaseModel):
@@ -165,13 +170,13 @@ class Dataset(BaseModel):
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
         """Create a `Dataset` from a `Manifest` instance.
-        
+
         The manifest contains the information about the dataset, including sequences,
         structures, msas, and assays details.
-        
+
         Args:
             manifest (DatasetManifest): The manifest to create the dataset from.
-            
+
         Returns:
             Dataset: The dataset created from the manifest.
         """
@@ -226,7 +231,7 @@ class Dataset(BaseModel):
 
         # Write sequences
         sequence_dir = DataDir(
-            path= path / "sequences",
+            path=path / "sequences",
             dir_type=DirType.LOCAL,
         ).dump()
         for sequence in self.sequences:

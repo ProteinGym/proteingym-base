@@ -6,7 +6,9 @@ from typing import Iterator, List
 
 
 @contextmanager
-def zip_context(zip_path: str | Path, extract_path: str | Path = None) -> Iterator[List[Path]]:
+def zip_context(
+    zip_path: str | Path, extract_path: str | Path = None
+) -> Iterator[List[Path]]:
     """Extract the contents of a ZIP within a context manager.
     This will extract the ZIP contents to the current working directory and
     yield the list of extracted files. After the context is exited, it will
