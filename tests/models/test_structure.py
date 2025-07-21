@@ -63,3 +63,15 @@ def test_structure_minimal() -> None:
         raise AssertionError("Could not create Structure") from e
     else:
         assert True, "Structure created successfully with minimal fields."
+
+
+@pytest.mark.parametrize("field", ["name", "description"])
+def test_structure_empty_string_field(tmp_path: Path, field: str) -> None:
+    """A validation error is raised if <field> is empty."""
+
+    match = (
+        f"validation error for Structure\n{field}\n  "
+        "String should have at least 1 character"
+    )
+    with pytest.raises(ValidationError, match=match):
+        Structure(value=BioStructure("test"), **{"name": "test", field: ""})
