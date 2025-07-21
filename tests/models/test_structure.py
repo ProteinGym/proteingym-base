@@ -29,7 +29,7 @@ def test_structure_manifest_section_minimal(tmp_path: Path) -> None:
         )
 
 
-def test_structure_manifest_missing_path() -> None:
+def test_structure_manifest_section_missing_path() -> None:
     """A validation error is raised if path is missing."""
     match = (
         "validation error for StructureManifestSection\npath\n  "
@@ -40,8 +40,10 @@ def test_structure_manifest_missing_path() -> None:
 
 
 @pytest.mark.parametrize("field", ["name", "description"])
-def test_structure_manifest_empty_string_field(tmp_path: Path, field: str) -> None:
-    """A validation error is raised if <field> is empty."""
+def test_structure_manifest_section_empty_string_field(
+    tmp_path: Path, field: str
+) -> None:
+    """A validation error is raised if string <field> is empty."""
     path = tmp_path / "test.pdb"
     path.touch()
 
@@ -53,17 +55,18 @@ def test_structure_manifest_empty_string_field(tmp_path: Path, field: str) -> No
         StructureManifestSection(path=path, **{field: ""})
 
 
-def test_structure_manifest_serialize_path_as_posix(tmp_path: Path) -> None:
+def test_structure_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
     """The path is serialized as a Posix path."""
     path = tmp_path / "test.pdb"
     path.touch()
 
     section = StructureManifestSection(path=path)
+
     assert section.model_dump().get("path") == path.as_posix()
 
 
 def test_structure_minimal() -> None:
-    """A minimal Structure can be created."""
+    """Only name and value are required for a minimal Structure."""
     try:
         Structure(name="test", value=BioStructure("test"))
     except ValidationError as e:
@@ -73,8 +76,8 @@ def test_structure_minimal() -> None:
 
 
 @pytest.mark.parametrize("field", ["name", "description"])
-def test_structure_empty_string_field(tmp_path: Path, field: str) -> None:
-    """A validation error is raised if <field> is empty."""
+def test_structure_empty_string_field(field: str) -> None:
+    """A validation error is raised if string <field> is empty."""
 
     match = (
         f"validation error for Structure\n{field}\n  "
@@ -123,7 +126,7 @@ def bio_structure() -> BioStructure:
 
 
 @pytest.fixture
-def structure_pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
+def pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     """PDB structure file for testing."""
     io = PDBIO()
     io.set_structure(bio_structure)
@@ -133,7 +136,7 @@ def structure_pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
 
 
 @pytest.fixture
-def structure_cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
+def cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     """CIF structure file for testing."""
     io = MMCIFIO()
     io.set_structure(bio_structure)
@@ -142,9 +145,20 @@ def structure_cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     return path
 
 
-def test_structure_from_manifest_section_with_c(structure_cif_file) -> None:
-    """A Structure can be created from a manifest section."""
-    section = StructureManifestSection(path=structure_cif_file)
+def test_structure_from_manifest_section_with_pdb(pdb_file: Path) -> None:
+    """A Structure can be created from a manifest section with PDB file."""
+    section = StructureManifestSection(path=pdb_file)
+
+    structure = Structure.from_manifest_section(section)
+
+    assert structure.name == "structure"
+    assert isinstance(structure.value, BioStructure)
+
+
+def test_structure_from_manifest_section_with_cif(cif_file: Path) -> None:
+    """A Structure can be created from a manifest section with CIF file."""
+    section = StructureManifestSection(path=cif_file)
+
     structure = Structure.from_manifest_section(section)
 
     assert structure.name == "structure"
