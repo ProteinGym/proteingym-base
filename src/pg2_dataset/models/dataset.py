@@ -76,6 +76,14 @@ def _try_coerce_version(version: _Version | str) -> _Version:
 class _StructureSection(BaseModel):
     """The structure section of the manifest."""
 
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
     path: FilePath
 
     @field_serializer("path")
