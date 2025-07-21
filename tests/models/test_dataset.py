@@ -59,11 +59,14 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
 
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
-    documenation_path = Path(__file__).parent.parent.parent / Path("docs/manifest.md")
-    assert documenation_path.exists(), (
-        f"Documentation file does not exist: {documenation_path}"
+    documentation_file_path = Path(__file__).parent.parent.parent / Path(
+        "docs/manifest.md"
     )
-    assert manifest_contents in documenation_path.read_text(), (
+
+    assert documentation_file_path.exists(), (
+        f"Documentation file does not exist: {documentation_file_path}"
+    )
+    assert manifest_contents in documentation_file_path.read_text(), (
         "Test manifest contents not found in documentation."
     )
 
