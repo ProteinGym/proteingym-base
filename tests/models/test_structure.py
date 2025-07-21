@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from Bio.PDB.PDBIO import PDBIO
 from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
 
@@ -75,3 +76,23 @@ def test_structure_empty_string_field(tmp_path: Path, field: str) -> None:
     )
     with pytest.raises(ValidationError, match=match):
         Structure(value=BioStructure("test"), **{"name": "test", field: ""})
+
+
+@pytest.fixture
+def mock_structure_file(tmp_path: Path) -> Path:
+    """Create a mock structure file for testing."""
+    io = PDBIO()
+    structure = BioStructure("test")
+    io.set_structure(structure)
+    path = tmp_path / "structure.pdb"
+    io.save(path.as_posix())
+    return path
+
+
+def test_structure_from_manifest_section(mock_structure_file) -> None:
+    """A Structure can be created from a manifest section."""
+    section = StructureManifestSection(path=mock_structure_file)
+    structure = Structure.from_manifest_section(section)
+
+    assert structure.name == "structure"
+    assert isinstance(structure.value, BioStructure)
