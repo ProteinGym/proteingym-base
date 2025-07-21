@@ -12,3 +12,7 @@ wheels/
 
 # MacOS
 .DS_Store
+
+# Testing and coverage
+.coverage
+.coverage.*
