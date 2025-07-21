@@ -74,7 +74,7 @@ def _try_coerce_version(version: _Version | str) -> _Version:
 
 
 class _StructureSection(BaseModel):
-    """The structure section of the manifest."""
+    """The protein structure section of the manifest."""
 
     model_config = ConfigDict(
         extra="forbid",
@@ -85,6 +85,16 @@ class _StructureSection(BaseModel):
     """Configuration for the Pydantic model."""
 
     path: FilePath
+    """The path to the protein structure file."""
+
+    name: str | None = None
+    """The name of the protein structure. If None, the file stem will be used."""
+
+    description: str | None = None
+    """The description of the protein structure."""
+
+    metadata: dict[str, str] = Field(default_factory=dict)
+    """Additional metadata for the protein structure."""
 
     @field_serializer("path")
     def serialize_path(self, path: Path) -> str:
