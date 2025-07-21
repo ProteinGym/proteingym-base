@@ -8,13 +8,13 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
-    FilePath,
     field_serializer,
 )
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
+from pg2_dataset.models.structure import StructureManifestSection
 from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.settings import _DEFAULT_MANIFEST_FILE
 from pg2_dataset.utils import zip_context
@@ -73,35 +73,6 @@ def _try_coerce_version(version: _Version | str) -> _Version:
     return version
 
 
-class _StructureSection(BaseModel):
-    """The protein structure section of the manifest."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=True,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
-
-    path: FilePath
-    """The path to the protein structure file."""
-
-    name: str | None = None
-    """The name of the protein structure. If None, the file stem will be used."""
-
-    description: str | None = None
-    """The description of the protein structure."""
-
-    metadata: dict[str, str] = Field(default_factory=dict)
-    """Additional metadata for the protein structure."""
-
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
-        """Serialize the path as a Posix path."""
-        return path.as_posix()
-
-
 class Manifest(BaseModel):
     """Dataset manifest representing a dataset's metadata and resources.
 
@@ -143,7 +114,7 @@ class Manifest(BaseModel):
     sequences: list[SequenceManifestSection] = Field(default_factory=list)
     """The sequences included in the dataset."""
 
-    structures: list[_StructureSection] = Field(default_factory=list)
+    structures: list[StructureManifestSection] = Field(default_factory=list)
     """The structures included in the dataset."""
 
     msas: list[dict[str, str]] = Field(default_factory=list)
