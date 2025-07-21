@@ -43,3 +43,12 @@ def test_structure_manifest_empty_string_field(tmp_path: Path, field: str) -> No
     )
     with pytest.raises(ValidationError, match=match):
         StructureManifestSection(path=path, **{field: ""})
+
+
+def test_structure_manifest_serialize_path_as_posix(tmp_path: Path) -> None:
+    """The path is serialized as a Posix path."""
+    path = tmp_path / "test.pdb"
+    path.touch()
+
+    section = StructureManifestSection(path=path)
+    assert section.model_dump().get("path") == path.as_posix()
