@@ -79,7 +79,7 @@ def test_structure_empty_string_field(tmp_path: Path, field: str) -> None:
 
 
 @pytest.fixture
-def mock_structure_file(tmp_path: Path) -> Path:
+def structure_file(tmp_path: Path) -> Path:
     """Create a mock structure file for testing."""
     io = PDBIO()
     structure = BioStructure("test")
@@ -89,9 +89,9 @@ def mock_structure_file(tmp_path: Path) -> Path:
     return path
 
 
-def test_structure_from_manifest_section(mock_structure_file) -> None:
+def test_structure_from_manifest_section(structure_file) -> None:
     """A Structure can be created from a manifest section."""
-    section = StructureManifestSection(path=mock_structure_file)
+    section = StructureManifestSection(path=structure_file)
     structure = Structure.from_manifest_section(section)
 
     assert structure.name == "structure"
