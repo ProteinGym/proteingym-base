@@ -10,8 +10,10 @@ from pg2_dataset.models.dataset import Dataset, Manifest
 
 
 @pytest.fixture
-def manifest_contents() -> str:
-    return """
+def manifest_contents(tmp_path: Path) -> str:
+    structure_file = tmp_path / "structures.pdb"
+    structure_file.touch()
+    return f"""
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
@@ -33,7 +35,7 @@ sequence_alphabet = "DNA"
 path = ["example_data/NEIME_2019/sequences"]
 
 [[structures]]
-path = "structures.pdb"
+path = "{structure_file.as_posix()}"
 
 [[msas]]
 path = "msas.a3m"
