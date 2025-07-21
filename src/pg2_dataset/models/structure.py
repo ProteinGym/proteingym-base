@@ -2,6 +2,9 @@
 
 from pathlib import Path
 
+from Bio.PDB import MMCIFParser, PDBParser
+from Bio.PDB.binary_cif import BinaryCIFParser
+from Bio.PDB.Structure import Structure
 from pydantic import BaseModel, ConfigDict, Field, FilePath, field_serializer
 
 
@@ -40,7 +43,7 @@ class Structure(BaseModel):
     name: str
     """The name of the protein structure."""
 
-    value: object
+    value: Structure
     """The value of the protein structure, typically a file path or binary data."""
 
     description: str | None = None
@@ -48,3 +51,21 @@ class Structure(BaseModel):
 
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the protein structure."""
+
+    @classmethod
+    def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
+        """Create a Structure instance from a manifest section."""
+        match section.path.suffix.lower():
+            case ".pdb":
+                parser = PDBParser()
+            case ".cif":
+                parser = MMCIFParser()
+            case ".bcif":
+                parser = BinaryCIFParser()
+        value = parser.get_structure(section.path.name, section.path)
+        return Structure(
+            name=section.name or section.path.stem,
+            value=value,
+            description=section.description,
+            metadata=section.metadata,
+        )
