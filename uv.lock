@@ -2204,7 +2204,6 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.4" },
     { name = "toml", specifier = ">=0.10.2" },
 ]
-
 provides-extras = ["biopython", "biotite"]
 
 [package.metadata.requires-dev]
