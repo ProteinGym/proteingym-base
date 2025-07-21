@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import pytest
+from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
 
-from pg2_dataset.models.structure import StructureManifestSection
+from pg2_dataset.models.structure import Structure, StructureManifestSection
 
 
 def test_structure_manifest_section_minimal(tmp_path: Path) -> None:
@@ -52,3 +53,13 @@ def test_structure_manifest_serialize_path_as_posix(tmp_path: Path) -> None:
 
     section = StructureManifestSection(path=path)
     assert section.model_dump().get("path") == path.as_posix()
+
+
+def test_structure_minimal() -> None:
+    """A minimal Structure can be created."""
+    try:
+        Structure(name="test", value=BioStructure("test"))
+    except ValidationError as e:
+        raise AssertionError("Could not create Structure") from e
+    else:
+        assert True, "Structure created successfully with minimal fields."
