@@ -8,6 +8,7 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    FilePath,
     field_serializer,
 )
 
@@ -72,6 +73,17 @@ def _try_coerce_version(version: _Version | str) -> _Version:
     return version
 
 
+class _StructureSection(BaseModel):
+    """The structure section of the manifest."""
+
+    path: FilePath
+
+    @field_serializer("path")
+    def serialize_path(self, path: Path) -> str:
+        """Serialize the path as a Posix path."""
+        return path.as_posix()
+
+
 class Manifest(BaseModel):
     """Dataset manifest representing a dataset's metadata and resources.
 
@@ -113,7 +125,7 @@ class Manifest(BaseModel):
     sequences: list[SequenceManifestSection] = Field(default_factory=list)
     """The sequences included in the dataset."""
 
-    structures: list[dict[str, str]] = Field(default_factory=list)
+    structures: list[_StructureSection] = Field(default_factory=list)
     """The structures included in the dataset."""
 
     msas: list[dict[str, str]] = Field(default_factory=list)
