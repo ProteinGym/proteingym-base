@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.getter import Sources
-from pg2_dataset.models.sequence import Sequence, SequenceManifest
+from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 
 
 @pytest.mark.parametrize(
@@ -99,7 +99,7 @@ def test_sequence_dump(tmp_path):
 def test_sequence_manifest(sequence_type, sequence_alphabet, local, s3):
     sources = Sources(local=local, s3=s3)
 
-    manifest = SequenceManifest(
+    manifest = SequenceManifestSection(
         sequence_type=sequence_type,
         sequence_alphabet=sequence_alphabet,
         sources=sources,
@@ -117,7 +117,7 @@ def test_sequence_manifest(sequence_type, sequence_alphabet, local, s3):
 )
 @pytest.mark.xfail(raises=ValidationError)
 def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, local, s3):
-    manifest = SequenceManifest(
+    manifest = SequenceManifestSection(
         sequence_type=sequence_type,
         sequence_alphabet=sequence_alphabet,
         sources=Sources(dirs=Sources(local=local, s3=s3)),

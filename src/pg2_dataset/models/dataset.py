@@ -8,8 +8,9 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_serial
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
-from pg2_dataset.repositories.sequence import Sequence, SequenceFactory
-from pg2_dataset.settings import datasets_dir
+from pg2_dataset.repositories.sequence import SequenceFactory
+from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
+from pg2_dataset.settings import _DEFAULT_MANIFEST_FILE
 from pg2_dataset.utils import zip_context
 
 
@@ -66,6 +67,13 @@ def _try_coerce_version(version: _Version | str) -> _Version:
     return version
 
 
+def length_validator(v, length: int):
+    if len(v) < length:
+        raise ValueError(f"Must be at least {length} characters long.")
+    return v
+
+
+
 class Manifest(BaseModel):
     """Dataset manifest representing a dataset's metadata and resources.
 
@@ -104,7 +112,7 @@ class Manifest(BaseModel):
     assays: list[dict[str, str]] = Field(default_factory=list)
     """The assays included in the dataset."""
 
-    sequences: list[dict[str, str]] = Field(default_factory=list)
+    sequences: list[SequenceManifestSection] = Field(default_factory=list)
     """The sequences included in the dataset."""
 
     structures: list[dict[str, str]] = Field(default_factory=list)
@@ -148,26 +156,22 @@ class Dataset(BaseModel):
     """The name of the dataset."""
     description: str
     """A brief description of the dataset."""
-    version: str
-    """ToDo: Add a version class to represent semantic versions."""
     sequences: Annotated[
         List[Sequence],
         AfterValidator(lambda v: assert_non_empty_sequence_list(v)),
     ]
-    """The list of sequences present in the dataset."""
-    creator: str = None
-    """The creator of the dataset, for eg, a person or an organization."""
-    metadata: Dict[str, str] = None
     manifest: Manifest = None
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
-        """Class Method to create a Dataset from a DatasetManifest instance.
+        """Create a `Dataset` from a `Manifest` instance.
+        
         The manifest contains the information about the dataset, including sequences,
-        structures, msas, and assays details. The sequences are generated
-        using the SequenceFactory based on the manifest.
+        structures, msas, and assays details.
+        
         Args:
             manifest (DatasetManifest): The manifest to create the dataset from.
+            
         Returns:
             Dataset: The dataset created from the manifest.
         """
@@ -180,34 +184,23 @@ class Dataset(BaseModel):
             name=manifest.name,
             description=manifest.description,
             version=manifest.version,
-            creator=manifest.creator,
-            metadata=manifest.metadata,
             sequences=sequences,
             manifest=manifest,
         )
 
     @classmethod
-    def from_manifest_toml(cls, path: str | Path) -> "Dataset":
-        """Class Method to create a Dataset from a manifest TOML file.
-        and returns a Dataset instance.
-        Args:
-            path (str | Path): The path to the manifest TOML file.
-        Returns:
-            Dataset: The dataset created from the manifest.
-        """
-        if isinstance(path, str):
-            path = Path(path)
-        dataset_manifest = Manifest.from_toml(path)
-        return cls.from_manifest(dataset_manifest)
+    def from_path(cls, path: Path) -> "Dataset":
+        """Create a `Dataset` from a ZIP archive.
 
-    @classmethod
-    def from_zip(cls, path: str | Path) -> "Dataset":
-        """Class Method to create a Dataset from a ZIP archive containing a manifest.
-        The ZIP archive should contain a single manifest file in TOML format.
+        The zip_context context manager is used to extract the contents of the zip,
+        load the dataset, and clean up the extracted contents.
+
         Args:
-            path (str | Path): The path to the ZIP archive.
+            path: The path to the ZIP archive.
+
         Returns:
-            Dataset: The dataset created from the manifest in the ZIP archive.
+            The dataset created from the manifest in the ZIP archive.
+
         Raises:
             ValueError: If multiple manifest files are found in the ZIP archive.
             FileNotFoundError: If no manifest file is found in the ZIP archive.
@@ -215,49 +208,30 @@ class Dataset(BaseModel):
         # The zip_context context manager is used to extract the contents of the zip,
         # load the dataset, and clean up the extracted contents.
         with zip_context(path) as zip_contents:
-            manifest_files = [name for name in zip_contents if name.suffix == ".toml"]
-            if len(manifest_files) > 1:
-                raise ValueError(
-                    f"Multiple manifest .toml files found in the \
-                        ZIP archive: {manifest_files}"
-                )
-            elif not manifest_files:
-                raise FileNotFoundError(
-                    f"No manifest .toml found in the ZIP archive at {path}"
-                )
-            else:
-                manifest_file = manifest_files[0]
-
-            dataset_manifest = DatasetManifest.from_toml(manifest_file)
+            print(f"Extracted contents of {path} to {zip_contents}")
+            manifest_file = f"{_DEFAULT_MANIFEST_FILE}"
+            dataset_manifest = Manifest.from_toml(manifest_file)
             return cls.from_manifest(dataset_manifest)
 
-    def dump(self, path: str | Path = None):
+    def dump(self, path: Path):
         """Dump the dataset to a specified path or directory.
-        If the path is not specified, it defaults to the dataset's name in the
-        datasets directory.
+
+        The method creates a directory containing the
+        sequences and a manifest file.
+
         Args:
-            path (str | Path, optional): The path to dump the dataset. Defaults to None.
-        Returns:
-            None
-        Outputs:
-            - A directory containing the sequences dir and a manifest file.
-            - A subdirectory named "sequences" containing the sequence files.
-            - Sequence files are dumped in the format defined by the Sequence class.
+            path: The path to dump the dataset.
         """
-        if isinstance(path, str):
-            path = Path(path)
-        if path is None:
-            path = datasets_dir / self.name
         path.mkdir(parents=True, exist_ok=True)
 
         # Write sequences
         sequence_dir = DataDir(
-            path=path / "sequences",
+            path= path / "sequences",
             dir_type=DirType.LOCAL,
         ).dump()
         for sequence in self.sequences:
             sequence.dump(sequence_dir)
 
         # Write manifest
-        manifest_path = path / "manifest.toml"
+        manifest_path = path / _DEFAULT_MANIFEST_FILE
         self.manifest.dump(manifest_path)

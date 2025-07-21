@@ -4,7 +4,7 @@ from typing import List
 from pydantic import BaseModel, Field
 
 from pg2_dataset.models.getter import DataGetter
-from pg2_dataset.models.sequence import Sequence, SequenceManifest
+from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 
 logger = logging.getLogger(__name__)
 
@@ -13,12 +13,12 @@ class SequenceFactory(BaseModel):
     sequence_type: str = Field(required=True)
     sequence_alphabet: str = Field(required=True)
     data_getters: DataGetter = None
-    sequence_manifest: SequenceManifest = None
+    sequence_manifest: SequenceManifestSection = None
 
     @classmethod
     def from_manifest(
         cls,
-        manifest: SequenceManifest,
+        manifest: SequenceManifestSection,
     ) -> "SequenceFactory":
         sequence_type = manifest.sequence_type
         sequence_alphabet = manifest.sequence_alphabet

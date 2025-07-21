@@ -66,8 +66,12 @@ data_type = "float"
 [[assays]]
 path = "assays.csv"
 
-[[sequences]]
-path = "sequences.fasta"
+[[ sequences ]]
+sequence_type = "wild_type"
+sequence_alphabet = "DNA"
+
+[ sequences.sources ]
+local = ["example_data/NEIME_2019/sequences"]
 
 [[structures]]
 path = "structures.pdb"

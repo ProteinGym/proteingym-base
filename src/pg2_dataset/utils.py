@@ -6,7 +6,7 @@ from typing import Iterator, List
 
 
 @contextmanager
-def zip_context(zip_path: str | Path) -> Iterator[List[Path]]:
+def zip_context(zip_path: str | Path, extract_path: str | Path = None) -> Iterator[List[Path]]:
     """Extract the contents of a ZIP within a context manager.
     This will extract the ZIP contents to the current working directory and
     yield the list of extracted files. After the context is exited, it will
@@ -26,7 +26,7 @@ def zip_context(zip_path: str | Path) -> Iterator[List[Path]]:
     """
     with zipfile.ZipFile(zip_path, "r") as zipf:
         zip_contents = zipf.namelist()
-        zipf.extractall()
+        zipf.extractall(extract_path)
     try:
         yield [Path(name) for name in zip_contents]
     finally:

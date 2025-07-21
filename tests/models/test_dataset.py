@@ -25,8 +25,12 @@ data_type = "float"
 [[assays]]
 path = "assays.csv"
 
-[[sequences]]
-path = "sequences.fasta"
+[[ sequences ]]
+sequence_type = "wild_type"
+sequence_alphabet = "DNA"
+
+[ sequences.sources ]
+local = ["example_data/NEIME_2019/sequences"]
 
 [[structures]]
 path = "structures.pdb"
@@ -54,7 +58,6 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
     documenation_path = Path(__file__).parent.parent.parent / Path("docs/manifest.md")
-
     assert documenation_path.exists(), (
         f"Documentation file does not exist: {documenation_path}"
     )
@@ -203,7 +206,7 @@ def test_manifest_dump_from_path_unit_docs_example(
     path = tmp_path / "manifest.toml"
 
     manifest.dump(path)
-
+    
     try:
         loaded_manifest = Manifest.from_path(path)
     except ValidationError as e:
