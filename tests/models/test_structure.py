@@ -92,33 +92,28 @@ def bio_structure() -> BioStructure:
     """Minimal biopython structure for testing."""
     structure = BioStructure("test")
 
-    model_id = 0
-    model = Model(model_id)
+    model = Model(id=0)
     structure.add(model)
 
-    chain_id = "A"
-    chain = Chain(chain_id)
+    chain = Chain(id="A")
     model.add(chain)
 
-    residue_id = (" ", 1, " ")
-    residue = Residue(residue_id, "GLY", "")
+    residue = Residue(
+        id=(" ", 1, " "),
+        resname="GLY",
+        segid="",
+    )
     chain.add(residue)
 
-    coord = np.array([10.0, 20.0, 30.0], dtype=float)
-    b_factor = 20.0
-    occupancy = 1.0
-    altloc = " "
-    fullname = " CA "  # PDB atom name field (4 characters)
-    element = "C"
     atom = Atom(
         name="CA",
-        coord=coord,
-        bfactor=b_factor,
-        occupancy=occupancy,
-        altloc=altloc,
-        fullname=fullname,
+        coord=np.array([10.0, 20.0, 30.0], dtype=float),
+        bfactor=20.0,
+        occupancy=1.0,
+        altloc=" ",
+        fullname=" CA ",  # PDB atom name field (4 characters)
         serial_number=1,
-        element=element,
+        element="C",
     )
     residue.add(atom)
 
