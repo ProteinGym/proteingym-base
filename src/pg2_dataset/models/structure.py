@@ -4,7 +4,7 @@ from pathlib import Path
 
 from Bio.PDB import MMCIFParser, PDBParser
 from Bio.PDB.binary_cif import BinaryCIFParser
-from Bio.PDB.Structure import Structure
+from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import BaseModel, ConfigDict, Field, FilePath, field_serializer
 
 
@@ -52,7 +52,7 @@ class Structure(BaseModel):
     name: str
     """The name of the protein structure."""
 
-    value: Structure
+    value: BioStructure
     """The value of the protein structure, typically a file path or binary data."""
 
     description: str | None = None
