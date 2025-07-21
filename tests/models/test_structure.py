@@ -29,3 +29,17 @@ def test_structure_manifest_missing_path() -> None:
     )
     with pytest.raises(ValidationError, match=match):
         StructureManifestSection(path="non_existent.pdb")
+
+
+@pytest.mark.parametrize("field", ["name", "description"])
+def test_structure_manifest_empty_string_field(tmp_path: Path, field: str) -> None:
+    """A validation error is raised if <field> is empty."""
+    path = tmp_path / "test.pdb"
+    path.touch()
+
+    match = (
+        f"validation error for StructureManifestSection\n{field}\n  "
+        "String should have at least 1 character"
+    )
+    with pytest.raises(ValidationError, match=match):
+        StructureManifestSection(path=path, **{field: ""})
