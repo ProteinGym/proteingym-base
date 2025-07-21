@@ -1,7 +1,13 @@
 from pathlib import Path
 
+import numpy as np
 import pytest
+from Bio.PDB.Atom import Atom
+from Bio.PDB.Chain import Chain
+from Bio.PDB.mmcifio import MMCIFIO
+from Bio.PDB.Model import Model
 from Bio.PDB.PDBIO import PDBIO
+from Bio.PDB.Residue import Residue
 from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
 
@@ -79,19 +85,66 @@ def test_structure_empty_string_field(tmp_path: Path, field: str) -> None:
 
 
 @pytest.fixture
-def structure_file(tmp_path: Path) -> Path:
-    """Create a mock structure file for testing."""
-    io = PDBIO()
+def bio_structure() -> BioStructure:
+    """Minimal biopython structure for testing."""
     structure = BioStructure("test")
-    io.set_structure(structure)
+
+    model_id = 0
+    model = Model(model_id)
+    structure.add(model)
+
+    chain_id = "A"
+    chain = Chain(chain_id)
+    model.add(chain)
+
+    residue_id = (" ", 1, " ")
+    residue = Residue(residue_id, "GLY", "")
+    chain.add(residue)
+
+    coord = np.array([10.0, 20.0, 30.0], dtype=float)
+    b_factor = 20.0
+    occupancy = 1.0
+    altloc = " "
+    fullname = " CA "  # PDB atom name field (4 characters)
+    element = "C"
+    atom = Atom(
+        name="CA",
+        coord=coord,
+        bfactor=b_factor,
+        occupancy=occupancy,
+        altloc=altloc,
+        fullname=fullname,
+        serial_number=1,
+        element=element,
+    )
+    residue.add(atom)
+
+    return structure
+
+
+@pytest.fixture
+def structure_pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
+    """PDB structure file for testing."""
+    io = PDBIO()
+    io.set_structure(bio_structure)
     path = tmp_path / "structure.pdb"
     io.save(path.as_posix())
     return path
 
 
-def test_structure_from_manifest_section(structure_file) -> None:
+@pytest.fixture
+def structure_cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
+    """CIF structure file for testing."""
+    io = MMCIFIO()
+    io.set_structure(bio_structure)
+    path = tmp_path / "structure.cif"
+    io.save(path.as_posix())
+    return path
+
+
+def test_structure_from_manifest_section_with_c(structure_cif_file) -> None:
     """A Structure can be created from a manifest section."""
-    section = StructureManifestSection(path=structure_file)
+    section = StructureManifestSection(path=structure_cif_file)
     structure = Structure.from_manifest_section(section)
 
     assert structure.name == "structure"
