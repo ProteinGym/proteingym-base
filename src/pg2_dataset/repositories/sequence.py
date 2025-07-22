@@ -13,10 +13,10 @@ class SequenceFactory(BaseModel):
     sequence_type: str = Field(required=True)
     sequence_alphabet: str = Field(required=True)
     data_getters: DataGetter = None
-    sequence_manifest: SequenceManifestSection = None
+    manifest_section: SequenceManifestSection = None
 
     @classmethod
-    def from_manifest(
+    def from_manifest_section(
         cls,
         manifest: SequenceManifestSection,
     ) -> "SequenceFactory":
@@ -29,7 +29,7 @@ class SequenceFactory(BaseModel):
             sequence_type=sequence_type,
             sequence_alphabet=sequence_alphabet,
             data_getters=data_getter,
-            sequence_manifest=manifest,
+            manifest_section=manifest,
         )
 
     def generate_sequences(self) -> List[Sequence]:

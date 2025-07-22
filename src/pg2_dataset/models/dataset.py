@@ -73,12 +73,6 @@ def _try_coerce_version(version: _Version | str) -> _Version:
     return version
 
 
-def length_validator(v, length: int):
-    if len(v) < length:
-        raise ValueError(f"Must be at least {length} characters long.")
-    return v
-
-
 class Manifest(BaseModel):
     """Dataset manifest representing a dataset's metadata and resources.
 
@@ -182,7 +176,9 @@ class Dataset(BaseModel):
         """
         sequences = []
         for sequence_manifest in manifest.sequences:
-            sequence_factory = SequenceFactory.from_manifest(manifest=sequence_manifest)
+            sequence_factory = SequenceFactory.from_manifest_section(
+                manifest=sequence_manifest
+            )
             sequences = sequences + sequence_factory.generate_sequences()
 
         return cls(
@@ -212,10 +208,8 @@ class Dataset(BaseModel):
         """
         # The zip_context context manager is used to extract the contents of the zip,
         # load the dataset, and clean up the extracted contents.
-        with zip_context(path) as zip_contents:
-            print(f"Extracted contents of {path} to {zip_contents}")
-            manifest_file = f"{_DEFAULT_MANIFEST_FILE}"
-            dataset_manifest = Manifest.from_toml(manifest_file)
+        with zip_context(path):
+            dataset_manifest = Manifest.from_toml(_DEFAULT_MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
     def dump(self, path: Path):

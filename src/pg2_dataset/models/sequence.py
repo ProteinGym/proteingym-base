@@ -39,7 +39,7 @@ class Sequence(BaseModel):
 # Create manifest for sequence, currently supports only local and S3 directories.
 # It can be extended to support xrefs.
 class SequenceManifestSection(BaseModel):
-    """This is the manifest for Sequences.
+    """This is the manifest section for Sequences.
 
     They can be loaded from multiple directories.  This object is used to
     validate the sequence manifest.
