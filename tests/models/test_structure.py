@@ -161,6 +161,24 @@ def test_structure_from_manifest_section_with_cif(cif_file: Path) -> None:
     assert isinstance(structure.value, BioStructure)
 
 
+def test_structure_from_manifest_section_structure_id_as_stem(pdb_file: Path) -> None:
+    """The structure ID is set to the file stem."""
+    section = StructureManifestSection(path=pdb_file)
+
+    structure = Structure.from_manifest_section(section)
+
+    assert structure.value.get_id() == pdb_file.stem
+
+
+def test_structure_from_manifest_section_structure_id_as_name(pdb_file: Path) -> None:
+    """The structure ID is set to the new name."""
+    section = StructureManifestSection(path=pdb_file, name="new_structure")
+
+    structure = Structure.from_manifest_section(section)
+
+    assert structure.value.get_id() == "new_structure"
+
+
 def test_dataset_with_structures(
     pdb_file: Path, cif_file: Path, bio_structure: BioStructure
 ) -> None:
