@@ -8,6 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class SequenceFactory:
+    """Factory for generating `Sequence` objects from manifest sections.
+
+    It provides the methods to generate `Sequence` instances from sequence
+    manifest section. It provides method for generating `Sequences`.
+    """
+
     def __init__(
         self,
         sequence_type: str,
@@ -15,6 +21,15 @@ class SequenceFactory:
         data_getters: DataGetter = None,
         manifest_section: SequenceManifestSection = None,
     ):
+        """Initialize `SequenceFactory`.
+
+        Args:
+        sequence_type (str): Type of sequence (e.g. wild_type, engineered_sequence).
+        sequence_alphabet (str): The alphabet of the sequence (e.g. DNA, RNA, AA).
+        data_getters (DataGetter): The data getter for retrieving sequence data.
+        manifest_section (SequenceManifestSection): The manifest section
+        describing the sequence.
+        """
         self.sequence_type = sequence_type
         self.sequence_alphabet = sequence_alphabet
         self.data_getters = data_getters
@@ -25,6 +40,15 @@ class SequenceFactory:
         cls,
         manifest_section: SequenceManifestSection,
     ) -> "SequenceFactory":
+        """Creates a `SequenceFactory` from a `SequenceManifestSection`.
+
+        Args:
+            manifest_section (SequenceManifestSection): The manifest section containing
+            sequence metadata and sources.
+
+        Returns:
+            SequenceFactory: An instance of SequenceFactory from the manifest section.
+        """
         sequence_type = manifest_section.sequence_type
         sequence_alphabet = manifest_section.sequence_alphabet
         sequence_sources = manifest_section.sources
@@ -38,8 +62,10 @@ class SequenceFactory:
         )
 
     def generate_sequences(self) -> List[Sequence]:
-        """
-        Generate sequences from a list of dictionaries.
+        """Generate a list of `Sequence` objects from the associated data sources.
+
+        Returns:
+            List[Sequence]: A list of generated Sequence objects.
         """
         data_getter = self.data_getters
         sequences = []
