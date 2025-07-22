@@ -1,19 +1,24 @@
 import logging
 from typing import List
 
-from pydantic import BaseModel, Field
-
 from pg2_dataset.models.getter import DataGetter
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 
 logger = logging.getLogger(__name__)
 
 
-class SequenceFactory(BaseModel):
-    sequence_type: str = Field(required=True)
-    sequence_alphabet: str = Field(required=True)
-    data_getters: DataGetter = None
-    manifest_section: SequenceManifestSection = None
+class SequenceFactory:
+    def __init__(
+        self,
+        sequence_type: str,
+        sequence_alphabet: str,
+        data_getters: DataGetter = None,
+        manifest_section: SequenceManifestSection = None,
+    ):
+        self.sequence_type = sequence_type
+        self.sequence_alphabet = sequence_alphabet
+        self.data_getters = data_getters
+        self.manifest_section = manifest_section
 
     @classmethod
     def from_manifest_section(
