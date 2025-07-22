@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import IO, Annotated, List
+from typing import IO, Annotated
 
 import toml
 from packaging.version import Version as PackagingVersion
 from pydantic import (
-    AfterValidator,
     BaseModel,
     BeforeValidator,
     ConfigDict,
@@ -139,13 +138,6 @@ class Manifest(BaseModel):
             toml.dump(self.model_dump(include=include), f)
 
 
-def assert_non_empty_sequence_list(v: List[Sequence]) -> List[Sequence]:
-    """Ensure that the list of sequences is not empty."""
-    if len(v) == 0:
-        raise ValueError("At least one sequence is required.")
-    return v
-
-
 class Dataset(BaseModel):
     """A Dataset class representing a PG2 Dataset consisting of sequences, structures,
     msas, and assays. This is the main entry point for loading the datasets in PG2.
@@ -155,11 +147,10 @@ class Dataset(BaseModel):
     """The name of the dataset."""
     description: str
     """A brief description of the dataset."""
-    sequences: Annotated[
-        List[Sequence],
-        AfterValidator(lambda v: assert_non_empty_sequence_list(v)),
-    ]
+    sequences: list[Sequence] = Field(default_factory=list)
+    """The sequences included in the dataset."""
     manifest: Manifest = None
+    """The manifest of the dataset containing metadata and resources."""
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":

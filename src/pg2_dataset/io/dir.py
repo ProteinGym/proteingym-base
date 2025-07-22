@@ -27,7 +27,7 @@ class DataDir(BaseModel):
     def infer_dir_type(cls, values):
         if "dir_type" not in values or values["dir_type"] is None:
             path = values.get("path")
-            if "s3" not in str(path):
+            if not path.as_posix().lower().startswith("s3"):
                 values["dir_type"] = DirType.LOCAL
             else:
                 raise ValueError("Path must be local.")

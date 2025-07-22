@@ -35,7 +35,7 @@ def test_source_dirs_empty(path):
     ],
 )
 def test_data_getter_initialization(path):
-    data_dir = DataDir(path=path)
+    data_dir = DataDir(path=Path(path))
     assert data_dir.dir_type == DirType.LOCAL
     assert isinstance(data_dir.path, Path)
     data_getter = DataGetter(data_dirs=[data_dir])
@@ -73,7 +73,7 @@ def test_data_getter_from_sources(path):
 )
 @pytest.mark.xfail(raises=ValueError)
 def test_data_getter_get_files_empty(path):
-    data_dir = DataDir(path=path)
+    data_dir = DataDir(path=Path(path))
     data_getter = DataGetter(data_dirs=[data_dir])
     files = data_getter.get_files()
     assert len(files) == 0
@@ -86,7 +86,7 @@ def test_data_getter_get_files_empty(path):
     ],
 )
 def test_data_getter_get_files(path):
-    data_dir = DataDir(path=path)
+    data_dir = DataDir(path=Path(path))
     data_getter = DataGetter(data_dirs=[data_dir])
 
     files = data_getter.get_files()

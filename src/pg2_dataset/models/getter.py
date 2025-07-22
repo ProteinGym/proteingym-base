@@ -1,22 +1,13 @@
 from pathlib import Path
-from typing import Annotated, List
+from typing import List
 
-from pydantic import AfterValidator, BaseModel
+from pydantic import BaseModel, conlist
 
 from pg2_dataset.io import DataDir, DataFile
 
 
-def assert_non_empty_sources_list(sources: List[str]) -> List[str]:
-    """Ensure that the sources list is not empty."""
-    if len(sources) == 0:
-        raise ValueError("Sources list cannot be empty.")
-    return sources
-
-
 class Sources(BaseModel):
-    path: Annotated[
-        List[str], AfterValidator(lambda v: assert_non_empty_sources_list(v))
-    ]
+    path: conlist(str, min_length=1)
 
 
 class DataGetter(BaseModel):
