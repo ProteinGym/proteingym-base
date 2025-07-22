@@ -183,9 +183,7 @@ class Dataset(BaseModel):
         return cls(
             name=manifest.name,
             description=manifest.description,
-            version=manifest.version,
             sequences=sequences,
-            manifest=manifest,
             structures=structures,
         )
 
