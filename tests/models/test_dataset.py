@@ -25,8 +25,12 @@ data_type = "float"
 [[assays]]
 path = "assays.csv"
 
-[[sequences]]
-path = "sequences.fasta"
+[[ sequences ]]
+sequence_type = "wild_type"
+sequence_alphabet = "DNA"
+
+[ sequences.sources ]
+path = ["example_data/NEIME_2019/sequences"]
 
 [[structures]]
 path = "structures.pdb"
@@ -54,7 +58,6 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
     documenation_path = Path(__file__).parent.parent.parent / Path("docs/manifest.md")
-
     assert documenation_path.exists(), (
         f"Documentation file does not exist: {documenation_path}"
     )
@@ -160,6 +163,70 @@ def test_manifest_version() -> None:
     assert manifest_v2.version > manifest_v1.version
     assert manifest_v1.version <= manifest_v2.version
     assert manifest_v2.version >= manifest_v1.version
+
+
+def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
+    """The manifest dump should create a file with content."""
+    manifest = Manifest(name="test")
+    path = tmp_path / "manifest.toml"
+
+    manifest.dump(path)
+
+    assert path.exists(), "Dumped manifest file does not exist."
+    assert path.stat().st_size > 0, "Dumped manifest file is empty."
+
+
+def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
+    """The manifest dump creates a file that can be loaded back with same content."""
+    manifest = Manifest(name="test")
+    path = tmp_path / "manifest.toml"
+
+    manifest.dump(path)
+
+    try:
+        loaded_manifest = Manifest.from_path(path)
+    except ValidationError as e:
+        raise AssertionError(
+            f"Loading manifest failed:``` toml\n{path.read_text()}```"
+        ) from e
+    else:
+        assert loaded_manifest == manifest, (
+            f"Loaded manifest does not match dumped manifest: {path.read_text()}"
+        )
+
+
+def test_manifest_dump_from_path_unit_docs_example(
+    tmp_path: Path, manifest_path: Path
+) -> None:
+    """The manifest dump creates a file that can be loaded back with same content.
+
+    Use the example from the documentation for more complicated manifest.
+    """
+    manifest = Manifest.from_path(manifest_path)
+    path = tmp_path / "manifest.toml"
+
+    manifest.dump(path)
+
+    try:
+        loaded_manifest = Manifest.from_path(path)
+    except ValidationError as e:
+        raise AssertionError(
+            f"Loading manifest failed:``` toml\n{path.read_text()}```"
+        ) from e
+    else:
+        assert loaded_manifest == manifest, (
+            f"Loaded manifest does not match dumped manifest: {path.read_text()}"
+        )
+
+
+def test_manifest_dump_version_string(tmp_path: Path) -> None:
+    """The version should be dumped as a string."""
+    manifest = Manifest(name="test", version="1.0.0")
+    path = tmp_path / "manifest.toml"
+
+    manifest.dump(path)
+
+    assert 'version = "1.0.0"' in path.read_text()
 
 
 @pytest.mark.skip(

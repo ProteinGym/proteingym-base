@@ -1,23 +1,23 @@
 from pathlib import Path
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, conlist
 
-from pg2_dataset.constants import DirType
 from pg2_dataset.io import DataDir, DataFile
-from pg2_dataset.models.manifest import Sources
+
+
+class Sources(BaseModel):
+    path: conlist(str, min_length=1)
 
 
 class DataGetter(BaseModel):
     data_dirs: List[DataDir]
 
     @classmethod
-    def from_sources(cls, data: List[Sources]) -> "DataGetter":
-        local_dirs = data.local
-
+    def from_sources(cls, data: Sources) -> "DataGetter":
         data_dirs = []
-        for dir in local_dirs:
-            data_dir = DataDir(path=Path(dir), dir_type=DirType.LOCAL)
+        for dir in data.path:
+            data_dir = DataDir(path=Path(dir))
             data_dirs.append(data_dir)
 
         return cls(

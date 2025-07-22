@@ -2,9 +2,11 @@ from pathlib import Path
 
 import pytest
 from Bio import Seq, SeqIO, SeqRecord
+from pydantic import ValidationError
 
-from pg2_dataset.constants import SequenceAlphabet, SequenceType
-from pg2_dataset.models.sequence import Sequence
+from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
+from pg2_dataset.models.getter import Sources
+from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 
 
 @pytest.mark.parametrize(
@@ -75,3 +77,48 @@ def test_sequence_dump(tmp_path):
 
     seq = SeqIO.read(file_path, "fasta")
     assert isinstance(seq, SeqRecord.SeqRecord)
+
+
+@pytest.mark.parametrize(
+    "sequence_type, sequence_alphabet, path",
+    [
+        (
+            "wild_type",
+            "DNA",
+            ["path/"],
+        ),
+        (
+            "wild_type",
+            "DNA",
+            ["path/"],
+        ),
+    ],
+)
+def test_sequence_manifest(sequence_type, sequence_alphabet, path):
+    sources = Sources(path=path)
+
+    manifest = SequenceManifestSection(
+        sequence_type=sequence_type,
+        sequence_alphabet=sequence_alphabet,
+        sources=sources,
+    )
+    assert manifest.sequence_type == sequence_type
+    assert manifest.sequence_alphabet == sequence_alphabet
+
+
+@pytest.mark.parametrize(
+    "sequence_type, sequence_alphabet, local, s3",
+    [
+        ("wild_type", None, ["path/"], []),
+        (None, "DNA", ["path/"], []),
+    ],
+)
+@pytest.mark.xfail(raises=ValidationError)
+def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, local, s3):
+    manifest = SequenceManifestSection(
+        sequence_type=sequence_type,
+        sequence_alphabet=sequence_alphabet,
+        sources=Sources(dirs=Sources(local=local, s3=s3)),
+    )
+    assert len(manifest.sequence_type) > 0
+    assert len(manifest.sequence_alphabet) > 0

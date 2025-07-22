@@ -1,24 +1,37 @@
 from pathlib import Path
 from typing import Annotated, List
 
-from pydantic import AfterValidator, BaseModel
+from pydantic import AfterValidator, BaseModel, model_validator
 
-from pg2_dataset.constants import DirType
 from pg2_dataset.io.files import DataFile, DataFileAdapter
+from pg2_dataset.models.constants import DirType
 
 
-def exists_ok(path: Path) -> str:
+def exists_non_empty(path: Path) -> str:
     if not path.is_dir():
         raise ValueError(f"Path {path} is not a directory.")
     if not path.exists():
         raise ValueError(f"Path {path} does not exist.")
+    if list(path.rglob("*")) == []:
+        raise ValueError(f"Path {path} is empty.")
     return path
 
 
 class DataDir(BaseModel):
-    path: Annotated[Path, AfterValidator(exists_ok)]
-    dir_type: DirType
+    path: Annotated[Path, AfterValidator(exists_non_empty)]
+    dir_type: DirType = None
     files: List[DataFile] = []
+
+    @model_validator(mode="before")
+    @classmethod
+    def infer_dir_type(cls, values):
+        if "dir_type" not in values or values["dir_type"] is None:
+            path = values.get("path")
+            if not path.as_posix().lower().startswith("s3"):
+                values["dir_type"] = DirType.LOCAL
+            else:
+                raise ValueError("Path must be local.")
+        return values
 
     def get_files(self, file_type: list[str] = None) -> List[DataFile]:
         if file_type is None:

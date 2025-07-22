@@ -1,27 +1,22 @@
+from typing import Annotated
+
 import typer
 
-from pg2_dataset.models.dataset import Dataset
+from pg2_dataset.models.dataset import Dataset, Manifest
 
 app = typer.Typer()
-create_app = typer.Typer()
-
-app.add_typer(create_app, name="create")
 
 
-# Create commands
-@create_app.command("from-manifest")
-def create_from_manifest(
-    path: str = typer.Argument(..., help="Path to the manifest file"),
+@app.command("create")
+def create(
+    manifest_path: str = Annotated[str, typer.Option(help="Path to the manifest file")],
 ):
-    dataset = Dataset.from_manifest_toml(path)
+    """Creates a Dataset instance from a manifest TOML file.
 
-    typer.echo(f"Created dataset from {dataset.name}")
-    typer.echo(f"Number of sequences: {len(dataset.sequences)}")
+    Args:
+        manifest_path: The path to the manifest TOML file.
+    """
 
-
-@create_app.command("from-zip")
-def create_from_zip(path: str = typer.Argument(..., help="Path to the ZIP file")):
-    dataset = Dataset.from_zip(path)
-
-    typer.echo(f"Created dataset from ZIP file: {dataset.name}")
-    typer.echo(f"Number of sequences: {len(dataset.sequences)}")
+    dataset_manifest = Manifest.from_path(manifest_path)
+    dataset = Dataset.from_manifest(dataset_manifest)
+    typer.echo(f"Dataset created with name: {dataset.name}")
