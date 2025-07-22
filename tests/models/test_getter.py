@@ -4,93 +4,89 @@ import pytest
 from pydantic import ValidationError
 
 from pg2_dataset.io import DataDir, DataFile
+from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataGetter, Sources
 
 
 @pytest.mark.parametrize(
-    "local,s3",
+    "path",
     [
-        (["/some/path"], []),
-        (["/some/path"], ["s3://bucket"]),
-        ([], ["s3://bucket"]),
+        (["/some/path"]),
+        (["/some/path", "s3://bucket"]),
+        (["s3://bucket"]),
     ],
 )
-def test_source_dirs(local, s3):
-    sources = Sources(local=local, s3=s3)
-    if local or s3:
-        assert sources.local == local
-        assert sources.s3 == s3
-    else:
-        with pytest.raises(ValidationError) as e:
-            Sources(local=local, s3=s3)
-        assert "At least one of 'local' or 's3' must be provided in sources" in str(
-            e.value
-        )
+def test_source_dirs(path):
+    sources = Sources(path=path)
+    assert isinstance(sources.path, list)
+    assert len(sources.path) > 0
 
 
-@pytest.mark.parametrize("local,s3", [([], [])])
+@pytest.mark.parametrize("path", [([])])
 @pytest.mark.xfail(raises=ValidationError)
-def test_source_dirs_empty(local, s3):
-    Sources(local=local, s3=s3)
+def test_source_dirs_empty(path):
+    Sources(path=path)
 
 
 @pytest.mark.parametrize(
-    "path, dir_type",
+    "path",
     [
-        ("tests/test_data/", "local"),
+        ("tests/test_data/"),
     ],
 )
-def test_data_getter_initialization(path, dir_type):
-    data_dir = DataDir(path=path, dir_type=dir_type)
+def test_data_getter_initialization(path):
+    data_dir = DataDir(path=Path(path))
+    assert data_dir.dir_type == DirType.LOCAL
+    assert isinstance(data_dir.path, Path)
     data_getter = DataGetter(data_dirs=[data_dir])
 
     assert isinstance(data_getter, DataGetter)
     assert len(data_getter.data_dirs) > 0
-    assert all(isinstance(dir.path, Path) for dir in data_getter.data_dirs)
-    assert data_getter.data_dirs[0].dir_type == dir_type
 
 
 @pytest.mark.parametrize(
-    "path, dir_type",
+    "path",
     [
-        ("tests/test_data/", "local"),
+        (["tests/test_data/"]),
     ],
 )
-def test_data_getter_from_sources(path, dir_type):
-    sources = Sources(local=[path])
+def test_data_getter_from_sources(path):
+    sources = Sources(path=path)
     data_getter = DataGetter.from_sources(sources)
 
     assert isinstance(data_getter, DataGetter)
     assert len(data_getter.data_dirs) > 0
-    assert data_getter.data_dirs[0].path == Path(path)
-    assert data_getter.data_dirs[0].dir_type == dir_type
+    for data_dir in data_getter.data_dirs:
+        assert isinstance(data_dir, DataDir)
+        assert isinstance(data_dir.path, Path)
+        assert data_dir.dir_type == DirType.LOCAL
 
 
 @pytest.mark.parametrize(
-    "path, dir_type",
+    "path",
     [
-        ("tests/invalid_dir/", "local"),
-        ("tests/test_data/", "asd"),
-        ("tests/test_data/", None),
-        ("", "local"),
+        ("tests/invalid_dir/"),
+        ("tests/test_data/"),
+        ("tests/test_data/"),
+        (""),
     ],
 )
 @pytest.mark.xfail(raises=ValueError)
-def test_data_getter_get_files_empty(path, dir_type):
-    data_dir = DataDir(path=path, dir_type=dir_type)
+def test_data_getter_get_files_empty(path):
+    data_dir = DataDir(path=Path(path))
     data_getter = DataGetter(data_dirs=[data_dir])
     files = data_getter.get_files()
     assert len(files) == 0
 
 
 @pytest.mark.parametrize(
-    "path, dir_type",
+    "path",
     [
-        ("tests/test_data/io/files", "local"),
+        ("tests/test_data/io/files"),
     ],
 )
-def test_data_getter_get_files(path, dir_type):
-    data_dir = DataDir(path=path, dir_type=dir_type)
+def test_data_getter_get_files(path):
+    data_dir = DataDir(path=Path(path))
     data_getter = DataGetter(data_dirs=[data_dir])
 
     files = data_getter.get_files()
