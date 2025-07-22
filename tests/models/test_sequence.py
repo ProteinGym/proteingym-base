@@ -80,24 +80,22 @@ def test_sequence_dump(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "sequence_type, sequence_alphabet, local, s3",
+    "sequence_type, sequence_alphabet, path",
     [
         (
             "wild_type",
             "DNA",
             ["path/"],
-            [],
         ),
         (
             "wild_type",
             "DNA",
             ["path/"],
-            [],
         ),
     ],
 )
-def test_sequence_manifest(sequence_type, sequence_alphabet, local, s3):
-    sources = Sources(local=local, s3=s3)
+def test_sequence_manifest(sequence_type, sequence_alphabet, path):
+    sources = Sources(path=path)
 
     manifest = SequenceManifestSection(
         sequence_type=sequence_type,
