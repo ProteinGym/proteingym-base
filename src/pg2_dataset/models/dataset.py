@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import IO, Annotated
+from typing import IO, Annotated, List
 
 import toml
 from packaging.version import Version as PackagingVersion
@@ -14,7 +14,7 @@ from pydantic import (
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
-from pg2_dataset.models.structure import StructureManifestSection
+from pg2_dataset.models.structure import Structure, StructureManifestSection
 from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.settings import _DEFAULT_MANIFEST_FILE
 from pg2_dataset.utils import zip_context
@@ -140,18 +140,23 @@ class Manifest(BaseModel):
 
 
 class Dataset(BaseModel):
-    """A Dataset class representing a PG2 Dataset consisting of sequences, structures,
-    msas, and assays. This is the main entry point for loading the datasets in PG2.
+    """A Protein Gym dataset.
+
+    The dataset provides access to metadata and protein data such as assays,
+    sequences, structures, and multiple sequence alignments (MSAs).
     """
 
     name: str
     """The name of the dataset."""
-    description: str
+
+    description: str | None = None
     """A brief description of the dataset."""
+
     sequences: list[Sequence] = Field(default_factory=list)
     """The sequences included in the dataset."""
-    manifest: Manifest = None
-    """The manifest of the dataset containing metadata and resources."""
+
+    structures: list[Structure] = Field(default_factory=list)
+    """The structures included in the dataset."""
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
@@ -173,12 +178,15 @@ class Dataset(BaseModel):
             )
             sequences = sequences + sequence_factory.generate_sequences()
 
+        structures = [Structure.from_manifest_section(s) for s in manifest.structures]
+
         return cls(
             name=manifest.name,
             description=manifest.description,
             version=manifest.version,
             sequences=sequences,
             manifest=manifest,
+            structures=structures,
         )
 
     @classmethod

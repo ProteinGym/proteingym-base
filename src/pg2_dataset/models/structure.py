@@ -79,9 +79,10 @@ class Structure(BaseModel):
                 raise NotImplementedError(
                     f"Unsupported file type: {section.path.suffix}"
                 )
-        value = parser.get_structure(section.path.name, section.path)
+        name = section.name or section.path.stem
+        value = parser.get_structure(name, section.path)
         return Structure(
-            name=section.name or section.path.stem,
+            name=name,
             value=value,
             description=section.description,
             metadata=section.metadata,
