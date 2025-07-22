@@ -11,6 +11,7 @@ from Bio.PDB.Residue import Residue
 from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
 
+from pg2_dataset.models.dataset import Dataset, Manifest
 from pg2_dataset.models.structure import Structure, StructureManifestSection
 
 
@@ -158,3 +159,27 @@ def test_structure_from_manifest_section_with_cif(cif_file: Path) -> None:
 
     assert structure.name == "structure"
     assert isinstance(structure.value, BioStructure)
+
+
+def test_dataset_with_structures(
+    pdb_file: Path, cif_file: Path, bio_structure: BioStructure
+) -> None:
+    """A Dataset can be created with structures from the manifest."""
+    manifest = Manifest(
+        name="test",
+        structures=[
+            StructureManifestSection(path=pdb_file, name=bio_structure.id),
+            StructureManifestSection(path=cif_file, name=bio_structure.id),
+        ],
+    )
+
+    dataset = Dataset.from_manifest(manifest)
+
+    assert len(dataset.structures) == 2
+    assert dataset.structures[0].value.strictly_equals(bio_structure)
+
+    # There is an inconsistency in biopython that loads the full name of an Atom
+    # differently for a PDB and CIF file - the full name is trimmed.
+    # Hence, we overwrite the fullname here before the assertion.
+    list(bio_structure.get_atoms())[0].fullname = "CA"
+    assert dataset.structures[1].value.strictly_equals(bio_structure)
