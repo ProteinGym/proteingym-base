@@ -146,6 +146,14 @@ class Dataset(BaseModel):
     sequences, structures, and multiple sequence alignments (MSAs).
     """
 
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
     name: str
     """The name of the dataset."""
 
