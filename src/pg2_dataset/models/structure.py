@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from Bio.PDB import MMCIFParser, PDBParser
+from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser
 from Bio.PDB.binary_cif import BinaryCIFParser
 from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import BaseModel, ConfigDict, Field, FilePath, field_serializer
@@ -87,3 +87,29 @@ class Structure(BaseModel):
             description=section.description,
             metadata=section.metadata,
         )
+
+    def dump(self, path: Path) -> None:
+        """Dump the structure to a file.
+
+        Biopython is used for writing the structure to a file. The following
+        formats are supported:
+        - PDB (.pdb)
+        - MMCIF (.cif)
+        Note that binary CIF files (.bcif) are not supported for writing.
+
+        Args:
+            path (Path): The path to the file where the structure will be saved.
+
+        Raises:
+            NotImplementedError if the file type is not supported.
+        """
+        match path.suffix.lower():
+            case ".pdb":
+                io = PDBIO()
+            case ".cif":
+                io = MMCIFIO()
+            case _:
+                raise NotImplementedError(f"Unsupported file type: {path.suffix}")
+        io.set_structure(self.value)
+        with path.open("w", encoding="utf-8") as file:
+            io.save(file)

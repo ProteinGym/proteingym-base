@@ -5,8 +5,10 @@ import pytest
 from Bio.PDB.Atom import Atom
 from Bio.PDB.Chain import Chain
 from Bio.PDB.mmcifio import MMCIFIO
+from Bio.PDB.MMCIFParser import MMCIFParser
 from Bio.PDB.Model import Model
 from Bio.PDB.PDBIO import PDBIO
+from Bio.PDB.PDBParser import PDBParser
 from Bio.PDB.Residue import Residue
 from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
@@ -177,6 +179,32 @@ def test_structure_from_manifest_section_structure_id_as_name(pdb_file: Path) ->
     structure = Structure.from_manifest_section(section)
 
     assert structure.value.get_id() == "new_structure"
+
+
+def test_structure_dump_to_pdb(tmp_path: Path, bio_structure: BioStructure) -> None:
+    """A Structure can be dumped to a PDB file."""
+    structure = Structure(name="test", value=bio_structure)
+    pdb_file = tmp_path / "test.pdb"
+
+    structure.dump(pdb_file)
+
+    loaded_structure = PDBParser().get_structure("test", pdb_file)
+    assert loaded_structure.strictly_equals(bio_structure)
+
+
+def test_structure_dump_to_cif(tmp_path: Path, bio_structure: BioStructure) -> None:
+    """A Structure can be dumped to a cif file."""
+    structure = Structure(name="test", value=bio_structure)
+    cif_file = tmp_path / "test.cif"
+
+    structure.dump(cif_file)
+
+    # There is an inconsistency in biopython that loads the full name of an Atom
+    # differently for a PDB and CIF file - the full name is trimmed for the
+    # later. Hence, we overwrite the fullname here before the assertion.
+    list(bio_structure.get_atoms())[0].fullname = "CA"
+    loaded_structure = MMCIFParser().get_structure("test", cif_file)
+    assert loaded_structure.strictly_equals(bio_structure)
 
 
 def test_dataset_with_structures(
