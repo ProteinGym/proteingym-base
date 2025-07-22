@@ -18,18 +18,18 @@ class SequenceFactory(BaseModel):
     @classmethod
     def from_manifest_section(
         cls,
-        manifest: SequenceManifestSection,
+        manifest_section: SequenceManifestSection,
     ) -> "SequenceFactory":
-        sequence_type = manifest.sequence_type
-        sequence_alphabet = manifest.sequence_alphabet
-        sequence_sources = manifest.sources
+        sequence_type = manifest_section.sequence_type
+        sequence_alphabet = manifest_section.sequence_alphabet
+        sequence_sources = manifest_section.sources
         data_getter = DataGetter.from_sources(sequence_sources)
 
         return cls(
             sequence_type=sequence_type,
             sequence_alphabet=sequence_alphabet,
             data_getters=data_getter,
-            manifest_section=manifest,
+            manifest_section=manifest_section,
         )
 
     def generate_sequences(self) -> List[Sequence]:

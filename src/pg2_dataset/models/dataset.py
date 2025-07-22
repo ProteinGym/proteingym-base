@@ -177,7 +177,7 @@ class Dataset(BaseModel):
         sequences = []
         for sequence_manifest in manifest.sequences:
             sequence_factory = SequenceFactory.from_manifest_section(
-                manifest=sequence_manifest
+                manifest_section=sequence_manifest
             )
             sequences = sequences + sequence_factory.generate_sequences()
 
