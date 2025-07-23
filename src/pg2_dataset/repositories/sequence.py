@@ -22,8 +22,8 @@ class SequenceFactory(BaseModel):
     ) -> "SequenceFactory":
         sequence_type = manifest_section.sequence_type
         sequence_alphabet = manifest_section.sequence_alphabet
-        sequence_sources = manifest_section.sources
-        data_getter = DataGetter.from_sources(sequence_sources)
+        sequence_source_paths = manifest_section.path
+        data_getter = DataGetter.from_paths(sequence_source_paths)
 
         return cls(
             sequence_type=sequence_type,

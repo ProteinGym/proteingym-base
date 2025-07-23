@@ -1,31 +1,10 @@
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
 from pg2_dataset.io import DataDir, DataFile
 from pg2_dataset.models.constants import DirType
-from pg2_dataset.models.getter import DataGetter, Sources
-
-
-@pytest.mark.parametrize(
-    "path",
-    [
-        (["/some/path"]),
-        (["/some/path", "s3://bucket"]),
-        (["s3://bucket"]),
-    ],
-)
-def test_source_dirs(path):
-    sources = Sources(path=path)
-    assert isinstance(sources.path, list)
-    assert len(sources.path) > 0
-
-
-@pytest.mark.parametrize("path", [([])])
-@pytest.mark.xfail(raises=ValidationError)
-def test_source_dirs_empty(path):
-    Sources(path=path)
+from pg2_dataset.models.getter import DataGetter
 
 
 @pytest.mark.parametrize(
@@ -50,9 +29,8 @@ def test_data_getter_initialization(path):
         (["tests/test_data/"]),
     ],
 )
-def test_data_getter_from_sources(path):
-    sources = Sources(path=path)
-    data_getter = DataGetter.from_sources(sources)
+def test_data_getter_from_paths(path):
+    data_getter = DataGetter.from_paths(path)
 
     assert isinstance(data_getter, DataGetter)
     assert len(data_getter.data_dirs) > 0

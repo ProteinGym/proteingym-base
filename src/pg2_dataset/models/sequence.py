@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, List
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -7,7 +7,6 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
-from pg2_dataset.models.getter import Sources
 
 
 def parse_sequence_value(value: str | Seq) -> Seq:
@@ -50,4 +49,4 @@ class SequenceManifestSection(BaseModel):
 
     sequence_type: str = Field(required=True)
     sequence_alphabet: str = Field(required=True)
-    sources: Sources = Field(required=True)
+    path: List[str] = Field(required=True)

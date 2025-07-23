@@ -69,8 +69,6 @@ path = "assays.csv"
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-
-[ sequences.sources ]
 path = ["example_data/NEIME_2019/sequences"]
 
 [[structures]]
