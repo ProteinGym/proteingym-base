@@ -202,10 +202,8 @@ def test_manifest_dump_from_path_unit_docs_example(
     """
     manifest = Manifest.from_path(manifest_path)
     path = tmp_path / "manifest.toml"
-    print(f"Manifest: {manifest}")
     manifest.dump(path)
     loaded_manifest = Manifest.from_path(path)
-    print(f"Loaded manifest: {loaded_manifest}")
     try:
         loaded_manifest = Manifest.from_path(path)
     except ValidationError as e:
