@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import IO, Annotated, List
+from typing import IO, Annotated
 
 import toml
 from packaging.version import Version as PackagingVersion
