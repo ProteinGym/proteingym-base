@@ -184,7 +184,7 @@ class Dataset(BaseModel):
             sequence_factory = SequenceFactory.from_manifest_section(
                 manifest_section=sequence_manifest
             )
-            sequences = sequences + sequence_factory.generate_sequences()
+            sequences = sequences + sequence_factory.generate()
 
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
 

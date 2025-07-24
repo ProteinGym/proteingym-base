@@ -24,11 +24,11 @@ class SequenceFactory:
         """Initialize `SequenceFactory`.
 
         Args:
-        sequence_type (str): Type of sequence (e.g. wild_type, engineered_sequence).
-        sequence_alphabet (str): The alphabet of the sequence (e.g. DNA, RNA, AA).
-        data_getters (DataGetter): The data getter for retrieving sequence data.
-        manifest_section (SequenceManifestSection): The manifest section
-        describing the sequence.
+            sequence_type (str): Type of sequence (e.g. wild_type, engineered_sequence).
+            sequence_alphabet (str): The alphabet of the sequence (e.g. DNA, RNA, AA).
+            data_getters (DataGetter): The data getter for retrieving sequence data.
+            manifest_section (SequenceManifestSection): The manifest section
+            describing the sequence.
         """
         self.sequence_type = sequence_type
         self.sequence_alphabet = sequence_alphabet
@@ -61,7 +61,7 @@ class SequenceFactory:
             manifest_section=manifest_section,
         )
 
-    def generate_sequences(self) -> List[Sequence]:
+    def generate(self) -> List[Sequence]:
         """Generate a list of `Sequence` objects from the associated data sources.
 
         Returns:
