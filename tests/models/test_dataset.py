@@ -10,8 +10,16 @@ from pg2_dataset.models.dataset import Dataset, Manifest
 
 
 @pytest.fixture
-def manifest_contents() -> str:
-    return """
+def mock_structure_file(tmp_path: Path) -> Path:
+    """Create a mock structure file for testing."""
+    structure_file = tmp_path / "structures.pdb"
+    structure_file.touch()
+    return structure_file
+
+
+@pytest.fixture
+def manifest_contents(mock_structure_file: Path) -> str:
+    return f"""
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
@@ -33,7 +41,7 @@ sequence_alphabet = "DNA"
 path = ["example_data/NEIME_2019/sequences"]
 
 [[structures]]
-path = "structures.pdb"
+path = "{mock_structure_file.as_posix()}"
 
 [[msas]]
 path = "msas.a3m"
@@ -48,7 +56,9 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     return manifest_file
 
 
-def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
+def test_manifest_contents_in_documentation(
+    mock_structure_file: Path, manifest_contents: str
+) -> None:
     """Check if the manifest contents are present in the documentation.
 
     If this tests fails, it indicates that the documentation is not up-to-date
@@ -57,11 +67,17 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
 
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
-    documenation_path = Path(__file__).parent.parent.parent / Path("docs/manifest.md")
-    assert documenation_path.exists(), (
-        f"Documentation file does not exist: {documenation_path}"
+    documentation_file_path = Path(__file__).parent.parent.parent / Path(
+        "docs/manifest.md"
     )
-    assert manifest_contents in documenation_path.read_text(), (
+    documentation_contents = documentation_file_path.read_text(
+        encoding="utf-8"
+    ).replace("structures.pdb", mock_structure_file.as_posix())
+
+    assert documentation_file_path.exists(), (
+        f"Documentation file does not exist: {documentation_file_path}"
+    )
+    assert manifest_contents in documentation_contents, (
         "Test manifest contents not found in documentation."
     )
 
