@@ -57,7 +57,7 @@ def test_invalid_sequence(name, value, description, type, alphabet):
     assert isinstance(seq.alphabet, SequenceAlphabet)
 
 
-def test_sequence_dump(tmp_path):
+def test_sequence_dump(tmp_path: Path) -> None:
     seq = Sequence(
         name="test_seq",
         value=Seq.Seq("ATCG"),
@@ -65,9 +65,8 @@ def test_sequence_dump(tmp_path):
         type=SequenceType("wild_type"),
         alphabet=SequenceAlphabet("DNA"),
     )
-    dir = Path(tmp_path)
-    seq.dump(dir)
-    file_path = tmp_path / "test_seq.fasta"
+    file_path = seq.dump(path=tmp_path)
+
     assert file_path.exists()
     with open(file_path, "r") as f:
         content = f.read()
