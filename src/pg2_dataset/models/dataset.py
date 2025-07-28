@@ -244,6 +244,22 @@ class Dataset(BaseModel):
         ]
         return manifest_sections
 
+    def _create_manifest(self, path: Path) -> Manifest:
+        """Create a manifest for the dataset."""
+        sequence_manifest_sections = self._create_manifest_sections(
+            self.sequences, path
+        )
+        structure_manifest_sections = self._create_manifest_sections(
+            self.structures, path
+        )
+        manifest = Manifest(
+            name=self.name,
+            description=self.description,
+            sequences=sequence_manifest_sections,
+            structures=structure_manifest_sections,
+        )
+        return manifest
+
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the dataset.
 
@@ -259,22 +275,8 @@ class Dataset(BaseModel):
 
         with TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
-
-            sequence_manifest_sections = self._create_manifest_sections(
-                self.sequences, temp_dir
-            )
-            structure_manifest_sections = self._create_manifest_sections(
-                self.structures, temp_dir
-            )
-
-            manifest = Manifest(
-                name=self.name,
-                description=self.description,
-                sequences=sequence_manifest_sections,
-                structures=structure_manifest_sections,
-            )
-            manifest_path = manifest.dump(path=Path(temp_dir))
-
+            manifest = self._create_manifest(temp_dir)
+            manifest_path = manifest.dump(path=temp_dir)
             with ZipFile(archive_path, "w") as zip:
                 zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
                 for sequence in manifest.sequences:
@@ -285,5 +287,4 @@ class Dataset(BaseModel):
                     zip.write(
                         structure.path, arcname=f"structures/{structure.path.name}"
                     )
-
         return archive_path
