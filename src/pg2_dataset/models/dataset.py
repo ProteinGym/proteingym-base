@@ -265,7 +265,6 @@ class Dataset(BaseModel):
                 )
                 structure_manifest_sections.append(structure_manifest_section)
 
-            # TODO: Write data files to the output directory.
             manifest = Manifest(
                 name=self.name,
                 description=self.description,
