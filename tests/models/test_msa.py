@@ -1,7 +1,10 @@
 from pathlib import Path
 
 import pytest
+from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from pg2_dataset.models.msa import MSA, MSAManifestSection
@@ -72,3 +75,37 @@ def test_msa_empty_string_field(field: str) -> None:
     )
     with pytest.raises(ValidationError, match=match):
         MSA(value=MultipleSeqAlignment([]), **{"name": "test", field: ""})
+
+
+@pytest.fixture
+def multiple_sequence_alignment() -> MultipleSeqAlignment:
+    """Minimal biopython multiple sequence alignment for testing."""
+    alignment = MultipleSeqAlignment([])
+
+    a = SeqRecord(Seq("AAAACGT"), id="Alpha")
+    b = SeqRecord(Seq("AAA-CGT"), id="Beta")
+    c = SeqRecord(Seq("AAAAGGT"), id="Gamma")
+    alignment = MultipleSeqAlignment(
+        [a, b, c], annotations={"tool": "demo"}, column_annotations={"stats": "CCCXCCC"}
+    )
+    return alignment
+
+
+@pytest.fixture
+def fasta_file(
+    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+) -> Path:
+    """FASTA structure file for testing."""
+    path = tmp_path / "structure.fasta"
+    AlignIO.write(multiple_sequence_alignment, path, "fasta")
+    return path
+
+
+def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
+    """A MSA can be created from a manifest section with FASTA file."""
+    section = MSAManifestSection(path=fasta_file)
+
+    msa = MSA.from_manifest_section(section)
+
+    assert msa.name == "structure"
+    assert isinstance(msa.value, MultipleSeqAlignment)
