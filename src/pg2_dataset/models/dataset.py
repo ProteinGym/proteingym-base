@@ -1,15 +1,17 @@
 from pathlib import Path
-from typing import IO, Annotated
+from typing import IO, Annotated, Any, Callable
 
 import toml
-from packaging.version import Version as PackagingVersion
 from pydantic import (
     BaseModel,
-    BeforeValidator,
     ConfigDict,
     Field,
+    GetJsonSchemaHandler,
     field_serializer,
 )
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
+from semver import Version
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
@@ -21,57 +23,52 @@ from pg2_dataset.utils import zip_context
 _DEFAULT_MANIFEST_FILE = Path("manifest.toml")
 
 
-class _Version(BaseModel):
+class _VersionPydanticAnnotation:
     """A version class to represent semantic versions.
 
-    Could not reuse `packaging.version.Version` directly without loosing
-    serializaiton as Pydantic requires a dataclass or Pydantic model for that.
-
     Docs:
-        See https://packaging.pypa.io/en/stable/version.html#packaging.version.Version
+        https://docs.pydantic.dev/latest/api/pydantic_extra_types_semantic_version/
+        https://python-semver.readthedocs.io/en/latest/advanced/combine-pydantic-and-semver.html
     """
 
-    major: int
-    minor: int
-    micro: int = 0
-
     @classmethod
-    def from_string(cls, version_string: str) -> "_Version":
-        """Initialize Version from a string in the format 'major.minor[.patch]'."""
-        version = PackagingVersion(version_string)
-        return cls(
-            major=version.major,
-            minor=version.minor,
-            micro=version.micro,
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: Any,
+        _handler: Callable[[Any], core_schema.CoreSchema],
+    ) -> core_schema.CoreSchema:
+        """See https://docs.pydantic.dev/latest/concepts/types/#customizing-validation-with-__get_pydantic_core_schema__"""
+        _ = _source_type
+        _ = _handler
+
+        def validate_from_str(value: str) -> Version:
+            return Version.parse(value)
+
+        from_str_schema = core_schema.chain_schema(
+            [
+                core_schema.str_schema(),
+                core_schema.no_info_plain_validator_function(validate_from_str),
+            ]
         )
 
-    def __str__(self) -> str:
-        return f"{self.major}.{self.minor}.{self.micro}"
+        return core_schema.json_or_python_schema(
+            json_schema=from_str_schema,
+            python_schema=core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(Version),
+                    from_str_schema,
+                ]
+            ),
+            serialization=core_schema.to_string_ser_schema(),
+        )
 
-    def __eq__(self, other: "_Version") -> bool:
-        return PackagingVersion(str(self)) == PackagingVersion(str(other))
-
-    def __ne__(self, other: "_Version") -> bool:
-        return PackagingVersion(str(self)) != PackagingVersion(str(other))
-
-    def __lt__(self, other: "_Version") -> bool:
-        return PackagingVersion(str(self)) < PackagingVersion(str(other))
-
-    def __le__(self, other: "_Version") -> bool:
-        return PackagingVersion(str(self)) <= PackagingVersion(str(other))
-
-    def __gt__(self, other: "_Version") -> bool:
-        return PackagingVersion(str(self)) > PackagingVersion(str(other))
-
-    def __ge__(self, other: "_Version") -> bool:
-        return PackagingVersion(str(self)) >= PackagingVersion(str(other))
-
-
-def _try_coerce_version(version: _Version | str) -> _Version:
-    """Try to coercea a Version object."""
-    if isinstance(version, str):
-        return _Version.from_string(version)
-    return version
+    @classmethod
+    def __get_pydantic_json_schema__(
+        cls, _core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        """See https://docs.pydantic.dev/latest/concepts/json_schema/#implementing-__get_pydantic_json_schema__"""
+        _ = core_schema
+        return handler(core_schema.str_schema())
 
 
 class Manifest(BaseModel):
@@ -90,9 +87,7 @@ class Manifest(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    version: Annotated[_Version, BeforeValidator(_try_coerce_version)] = _Version(
-        major=1, minor=0
-    )
+    version: Annotated[Version, _VersionPydanticAnnotation] = Version(1, 0)
     """The version of the manifest schema.
 
     The version follows the semantic version format: `<major>.<minor>`. A major
@@ -127,7 +122,7 @@ class Manifest(BaseModel):
         return cls(**toml.load(path))
 
     @field_serializer("version")
-    def serialize_version(self, version: _Version) -> str:
+    def serialize_version(self, version: Version) -> str:
         """Serialize the version to a string."""
         return str(version)
 
