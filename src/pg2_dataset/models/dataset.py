@@ -244,11 +244,7 @@ class Dataset(BaseModel):
             return cls.from_manifest(dataset_manifest)
 
     def _create_manifest_sections(self, objects: list[Any], path: Path) -> list[Any]:
-        """Create manifest sections for sequences and structures.
-
-        TODO:
-            Improve type hints.
-        """
+        """Create manifest sections for sequences and structures."""
         manifest_sections = [
             obj.as_manifest_section(path=obj.dump(path=path)) for obj in objects
         ]
