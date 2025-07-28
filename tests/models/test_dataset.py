@@ -265,6 +265,16 @@ def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
     assert not ZipFile(path).testzip(), "Dataset dump contains a bad file."
 
 
+def test_dataset_dump_creates_one_file(tmp_path: Path) -> None:
+    """The dataset dump should create a single file."""
+    dataset = Dataset(name="test")
+
+    path = dataset.dump(path=tmp_path)
+
+    paths = list(tmp_path.iterdir())
+    assert [path] == paths, f"Expected one file in the directory, but found: {paths}"
+
+
 @pytest.mark.skip(reason="TODO: Add a `from_path` method to the Dataset class")
 def test_from_path_with_invalid_file_should_raise_exceptions(tmpdir: Path) -> None:
     invalid_zip_path = Path(tmpdir) / "invalid_dataset.zip"
