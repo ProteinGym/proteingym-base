@@ -40,3 +40,13 @@ def test_msa_manifest_section_empty_string_field(tmp_path: Path, field: str) -> 
     )
     with pytest.raises(ValidationError, match=match):
         MSAManifestSection(path=path, **{field: ""})
+
+
+def test_msa_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
+    """The path is serialized as a Posix path."""
+    path = tmp_path / "test.msa"
+    path.touch()
+
+    section = MSAManifestSection(path=path)
+
+    assert section.model_dump().get("path") == path.as_posix()
