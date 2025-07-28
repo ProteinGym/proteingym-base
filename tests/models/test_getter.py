@@ -17,27 +17,25 @@ def test_data_getter_initialization(path):
     data_dir = DataDir(path=Path(path))
     assert data_dir.dir_type == DirType.LOCAL
     assert isinstance(data_dir.path, Path)
-    data_getter = DataGetter(data_dirs=[data_dir])
+    data_getter = DataGetter(data_dir=data_dir)
 
     assert isinstance(data_getter, DataGetter)
-    assert len(data_getter.data_dirs) > 0
+    assert isinstance(data_getter.data_dir, DataDir)
 
 
 @pytest.mark.parametrize(
     "path",
     [
-        (["tests/test_data/"]),
+        ("tests/test_data/"),
     ],
 )
-def test_data_getter_from_paths(path):
-    data_getter = DataGetter.from_paths(path)
+def test_data_getter_from_path(path):
+    data_getter = DataGetter.from_path(path)
 
     assert isinstance(data_getter, DataGetter)
-    assert len(data_getter.data_dirs) > 0
-    for data_dir in data_getter.data_dirs:
-        assert isinstance(data_dir, DataDir)
-        assert isinstance(data_dir.path, Path)
-        assert data_dir.dir_type == DirType.LOCAL
+    assert isinstance(data_getter.data_dir, DataDir)
+    assert isinstance(data_getter.data_dir.path, Path)
+    assert data_getter.data_dir.dir_type == DirType.LOCAL
 
 
 @pytest.mark.parametrize(
@@ -45,15 +43,14 @@ def test_data_getter_from_paths(path):
     [
         ("tests/invalid_dir/"),
         ("tests/test_data/"),
-        ("tests/test_data/"),
         (""),
     ],
 )
 @pytest.mark.xfail(raises=ValueError)
 def test_data_getter_get_files_empty(path):
     data_dir = DataDir(path=Path(path))
-    data_getter = DataGetter(data_dirs=[data_dir])
-    files = data_getter.get_files()
+    data_getter = DataGetter(data_dir=data_dir)
+    files = data_getter.data_dir.get_files()
     assert len(files) == 0
 
 
@@ -65,9 +62,9 @@ def test_data_getter_get_files_empty(path):
 )
 def test_data_getter_get_files(path):
     data_dir = DataDir(path=Path(path))
-    data_getter = DataGetter(data_dirs=[data_dir])
+    data_getter = DataGetter(data_dir=data_dir)
 
-    files = data_getter.get_files()
+    files = data_getter.data_dir.get_files()
     assert len(files) > 0
 
     assert all(isinstance(file, DataFile) for file in files)

@@ -84,12 +84,12 @@ def test_sequence_dump(tmp_path):
         (
             "wild_type",
             "DNA",
-            ["path/"],
+            "path/",
         ),
         (
             "wild_type",
             "DNA",
-            ["path/"],
+            "path/",
         ),
     ],
 )
@@ -106,8 +106,8 @@ def test_sequence_manifest(sequence_type, sequence_alphabet, path):
 @pytest.mark.parametrize(
     "sequence_type, sequence_alphabet, path",
     [
-        ("wild_type", None, ["path/"]),
-        (None, "DNA", ["path/"]),
+        ("wild_type", None, "path/"),
+        (None, "DNA", "path/"),
     ],
 )
 @pytest.mark.xfail(raises=ValidationError)
@@ -115,7 +115,7 @@ def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, path):
     manifest = SequenceManifestSection(
         sequence_type=sequence_type,
         sequence_alphabet=sequence_alphabet,
-        path=[Path(p) for p in path],
+        path=Path(path),
     )
     assert len(manifest.sequence_type) > 0
     assert len(manifest.sequence_alphabet) > 0

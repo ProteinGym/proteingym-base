@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, List
+from typing import Annotated
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -49,4 +49,4 @@ class SequenceManifestSection(BaseModel):
 
     sequence_type: str = Field(required=True)
     sequence_alphabet: str = Field(required=True)
-    path: List[str] = Field(required=True)
+    path: str = Field(required=True)
