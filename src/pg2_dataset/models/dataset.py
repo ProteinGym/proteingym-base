@@ -258,5 +258,8 @@ class Dataset(BaseModel):
 
             with ZipFile(archive_path, "w") as zip:
                 zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
+                for sequence in manifest.sequences:
+                    for path in sequence.sources.path:
+                        zip.write(path, arcname=f"sequences/{path.name}")
 
         return archive_path
