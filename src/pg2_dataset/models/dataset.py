@@ -256,17 +256,11 @@ class Dataset(BaseModel):
 
     def _create_manifest(self, path: Path) -> Manifest:
         """Create a manifest for the dataset."""
-        sequence_manifest_sections = self._create_manifest_sections(
-            self.sequences, path
-        )
-        structure_manifest_sections = self._create_manifest_sections(
-            self.structures, path
-        )
         manifest = Manifest(
             name=self.name,
             description=self.description,
-            sequences=sequence_manifest_sections,
-            structures=structure_manifest_sections,
+            sequences=self._create_manifest_sections(self.sequences, path),
+            structures=self._create_manifest_sections(self.structures, path),
         )
         return manifest
 
