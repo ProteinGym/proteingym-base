@@ -5,9 +5,12 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+from Bio.Seq import Seq
 from pydantic import ValidationError
 
+from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset, Manifest
+from pg2_dataset.models.sequence import Sequence
 
 
 @pytest.fixture
@@ -262,6 +265,23 @@ def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
         https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.testzip
     """
     dataset = Dataset(name="test")
+
+    path = dataset.dump(path=tmp_path)
+
+    assert not ZipFile(path).testzip(), "Dataset dump contains a bad file."
+
+
+def test_dataset_dump_test_zip_with_sequences(tmp_path: Path) -> None:
+    """Test the zip file created by the Dataset dump with sequences."""
+    bio_sequence = Seq("ATCGATCGATCG")
+    sequence = Sequence(
+        name="seq",
+        value=bio_sequence,
+        description="Test sequence",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    dataset = Dataset(name="test", sequences=[sequence])
 
     path = dataset.dump(path=tmp_path)
 

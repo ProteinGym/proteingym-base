@@ -2,7 +2,11 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from pg2_dataset.io import DataDir
+from pg2_dataset.io import DataDir, DataFile
+
+
+class Sources(BaseModel):
+    path: conlist(Path, min_length=1)
 
 
 class DataGetter(BaseModel):

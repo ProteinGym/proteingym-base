@@ -1,10 +1,6 @@
 from pathlib import Path
-<<<<<<< HEAD
-from typing import IO, Annotated, Any, Callable
-=======
 from tempfile import TemporaryDirectory
-from typing import IO, Annotated
->>>>>>> 28823ba (Dump intermediate files of dataset into temporary directory)
+from typing import IO, Annotated, Any, Callable
 from zipfile import ZipFile
 
 import toml
@@ -257,25 +253,10 @@ class Dataset(BaseModel):
             ],
         )
 
-<<<<<<< HEAD
-        for sequence in self.sequences:
-            sequence.dump(path=path / "sequences")
-
-        for msa in self.msas:
-            msa.dump(path=path / "msas")
-
-        # Write manifest
-        manifest_path = path / _DEFAULT_MANIFEST_FILE
-        self.manifest.dump(manifest_path)
-        archive_path = path / f"{self.name}.zip"
-        with ZipFile(archive_path, "w") as zip:
-            zip.write(manifest_path)
-=======
         with TemporaryDirectory() as temp_dir:
             manifest_path = manifest.dump(path=Path(temp_dir))
 
             with ZipFile(archive_path, "w") as zip:
                 zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
 
->>>>>>> 28823ba (Dump intermediate files of dataset into temporary directory)
         return archive_path
