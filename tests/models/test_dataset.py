@@ -192,9 +192,8 @@ def test_manifest_version() -> None:
 def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
     """The manifest dump should create a file with content."""
     manifest = Manifest(name="test")
-    path = tmp_path / "manifest.toml"
 
-    manifest.dump(path)
+    path = manifest.dump(path=tmp_path)
 
     assert path.exists(), "Dumped manifest file does not exist."
     assert path.stat().st_size > 0, "Dumped manifest file is empty."
@@ -203,9 +202,8 @@ def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
 def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
     """The manifest dump creates a file that can be loaded back with same content."""
     manifest = Manifest(name="test")
-    path = tmp_path / "manifest.toml"
 
-    manifest.dump(path)
+    path = manifest.dump(path=tmp_path)
 
     try:
         loaded_manifest = Manifest.from_path(path)
@@ -227,9 +225,15 @@ def test_manifest_dump_from_path_unit_docs_example(
     Use the example from the documentation for more complicated manifest.
     """
     manifest = Manifest.from_path(manifest_path)
+<<<<<<< HEAD
     path = tmp_path / "manifest.toml"
     manifest.dump(path)
     loaded_manifest = Manifest.from_path(path)
+=======
+
+    path = manifest.dump(path=tmp_path)
+
+>>>>>>> 28823ba (Dump intermediate files of dataset into temporary directory)
     try:
         loaded_manifest = Manifest.from_path(path)
     except ValidationError as e:
@@ -245,9 +249,8 @@ def test_manifest_dump_from_path_unit_docs_example(
 def test_manifest_dump_version_string(tmp_path: Path) -> None:
     """The version should be dumped as a string."""
     manifest = Manifest(name="test", version="1.0.0")
-    path = tmp_path / "manifest.toml"
 
-    manifest.dump(path)
+    path = manifest.dump(path=tmp_path)
 
     assert 'version = "1.0.0"' in path.read_text()
 

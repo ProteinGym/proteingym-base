@@ -1,5 +1,10 @@
 from pathlib import Path
+<<<<<<< HEAD
 from typing import IO, Annotated, Any, Callable
+=======
+from tempfile import TemporaryDirectory
+from typing import IO, Annotated
+>>>>>>> 28823ba (Dump intermediate files of dataset into temporary directory)
 from zipfile import ZipFile
 
 import toml
@@ -124,13 +129,24 @@ class Manifest(BaseModel):
         """Serialize the version to a string."""
         return str(version)
 
-    def dump(self, path: Path) -> None:
-        """Dump the manifest to a TOML file."""
+    def dump(self, *, path: Path | None = None) -> Path:
+        """Dump the manifest to a TOML file.
+
+        Args:
+            path (Path | None): The directory path to dump the manifest to. If
+                None, the current working directory is used. Defaults to None.
+
+        Returns:
+            Path: The path to the dumped manifest file.
+        """
+        path = path or Path.cwd()
+        manifest_path = path / f"{self.name}.toml"
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
         include = {key for key, value in self.model_dump().items() if value}
-        with path.open("w", encoding="utf-8") as f:
+        with manifest_path.open("w", encoding="utf-8") as f:
             toml.dump(self.model_dump(include=include), f)
+        return manifest_path
 
 
 class Dataset(BaseModel):
@@ -229,6 +245,8 @@ class Dataset(BaseModel):
                 current working directory is used. Defaults to None.
         """
         path = path or Path.cwd()
+        archive_path = path / f"{self.name}.zip"
+
         # TODO: Write data files to the output directory.
         manifest = Manifest(
             name=self.name,
@@ -238,9 +256,8 @@ class Dataset(BaseModel):
                 structure.as_manifest_section() for structure in self.structures
             ],
         )
-        manifest_path = path / self._INTERNAL_MANIFEST_FILE
-        manifest.dump(manifest_path)
 
+<<<<<<< HEAD
         for sequence in self.sequences:
             sequence.dump(path=path / "sequences")
 
@@ -253,4 +270,12 @@ class Dataset(BaseModel):
         archive_path = path / f"{self.name}.zip"
         with ZipFile(archive_path, "w") as zip:
             zip.write(manifest_path)
+=======
+        with TemporaryDirectory() as temp_dir:
+            manifest_path = manifest.dump(path=Path(temp_dir))
+
+            with ZipFile(archive_path, "w") as zip:
+                zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
+
+>>>>>>> 28823ba (Dump intermediate files of dataset into temporary directory)
         return archive_path
