@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import IO, Annotated, Any, Callable
+from zipfile import ZipFile
 
 import toml
 from pydantic import (
@@ -13,15 +14,11 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from pg2_dataset.models.constants import DirType
-from pg2_dataset.models.getter import DataDir
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
 from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.utils import zip_context
-
-_DEFAULT_MANIFEST_FILE = Path("manifest.toml")
 
 
 class _VersionPydanticAnnotation:
@@ -143,6 +140,9 @@ class Dataset(BaseModel):
     sequences, structures, and multiple sequence alignments (MSAs).
     """
 
+    _INTERNAL_MANIFEST_FILE = Path("manifest.toml")
+    """The dataset internal manifest file name."""
+
     model_config = ConfigDict(
         extra="forbid",
         frozen=True,
@@ -218,31 +218,39 @@ class Dataset(BaseModel):
         # The zip_context context manager is used to extract the contents of the zip,
         # load the dataset, and clean up the extracted contents.
         with zip_context(path):
-            dataset_manifest = Manifest.from_toml(_DEFAULT_MANIFEST_FILE)
+            dataset_manifest = Manifest.from_toml(cls._INTERNAL_MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
-    def dump(self, path: Path):
-        """Dump the dataset to a specified path or directory.
-
-        The method creates a directory containing the
-        sequences and a manifest file.
+    def dump(self, *, path: Path | None = None) -> None:
+        """Dump the dataset.
 
         Args:
-            path: The path to dump the dataset.
+            path (Path | None): The path to dump the dataset in. If None, the
+                current working directory is used. Defaults to None.
         """
-        path.mkdir(parents=True, exist_ok=True)
+        path = path or Path.cwd()
+        # TODO: Write data files to the output directory.
+        manifest = Manifest(
+            name=self.name,
+            description=self.description,
+            sequences=[sequence.as_manifest_section() for sequence in self.sequences],
+            structures=[
+                structure.as_manifest_section() for structure in self.structures
+            ],
+        )
+        manifest_path = path / self._INTERNAL_MANIFEST_FILE
+        manifest.dump(manifest_path)
 
-        # Write sequences
-        sequence_dir = DataDir(
-            path=path / "sequences",
-            dir_type=DirType.LOCAL,
-        ).dump()
         for sequence in self.sequences:
-            sequence.dump(sequence_dir)
+            sequence.dump(path=path / "sequences")
 
         for msa in self.msas:
-            msa.dump(output_directory=path / "msas")
+            msa.dump(path=path / "msas")
 
         # Write manifest
         manifest_path = path / _DEFAULT_MANIFEST_FILE
         self.manifest.dump(manifest_path)
+        archive_path = path / f"{self.name}.zip"
+        with ZipFile(archive_path, "w") as zip:
+            zip.write(manifest_path)
+        return archive_path

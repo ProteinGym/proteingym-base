@@ -2,6 +2,7 @@ import io
 import tempfile
 import zipfile
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 from pydantic import ValidationError
@@ -251,21 +252,17 @@ def test_manifest_dump_version_string(tmp_path: Path) -> None:
     assert 'version = "1.0.0"' in path.read_text()
 
 
-@pytest.mark.skip(
-    reason="TODO: Update the test when adding defaults to the Dataset class"
-)
-def test_dataset_dump_manifest_file(tmpdir: Path) -> None:
-    """When dumping a dataset, the manifest file should be included."""
+def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
+    """Test the zip file created by the Dataset dump.
+
+    Docs:
+        https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.testzip
+    """
     dataset = Dataset(name="test")
-    zip_path = tmpdir / "dataset.zip"
 
-    dataset.persist(zip_path)
+    path = dataset.dump(path=tmp_path)
 
-    with zipfile.ZipFile(zip_path, "r") as zipf:
-        files = zipf.namelist()
-        zipf.extractall()
-
-        assert "manifest.toml" in files
+    assert not ZipFile(path).testzip(), "Dataset dump contains a bad file."
 
 
 @pytest.mark.skip(reason="TODO: Add a `from_path` method to the Dataset class")
