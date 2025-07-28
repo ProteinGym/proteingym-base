@@ -286,8 +286,11 @@ class Dataset(BaseModel):
             Path: The path to the dumped dataset archive.
         """
         path = path or Path.cwd()
+        # While we prefer to avoid IO to disk, TemporaryDirectory is used for
+        # convenience because it unifies the `:method:dump` signatures to write
+        # to a directory.
         with TemporaryDirectory() as temp_dir:
-            archive_path = self._create_archive(
-                path, temporary_directory=Path(temp_dir)
-            )
+            # TemporaryDirectory returns a string, we prefer a Path object.
+            temp_dir = Path(temp_dir)
+            archive_path = self._create_archive(path, temporary_directory=temp_dir)
         return archive_path
