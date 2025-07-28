@@ -109,3 +109,15 @@ def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
 
     assert msa.name == "structure"
     assert isinstance(msa.value, MultipleSeqAlignment)
+
+
+def test_msa_dump(
+    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+) -> None:
+    """A MSA can be dumped to a FASTA file."""
+    msa = MSA(name="test", value=multiple_sequence_alignment)
+
+    path = msa.dump(output_directory=tmp_path)
+
+    loaded_msa = AlignIO.read(path, path.suffix[1:].lower())
+    assert msa.value.alignment == loaded_msa.alignment
