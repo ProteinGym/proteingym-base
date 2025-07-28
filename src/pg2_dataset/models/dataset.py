@@ -13,6 +13,7 @@ from pydantic import (
 
 from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataDir
+from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
 from pg2_dataset.repositories.sequence import SequenceFactory
@@ -117,7 +118,7 @@ class Manifest(BaseModel):
     structures: list[StructureManifestSection] = Field(default_factory=list)
     """The structures included in the dataset."""
 
-    msas: list[dict[str, str]] = Field(default_factory=list)
+    msas: list[MSAManifestSection] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
     @classmethod
@@ -166,6 +167,9 @@ class Dataset(BaseModel):
     structures: list[Structure] = Field(default_factory=list)
     """The structures included in the dataset."""
 
+    msas: list[MSA] = Field(default_factory=list)
+    """The multiple sequence alignments included in the dataset."""
+
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
         """Create a `Dataset` from a `Manifest` instance.
@@ -188,11 +192,14 @@ class Dataset(BaseModel):
 
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
 
+        msas = [MSA.from_manifest_section(m) for m in manifest.msas]
+
         return cls(
             name=manifest.name,
             description=manifest.description,
             sequences=sequences,
             structures=structures,
+            msas=msas,
         )
 
     @classmethod
@@ -236,6 +243,9 @@ class Dataset(BaseModel):
         ).dump()
         for sequence in self.sequences:
             sequence.dump(sequence_dir)
+
+        for msa in self.msas:
+            msa.dump(output_directory=path / "msas")
 
         # Write manifest
         manifest_path = path / _DEFAULT_MANIFEST_FILE

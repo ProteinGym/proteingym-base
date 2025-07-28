@@ -18,7 +18,15 @@ def mock_structure_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def manifest_contents(mock_structure_file: Path) -> str:
+def mock_msa_file(tmp_path: Path) -> Path:
+    """Create a mock MSA file for testing."""
+    msa_file = tmp_path / "msas.a3m"
+    msa_file.touch()
+    return msa_file
+
+
+@pytest.fixture
+def manifest_contents(mock_structure_file: Path, mock_msa_file: Path) -> str:
     return f"""
 version = "1.0.0"
 name = "Example Dataset"
@@ -44,7 +52,7 @@ path = ["example_data/NEIME_2019/sequences"]
 path = "{mock_structure_file.as_posix()}"
 
 [[msas]]
-path = "msas.a3m"
+path = "{mock_msa_file.as_posix()}"
 """
 
 
