@@ -26,3 +26,17 @@ def test_msa_manifest_section_missing_path() -> None:
     )
     with pytest.raises(ValidationError, match=match):
         MSAManifestSection(path="non_existent.msa")
+
+
+@pytest.mark.parametrize("field", ["name", "description"])
+def test_msa_manifest_section_empty_string_field(tmp_path: Path, field: str) -> None:
+    """A validation error is raised if string <field> is empty."""
+    path = tmp_path / "test.msa"
+    path.touch()
+
+    match = (
+        f"validation error for MSAManifestSection\n{field}\n  "
+        "String should have at least 1 character"
+    )
+    with pytest.raises(ValidationError, match=match):
+        MSAManifestSection(path=path, **{field: ""})
