@@ -61,3 +61,14 @@ def test_msa_minimal() -> None:
         raise AssertionError("Could not create MSA") from e
     else:
         assert True, "MSA created successfully with minimal fields."
+
+
+@pytest.mark.parametrize("field", ["name", "description"])
+def test_msa_empty_string_field(field: str) -> None:
+    """A validation error is raised if string <field> is empty."""
+
+    match = (
+        f"validation error for MSA\n{field}\n  String should have at least 1 character"
+    )
+    with pytest.raises(ValidationError, match=match):
+        MSA(value=MultipleSeqAlignment([]), **{"name": "test", field: ""})
