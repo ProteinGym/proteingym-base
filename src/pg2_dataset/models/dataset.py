@@ -243,23 +243,42 @@ class Dataset(BaseModel):
         path = path or Path.cwd()
         archive_path = path / f"{self.name}.zip"
 
-        # TODO: Write data files to the output directory.
-        manifest = Manifest(
-            name=self.name,
-            description=self.description,
-            sequences=[sequence.as_manifest_section() for sequence in self.sequences],
-            structures=[
-                structure.as_manifest_section() for structure in self.structures
-            ],
-        )
-
         with TemporaryDirectory() as temp_dir:
+            temp_dir = Path(temp_dir)
+
+            sequence_manifest_sections = []
+            for sequence in self.sequences:
+                sequence_path = sequence.dump(path=temp_dir)
+                sequence_manifest_section = sequence.as_manifest_section(
+                    path=sequence_path
+                )
+                sequence_manifest_sections.append(sequence_manifest_section)
+
+            structure_manifest_sections = []
+            for structure in self.structures:
+                structure_path = structure.dump(path=temp_dir)
+                structure_manifest_section = structure.as_manifest_section(
+                    path=structure_path
+                )
+                structure_manifest_sections.append(structure_manifest_section)
+
+            # TODO: Write data files to the output directory.
+            manifest = Manifest(
+                name=self.name,
+                description=self.description,
+                sequences=sequence_manifest_sections,
+                structures=structure_manifest_sections,
+            )
             manifest_path = manifest.dump(path=Path(temp_dir))
 
             with ZipFile(archive_path, "w") as zip:
                 zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
                 for sequence in manifest.sequences:
-                    for path in sequence.sources.path:
-                        zip.write(path, arcname=f"sequences/{path.name}")
+                    for source_path in sequence.sources.path:
+                        zip.write(source_path, arcname=f"sequences/{source_path.name}")
+                for structure in manifest.structures:
+                    zip.write(
+                        structure.path, arcname=f"structures/{structure.path.name}"
+                    )
 
         return archive_path

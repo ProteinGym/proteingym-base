@@ -1,4 +1,6 @@
+import io
 from pathlib import Path
+from zipfile import ZipFile
 
 import numpy as np
 import pytest
@@ -14,7 +16,11 @@ from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
 
 from pg2_dataset.models.dataset import Dataset, Manifest
-from pg2_dataset.models.structure import Structure, StructureManifestSection
+from pg2_dataset.models.structure import (
+    Structure,
+    StructureFormat,
+    StructureManifestSection,
+)
 
 
 def test_structure_manifest_section_minimal(tmp_path: Path) -> None:
@@ -184,26 +190,24 @@ def test_structure_from_manifest_section_structure_id_as_name(pdb_file: Path) ->
 def test_structure_dump_to_pdb(tmp_path: Path, bio_structure: BioStructure) -> None:
     """A Structure can be dumped to a PDB file."""
     structure = Structure(name="test", value=bio_structure)
-    pdb_file = tmp_path / "test.pdb"
 
-    structure.dump(pdb_file)
+    path = structure.dump(path=tmp_path)
 
-    loaded_structure = PDBParser().get_structure("test", pdb_file)
+    loaded_structure = PDBParser().get_structure("test", path)
     assert loaded_structure.strictly_equals(bio_structure)
 
 
 def test_structure_dump_to_cif(tmp_path: Path, bio_structure: BioStructure) -> None:
     """A Structure can be dumped to a cif file."""
     structure = Structure(name="test", value=bio_structure)
-    cif_file = tmp_path / "test.cif"
 
-    structure.dump(cif_file)
+    path = structure.dump(path=tmp_path, format=StructureFormat.MMCIF)
 
     # There is an inconsistency in biopython that loads the full name of an Atom
     # differently for a PDB and CIF file - the full name is trimmed for the
     # later. Hence, we overwrite the fullname here before the assertion.
     list(bio_structure.get_atoms())[0].fullname = "CA"
-    loaded_structure = MMCIFParser().get_structure("test", cif_file)
+    loaded_structure = MMCIFParser().get_structure("test", path)
     assert loaded_structure.strictly_equals(bio_structure)
 
 
@@ -229,3 +233,30 @@ def test_dataset_with_structures(
     # Hence, we overwrite the fullname here before the assertion.
     list(bio_structure.get_atoms())[0].fullname = "CA"
     assert dataset.structures[1].value.strictly_equals(bio_structure)
+
+
+def test_dataset_dump_with_structures(
+    tmp_path: Path, bio_structure: BioStructure
+) -> None:
+    """The dataset can be dumped with structures.
+
+    The created archive:
+    - Should not contain a bad file.
+    - Should contain the structure file.
+    - Should result the structure being loaded correctly.
+    """
+    structure = Structure(name="test", value=bio_structure)
+    dataset = Dataset(name="test", structures=[structure])
+
+    path = dataset.dump(path=tmp_path)
+
+    zip = ZipFile(path)
+    assert not zip.testzip(), "Dataset dump contains a bad file."
+    assert "structures/test.pdb" in zip.namelist(), (
+        "Structure file not found in dataset dump."
+    )
+
+    with zip.open("structures/test.pdb", "r") as structure_file:
+        string_io = io.StringIO(structure_file.read().decode("utf-8"))
+        loaded_structure = PDBParser().get_structure("test", string_io)
+        assert bio_structure == loaded_structure
