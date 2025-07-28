@@ -145,15 +145,25 @@ class Manifest(BaseModel):
         return manifest_path
 
 
+class DatasetArchiveLayout:
+    """The layout of the dataset archive."""
+
+    MANIFEST_FILE = "manifest.toml"
+    """The manifest file name in the dataset archive."""
+
+    SEQUENCES_DIRECTORY = "sequences/"
+    """The directory for sequences."""
+
+    STRUCTURES_DIRECTORY = "structures/"
+    """The directory for structures."""
+
+
 class Dataset(BaseModel):
     """A Protein Gym dataset.
 
     The dataset provides access to metadata and protein data such as assays,
     sequences, structures, and multiple sequence alignments (MSAs).
     """
-
-    _INTERNAL_MANIFEST_FILE = Path("manifest.toml")
-    """The dataset internal manifest file name."""
 
     model_config = ConfigDict(
         extra="forbid",
@@ -230,7 +240,7 @@ class Dataset(BaseModel):
         # The zip_context context manager is used to extract the contents of the zip,
         # load the dataset, and clean up the extracted contents.
         with zip_context(path):
-            dataset_manifest = Manifest.from_toml(cls._INTERNAL_MANIFEST_FILE)
+            dataset_manifest = Manifest.from_toml(DatasetArchiveLayout.MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
     def _create_manifest_sections(self, objects: list[Any], path: Path) -> list[Any]:
@@ -266,13 +276,19 @@ class Dataset(BaseModel):
         manifest = self._create_manifest(temporary_directory)
         manifest_path = manifest.dump(path=temporary_directory)
         with ZipFile(archive_path, "w") as zip:
-            zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
+            zip.write(manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE)
             for sequence in manifest.sequences:
                 # TODO: Remove inner for-loop after removing the Sources class.
                 for source_path in sequence.sources.path:
-                    zip.write(source_path, arcname=f"sequences/{source_path.name}")
+                    arcname = (
+                        f"{DatasetArchiveLayout.SEQUENCES_DIRECTORY}{source_path.name}"
+                    )
+                    zip.write(source_path, arcname=arcname)
             for structure in manifest.structures:
-                zip.write(structure.path, arcname=f"structures/{structure.path.name}")
+                arcname = (
+                    f"{DatasetArchiveLayout.STRUCTURES_DIRECTORY}{structure.path.name}"
+                )
+                zip.write(structure.path, arcname=arcname)
         return archive_path
 
     def dump(self, *, path: Path | None = None) -> Path:
