@@ -260,6 +260,21 @@ class Dataset(BaseModel):
         )
         return manifest
 
+    def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
+        """Create a ZIP archive of the dataset."""
+        archive_path = path / f"{self.name}.zip"
+        manifest = self._create_manifest(temporary_directory)
+        manifest_path = manifest.dump(path=temporary_directory)
+        with ZipFile(archive_path, "w") as zip:
+            zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
+            for sequence in manifest.sequences:
+                # TODO: Remove inner for-loop after removing the Sources class.
+                for source_path in sequence.sources.path:
+                    zip.write(source_path, arcname=f"sequences/{source_path.name}")
+            for structure in manifest.structures:
+                zip.write(structure.path, arcname=f"structures/{structure.path.name}")
+        return archive_path
+
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the dataset.
 
@@ -271,20 +286,8 @@ class Dataset(BaseModel):
             Path: The path to the dumped dataset archive.
         """
         path = path or Path.cwd()
-        archive_path = path / f"{self.name}.zip"
-
         with TemporaryDirectory() as temp_dir:
-            temp_dir = Path(temp_dir)
-            manifest = self._create_manifest(temp_dir)
-            manifest_path = manifest.dump(path=temp_dir)
-            with ZipFile(archive_path, "w") as zip:
-                zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
-                for sequence in manifest.sequences:
-                    # TODO: Remove inner for-loop after removing the Sources class.
-                    for source_path in sequence.sources.path:
-                        zip.write(source_path, arcname=f"sequences/{source_path.name}")
-                for structure in manifest.structures:
-                    zip.write(
-                        structure.path, arcname=f"structures/{structure.path.name}"
-                    )
+            archive_path = self._create_archive(
+                path, temporary_directory=Path(temp_dir)
+            )
         return archive_path
