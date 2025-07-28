@@ -276,6 +276,7 @@ class Dataset(BaseModel):
             with ZipFile(archive_path, "w") as zip:
                 zip.write(manifest_path, arcname=self._INTERNAL_MANIFEST_FILE)
                 for sequence in manifest.sequences:
+                    # TODO: Remove inner for-loop after removing the Sources class.
                     for source_path in sequence.sources.path:
                         zip.write(source_path, arcname=f"sequences/{source_path.name}")
                 for structure in manifest.structures:
