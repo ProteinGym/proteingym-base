@@ -233,6 +233,17 @@ class Dataset(BaseModel):
             dataset_manifest = Manifest.from_toml(cls._INTERNAL_MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
+    def _create_manifest_sections(self, objects: list[Any], path: Path) -> list[Any]:
+        """Create manifest sections for sequences and structures.
+
+        TODO:
+            Improve type hints.
+        """
+        manifest_sections = [
+            obj.as_manifest_section(path=obj.dump(path=path)) for obj in objects
+        ]
+        return manifest_sections
+
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the dataset.
 
@@ -249,21 +260,12 @@ class Dataset(BaseModel):
         with TemporaryDirectory() as temp_dir:
             temp_dir = Path(temp_dir)
 
-            sequence_manifest_sections = []
-            for sequence in self.sequences:
-                sequence_path = sequence.dump(path=temp_dir)
-                sequence_manifest_section = sequence.as_manifest_section(
-                    path=sequence_path
-                )
-                sequence_manifest_sections.append(sequence_manifest_section)
-
-            structure_manifest_sections = []
-            for structure in self.structures:
-                structure_path = structure.dump(path=temp_dir)
-                structure_manifest_section = structure.as_manifest_section(
-                    path=structure_path
-                )
-                structure_manifest_sections.append(structure_manifest_section)
+            sequence_manifest_sections = self._create_manifest_sections(
+                self.sequences, temp_dir
+            )
+            structure_manifest_sections = self._create_manifest_sections(
+                self.structures, temp_dir
+            )
 
             manifest = Manifest(
                 name=self.name,
