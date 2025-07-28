@@ -233,12 +233,15 @@ class Dataset(BaseModel):
             dataset_manifest = Manifest.from_toml(cls._INTERNAL_MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
-    def dump(self, *, path: Path | None = None) -> None:
+    def dump(self, *, path: Path | None = None) -> Path:
         """Dump the dataset.
 
         Args:
             path (Path | None): The path to dump the dataset in. If None, the
                 current working directory is used. Defaults to None.
+
+        Returns:
+            Path: The path to the dumped dataset archive.
         """
         path = path or Path.cwd()
         archive_path = path / f"{self.name}.zip"
