@@ -16,8 +16,9 @@ from pg2_dataset.models.getter import DataDir
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
 from pg2_dataset.repositories.sequence import SequenceFactory
-from pg2_dataset.settings import _DEFAULT_MANIFEST_FILE
 from pg2_dataset.utils import zip_context
+
+_DEFAULT_MANIFEST_FILE = Path("manifest.toml")
 
 
 class _Version(BaseModel):
