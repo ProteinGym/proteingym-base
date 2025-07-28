@@ -1,12 +1,17 @@
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, conlist, field_serializer
 
 from pg2_dataset.io import DataDir, DataFile
 
 
 class Sources(BaseModel):
     path: conlist(Path, min_length=1)
+
+    @field_serializer("path")
+    def serialize_path(self, path: list[Path]) -> list[str]:
+        """Serialize path to posix string."""
+        return [p.as_posix() for p in path]
 
 
 class DataGetter(BaseModel):
