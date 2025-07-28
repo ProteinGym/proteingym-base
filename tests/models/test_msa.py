@@ -1,9 +1,10 @@
 from pathlib import Path
 
 import pytest
+from Bio.Align import MultipleSeqAlignment
 from pydantic import ValidationError
 
-from pg2_dataset.models.msa import MSAManifestSection
+from pg2_dataset.models.msa import MSA, MSAManifestSection
 
 
 def test_msa_manifest_section_minimal(tmp_path: Path) -> None:
@@ -50,3 +51,13 @@ def test_msa_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
     section = MSAManifestSection(path=path)
 
     assert section.model_dump().get("path") == path.as_posix()
+
+
+def test_msa_minimal() -> None:
+    """Only name and value are required for a minimal MSA."""
+    try:
+        MSA(name="test", value=MultipleSeqAlignment([]))
+    except ValidationError as e:
+        raise AssertionError("Could not create MSA") from e
+    else:
+        assert True, "MSA created successfully with minimal fields."
