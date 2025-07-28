@@ -76,7 +76,15 @@ class Sequence(BaseModel):
         return sequence_path
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
-        """Convert the sequence to a manifest section."""
+        """Convert the sequence to a manifest section.
+
+        Args:
+            path (Path): The path to the sequence file (as created by
+                `method:dump`).
+
+        Returns:
+            SequenceManifestSection: The manifest section for the sequence.
+        """
         return SequenceManifestSection(
             sequence_type=self.type.value,
             sequence_alphabet=self.alphabet.value,
