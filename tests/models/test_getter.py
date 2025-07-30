@@ -7,30 +7,36 @@ from pg2_dataset.models.constants import DirType
 from pg2_dataset.models.getter import DataGetter
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        ("tests/test_data/"),
-    ],
-)
-def test_data_getter_initialization(path):
-    data_dir = DataDir(path=path)
-    assert data_dir.dir_type == DirType.LOCAL
-    assert isinstance(data_dir.path, Path)
-    data_getter = DataGetter(data_dir=data_dir)
+@pytest.fixture
+def test_data_path():
+    return "tests/test_data/"
 
+
+@pytest.fixture
+def test_files_path():
+    return "tests/test_data/io/files"
+
+
+@pytest.fixture(params=["tests/invalid_dir/", "tests/test_data/", ""])
+def invalid_path(request):
+    return request.param
+
+
+@pytest.fixture
+def data_dir(test_data_path):
+    return DataDir(path=test_data_path)
+
+
+def test_data_getter_initialization(data_dir: DataDir):
+    data_getter = DataGetter(data_dir=data_dir)
+    assert data_getter.data_dir.dir_type == DirType.LOCAL
+    assert isinstance(data_getter.data_dir.path, Path)
     assert isinstance(data_getter, DataGetter)
     assert isinstance(data_getter.data_dir, DataDir)
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        ("tests/test_data/"),
-    ],
-)
-def test_data_getter_from_path(path):
-    data_getter = DataGetter.from_path(path)
+def test_data_getter_from_path(test_data_path: str):
+    data_getter = DataGetter.from_path(test_data_path)
 
     assert isinstance(data_getter, DataGetter)
     assert isinstance(data_getter.data_dir, DataDir)
@@ -38,30 +44,16 @@ def test_data_getter_from_path(path):
     assert data_getter.data_dir.dir_type == DirType.LOCAL
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        ("tests/invalid_dir/"),
-        ("tests/test_data/"),
-        (""),
-    ],
-)
 @pytest.mark.xfail(raises=ValueError)
-def test_data_getter_get_files_empty(path):
-    data_dir = DataDir(path=path)
+def test_data_getter_get_files_empty(invalid_path: str):
+    data_dir = DataDir(path=invalid_path)
     data_getter = DataGetter(data_dir=data_dir)
     files = data_getter.data_dir.get_files()
     assert len(files) == 0
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        ("tests/test_data/io/files"),
-    ],
-)
-def test_data_getter_get_files(path):
-    data_dir = DataDir(path=path)
+def test_data_getter_get_files(test_files_path: str):
+    data_dir = DataDir(path=test_files_path)
     data_getter = DataGetter(data_dir=data_dir)
 
     files = data_getter.data_dir.get_files()
