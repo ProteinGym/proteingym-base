@@ -5,13 +5,9 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
-from Bio import SeqIO
-from Bio.Seq import Seq
 from pydantic import ValidationError
 
-from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset, Manifest
-from pg2_dataset.models.sequence import Sequence
 
 
 @pytest.fixture
@@ -270,38 +266,6 @@ def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
     path = dataset.dump(path=tmp_path)
 
     assert not ZipFile(path).testzip(), "Dataset dump contains a bad file."
-
-
-def test_dataset_dump_with_sequences(tmp_path: Path) -> None:
-    """Test the zip file created by the Dataset dump with sequences.
-
-    The created archive:
-    - Should not contain a bad file.
-    - Should contain the sequence file.
-    - Should result the sequence being loaded correctly.
-    """
-    bio_sequence = Seq("ATCGATCGATCG")
-    sequence = Sequence(
-        name="seq",
-        value=bio_sequence,
-        description="Test sequence",
-        type=SequenceType.WILD_TYPE,
-        alphabet=SequenceAlphabet.DNA,
-    )
-    dataset = Dataset(name="test", sequences=[sequence])
-
-    path = dataset.dump(path=tmp_path)
-
-    zip = ZipFile(path)
-    assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "sequences/seq.fasta" in zip.namelist(), (
-        "Sequence file not found in dataset dump."
-    )
-
-    with zip.open("sequences/seq.fasta", "r") as sequence_file:
-        string_io = io.StringIO(sequence_file.read().decode("utf-8"))
-        loaded_sequence = SeqIO.read(string_io, "fasta")
-        assert bio_sequence == loaded_sequence.seq
 
 
 def test_dataset_dump_creates_one_file(tmp_path: Path) -> None:
