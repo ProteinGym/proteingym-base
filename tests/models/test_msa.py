@@ -117,7 +117,7 @@ def test_msa_dump(
     """A MSA can be dumped to a FASTA file."""
     msa = MSA(name="test", value=multiple_sequence_alignment)
 
-    path = msa.dump(output_directory=tmp_path)
+    path = msa.dump(path=tmp_path)
 
     loaded_msa = AlignIO.read(path, path.suffix[1:].lower())
     assert msa.value.alignment == loaded_msa.alignment

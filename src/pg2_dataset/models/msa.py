@@ -69,29 +69,27 @@ class MSA(BaseModel):
         value = AlignIO.read(section.path, section.path.suffix[1:].lower())
         return MSA(name=name, value=value, description=section.description)
 
-    def dump(self, *, output_directory: Path | None = None) -> Path:
+    def dump(self, *, path: Path | None = None) -> Path:
         """Dump the multiple sequence alignment to a file.
 
         Biopython is used for writing the MSA to a file, see
         :func:`Bio.AlignIO.write` for details.
 
         Args:
-            output_directory (Path | None): The directory where the MSA will be
-                saved. Defaults to the current working directory.
+            path (Path | None): The directory path to save the MSA file in.
+                Defaults to the current working directory.
 
         Returns:
             Path: The path to the saved MSA file.
-
-        Raises:
-            ValueError: if the file type is not supported.
 
         Note:
             This dump implementation looses the metadata besides the multiple
             sequence alignment. This metadata should be stored with dumping the
             dataset.
         """
-        output_directory = output_directory or Path.cwd()
-        path = output_directory / f"{self.name}.fasta"
         format = "fasta"
+        if path.is_dir():
+            output_directory = path or Path.cwd()
+            path = output_directory / f"{self.name}.{format}"
         AlignIO.write(self.value, path, format=format)
         return path
