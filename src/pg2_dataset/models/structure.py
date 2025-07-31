@@ -128,7 +128,7 @@ class Structure(BaseModel):
         Args:
             path (Path): The output directory path to dump the structure to. If
                 None, the current working directory is used.
-            format (_StructureFormat): The format to dump the structure in.
+            format (StructureFormat): The format to dump the structure in.
 
         Raises:
             NotImplementedError if the file type is not supported.
