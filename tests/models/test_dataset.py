@@ -131,10 +131,7 @@ def test_manifest_from_path_like_version_field_is_semantic() -> None:
         "name = 'd'\nversion = '2023-10-05'"
     )  # Try date version format
 
-    match = (
-        "validation error for Manifest\nversion\n  "
-        "Value error, Invalid version: '2023-10-05'"
-    )
+    match = r".* Value error, 2023-10-05 is not valid SemVer string .*"
     with pytest.raises(ValidationError, match=match):
         Manifest.from_path(manifest_contents_with_date_version)
 
