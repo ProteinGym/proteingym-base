@@ -34,12 +34,12 @@ class _VersionPydanticAnnotation:
     @classmethod
     def __get_pydantic_core_schema__(
         cls,
-        _source_type: Any,
-        _handler: Callable[[Any], core_schema.CoreSchema],
+        source_type: Any,
+        handler: Callable[[Any], core_schema.CoreSchema],
     ) -> core_schema.CoreSchema:
         """See https://docs.pydantic.dev/latest/concepts/types/#customizing-validation-with-__get_pydantic_core_schema__"""
-        _ = _source_type
-        _ = _handler
+        _ = source_type
+        _ = handler
 
         def validate_from_str(value: str) -> Version:
             return Version.parse(value)
@@ -64,7 +64,7 @@ class _VersionPydanticAnnotation:
 
     @classmethod
     def __get_pydantic_json_schema__(
-        cls, _core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+        cls, core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
     ) -> JsonSchemaValue:
         """See https://docs.pydantic.dev/latest/concepts/json_schema/#implementing-__get_pydantic_json_schema__"""
         _ = core_schema
