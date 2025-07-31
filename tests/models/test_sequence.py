@@ -84,12 +84,7 @@ def test_sequence_dump(tmp_path):
         (
             "wild_type",
             "DNA",
-            "path/",
-        ),
-        (
-            "wild_type",
-            "DNA",
-            "path/",
+            "tests/test_data/io/files",
         ),
     ],
 )

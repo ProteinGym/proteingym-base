@@ -26,7 +26,9 @@ class DataDir(BaseModel):
     @classmethod
     def infer_dir_type(cls, values):
         if values.get("path") and not values.get("dir_type"):
-            if not values.get("path").lower().startswith("s3"):
+            if isinstance(values["path"], str):
+                values["path"] = Path(values["path"])
+            if not values.get("path").as_posix().lower().startswith("s3"):
                 values["dir_type"] = DirType.LOCAL
         return values
 
