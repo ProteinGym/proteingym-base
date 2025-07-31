@@ -148,8 +148,8 @@ class Manifest(BaseModel):
 class DatasetArchiveLayout:
     """The layout of the dataset archive."""
 
-    MANIFEST_FILE = "manifest.toml"
-    """The manifest file name in the dataset archive."""
+    MANIFEST_FILE = "manifest.lock"
+    """The internal manifest file inside the dataset archive."""
 
     SEQUENCES_DIRECTORY = "sequences/"
     """The directory for sequences."""

@@ -1,7 +1,9 @@
-# 1. pg2 dataset
+# Protein Gym 2 Dataset
+
+A standardisation for using protein data within protein gym.
 
 ## 1.1. Table of Contents
-- [1. pg2 dataset](#1-pg2-dataset)
+- [Protein Gym 2 Dataset](#protein-gym-2-dataset)
   - [1.1. Table of Contents](#11-table-of-contents)
   - [1.2. Schema](#12-schema)
   - [1.3. Getting Started](#13-getting-started)
