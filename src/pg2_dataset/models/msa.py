@@ -88,8 +88,8 @@ class MSA(BaseModel):
             dataset.
         """
         format = "fasta"
+        path = path or Path.cwd()
         if path.is_dir():
-            output_directory = path or Path.cwd()
-            path = output_directory / f"{self.name}.{format}"
+            path /= f"{self.name}.{format}"
         AlignIO.write(self.value, path, format=format)
         return path
