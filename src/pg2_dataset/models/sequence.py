@@ -88,5 +88,5 @@ class Sequence(BaseModel):
         return SequenceManifestSection(
             sequence_type=self.type.value,
             sequence_alphabet=self.alphabet.value,
-            sources=Sources(path=[path]),
+            path=path,
         )
