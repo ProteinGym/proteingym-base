@@ -18,7 +18,15 @@ def mock_structure_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def manifest_contents(mock_structure_file: Path) -> str:
+def mock_msa_file(tmp_path: Path) -> Path:
+    """Create a mock MSA file for testing."""
+    msa_file = tmp_path / "msas.a3m"
+    msa_file.touch()
+    return msa_file
+
+
+@pytest.fixture
+def manifest_contents(mock_structure_file: Path, mock_msa_file: Path) -> str:
     return f"""
 version = "1.0.0"
 name = "Example Dataset"
@@ -42,7 +50,7 @@ path = "example_data/NEIME_2019/sequences"
 path = "{mock_structure_file.as_posix()}"
 
 [[msas]]
-path = "msas.a3m"
+path = "{mock_msa_file.as_posix()}"
 """
 
 
@@ -55,7 +63,7 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
 
 
 def test_manifest_contents_in_documentation(
-    mock_structure_file: Path, manifest_contents: str
+    mock_structure_file: Path, mock_msa_file: Path, manifest_contents: str
 ) -> None:
     """Check if the manifest contents are present in the documentation.
 
@@ -68,9 +76,13 @@ def test_manifest_contents_in_documentation(
     documentation_file_path = Path(__file__).parent.parent.parent / Path(
         "docs/manifest.md"
     )
-    documentation_contents = documentation_file_path.read_text(
-        encoding="utf-8"
-    ).replace("structures.pdb", mock_structure_file.as_posix())
+    documentation_contents = (
+        documentation_file_path.read_text(encoding="utf-8")
+        # For testing purporses, these files have to exists while in the
+        # documentation placeholders are used.
+        .replace("structures.pdb", mock_structure_file.as_posix())
+        .replace("msas.a3m", mock_msa_file.as_posix())
+    )
 
     assert documentation_file_path.exists(), (
         f"Documentation file does not exist: {documentation_file_path}"
