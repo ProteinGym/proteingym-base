@@ -136,13 +136,14 @@ class Manifest(BaseModel):
             Path: The path to the dumped manifest file.
         """
         path = path or Path.cwd()
-        manifest_path = path / f"{self.name}.toml"
+        if path.is_dir():
+            path = path / f"{self.name}.toml"
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
         include = {key for key, value in self.model_dump().items() if value}
-        with manifest_path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             toml.dump(self.model_dump(include=include), f)
-        return manifest_path
+        return path
 
 
 class DatasetArchiveLayout:
