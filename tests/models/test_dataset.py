@@ -2,6 +2,7 @@ import io
 import tempfile
 import zipfile
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 from pydantic import ValidationError
@@ -191,9 +192,8 @@ def test_manifest_version() -> None:
 def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
     """The manifest dump should create a file with content."""
     manifest = Manifest(name="test")
-    path = tmp_path / "manifest.toml"
 
-    manifest.dump(path)
+    path = manifest.dump(path=tmp_path)
 
     assert path.exists(), "Dumped manifest file does not exist."
     assert path.stat().st_size > 0, "Dumped manifest file is empty."
@@ -202,9 +202,8 @@ def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
 def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
     """The manifest dump creates a file that can be loaded back with same content."""
     manifest = Manifest(name="test")
-    path = tmp_path / "manifest.toml"
 
-    manifest.dump(path)
+    path = manifest.dump(path=tmp_path)
 
     try:
         loaded_manifest = Manifest.from_path(path)
@@ -227,8 +226,11 @@ def test_manifest_dump_from_path_unit_docs_example(
     """
     manifest = Manifest.from_path(manifest_path)
     path = tmp_path / "manifest.toml"
-    manifest.dump(path)
+    manifest.dump(path=path)
     loaded_manifest = Manifest.from_path(path)
+
+    path = manifest.dump(path=tmp_path)
+
     try:
         loaded_manifest = Manifest.from_path(path)
     except ValidationError as e:
@@ -244,28 +246,33 @@ def test_manifest_dump_from_path_unit_docs_example(
 def test_manifest_dump_version_string(tmp_path: Path) -> None:
     """The version should be dumped as a string."""
     manifest = Manifest(name="test", version="1.0.0")
-    path = tmp_path / "manifest.toml"
 
-    manifest.dump(path)
+    path = manifest.dump(path=tmp_path)
 
     assert 'version = "1.0.0"' in path.read_text()
 
 
-@pytest.mark.skip(
-    reason="TODO: Update the test when adding defaults to the Dataset class"
-)
-def test_dataset_dump_manifest_file(tmpdir: Path) -> None:
-    """When dumping a dataset, the manifest file should be included."""
+def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
+    """Test the zip file created by the Dataset dump.
+
+    Docs:
+        https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.testzip
+    """
     dataset = Dataset(name="test")
-    zip_path = tmpdir / "dataset.zip"
 
-    dataset.persist(zip_path)
+    path = dataset.dump(path=tmp_path)
 
-    with zipfile.ZipFile(zip_path, "r") as zipf:
-        files = zipf.namelist()
-        zipf.extractall()
+    assert not ZipFile(path).testzip(), "Dataset dump contains a bad file."
 
-        assert "manifest.toml" in files
+
+def test_dataset_dump_creates_one_file(tmp_path: Path) -> None:
+    """The dataset dump should create a single file."""
+    dataset = Dataset(name="test")
+
+    path = dataset.dump(path=tmp_path)
+
+    paths = list(tmp_path.iterdir())
+    assert [path] == paths, f"Expected one file in the directory, but found: {paths}"
 
 
 @pytest.mark.skip(reason="TODO: Add a `from_path` method to the Dataset class")
