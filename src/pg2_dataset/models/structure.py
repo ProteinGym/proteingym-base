@@ -1,5 +1,6 @@
 """The protein structure of the dataset."""
 
+from enum import StrEnum
 from pathlib import Path
 
 from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser
@@ -37,6 +38,14 @@ class StructureManifestSection(BaseModel):
         return path.as_posix()
 
 
+class StructureFormat(StrEnum):
+    """Supported structure file formats."""
+
+    PDB = ".pdb"
+    MMCIF = ".cif"
+    BINARY_CIF = ".bcif"
+
+
 class Structure(BaseModel):
     """A protein structure in the dataset."""
 
@@ -69,11 +78,11 @@ class Structure(BaseModel):
             NotImplementedError if the file type is not supported.
         """
         match section.path.suffix.lower():
-            case ".pdb":
+            case StructureFormat.PDB:
                 parser = PDBParser()
-            case ".cif":
+            case StructureFormat.MMCIF:
                 parser = MMCIFParser()
-            case ".bcif":
+            case StructureFormat.BINARY_CIF:
                 parser = BinaryCIFParser()
             case _:
                 raise NotImplementedError(
@@ -88,7 +97,26 @@ class Structure(BaseModel):
             metadata=section.metadata,
         )
 
-    def dump(self, path: Path) -> None:
+    def as_manifest_section(self, *, path: Path) -> StructureManifestSection:
+        """Convert the structure to a manifest section.
+
+        Args:
+            path (Path): The path to the structure file (as created by
+                `method:dump`).
+
+        Returns:
+            StructureManifestSection: The manifest section for the structure.
+        """
+        return StructureManifestSection(
+            path=path,
+            name=self.name,
+            description=self.description,
+            metadata=self.metadata,
+        )
+
+    def dump(
+        self, *, path: Path | None = None, format: StructureFormat = StructureFormat.PDB
+    ) -> Path:
         """Dump the structure to a file.
 
         Biopython is used for writing the structure to a file. The following
@@ -98,18 +126,23 @@ class Structure(BaseModel):
         Note that binary CIF files (.bcif) are not supported for writing.
 
         Args:
-            path (Path): The path to the file where the structure will be saved.
+            path (Path): The output directory path to dump the structure to. If
+                None, the current working directory is used.
+            format (StructureFormat): The format to dump the structure in.
 
         Raises:
             NotImplementedError if the file type is not supported.
         """
-        match path.suffix.lower():
-            case ".pdb":
+        path = path or Path.cwd()
+        structure_path = path / f"{self.name}{format.value}"
+        match format:
+            case StructureFormat.PDB:
                 io = PDBIO()
-            case ".cif":
+            case StructureFormat.MMCIF:
                 io = MMCIFIO()
             case _:
-                raise NotImplementedError(f"Unsupported file type: {path.suffix}")
+                raise NotImplementedError(f"Unsupported file type: {format.value}")
         io.set_structure(self.value)
-        with path.open("w", encoding="utf-8") as file:
+        with structure_path.open("w", encoding="utf-8") as file:
             io.save(file)
+        return structure_path

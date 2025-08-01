@@ -1,21 +1,26 @@
+import io
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
-from Bio import Seq, SeqIO, SeqRecord
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
-from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
+from pg2_dataset.models.dataset import Dataset
+from pg2_dataset.models.sequence import Sequence, SequenceManifestSection, SequenceFormat
 
 
 @pytest.mark.parametrize(
     "name, value, description, type, alphabet",
     [
-        ("seq1", Seq.Seq("ATCG"), "Test sequence 1", SequenceType("wild_type"), "DNA"),
-        ("seq2", Seq.Seq("AUGC"), "Test sequence 2", "starting_sequence", "RNA"),
+        ("seq1", Seq("ATCG"), "Test sequence 1", SequenceType("wild_type"), "DNA"),
+        ("seq2", Seq("AUGC"), "Test sequence 2", "starting_sequence", "RNA"),
         (
             "seq3",
-            Seq.Seq("MKTAYIAKQRQISF"),
+            Seq("MKTAYIAKQRQISF"),
             "Test sequence 3",
             "engineered_sequence",
             SequenceAlphabet("AA"),
@@ -23,16 +28,16 @@ from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
     ],
 )
 def test_sequence(name, value, description, type, alphabet):
-    seq = Sequence(
+    sequence = Sequence(
         name=name,
         value=value,
         description=description,
         type=SequenceType(type),
         alphabet=SequenceAlphabet(alphabet),
     )
-    assert isinstance(seq.value, Seq.Seq)
-    assert isinstance(seq.type, SequenceType)
-    assert isinstance(seq.alphabet, SequenceAlphabet)
+    assert isinstance(sequence.value, Seq)
+    assert isinstance(sequence.type, SequenceType)
+    assert isinstance(sequence.alphabet, SequenceAlphabet)
 
 
 @pytest.mark.xfail(raises=ValueError)
@@ -45,30 +50,30 @@ def test_sequence(name, value, description, type, alphabet):
     ],
 )
 def test_invalid_sequence(name, value, description, type, alphabet):
-    seq = Sequence(
+    sequence = Sequence(
         name=name,
         value=value,
         description=description,
         type=SequenceType(type),
         alphabet=SequenceAlphabet(alphabet),
     )
-    assert isinstance(seq.value, Seq.Seq)
-    assert isinstance(seq.type, SequenceType)
-    assert isinstance(seq.alphabet, SequenceAlphabet)
+    assert isinstance(sequence.value, Seq)
+    assert isinstance(sequence.type, SequenceType)
+    assert isinstance(sequence.alphabet, SequenceAlphabet)
 
 
-def test_sequence_dump(tmp_path):
-    seq = Sequence(
+def test_sequence_dump(tmp_path: Path) -> None:
+    sequence = Sequence(
         name="test_seq",
-        value=Seq.Seq("ATCG"),
+        value=Seq("ATCG"),
         description="Test sequence for dumping",
         type=SequenceType("wild_type"),
         alphabet=SequenceAlphabet("DNA"),
     )
     dir = Path(tmp_path)
-    saved_file_path = seq.dump(dir)
+    saved_file_path = sequence.dump(dir)
     print(f"Sequence dumped to: {saved_file_path}")
-    file_path = tmp_path / "test_seq.fasta"
+    file_path = tmp_path / f"test_seq.{SequenceFormat.FASTA.value}"
     print(f"Expected file path: {file_path}")
     assert file_path.exists()
     with open(file_path, "r") as f:
@@ -76,8 +81,8 @@ def test_sequence_dump(tmp_path):
         assert ">test_seq" in content
         assert "ATCG" in content
 
-    seq = SeqIO.read(file_path, "fasta")
-    assert isinstance(seq, SeqRecord.SeqRecord)
+    sequence_record = SeqIO.read(file_path, "fasta")
+    assert isinstance(sequence_record, SeqRecord)
 
 
 @pytest.mark.parametrize(
@@ -116,3 +121,35 @@ def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, path):
     )
     assert len(manifest.sequence_type) > 0
     assert len(manifest.sequence_alphabet) > 0
+
+
+def test_dataset_dump_with_sequences(tmp_path: Path) -> None:
+    """Test the zip file created by the Dataset dump with sequences.
+
+    The created archive:
+    - Should not contain a bad file.
+    - Should contain the sequence file.
+    - Should result the sequence being loaded correctly.
+    """
+    bio_sequence = Seq("ATCGATCGATCG")
+    sequence = Sequence(
+        name="seq",
+        value=bio_sequence,
+        description="Test sequence",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    dataset = Dataset(name="test", sequences=[sequence])
+
+    path = dataset.dump(path=tmp_path)
+
+    zip = ZipFile(path)
+    assert not zip.testzip(), "Dataset dump contains a bad file."
+    assert "sequences/seq.fasta" in zip.namelist(), (
+        "Sequence file not found in dataset dump."
+    )
+
+    with zip.open("sequences/seq.fasta", "r") as sequence_file:
+        string_io = io.StringIO(sequence_file.read().decode("utf-8"))
+        loaded_sequence = SeqIO.read(string_io, "fasta")
+        assert bio_sequence == loaded_sequence.seq
