@@ -59,4 +59,4 @@ class SequenceManifestSection(BaseModel):
     @field_serializer("path")
     def serialize_path(self, path: Path) -> str:
         """Serialize the path to a string."""
-        return str(path)
+        return path.as_posix()
