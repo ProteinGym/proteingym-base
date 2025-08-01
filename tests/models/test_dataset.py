@@ -225,15 +225,12 @@ def test_manifest_dump_from_path_unit_docs_example(
     Use the example from the documentation for more complicated manifest.
     """
     manifest = Manifest.from_path(manifest_path)
-<<<<<<< HEAD
     path = tmp_path / "manifest.toml"
     manifest.dump(path)
     loaded_manifest = Manifest.from_path(path)
-=======
 
     path = manifest.dump(path=tmp_path)
 
->>>>>>> 28823ba (Dump intermediate files of dataset into temporary directory)
     try:
         loaded_manifest = Manifest.from_path(path)
     except ValidationError as e:
