@@ -260,23 +260,37 @@ class Dataset(BaseModel):
         )
         return manifest
 
+    def _write_paths_to_zip(
+        self,
+        zip: ZipFile,
+        *paths: Path,
+        arcname: str | None = None,
+        arcname_prefix: str = "",
+    ) -> None:
+        """Write paths to a ZIP archive."""
+        for path in paths:
+            arcname = arcname_prefix + (arcname or path.name)
+            zip.write(path, arcname=arcname)
+
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
         archive_path = path / f"{self.name}.zip"
         manifest = self._create_manifest(temporary_directory)
         manifest_path = manifest.dump(path=temporary_directory)
         with ZipFile(archive_path, "w") as zip:
-            zip.write(manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE)
-            for sequence in manifest.sequences:
-                arcname = (
-                    f"{DatasetArchiveLayout.SEQUENCES_DIRECTORY}{sequence.path.name}"
-                )
-                zip.write(sequence.path, arcname=arcname)
-            for structure in manifest.structures:
-                arcname = (
-                    f"{DatasetArchiveLayout.STRUCTURES_DIRECTORY}{structure.path.name}"
-                )
-                zip.write(structure.path, arcname=arcname)
+            self._write_paths_to_zip(
+                zip, manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE
+            )
+            self._write_paths_to_zip(
+                zip,
+                *[sequence.path for sequence in manifest.sequences],
+                arcname_prefix=DatasetArchiveLayout.SEQUENCES_DIRECTORY,
+            )
+            self._write_paths_to_zip(
+                zip,
+                *[structure.path for structure in manifest.structures],
+                arcname_prefix=DatasetArchiveLayout.STRUCTURES_DIRECTORY,
+            )
         return archive_path
 
     def dump(self, *, path: Path | None = None) -> Path:
