@@ -129,8 +129,10 @@ class Manifest(BaseModel):
         """Dump the manifest to a TOML file.
 
         Args:
-            path (Path | None): The directory path to dump the manifest to. If
-                None, the current working directory is used. Defaults to None.
+            path (Path | None): The path to dump the manifest to. If
+                None, the current working directory is used as path. If path is
+                a directory, the manifest name is used as file name. Defaults to
+                None.
 
         Returns:
             Path: The path to the dumped manifest file.
