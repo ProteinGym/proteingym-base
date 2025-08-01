@@ -13,11 +13,8 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from pg2_dataset.models.constants import DirType
-from pg2_dataset.models.getter import DataDir
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
-from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.utils import zip_context
 
 _DEFAULT_MANIFEST_FILE = Path("manifest.toml")
@@ -175,12 +172,11 @@ class Dataset(BaseModel):
         Returns:
             Dataset: The dataset created from the manifest.
         """
-        sequences = []
-        for sequence_manifest in manifest.sequences:
-            sequence_factory = SequenceFactory.from_manifest_section(
-                manifest_section=sequence_manifest
-            )
-            sequences = sequences + sequence_factory.generate()
+        sequences = [
+            seq
+            for manifest_section in manifest.sequences
+            for seq in Sequence.from_manifest_section(manifest_section)
+        ]
 
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
 
@@ -226,10 +222,9 @@ class Dataset(BaseModel):
         path.mkdir(parents=True, exist_ok=True)
 
         # Write sequences
-        sequence_dir = DataDir(
-            path=path / "sequences",
-            dir_type=DirType.LOCAL,
-        ).dump()
+        sequence_dir = path / "sequences"
+        sequence_dir.mkdir(parents=True, exist_ok=True)
+
         for sequence in self.sequences:
             sequence.dump(sequence_dir)
 

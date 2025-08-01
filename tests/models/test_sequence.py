@@ -66,8 +66,10 @@ def test_sequence_dump(tmp_path):
         alphabet=SequenceAlphabet("DNA"),
     )
     dir = Path(tmp_path)
-    seq.dump(dir)
+    saved_file_path = seq.dump(dir)
+    print(f"Sequence dumped to: {saved_file_path}")
     file_path = tmp_path / "test_seq.fasta"
+    print(f"Expected file path: {file_path}")
     assert file_path.exists()
     with open(file_path, "r") as f:
         content = f.read()

@@ -1,6 +1,6 @@
 name = "PG2-Dataset"
 description = "This is an example dataset"
-version = "1.0"
+version = "1.0.0"
 
 
 [[ sequences ]]
