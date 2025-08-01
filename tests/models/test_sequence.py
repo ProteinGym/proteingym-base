@@ -5,7 +5,6 @@ from Bio import Seq, SeqIO, SeqRecord
 from pydantic import ValidationError
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
-from pg2_dataset.models.getter import Sources
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 
 
@@ -85,40 +84,33 @@ def test_sequence_dump(tmp_path):
         (
             "wild_type",
             "DNA",
-            ["path/"],
-        ),
-        (
-            "wild_type",
-            "DNA",
-            ["path/"],
+            "tests/test_data/io/files",
         ),
     ],
 )
 def test_sequence_manifest(sequence_type, sequence_alphabet, path):
-    sources = Sources(path=path)
-
     manifest = SequenceManifestSection(
         sequence_type=sequence_type,
         sequence_alphabet=sequence_alphabet,
-        sources=sources,
+        path=path,
     )
     assert manifest.sequence_type == sequence_type
     assert manifest.sequence_alphabet == sequence_alphabet
 
 
 @pytest.mark.parametrize(
-    "sequence_type, sequence_alphabet, local, s3",
+    "sequence_type, sequence_alphabet, path",
     [
-        ("wild_type", None, ["path/"], []),
-        (None, "DNA", ["path/"], []),
+        ("wild_type", None, "path/"),
+        (None, "DNA", "path/"),
     ],
 )
 @pytest.mark.xfail(raises=ValidationError)
-def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, local, s3):
+def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, path):
     manifest = SequenceManifestSection(
         sequence_type=sequence_type,
         sequence_alphabet=sequence_alphabet,
-        sources=Sources(dirs=Sources(local=local, s3=s3)),
+        path=Path(path),
     )
     assert len(manifest.sequence_type) > 0
     assert len(manifest.sequence_alphabet) > 0

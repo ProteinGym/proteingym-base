@@ -36,9 +36,7 @@ path = "assays.csv"
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-
-[ sequences.sources ]
-path = ["example_data/NEIME_2019/sequences"]
+path = "example_data/NEIME_2019/sequences"
 
 [[structures]]
 path = "{mock_structure_file.as_posix()}"
@@ -217,9 +215,8 @@ def test_manifest_dump_from_path_unit_docs_example(
     """
     manifest = Manifest.from_path(manifest_path)
     path = tmp_path / "manifest.toml"
-
     manifest.dump(path)
-
+    loaded_manifest = Manifest.from_path(path)
     try:
         loaded_manifest = Manifest.from_path(path)
     except ValidationError as e:

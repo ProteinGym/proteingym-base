@@ -1,38 +1,44 @@
 from pathlib import Path
-from typing import List
 
-from pydantic import BaseModel, conlist
+from pydantic import BaseModel
 
-from pg2_dataset.io import DataDir, DataFile
-
-
-class Sources(BaseModel):
-    path: conlist(str, min_length=1)
+from pg2_dataset.io import DataDir
 
 
 class DataGetter(BaseModel):
-    data_dirs: List[DataDir]
+    """Object to retrieve data from different sources.
+
+    Data can be retrieved from:
+    - local paths
+    - TODO: crossrefs
+    """
+
+    data_dir: DataDir
 
     @classmethod
-    def from_sources(cls, data: Sources) -> "DataGetter":
-        data_dirs = []
-        for dir in data.path:
-            data_dir = DataDir(path=Path(dir))
-            data_dirs.append(data_dir)
+    def from_path(cls, path: Path) -> "DataGetter":
+        """Create a `DataGetter` instance from a local directory path.
 
-        return cls(
-            data_dirs=data_dirs,
-        )
+        Args:
+            path (Path): The path to the local directory containing data files.
 
-    def get_files(self, file_type: list[str] = None) -> List[DataFile]:
-        all_files = []
-        for data_dir in self.data_dirs:
-            files = data_dir.get_files(file_type=file_type)
-            all_files = all_files + files
-        return all_files
+        Returns:
+            DataGetter: An instance of `DataGetter`.
+        """
+        data_dir = DataDir(path=path)
+        return cls(data_dir=data_dir)
 
-    def get_data(self, file_type: list[str] = None) -> list:
-        files = self.get_files(file_type=file_type)
+    def get_data(self, *, file_types: list[str] = None) -> list:
+        """Get data from for a specific file type.
+
+        Args:
+            file_types (list[str], optional): List of file extensions to filter files.
+                Defaults to None, which retrieves all files.
+
+        Returns:
+            list: A list of data read from the files.
+        """
+        files = self.data_dir.get_files(file_types=file_types)
         data = []
         for file in files:
             content = file.read()

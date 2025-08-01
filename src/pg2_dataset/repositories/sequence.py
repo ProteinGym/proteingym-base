@@ -51,8 +51,7 @@ class SequenceFactory:
         """
         sequence_type = manifest_section.sequence_type
         sequence_alphabet = manifest_section.sequence_alphabet
-        sequence_sources = manifest_section.sources
-        data_getter = DataGetter.from_sources(sequence_sources)
+        data_getter = DataGetter.from_path(manifest_section.path)
 
         return cls(
             sequence_type=sequence_type,

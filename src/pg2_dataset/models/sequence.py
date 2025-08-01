@@ -4,10 +4,14 @@ from typing import Annotated
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    field_serializer,
+)
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
-from pg2_dataset.models.getter import Sources
 
 
 def parse_sequence_value(value: str | Seq) -> Seq:
@@ -48,6 +52,11 @@ class SequenceManifestSection(BaseModel):
         Discuss if this should be part of the manifest or of the dataset.
     """
 
-    sequence_type: str = Field(required=True)
-    sequence_alphabet: str = Field(required=True)
-    sources: Sources = Field(required=True)
+    sequence_type: str
+    sequence_alphabet: str
+    path: Path
+
+    @field_serializer("path")
+    def serialize_path(self, path: Path) -> str:
+        """Serialize the path to a string."""
+        return path.as_posix()

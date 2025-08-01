@@ -25,20 +25,19 @@ class DataDir(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def infer_dir_type(cls, values):
-        if "dir_type" not in values or values["dir_type"] is None:
-            path = values.get("path")
-            if not path.as_posix().lower().startswith("s3"):
+        if values.get("path") and not values.get("dir_type"):
+            if isinstance(values["path"], str):
+                values["path"] = Path(values["path"])
+            if not values.get("path").as_posix().lower().startswith("s3"):
                 values["dir_type"] = DirType.LOCAL
-            else:
-                raise ValueError("Path must be local.")
         return values
 
-    def get_files(self, file_type: list[str] = None) -> List[DataFile]:
-        if file_type is None:
+    def get_files(self, file_types: list[str] = None) -> List[DataFile]:
+        if file_types is None:
             file_names = self.path.rglob("*.*")
         else:
-            file_type = [ft.lower() for ft in file_type]
-            file_names = self.path.rglob(f"*.{'|'.join(file_type)}")
+            file_types = [ft.lower() for ft in file_types]
+            file_names = self.path.rglob(f"*.{'|'.join(file_types)}")
 
         all_files = []
         for file in file_names:
