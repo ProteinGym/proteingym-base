@@ -10,7 +10,6 @@ from pydantic import ValidationError
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.getter import Sources
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 
 
