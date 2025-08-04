@@ -93,19 +93,19 @@ def multiple_sequence_alignment() -> MultipleSeqAlignment:
 def fasta_file(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> Path:
-    """FASTA structure file for testing."""
-    path = tmp_path / "structure.fasta"
+    """FASTA MSA file for testing."""
+    path = tmp_path / "msa.fasta"
     AlignIO.write(multiple_sequence_alignment, path, "fasta")
     return path
 
 
-def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
+def test_msa_from_manifest_section_with_fasta_file(fasta_file: Path) -> None:
     """A MSA can be created from a manifest section with FASTA file."""
     section = MSAManifestSection(path=fasta_file)
 
     msa = MSA.from_manifest_section(section)
 
-    assert msa.name == "structure"
+    assert msa.name == "msa"
     assert isinstance(msa.value, MultipleSeqAlignment)
 
 
