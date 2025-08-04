@@ -218,3 +218,22 @@ def test_dataset_dump_with_msas(
     assert "msas/msa2.fasta" in zip.namelist(), (
         "Second MSA file not found in dataset dump."
     )
+
+
+def test_dataset_from_path_with_msa(
+    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+) -> None:
+    """Read a dataset from a path with a MSA."""
+    msa = MSA(name="msa", value=multiple_sequence_alignment)
+    dataset = Dataset(name="test", msas=[msa])
+
+    path = dataset.dump(path=tmp_path)
+
+    loaded_dataset = Dataset.from_path(path)
+
+    assert loaded_dataset.name == "test"
+    assert len(loaded_dataset.msas) == 1
+    assert loaded_dataset.msas[0].name == "msa"
+    assert (
+        loaded_dataset.msas[0].value.alignment == multiple_sequence_alignment.alignment
+    )
