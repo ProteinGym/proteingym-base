@@ -88,9 +88,9 @@ class Sequence(BaseModel):
         else:
             raise ValueError("Path must be a directory or a file.")
 
-        files = [f for f in files if f.suffix in [ft.value for ft in SequenceFormat]]
+        files = [f for f in files if f.suffix[1:] in SequenceFormat]
         sequences = [SeqIO.read(file, format=file.suffix[1:]) for file in files]
-
+        
         return [
             cls(
                 name=seq.name,
