@@ -243,7 +243,7 @@ class Dataset(BaseModel):
         # The zip_context context manager is used to extract the contents of the zip,
         # load the dataset, and clean up the extracted contents.
         with zip_context(path):
-            dataset_manifest = Manifest.from_toml(DatasetArchiveLayout.MANIFEST_FILE)
+            dataset_manifest = Manifest.from_path(DatasetArchiveLayout.MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
     def _create_manifest_sections(self, objects: list[Any], path: Path) -> list[Any]:
