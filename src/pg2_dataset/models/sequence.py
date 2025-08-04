@@ -9,6 +9,7 @@ from pydantic import (
     ConfigDict,
     DirectoryPath,
     FilePath,
+    SerializationInfo,
     field_serializer,
 )
 
@@ -25,13 +26,25 @@ class SequenceManifestSection(BaseModel):
         Discuss if this should be part of the manifest or of the dataset.
     """
 
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
     sequence_type: str
     sequence_alphabet: str
-    path: FilePath | DirectoryPath
 
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
-        """Serialize the path to a string."""
+    path: FilePath | DirectoryPath
+    """The path to the sequence file."""
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
+        """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
 
