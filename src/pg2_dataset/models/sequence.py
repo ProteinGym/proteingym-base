@@ -1,6 +1,7 @@
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
-from enum import StrEnum
+
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -8,9 +9,9 @@ from pydantic import (
     BaseModel,
     BeforeValidator,
     ConfigDict,
-    field_serializer,
     DirectoryPath,
-    FilePath
+    FilePath,
+    field_serializer,
 )
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
@@ -25,8 +26,6 @@ def parse_sequence_value(value: str | Seq) -> Seq:
     return Seq(value)
 
 
-# Create manifest for sequence, currently supports only local and S3 directories.
-# It can be extended to support xrefs.
 class SequenceManifestSection(BaseModel):
     """This is the manifest section for Sequences.
 
@@ -49,6 +48,7 @@ class SequenceManifestSection(BaseModel):
 
 class SequenceFormat(StrEnum):
     """Enumeration for sequence file formats."""
+
     FASTA = "fasta"
     FASTQ = "fastq"
 
@@ -57,16 +57,16 @@ class Sequence(BaseModel):
     """A sequence in the dataset."""
 
     model_config = ConfigDict(
-        arbitrary_types_allowed=True, # Allow BioPython Seq Objects
+        arbitrary_types_allowed=True,  # Allow BioPython Seq Objects
     )
 
-    name: str
+    name: str | None = None
     """The name of the sequence."""
 
     value: Annotated[Seq, BeforeValidator(lambda v: parse_sequence_value(v))]
     """The value of the sequence, a Seq object."""
 
-    description: str
+    description: str | None = None
     """The description of the sequence."""
 
     type: SequenceType
@@ -74,19 +74,20 @@ class Sequence(BaseModel):
 
     alphabet: SequenceAlphabet
     """The alphabet of the sequence."""
-    
 
     @classmethod
-    def from_manifest_section(cls, section: SequenceManifestSection) -> list["Sequence"]:
+    def from_manifest_section(
+        cls, section: SequenceManifestSection
+    ) -> list["Sequence"]:
         """Create a list of Sequence from a manifest section."""
-        
+
         if section.path.is_dir():
             files = list(section.path.glob("*.*"))
         elif section.path.is_file():
             files = [section.path]
         else:
             raise ValueError("Path must be a directory or a file.")
-        
+
         files = [f for f in files if f.suffix in [ft.value for ft in SequenceFormat]]
         sequences = [SeqIO.read(file, format=file.suffix[1:]) for file in files]
 
@@ -96,14 +97,46 @@ class Sequence(BaseModel):
                 value=seq.seq,
                 description=seq.description,
                 type=section.sequence_type,
-                alphabet=section.sequence_alphabet
+                alphabet=section.sequence_alphabet,
             )
             for seq in sequences
         ]
 
-    def dump(self, dir: Path) -> Path:
-        dir.mkdir(parents=True, exist_ok=True)
-        file_path = dir / f"{self.name}.{SequenceFormat.FASTA.value}"
+    def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
+        """Convert the sequence to a manifest section.
+
+        Args:
+            path (Path): The path to the sequence file (as created by
+                `method:dump`).
+
+        Returns:
+            SequenceManifestSection: The manifest section for the sequence.
+        """
+        return SequenceManifestSection(
+            path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
+        )
+
+    def dump(self, path: Path, format: SequenceFormat = SequenceFormat.FASTA) -> Path:
+        """Dump the sequence to a file in `path` directory.
+
+        Biopython is used for writing the sequence to a file. The following
+        formats are supported:
+        - FASTA (.fasta)
+        - FASTQ (.fastq)
+
+        Args:
+            path (Path): The output directory path to dump the sequence to. If
+                None, the current working directory is used.
+            format (SequenceFormat): The format to dump the sequence in.
+
+        Raises:
+            ValueError: If the path does not have a valid sequence file extension.
+        """
+        file_path = path / f"{self.name}.{format.value}"
+        assert file_path.suffix[1:] in [
+            SequenceFormat.FASTA.value,
+            SequenceFormat.FASTQ.value,
+        ]
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )

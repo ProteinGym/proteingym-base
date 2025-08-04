@@ -10,7 +10,19 @@ from pydantic import ValidationError
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.sequence import Sequence, SequenceManifestSection, SequenceFormat
+from pg2_dataset.models.sequence import (
+    Sequence,
+    SequenceFormat,
+    SequenceManifestSection,
+    parse_sequence_value,
+)
+
+
+def test_parse_sequence_value():
+    assert isinstance(parse_sequence_value("ATCG"), Seq)
+    assert isinstance(parse_sequence_value(Seq("ATCG")), Seq)
+    with pytest.raises(ValueError):
+        parse_sequence_value("")
 
 
 @pytest.mark.parametrize(
@@ -70,11 +82,8 @@ def test_sequence_dump(tmp_path: Path) -> None:
         type=SequenceType("wild_type"),
         alphabet=SequenceAlphabet("DNA"),
     )
-    dir = Path(tmp_path)
-    saved_file_path = sequence.dump(dir)
-    print(f"Sequence dumped to: {saved_file_path}")
-    file_path = tmp_path / f"test_seq.{SequenceFormat.FASTA.value}"
-    print(f"Expected file path: {file_path}")
+    sequence.dump(Path(tmp_path))
+    file_path = Path(tmp_path) / f"test_seq.{SequenceFormat.FASTA.value}"
     assert file_path.exists()
     with open(file_path, "r") as f:
         content = f.read()
