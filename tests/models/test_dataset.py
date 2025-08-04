@@ -1,6 +1,4 @@
 import io
-import tempfile
-import zipfile
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -275,18 +273,10 @@ def test_dataset_dump_creates_one_file(tmp_path: Path) -> None:
     assert [path] == paths, f"Expected one file in the directory, but found: {paths}"
 
 
-@pytest.mark.skip(reason="TODO: Add a `from_path` method to the Dataset class")
-def test_from_path_with_invalid_file_should_raise_exceptions(tmpdir: Path) -> None:
-    invalid_zip_path = Path(tmpdir) / "invalid_dataset.zip"
+def test_dataset_from_path_simple(tmp_path: Path) -> None:
+    """Create a dataset from a path to a zip file."""
+    dataset_path = Dataset(name="test").dump(path=tmp_path)
 
-    with pytest.raises(
-        FileNotFoundError,
-        match=f"No such file or directory: '{str(invalid_zip_path)}'",
-    ):
-        Dataset.from_path(invalid_zip_path)
+    dataset = Dataset.from_path(dataset_path)
 
-    with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as tmpfile:
-        Path(tmpfile.name).touch()
-
-        with pytest.raises(zipfile.BadZipFile, match="File is not a zip file"):
-            Dataset.from_path(tmpfile.name)
+    assert dataset.name == "test", "Dataset name does not match the expected name."
