@@ -7,6 +7,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
+from pg2_dataset.models.dataset import Dataset, Manifest
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 
 
@@ -171,3 +172,18 @@ def test_msa_dump_to_directory(
 
     loaded_msa = AlignIO.read(path, path.suffix[1:].lower())
     assert msa.value.alignment == loaded_msa.alignment
+
+
+def test_dataset_from_manifest_section_with_msa(
+    fasta_file: Path, multiple_sequence_alignment: MultipleSeqAlignment
+) -> None:
+    """A dataset can be created from a manifest section with MSAs."""
+    manifest_section = MSAManifestSection(path=fasta_file)
+    manifest = Manifest(name="test_msa", msas=[manifest_section])
+    dataset = Dataset.from_manifest(manifest)
+
+    assert len(dataset.msas) == 1, "Dataset should contain one MSA"
+
+    msa = dataset.msas[0]
+    assert msa.name == "msa"
+    assert msa.value.alignment == multiple_sequence_alignment.alignment

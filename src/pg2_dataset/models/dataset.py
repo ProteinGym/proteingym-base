@@ -1,3 +1,4 @@
+import itertools
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import IO, Annotated, Any, Callable
@@ -211,7 +212,7 @@ class Dataset(BaseModel):
 
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
 
-        msas = [MSA.from_manifest_section(m) for m in manifest.msas]
+        msas = itertools.chain(*[MSA.from_manifest_section(m) for m in manifest.msas])
 
         return cls(
             name=manifest.name,
