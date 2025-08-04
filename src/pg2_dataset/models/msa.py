@@ -31,7 +31,7 @@ class MSAManifestSection(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the multiple sequence alignment."""
 
-    @field_serializer("path")
+    @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path) -> str:
         """Serialize the path as a Posix path."""
         return path.as_posix()
