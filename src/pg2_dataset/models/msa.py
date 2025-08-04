@@ -2,7 +2,14 @@ from pathlib import Path
 
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
-from pydantic import BaseModel, ConfigDict, Field, FilePath, field_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    DirectoryPath,
+    Field,
+    FilePath,
+    field_serializer,
+)
 
 
 class MSAManifestSection(BaseModel):
@@ -16,7 +23,7 @@ class MSAManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    path: FilePath
+    path: FilePath | DirectoryPath
     """The path to the multiple sequence alignment file."""
 
     name: str | None = None

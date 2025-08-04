@@ -23,10 +23,25 @@ def test_msa_manifest_section_minimal(tmp_path: Path) -> None:
         assert True, "MSAManifestSection created successfully with minimal fields."
 
 
+def test_msa_manifest_section_with_directory(tmp_path: Path) -> None:
+    """A directory is also allowed as a path."""
+    path = tmp_path / "msas/"
+    path.mkdir()
+
+    try:
+        MSAManifestSection(path=path)
+    except ValidationError as e:
+        raise AssertionError("Could not create MSAManifestSection") from e
+    else:
+        assert True, "MSAManifestSection created successfully with minimal fields."
+
+
 def test_msa_manifest_section_missing_path() -> None:
     """A validation error is raised if path is missing."""
     match = (
-        "validation error for MSAManifestSection\npath\n  Path does not point to a file"
+        r"(?s)2 validation errors for MSAManifestSection"
+        r".*Path does not point to a file"
+        r".*Path does not point to a directory"
     )
     with pytest.raises(ValidationError, match=match):
         MSAManifestSection(path="non_existent.msa")
