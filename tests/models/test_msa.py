@@ -118,10 +118,35 @@ def test_msa_from_manifest_section_with_fasta_file(fasta_file: Path) -> None:
     """A MSA can be created from a manifest section with FASTA file."""
     section = MSAManifestSection(path=fasta_file)
 
-    msa = MSA.from_manifest_section(section)
+    msa = next(MSA.from_manifest_section(section))
 
     assert msa.name == "msa"
     assert isinstance(msa.value, MultipleSeqAlignment)
+
+
+@pytest.fixture
+def fasta_directory(
+    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+) -> Path:
+    """A directory with two fasta files for testing."""
+    path = tmp_path / "msas/"
+    path.mkdir()
+    fasta_file1 = path / "msa1.fasta"
+    fasta_file2 = path / "msa2.fasta"
+    AlignIO.write(multiple_sequence_alignment, fasta_file1, "fasta")
+    AlignIO.write(multiple_sequence_alignment, fasta_file2, "fasta")
+    return path
+
+
+def test_msa_from_manifest_section_with_fasta_directory(fasta_directory: Path) -> None:
+    """A MSA can be created from a manifest section with FASTA file."""
+    section = MSAManifestSection(path=fasta_directory)
+
+    msas = list(MSA.from_manifest_section(section))
+
+    assert len(msas) == 2
+    assert msas[0].name == "msa1"
+    assert msas[1].name == "msa2"
 
 
 def test_msa_dump_to_file(

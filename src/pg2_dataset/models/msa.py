@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Iterator
 
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
@@ -66,15 +67,21 @@ class MSA(BaseModel):
     """A brief description of the MSA."""
 
     @classmethod
-    def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
+    def from_manifest_section(cls, section: MSAManifestSection) -> Iterator["MSA"]:
         """Create a MSA instance from a manifest section.
 
         Raises :
             NotImplementedError if the file type is not supported.
         """
-        name = section.name or section.path.stem
-        value = AlignIO.read(section.path, section.path.suffix[1:].lower())
-        return MSA(name=name, value=value, description=section.description)
+        if section.path.is_dir():
+            paths = sorted(section.path.iterdir())
+        else:
+            paths = [section.path]
+        for path in paths:
+            # TODO: What name and description to give with multiple MSAs?
+            name = section.name or path.stem
+            value = AlignIO.read(path, path.suffix[1:].lower())
+            yield MSA(name=name, value=value, description=section.description)
 
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the multiple sequence alignment to a file.
