@@ -124,7 +124,7 @@ def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, path):
     assert len(manifest.sequence_alphabet) > 0
 
 
-def test_dataset_dump_with_sequences(tmp_path: Path) -> None:
+def test_dataset_dump_with_sequence(tmp_path: Path) -> None:
     """Test the zip file created by the Dataset dump with sequences.
 
     The created archive:
@@ -154,3 +154,53 @@ def test_dataset_dump_with_sequences(tmp_path: Path) -> None:
         string_io = io.StringIO(sequence_file.read().decode("utf-8"))
         loaded_sequence = SeqIO.read(string_io, "fasta")
         assert bio_sequence == loaded_sequence.seq
+
+
+def test_dataset_dump_with_sequences(tmp_path: Path) -> None:
+    """Same as test_dataset_dump_with_sequence, but with multiple sequences."""
+    bio_sequence = Seq("ATCGATCGATCG")
+    sequence1 = Sequence(
+        name="sequence1",
+        value=bio_sequence,
+        description="Test sequence",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    sequence2 = Sequence(
+        name="sequence2",
+        value=bio_sequence,
+        description="Test sequence",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    dataset = Dataset(name="test", sequences=[sequence1, sequence2])
+
+    path = dataset.dump(path=tmp_path)
+
+    zip = ZipFile(path)
+    assert "sequences/sequence1.fasta" in zip.namelist(), (
+        "Sequence file not found in dataset dump."
+    )
+    assert "sequences/sequence2.fasta" in zip.namelist(), (
+        "Sequence file not found in dataset dump."
+    )
+
+
+def test_dataset_from_path_with_sequence(tmp_path: Path) -> None:
+    """Read a datset from a path with a sequence."""
+    bio_sequence = Seq("ATCGATCGATCG")
+    sequence = Sequence(
+        name="sequence",
+        value=bio_sequence,
+        description="Test sequence",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    path = Dataset(name="test", sequences=[sequence]).dump(path=tmp_path)
+
+    dataset = Dataset.from_path(path)
+
+    assert dataset.name == "test", "Dataset name does not match the expected name."
+    assert dataset.sequences == [sequence], (
+        "Dataset sequences do not match the expected sequences."
+    )
