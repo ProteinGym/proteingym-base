@@ -176,7 +176,7 @@ def test_msa_dump_to_directory(
     assert msa.value.alignment == loaded_msa.alignment
 
 
-def test_dataset_dump_with_msas(
+def test_dataset_dump_with_msa(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> None:
     """Test the zip file created by the Dataset dump with MSAs.
@@ -199,3 +199,22 @@ def test_dataset_dump_with_msas(
         string_io = io.StringIO(msa_file.read().decode("utf-8"))
         loaded_msa = AlignIO.read(string_io, "fasta")
         assert multiple_sequence_alignment.alignment == loaded_msa.alignment
+
+
+def test_dataset_dump_with_msas(
+    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+) -> None:
+    """Same as `test_dataset_dump_with_msa`, but with MSAs."""
+    msa1 = MSA(name="msa1", value=multiple_sequence_alignment)
+    msa2 = MSA(name="msa2", value=multiple_sequence_alignment)
+    dataset = Dataset(name="test", msas=[msa1, msa2])
+
+    path = dataset.dump(path=tmp_path)
+
+    zip = ZipFile(path)
+    assert "msas/msa1.fasta" in zip.namelist(), (
+        "First MSA file not found in dataset dump."
+    )
+    assert "msas/msa2.fasta" in zip.namelist(), (
+        "Second MSA file not found in dataset dump."
+    )
