@@ -1,4 +1,6 @@
+import io
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 from Bio import AlignIO
@@ -7,6 +9,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
+from pg2_dataset.models.dataset import Dataset
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 
 
@@ -171,3 +174,28 @@ def test_msa_dump_to_directory(
 
     loaded_msa = AlignIO.read(path, path.suffix[1:].lower())
     assert msa.value.alignment == loaded_msa.alignment
+
+
+def test_dataset_dump_with_msas(
+    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+) -> None:
+    """Test the zip file created by the Dataset dump with MSAs.
+
+    The created archive:
+    - Should not contain a bad file.
+    - Should contain the sequence file.
+    - Should result the sequence being loaded correctly.
+    """
+    msa = MSA(name="msa", value=multiple_sequence_alignment)
+    dataset = Dataset(name="test", msas=[msa])
+
+    path = dataset.dump(path=tmp_path)
+
+    zip = ZipFile(path)
+    assert not zip.testzip(), "Dataset dump contains a bad file."
+    assert "msas/msa.fasta" in zip.namelist(), "MSA file not found in dataset dump."
+
+    with zip.open("msas/msa.fasta", "r") as msa_file:
+        string_io = io.StringIO(msa_file.read().decode("utf-8"))
+        loaded_msa = AlignIO.read(string_io, "fasta")
+        assert multiple_sequence_alignment.alignment == loaded_msa.alignment

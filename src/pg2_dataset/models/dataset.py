@@ -161,6 +161,9 @@ class DatasetArchiveLayout:
     MANIFEST_FILE = "manifest.lock"
     """The internal manifest file inside the dataset archive."""
 
+    MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY = "msas/"
+    """The directory for multiple sequence alignments (MSAs)."""
+
     SEQUENCES_DIRECTORY = "sequences/"
     """The directory for sequences."""
 
@@ -264,6 +267,7 @@ class Dataset(BaseModel):
         manifest = Manifest(
             name=self.name,
             description=self.description,
+            msas=self._create_manifest_sections(self.msas, path),
             sequences=self._create_manifest_sections(self.sequences, path),
             structures=self._create_manifest_sections(self.structures, path),
         )
@@ -289,6 +293,11 @@ class Dataset(BaseModel):
         with ZipFile(archive_path, "w") as zip:
             self._write_paths_to_zip(
                 zip, manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE
+            )
+            self._write_paths_to_zip(
+                zip,
+                *[msa.path for msa in manifest.msas],
+                arcname_prefix=DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY,
             )
             self._write_paths_to_zip(
                 zip,
