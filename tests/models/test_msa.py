@@ -80,8 +80,6 @@ def test_msa_empty_string_field(field: str) -> None:
 @pytest.fixture
 def multiple_sequence_alignment() -> MultipleSeqAlignment:
     """Minimal biopython multiple sequence alignment for testing."""
-    alignment = MultipleSeqAlignment([])
-
     a = SeqRecord(Seq("AAAACGT"), id="Alpha")
     b = SeqRecord(Seq("AAA-CGT"), id="Beta")
     c = SeqRecord(Seq("AAAAGGT"), id="Gamma")
