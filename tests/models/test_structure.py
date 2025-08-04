@@ -66,12 +66,25 @@ def test_structure_manifest_section_empty_string_field(
 
 def test_structure_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
     """The path is serialized as a Posix path."""
-    path = tmp_path / "test.pdb"
+    path = tmp_path / "structure.pdb"
     path.touch()
 
     section = StructureManifestSection(path=path)
 
     assert section.model_dump().get("path") == path.as_posix()
+
+
+def test_structure_manifest_section_serialize_path_as_posix_relative_to(
+    tmp_path: Path,
+) -> None:
+    """The path is serialized as a Posix path relative to another path."""
+    path = tmp_path / "structure.pdb"
+    path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    section = StructureManifestSection(path=path)
+
+    assert section.model_dump(context=context).get("path") == "structure.pdb"
 
 
 def test_structure_minimal() -> None:
