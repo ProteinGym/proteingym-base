@@ -9,6 +9,14 @@ from pg2_dataset.models.dataset import Dataset, Manifest
 
 
 @pytest.fixture
+def mock_sequence_file(tmp_path: Path) -> Path:
+    """Create a mock sequence file for testing."""
+    sequence_file = tmp_path / "sequences.fasta"
+    sequence_file.touch()
+    return sequence_file
+
+
+@pytest.fixture
 def mock_structure_file(tmp_path: Path) -> Path:
     """Create a mock structure file for testing."""
     structure_file = tmp_path / "structures.pdb"
@@ -25,7 +33,9 @@ def mock_msa_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def manifest_contents(mock_structure_file: Path, mock_msa_file: Path) -> str:
+def manifest_contents(
+    mock_sequence_file: Path, mock_structure_file: Path, mock_msa_file: Path
+) -> str:
     return f"""
 version = "1.0.0"
 name = "Example Dataset"
@@ -43,7 +53,7 @@ path = "assays.csv"
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "example_data/NEIME_2019/sequences"
+path = "{mock_sequence_file.as_posix()}"
 
 [[structures]]
 path = "{mock_structure_file.as_posix()}"
@@ -62,7 +72,10 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
 
 
 def test_manifest_contents_in_documentation(
-    mock_structure_file: Path, mock_msa_file: Path, manifest_contents: str
+    mock_sequence_file: Path,
+    mock_structure_file: Path,
+    mock_msa_file: Path,
+    manifest_contents: str,
 ) -> None:
     """Check if the manifest contents are present in the documentation.
 
@@ -79,6 +92,7 @@ def test_manifest_contents_in_documentation(
         documentation_file_path.read_text(encoding="utf-8")
         # For testing purporses, these files have to exists while in the
         # documentation placeholders are used.
+        .replace("sequence.fasta", mock_sequence_file.as_posix())
         .replace("structures.pdb", mock_structure_file.as_posix())
         .replace("msas.a3m", mock_msa_file.as_posix())
     )
