@@ -271,8 +271,7 @@ class Dataset(BaseModel):
     ) -> None:
         """Write paths to a ZIP archive."""
         for path in paths:
-            arcname = arcname_prefix + (arcname or path.name)
-            zip.write(path, arcname=arcname)
+            zip.write(path, arcname=arcname_prefix + (arcname or path.name))
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
