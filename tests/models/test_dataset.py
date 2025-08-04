@@ -260,6 +260,20 @@ def test_manifest_dump_version_string(tmp_path: Path) -> None:
     assert 'version = "1.0.0"' in path.read_text()
 
 
+@pytest.mark.parametrize(
+    "relative_path", ["sequences.fasta", "structures.pdb", "msas.a3m"]
+)
+def test_manifest_dump_relative_path(
+    tmp_path: Path, manifest_path: Path, relative_path: str
+) -> None:
+    """The protein data path should be dumped as relative paths."""
+    manifest = Manifest.from_path(manifest_path)
+
+    path = manifest.dump(path=tmp_path)
+
+    assert f'path = "{relative_path}"' in path.read_text()
+
+
 def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
     """Test the zip file created by the Dataset dump.
 

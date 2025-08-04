@@ -127,6 +127,9 @@ class Manifest(BaseModel):
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the manifest to a TOML file.
 
+        The paths in the manifest are serialized as relative paths to the
+        manifest path.
+
         Args:
             path (Path | None): The path to dump the manifest to. If
                 None, the current working directory is used as path. If path is
@@ -142,8 +145,9 @@ class Manifest(BaseModel):
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
         include = {key for key, value in self.model_dump().items() if value}
+        context = {"relative_to_path": path.parent}
         with path.open("w", encoding="utf-8") as f:
-            toml.dump(self.model_dump(include=include), f)
+            toml.dump(self.model_dump(include=include, context=context), f)
         return path
 
 
