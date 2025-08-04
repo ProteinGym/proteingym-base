@@ -138,6 +138,17 @@ def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
     assert isinstance(msa.value, MultipleSeqAlignment)
 
 
+def test_msa_as_manifest_section(fasta_file: Path) -> None:
+    """A MSA can be converted to a manifest section."""
+    msa = MSA(name="test_msa", value=MultipleSeqAlignment([]))
+
+    section = msa.as_manifest_section(path=fasta_file)
+
+    assert section.path == fasta_file
+    assert section.name == "test_msa"
+    assert section.description is None
+
+
 def test_msa_dump_to_file(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> None:
