@@ -17,15 +17,6 @@ from pydantic import (
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 
 
-def parse_sequence_value(value: str | Seq) -> Seq:
-    """Convert a string value to a Seq object."""
-    if len(value) < 1:
-        raise ValueError("Sequence value must not be empty.")
-    if isinstance(value, Seq):
-        return value
-    return Seq(value)
-
-
 class SequenceManifestSection(BaseModel):
     """This is the manifest section for Sequences.
 
@@ -57,13 +48,17 @@ class Sequence(BaseModel):
     """A sequence in the dataset."""
 
     model_config = ConfigDict(
-        arbitrary_types_allowed=True,  # Allow BioPython Seq Objects
+        arbitrary_types_allowed=True,
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
     )
 
     name: str | None = None
     """The name of the sequence."""
 
-    value: Annotated[Seq, BeforeValidator(lambda v: parse_sequence_value(v))]
+    value: Seq
     """The value of the sequence, a Seq object."""
 
     description: str | None = None
@@ -85,8 +80,6 @@ class Sequence(BaseModel):
             files = list(section.path.glob("*.*"))
         elif section.path.is_file():
             files = [section.path]
-        else:
-            raise ValueError("Path must be a directory or a file.")
 
         files = [f for f in files if f.suffix[1:] in SequenceFormat]
         sequences = [SeqIO.read(file, format=file.suffix[1:]) for file in files]
@@ -116,7 +109,7 @@ class Sequence(BaseModel):
             path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
         )
 
-    def dump(self, path: Path, format: SequenceFormat = SequenceFormat.FASTA) -> Path:
+    def dump(self, *, path: Path | None = None, format: SequenceFormat = SequenceFormat.FASTA) -> Path:
         """Dump the sequence to a file in `path` directory.
 
         Biopython is used for writing the sequence to a file. The following
@@ -132,13 +125,13 @@ class Sequence(BaseModel):
         Raises:
             ValueError: If the path does not have a valid sequence file extension.
         """
-        file_path = path / f"{self.name}.{format.value}"
-        assert file_path.suffix[1:] in [
-            SequenceFormat.FASTA.value,
-            SequenceFormat.FASTQ.value,
-        ]
+        path = path or Path.cwd()
+        if path.is_dir():
+            path = path / f"{self.name}.{format.value}"
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )
-        SeqIO.write(record, file_path, SequenceFormat.FASTA.value)
-        return file_path
+        if format not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {format}")
+        SeqIO.write(record, path, format.value)
+        return path

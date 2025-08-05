@@ -14,16 +14,7 @@ from pg2_dataset.models.sequence import (
     Sequence,
     SequenceFormat,
     SequenceManifestSection,
-    parse_sequence_value,
 )
-
-
-def test_parse_sequence_value():
-    assert isinstance(parse_sequence_value("ATCG"), Seq)
-    assert isinstance(parse_sequence_value(Seq("ATCG")), Seq)
-    with pytest.raises(ValueError):
-        parse_sequence_value("")
-
 
 @pytest.mark.parametrize(
     "name, value, description, type, alphabet",
@@ -82,7 +73,7 @@ def test_sequence_dump(tmp_path: Path) -> None:
         type=SequenceType("wild_type"),
         alphabet=SequenceAlphabet("DNA"),
     )
-    sequence.dump(Path(tmp_path))
+    sequence.dump(path=Path(tmp_path))
     file_path = Path(tmp_path) / f"test_seq.{SequenceFormat.FASTA.value}"
     assert file_path.exists()
     with open(file_path, "r") as f:
