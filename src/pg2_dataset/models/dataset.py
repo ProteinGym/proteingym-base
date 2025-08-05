@@ -18,7 +18,6 @@ from semver import Version
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
-from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.utils import zip_context
 
 
@@ -204,12 +203,11 @@ class Dataset(BaseModel):
         Returns:
             Dataset: The dataset created from the manifest.
         """
-        sequences = []
-        for sequence_manifest in manifest.sequences:
-            sequence_factory = SequenceFactory.from_manifest_section(
-                manifest_section=sequence_manifest
-            )
-            sequences = sequences + sequence_factory.generate()
+        sequences = [
+            seq
+            for manifest_section in manifest.sequences
+            for seq in Sequence.from_manifest_section(manifest_section)
+        ]
 
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
 

@@ -15,12 +15,3 @@ class SequenceAlphabet(str, Enum):
     DNA = "DNA"
     RNA = "RNA"
     AA = "AA"
-
-
-class DirType(str, Enum):
-    LOCAL = "local"
-
-
-class SequenceFileType(str, Enum):
-    FASTA = "fasta"
-    FASTQ = "fastq"

@@ -10,7 +10,11 @@ from pydantic import ValidationError
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
+from pg2_dataset.models.sequence import (
+    Sequence,
+    SequenceFormat,
+    SequenceManifestSection,
+)
 
 
 @pytest.mark.parametrize(
@@ -70,8 +74,8 @@ def test_sequence_dump(tmp_path: Path) -> None:
         type=SequenceType("wild_type"),
         alphabet=SequenceAlphabet("DNA"),
     )
-    file_path = sequence.dump(path=tmp_path)
-
+    sequence.dump(path=Path(tmp_path))
+    file_path = Path(tmp_path) / f"test_seq.{SequenceFormat.FASTA.value}"
     assert file_path.exists()
     with open(file_path, "r") as f:
         content = f.read()
