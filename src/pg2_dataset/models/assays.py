@@ -109,12 +109,14 @@ class Assay(BaseModel):
     ) -> "Assay":
         """Create an Assay instance from a manifest section."""
         df = pl.read_csv(section.path)
-        assert section.sequence in df.columns, ValueError(
-            f"Sequence column '{section.sequence}' not found in the file."
-        )
-        assert section.target in df.columns, ValueError(
-            f"Target column '{section.target}' not found in the file."
-        )
+        if section.sequence not in df.columns:
+            return ValueError(
+                f"Sequence column '{section.sequence}' not found in the file."
+            )
+        if section.target not in df.columns:
+            return ValueError(
+                f"Target column '{section.target}' not found in the file."
+            )
         records = []
         for row in df.iter_rows(named=True):
             records.append((row[section.sequence], row[section.target]))
