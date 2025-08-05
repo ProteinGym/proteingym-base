@@ -1,13 +1,11 @@
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated
 
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import (
     BaseModel,
-    BeforeValidator,
     ConfigDict,
     DirectoryPath,
     FilePath,
@@ -109,7 +107,9 @@ class Sequence(BaseModel):
             path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
         )
 
-    def dump(self, *, path: Path | None = None, format: SequenceFormat = SequenceFormat.FASTA) -> Path:
+    def dump(
+        self, *, path: Path | None = None, format: SequenceFormat = SequenceFormat.FASTA
+    ) -> Path:
         """Dump the sequence to a file in `path` directory.
 
         Biopython is used for writing the sequence to a file. The following

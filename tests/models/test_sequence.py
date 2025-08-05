@@ -16,6 +16,7 @@ from pg2_dataset.models.sequence import (
     SequenceManifestSection,
 )
 
+
 @pytest.mark.parametrize(
     "name, value, description, type, alphabet",
     [
