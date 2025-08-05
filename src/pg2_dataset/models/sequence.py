@@ -125,13 +125,13 @@ class Sequence(BaseModel):
         Raises:
             ValueError: If the path does not have a valid sequence file extension.
         """
+        if format not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {format}")
         path = path or Path.cwd()
         if path.is_dir():
             path = path / f"{self.name}.{format.value}"
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )
-        if format not in SequenceFormat:
-            raise ValueError(f"Unsupported sequence format: {format}")
         SeqIO.write(record, path, format.value)
         return path
