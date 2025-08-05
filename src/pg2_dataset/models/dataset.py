@@ -19,7 +19,6 @@ from pg2_dataset.models.assays import Assay, AssayCondition, AssayManifestSectio
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
-from pg2_dataset.repositories.sequence import SequenceFactory
 from pg2_dataset.utils import zip_context
 
 
@@ -214,12 +213,11 @@ class Dataset(BaseModel):
         Returns:
             Dataset: The dataset created from the manifest.
         """
-        sequences = []
-        for sequence_manifest in manifest.sequences:
-            sequence_factory = SequenceFactory.from_manifest_section(
-                manifest_section=sequence_manifest
-            )
-            sequences = sequences + sequence_factory.generate()
+        sequences = [
+            seq
+            for manifest_section in manifest.sequences
+            for seq in Sequence.from_manifest_section(manifest_section)
+        ]
 
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
 
@@ -259,7 +257,7 @@ class Dataset(BaseModel):
         # The zip_context context manager is used to extract the contents of the zip,
         # load the dataset, and clean up the extracted contents.
         with zip_context(path):
-            dataset_manifest = Manifest.from_toml(DatasetArchiveLayout.MANIFEST_FILE)
+            dataset_manifest = Manifest.from_path(DatasetArchiveLayout.MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
     def _create_manifest_sections(self, objects: list[Any], path: Path) -> list[Any]:

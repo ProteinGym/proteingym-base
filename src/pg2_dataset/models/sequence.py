@@ -1,30 +1,20 @@
+from enum import StrEnum
 from pathlib import Path
-from typing import Annotated
 
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import (
     BaseModel,
-    BeforeValidator,
     ConfigDict,
+    DirectoryPath,
+    FilePath,
     field_serializer,
 )
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 
 
-def parse_sequence_value(value: str | Seq) -> Seq:
-    """Convert a string value to a Seq object."""
-    if len(value) < 1:
-        raise ValueError("Sequence value must not be empty.")
-    if isinstance(value, Seq):
-        return value
-    return Seq(value)
-
-
-# Create manifest for sequence, currently supports only local and S3 directories.
-# It can be extended to support xrefs.
 class SequenceManifestSection(BaseModel):
     """This is the manifest section for Sequences.
 
@@ -37,7 +27,7 @@ class SequenceManifestSection(BaseModel):
 
     sequence_type: str
     sequence_alphabet: str
-    path: Path
+    path: FilePath | DirectoryPath
 
     @field_serializer("path")
     def serialize_path(self, path: Path) -> str:
@@ -45,35 +35,63 @@ class SequenceManifestSection(BaseModel):
         return path.as_posix()
 
 
+class SequenceFormat(StrEnum):
+    """Enumeration for sequence file formats."""
+
+    FASTA = "fasta"
+    FASTQ = "fastq"
+
+
 class Sequence(BaseModel):
-    name: str
-    value: Annotated[Seq, BeforeValidator(lambda v: parse_sequence_value(v))]
-    description: str
+    """A sequence in the dataset."""
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+
+    name: str | None = None
+    """The name of the sequence."""
+
+    value: Seq
+    """The value of the sequence, a Seq object."""
+
+    description: str | None = None
+    """The description of the sequence."""
+
     type: SequenceType
+    """The type of the sequence."""
+
     alphabet: SequenceAlphabet
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    """The alphabet of the sequence."""
 
-    def dump(self, *, path: Path | None = None) -> Path:
-        """Dump the sequence to a file in FASTA format.
+    @classmethod
+    def from_manifest_section(
+        cls, section: SequenceManifestSection
+    ) -> list["Sequence"]:
+        """Create a list of Sequence from a manifest section."""
 
-        Args:
-            path (Path | None): The directory path to dump the sequence to. If
-                None, the current working directory is used. Defaults to None.
+        if section.path.is_dir():
+            files = list(section.path.glob("*.*"))
+        elif section.path.is_file():
+            files = [section.path]
 
-        Returns:
-            Path: The path to the dumped sequence file.
-        """
-        path = path or Path.cwd()
-        sequence_path = path / f"{self.name}.fasta"
-        format = "fasta"
-        record = SeqRecord(
-            seq=self.value,
-            id=self.name,
-            name=self.name,
-            description=self.description,
-        )
-        SeqIO.write(record, sequence_path, format)
-        return sequence_path
+        files = [f for f in files if f.suffix[1:] in SequenceFormat]
+        sequences = [SeqIO.read(file, format=file.suffix[1:]) for file in files]
+
+        return [
+            cls(
+                name=seq.name,
+                value=seq.seq,
+                description=seq.description,
+                type=section.sequence_type,
+                alphabet=section.sequence_alphabet,
+            )
+            for seq in sequences
+        ]
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
         """Convert the sequence to a manifest section.
@@ -86,7 +104,34 @@ class Sequence(BaseModel):
             SequenceManifestSection: The manifest section for the sequence.
         """
         return SequenceManifestSection(
-            sequence_type=self.type.value,
-            sequence_alphabet=self.alphabet.value,
-            path=path,
+            path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
         )
+
+    def dump(
+        self, *, path: Path | None = None, format: SequenceFormat = SequenceFormat.FASTA
+    ) -> Path:
+        """Dump the sequence to a file in `path` directory.
+
+        Biopython is used for writing the sequence to a file. The following
+        formats are supported:
+        - FASTA (.fasta)
+        - FASTQ (.fastq)
+
+        Args:
+            path (Path): The output directory path to dump the sequence to. If
+                None, the current working directory is used.
+            format (SequenceFormat): The format to dump the sequence in.
+
+        Raises:
+            ValueError: If the path does not have a valid sequence file extension.
+        """
+        if format not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {format}")
+        path = path or Path.cwd()
+        if path.is_dir():
+            path = path / f"{self.name}.{format.value}"
+        record = SeqRecord(
+            seq=self.value, id=self.name, name=self.name, description=self.description
+        )
+        SeqIO.write(record, path, format.value)
+        return path
