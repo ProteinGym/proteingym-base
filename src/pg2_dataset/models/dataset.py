@@ -100,7 +100,7 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_conditions: list[dict[str, str]] = Field(default_factory=dict)
+    assay_conditions: list[dict[str, str]] = Field(default_factory=list)
     """The conditions for the assays defined in the dataset."""
 
     assays: list[dict[str, str]] = Field(default_factory=list)
