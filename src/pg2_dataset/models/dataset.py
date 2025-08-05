@@ -15,6 +15,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
+from pg2_dataset.models.assays import Assay, AssayCondition, AssayManifestSection
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
@@ -100,10 +101,10 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_conditions: list[dict[str, str]] = Field(default_factory=dict)
+    conditions: list[AssayCondition] = Field(default_factory=list)
     """The conditions for the assays defined in the dataset."""
 
-    assays: list[dict[str, str]] = Field(default_factory=list)
+    assays: list[AssayManifestSection] = Field(default_factory=list)
     """The assays included in the dataset."""
 
     sequences: list[SequenceManifestSection] = Field(default_factory=list)
@@ -160,6 +161,9 @@ class DatasetArchiveLayout:
     STRUCTURES_DIRECTORY = "structures/"
     """The directory for structures."""
 
+    ASSAYS_DIRECTORY = "assays/"
+    """The directory for assays."""
+
 
 class Dataset(BaseModel):
     """A Protein Gym dataset.
@@ -191,6 +195,12 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
+    conditions: list[AssayCondition] = Field(default_factory=list)
+    """The list of conditions relevant to the dataset."""
+
+    assays: list[Assay] = Field(default_factory=list)
+    """The assays present in the dataset."""
+
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
         """Create a `Dataset` from a `Manifest` instance.
@@ -215,12 +225,18 @@ class Dataset(BaseModel):
 
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
 
+        assays = [
+            Assay.from_manifest_section(a, manifest.conditions) for a in manifest.assays
+        ]
+
         return cls(
             name=manifest.name,
             description=manifest.description,
             sequences=sequences,
             structures=structures,
             msas=msas,
+            conditions=manifest.conditions,
+            assays=assays,
         )
 
     @classmethod
@@ -260,6 +276,7 @@ class Dataset(BaseModel):
             description=self.description,
             sequences=self._create_manifest_sections(self.sequences, path),
             structures=self._create_manifest_sections(self.structures, path),
+            assays=self._create_manifest_sections(self.assays, path),
         )
         return manifest
 
@@ -293,6 +310,11 @@ class Dataset(BaseModel):
                 zip,
                 *[structure.path for structure in manifest.structures],
                 arcname_prefix=DatasetArchiveLayout.STRUCTURES_DIRECTORY,
+            )
+            self._write_paths_to_zip(
+                zip,
+                *[assay.path for assay in manifest.assays],
+                arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
             )
         return archive_path
 

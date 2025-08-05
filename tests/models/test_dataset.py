@@ -27,25 +27,50 @@ def mock_msa_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def manifest_contents(mock_structure_file: Path, mock_msa_file: Path) -> str:
+def mock_assay_file(tmp_path: Path) -> Path:
+    """Create a mock assay csv file for testing."""
+    assay_file = tmp_path / "assay.csv"
+    assay_file.touch()
+    return assay_file
+
+
+@pytest.fixture
+def mock_sequence_file(tmp_path: Path) -> Path:
+    """Create a mock sequence file for testing."""
+    sequence_file = tmp_path / "sequences.fasta"
+    sequence_file.touch()
+    return sequence_file
+
+
+@pytest.fixture
+def manifest_contents(
+    mock_structure_file: Path,
+    mock_msa_file: Path,
+    mock_assay_file: Path,
+    mock_sequence_file: Path,
+) -> str:
     return f"""
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[assay_conditions]]
+[[conditions]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
-data_type = "float"
+type = "numerical"
 
 [[assays]]
-path = "assays.csv"
+path = "{mock_assay_file.as_posix()}"
+sequence = "mutated_sequence"
+target = "DMS_score"
+[ assays.conditions ]
+PH = "7"
 
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "example_data/NEIME_2019/sequences"
+path = "{mock_sequence_file.as_posix()}"
 
 [[structures]]
 path = "{mock_structure_file.as_posix()}"
@@ -64,7 +89,11 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
 
 
 def test_manifest_contents_in_documentation(
-    mock_structure_file: Path, mock_msa_file: Path, manifest_contents: str
+    manifest_contents: str,
+    mock_structure_file: Path,
+    mock_msa_file: Path,
+    mock_sequence_file: Path,
+    mock_assay_file: Path,
 ) -> None:
     """Check if the manifest contents are present in the documentation.
 
@@ -81,8 +110,10 @@ def test_manifest_contents_in_documentation(
         documentation_file_path.read_text(encoding="utf-8")
         # For testing purporses, these files have to exists while in the
         # documentation placeholders are used.
+        .replace("sequences.fasta", mock_sequence_file.as_posix())
         .replace("structures.pdb", mock_structure_file.as_posix())
         .replace("msas.a3m", mock_msa_file.as_posix())
+        .replace("assays.csv", mock_assay_file.as_posix())
     )
 
     assert documentation_file_path.exists(), (

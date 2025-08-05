@@ -57,19 +57,23 @@ version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[assay_conditions]]
+[[conditions]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
-data_type = "float"
+type = "numerical"
 
 [[assays]]
 path = "assays.csv"
+sequence = "mutated_sequence"
+target = "DMS_score"
+[ assays.conditions ]
+PH = "7"
 
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "example_data/NEIME_2019/sequences"
+path = "sequences.fasta"
 
 [[structures]]
 path = "structures.pdb"
