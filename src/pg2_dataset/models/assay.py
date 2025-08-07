@@ -1,9 +1,8 @@
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
 
 import polars as pl
-from pydantic import BaseModel, field_serializer, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 class AssayDataType(StrEnum):
@@ -24,7 +23,7 @@ class AssayCondition(BaseModel):
         str_min_length=1,
     )
     """Configuration for the Pydantic model."""
-    
+
     name: str
     """The name of the condition."""
 
@@ -61,6 +60,7 @@ class AssayManifestSection(BaseModel):
     They can be loaded from a file. This object is used to
     validate the assay manifest.
     """
+
     model_config = ConfigDict(
         extra="forbid",
         frozen=True,
@@ -107,7 +107,7 @@ class Assay(BaseModel):
         str_min_length=1,
     )
     """Configuration for the Pydantic model."""
-    
+
     name: str | None = None
     """The name of the assay."""
 
