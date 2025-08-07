@@ -1,9 +1,9 @@
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import polars as pl
-from pydantic import BaseModel, field_serializer
+from pydantic import BaseModel, field_serializer, ConfigDict, Field
 
 
 class AssayDataType(StrEnum):
@@ -17,6 +17,14 @@ class AssayDataType(StrEnum):
 class AssayCondition(BaseModel):
     """Definition of an assay condition."""
 
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=False,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+    
     name: str
     """The name of the condition."""
 
@@ -26,7 +34,7 @@ class AssayCondition(BaseModel):
     type: AssayDataType
     """The data type of the condition."""
 
-    value: Any = None
+    value: int | float | bool | str | None = None
     """The value of the condition, can be a any type."""
 
     description: str | None = None
@@ -38,7 +46,7 @@ class AssayCondition(BaseModel):
 
     @classmethod
     def assign_from_name(
-        cls, name: str, available_conditions: List["AssayCondition"]
+        cls, name: str, available_conditions: list["AssayCondition"]
     ) -> "AssayCondition":
         """Auto-assign conditions based on the name."""
         for condition in available_conditions:
@@ -50,9 +58,16 @@ class AssayCondition(BaseModel):
 class AssayManifestSection(BaseModel):
     """This is the manifest section for Assays.
 
-    They can be loaded from multiple directories. This object is used to
+    They can be loaded from a file. This object is used to
     validate the assay manifest.
     """
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
 
     description: str | None = None
     """Description of the assay."""
@@ -63,7 +78,7 @@ class AssayManifestSection(BaseModel):
     target: str
     """The target feature name given in the file."""
 
-    conditions: dict[str, Any] = {}
+    conditions: dict[str, int | float | bool | str] = {}
     """The condition key:value pairs, key is the name of the assay condition (defined in
     dataset manifest and value of the condition."""
 
@@ -85,10 +100,18 @@ class AssayFormat(StrEnum):
 class Assay(BaseModel):
     """An assay in the dataset."""
 
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+    
     name: str | None = None
     """The name of the assay."""
 
-    records: List[tuple[str, Any]]
+    records: list[tuple[str, int | float | bool | str]]
     """The records of the assay, pairs of Sequence and target values."""
 
     sequence: str = "sequence"
@@ -97,7 +120,7 @@ class Assay(BaseModel):
     target: str = "target"
     """The target feature name in the assay records."""
 
-    conditions: List[AssayCondition] = []
+    conditions: list[AssayCondition] = Field(default_factory=list)
     """The conditions of the assay, defined in the manifest."""
 
     description: str | None = None
@@ -105,7 +128,7 @@ class Assay(BaseModel):
 
     @classmethod
     def from_manifest_section(
-        cls, section: AssayManifestSection, conditions: List[AssayCondition]
+        cls, section: AssayManifestSection, conditions: list[AssayCondition]
     ) -> "Assay":
         """Create an Assay instance from a manifest section."""
         df = pl.read_csv(section.path)
@@ -129,7 +152,6 @@ class Assay(BaseModel):
                 assay_conditions.append(condition)
             except ValueError as err:
                 raise err
-
         return cls(
             name=section.description,
             sequence=section.sequence,

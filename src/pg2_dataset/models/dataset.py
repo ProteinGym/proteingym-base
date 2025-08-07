@@ -15,7 +15,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from pg2_dataset.models.assays import Assay, AssayCondition, AssayManifestSection
+from pg2_dataset.models.assay import Assay, AssayCondition, AssayManifestSection
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
@@ -154,14 +154,14 @@ class DatasetArchiveLayout:
     MANIFEST_FILE = "manifest.lock"
     """The internal manifest file inside the dataset archive."""
 
+    ASSAYS_DIRECTORY = "assays/"
+    """The directory for assays."""
+
     SEQUENCES_DIRECTORY = "sequences/"
     """The directory for sequences."""
 
     STRUCTURES_DIRECTORY = "structures/"
     """The directory for structures."""
-
-    ASSAYS_DIRECTORY = "assays/"
-    """The directory for assays."""
 
 
 class Dataset(BaseModel):
@@ -230,10 +230,10 @@ class Dataset(BaseModel):
         return cls(
             name=manifest.name,
             description=manifest.description,
+            conditions=manifest.conditions,
             sequences=sequences,
             structures=structures,
             msas=msas,
-            conditions=manifest.conditions,
             assays=assays,
         )
 

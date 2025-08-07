@@ -107,7 +107,7 @@ The assay conditions section contains a list of assay conditions defined in the 
 | `name`        | `string`         | Yes          | N/A         | The (column) name                                  |
 | `description` | `string \| None` | No           | `None`      | A brief description.                               |
 | `unit`        | `string \| None` | No           | `None`      | The unit of measurement.                           |
-| `data_type`   | `string`         | Yes          | N/A         | The data type: `float`, `int`, `string` or `bool`. |
+| `data_type`   | `string`         | Yes          | N/A         | The data type: `numerical`, `categorical`, or `boolean`. |
 
 ### Assays
 
@@ -143,7 +143,7 @@ The sequences section contains a list of sequences included in the dataset.
 
 | **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                  |
 | --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fa`. |
+| `path`    | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
 
 ### Structures
 

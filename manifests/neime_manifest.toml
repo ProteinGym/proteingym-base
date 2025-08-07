@@ -19,4 +19,4 @@ sequence = "mutated_sequence"
 target = "DMS_score"
 path = "example_data/NEIME_2019/Assays/Assay1.csv"
 [ assays.conditions ]
-engineering_round = "1"
+engineering_round = 1
