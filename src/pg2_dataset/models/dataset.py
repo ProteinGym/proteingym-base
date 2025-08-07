@@ -264,12 +264,17 @@ class Dataset(BaseModel):
 
     def _create_manifest(self, path: Path) -> Manifest:
         """Create a manifest for the dataset."""
+        path_sequences = path / DatasetArchiveLayout.SEQUENCES_DIRECTORY
+        path_structures = path / DatasetArchiveLayout.STRUCTURES_DIRECTORY
+        path_msas = path / DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY
+        for directory in path_sequences, path_structures, path_msas:
+            directory.mkdir()
         manifest = Manifest(
             name=self.name,
             description=self.description,
-            sequences=self._create_manifest_sections(self.sequences, path),
-            structures=self._create_manifest_sections(self.structures, path),
-            msas=self._create_manifest_sections(self.msas, path),
+            sequences=self._create_manifest_sections(self.sequences, path_sequences),
+            structures=self._create_manifest_sections(self.structures, path_structures),
+            msas=self._create_manifest_sections(self.msas, path_msas),
         )
         return manifest
 
