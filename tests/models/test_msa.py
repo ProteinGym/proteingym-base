@@ -224,17 +224,18 @@ def test_dataset_dump_with_msas_contains_archive_names(
 def test_dataset_with_msas_dump_from_path_unit(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> None:
-    """Read a dataset from a path with a MSA."""
-    msa = MSA(name="msa", value=multiple_sequence_alignment)
-    dataset = Dataset(name="test", msas=[msa])
+    """Dumping a dataset with MSAs should return the same after reading"""
+    msa1 = MSA(name="msa1", value=multiple_sequence_alignment)
+    msa2 = MSA(name="msa2", value=multiple_sequence_alignment)
+    dataset = Dataset(name="test", msas=[msa1, msa2])
 
     path = dataset.dump(path=tmp_path)
 
     loaded_dataset = Dataset.from_path(path)
 
-    assert loaded_dataset.name == "test"
-    assert len(loaded_dataset.msas) == 1
-    assert loaded_dataset.msas[0].name == "msa"
-    assert (
-        loaded_dataset.msas[0].value.alignment == multiple_sequence_alignment.alignment
-    )
+    # TODO (#255): Implement Dataset.__eq__ and use it here instead of multiple asserts
+    assert loaded_dataset.name == dataset.name
+    assert len(loaded_dataset.msas) == len(dataset.msas)
+    for loaded_msa, msa in zip(loaded_dataset.msas, dataset.msas, strict=True):
+        assert loaded_msa.name == msa.name
+        assert loaded_msa.value.alignment == msa.value.alignment
