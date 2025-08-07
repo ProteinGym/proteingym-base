@@ -74,7 +74,8 @@ class MSA(BaseModel):
             NotImplementedError if the file type is not supported.
         """
         if section.path.is_dir():
-            paths = sorted(section.path.iterdir())
+            # TODO: What will we do with nested directories?
+            paths = sorted(path for path in section.path.iterdir() if path.is_file())
         else:
             paths = [section.path]
         for path in paths:
