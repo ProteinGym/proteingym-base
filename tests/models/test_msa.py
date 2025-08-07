@@ -23,6 +23,20 @@ def test_msa_manifest_section_minimal(tmp_path: Path) -> None:
         assert True, "MSAManifestSection created successfully with minimal fields."
 
 
+def test_msa_manifest_section_with_relative_path(tmp_path: Path) -> None:
+    """The path can be relative to another path."""
+    path = tmp_path / "test.msa"
+    path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    try:
+        MSAManifestSection.model_validate({"path": "test.msa"}, context=context)
+    except ValidationError as e:
+        raise AssertionError("Could not create MSAManifestSection") from e
+    else:
+        assert True, "MSAManifestSection created successfully with minimal fields."
+
+
 def test_msa_manifest_section_missing_path() -> None:
     """A validation error is raised if path is missing."""
     match = (
