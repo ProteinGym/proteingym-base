@@ -12,7 +12,9 @@ from pydantic import (
     Field,
     FilePath,
     SerializationInfo,
+    ValidationInfo,
     field_serializer,
+    field_validator,
 )
 
 
@@ -38,6 +40,13 @@ class StructureManifestSection(BaseModel):
 
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the protein structure."""
+
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        return path
 
     @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
