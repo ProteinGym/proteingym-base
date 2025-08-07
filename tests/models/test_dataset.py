@@ -9,30 +9,6 @@ from pg2_dataset.models.dataset import Dataset, Manifest
 
 
 @pytest.fixture
-def mock_sequence_file(tmp_path: Path) -> Path:
-    """Create a mock sequence file for testing."""
-    sequence_file = tmp_path / "sequences.fasta"
-    sequence_file.touch()
-    return sequence_file
-
-
-@pytest.fixture
-def mock_structure_file(tmp_path: Path) -> Path:
-    """Create a mock structure file for testing."""
-    structure_file = tmp_path / "structures.pdb"
-    structure_file.touch()
-    return structure_file
-
-
-@pytest.fixture
-def mock_msa_file(tmp_path: Path) -> Path:
-    """Create a mock MSA file for testing."""
-    msa_file = tmp_path / "msas.a3m"
-    msa_file.touch()
-    return msa_file
-
-
-@pytest.fixture
 def manifest_contents() -> str:
     return """
 version = "1.0.0"
@@ -62,18 +38,15 @@ path = "msas.a3m"
 
 
 @pytest.fixture
-def manifest_path(
-    tmp_path: Path,
-    mock_msa_file: Path,
-    mock_sequence_file: Path,
-    mock_structure_file: Path,
-    manifest_contents: str,
-) -> Path:
+def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     """A (temporary) manifest file."""
     # Mock files need to exist for the manifest validation to pass
-    _ = mock_msa_file
-    _ = mock_sequence_file
-    _ = mock_structure_file
+    sequence_file = tmp_path / "sequences.fasta"
+    structure_file = tmp_path / "structures.pdb"
+    msa_file = tmp_path / "msas.a3m"
+    for path in sequence_file, structure_file, msa_file:
+        path.touch()
+
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
