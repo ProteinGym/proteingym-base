@@ -2,7 +2,16 @@ from pathlib import Path
 
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
-from pydantic import BaseModel, ConfigDict, Field, FilePath, field_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    FilePath,
+    SerializationInfo,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+)
 
 
 class MSAManifestSection(BaseModel):
@@ -31,9 +40,18 @@ class MSAManifestSection(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the multiple sequence alignment."""
 
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        return path
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
 

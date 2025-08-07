@@ -38,6 +38,27 @@ def test_structure_manifest_section_minimal(tmp_path: Path) -> None:
         )
 
 
+def test_structure_manifest_section_with_relative_path(tmp_path: Path) -> None:
+    """The path can be relative to another path."""
+    path = tmp_path / "structure.pdb"
+    path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    try:
+        StructureManifestSection.model_validate(
+            {
+                "path": "structure.pdb",
+            },
+            context=context,
+        )
+    except ValidationError as e:
+        raise AssertionError("Could not create StructureManifestSection") from e
+    else:
+        assert True, (
+            "StructureManifestSection created successfully with minimal fields."
+        )
+
+
 def test_structure_manifest_section_missing_path() -> None:
     """A validation error is raised if path is missing."""
     match = (
@@ -66,12 +87,25 @@ def test_structure_manifest_section_empty_string_field(
 
 def test_structure_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
     """The path is serialized as a Posix path."""
-    path = tmp_path / "test.pdb"
+    path = tmp_path / "structure.pdb"
     path.touch()
 
     section = StructureManifestSection(path=path)
 
     assert section.model_dump().get("path") == path.as_posix()
+
+
+def test_structure_manifest_section_serialize_path_as_posix_relative_to(
+    tmp_path: Path,
+) -> None:
+    """The path is serialized as a Posix path relative to another path."""
+    path = tmp_path / "structure.pdb"
+    path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    section = StructureManifestSection(path=path)
+
+    assert section.model_dump(context=context).get("path") == "structure.pdb"
 
 
 def test_structure_minimal() -> None:

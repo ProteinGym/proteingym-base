@@ -9,89 +9,50 @@ from pg2_dataset.models.dataset import Dataset, Manifest
 
 
 @pytest.fixture
-def mock_structure_file(tmp_path: Path) -> Path:
-    """Create a mock structure file for testing."""
-    structure_file = tmp_path / "structures.pdb"
-    structure_file.touch()
-    return structure_file
-
-
-@pytest.fixture
-def mock_msa_file(tmp_path: Path) -> Path:
-    """Create a mock MSA file for testing."""
-    msa_file = tmp_path / "msas.a3m"
-    msa_file.touch()
-    return msa_file
-
-
-@pytest.fixture
-def mock_assay_file(tmp_path: Path) -> Path:
-    """Create a mock assay csv file for testing."""
-    assay_file = tmp_path / "assay.csv"
-    assay_file.write_text("sequence,target\nF1I,1.59\nF1L,0.6", encoding="utf-8")
-    return assay_file
-
-
-@pytest.fixture
-def mock_sequence_file(tmp_path: Path) -> Path:
-    """Create a mock sequence file for testing."""
-    sequence_file = tmp_path / "sequences.fasta"
-    sequence_file.touch()
-    return sequence_file
-
-
-@pytest.fixture
-def manifest_contents(
-    mock_structure_file: Path,
-    mock_msa_file: Path,
-    mock_assay_file: Path,
-    mock_sequence_file: Path,
-) -> str:
-    return f"""
+def manifest_contents() -> str:
+    return """
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[conditions]]
+[[assay_conditions]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
+data_type = "float"
 
 [[assays]]
-path = "{mock_assay_file.as_posix()}"
-sequence = "sequence"
-target = "target"
-[ assays.conditions ]
-PH = "7"
+path = "assays.csv"
 
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "{mock_sequence_file.as_posix()}"
+path = "sequences.fasta"
 
 [[structures]]
-path = "{mock_structure_file.as_posix()}"
+path = "structures.pdb"
 
 [[msas]]
-path = "{mock_msa_file.as_posix()}"
+path = "msas.a3m"
 """
 
 
 @pytest.fixture
 def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     """A (temporary) manifest file."""
+    # Mock files need to exist for the manifest validation to pass
+    sequence_file = tmp_path / "sequences.fasta"
+    structure_file = tmp_path / "structures.pdb"
+    msa_file = tmp_path / "msas.a3m"
+    for path in sequence_file, structure_file, msa_file:
+        path.touch()
+
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
 
 
-def test_manifest_contents_in_documentation(
-    manifest_contents: str,
-    mock_structure_file: Path,
-    mock_msa_file: Path,
-    mock_sequence_file: Path,
-    mock_assay_file: Path,
-) -> None:
+def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     """Check if the manifest contents are present in the documentation.
 
     If this tests fails, it indicates that the documentation is not up-to-date
@@ -103,15 +64,7 @@ def test_manifest_contents_in_documentation(
     documentation_file_path = Path(__file__).parent.parent.parent / Path(
         "docs/manifest.md"
     )
-    documentation_contents = (
-        documentation_file_path.read_text(encoding="utf-8")
-        # For testing purporses, these files have to exists while in the
-        # documentation placeholders are used.
-        .replace("sequences.fasta", mock_sequence_file.as_posix())
-        .replace("structures.pdb", mock_structure_file.as_posix())
-        .replace("msas.a3m", mock_msa_file.as_posix())
-        .replace("assays.csv", mock_assay_file.as_posix())
-    )
+    documentation_contents = documentation_file_path.read_text(encoding="utf-8")
 
     assert documentation_file_path.exists(), (
         f"Documentation file does not exist: {documentation_file_path}"
@@ -119,16 +72,6 @@ def test_manifest_contents_in_documentation(
     assert manifest_contents in documentation_contents, (
         "Test manifest contents not found in documentation."
     )
-
-
-def test_manifest_from_path_like(manifest_contents: str) -> None:
-    """Happy flow for loading a Manifest from a path-like object."""
-    try:
-        Manifest.from_path(io.StringIO(manifest_contents))
-    except ValidationError as e:
-        raise AssertionError("ValidationError raised") from e
-    else:
-        assert True, "Manifest loaded successfully from path-like object."
 
 
 def test_manifest_from_path_like_minimal_contents() -> None:
@@ -195,10 +138,17 @@ def test_manifest_from_non_existing_path(tmp_path: Path) -> None:
         Manifest.from_path(non_existing_path)
 
 
-def test_manifest_from_path_like_has_assays(manifest_contents: str) -> None:
-    """The manifest optionally has assays. See if they are loaded correctly."""
-    manifest = Manifest.from_path(io.StringIO(manifest_contents))
-    assert len(manifest.assays) == 1, "Expecting one assay"
+@pytest.mark.parametrize(
+    "protein_data_attribute", ["assays", "sequences", "structures", "msas"]
+)
+def test_manifest_from_path_has_protein_data(
+    manifest_path: Path, protein_data_attribute: str
+) -> None:
+    """The manifest optionally has protein data. See if they are loaded correctly."""
+    manifest = Manifest.from_path(manifest_path)
+    assert len(getattr(manifest, protein_data_attribute)) == 1, (
+        f"Expecting one {protein_data_attribute}"
+    )
 
 
 def test_manifest_version() -> None:
@@ -255,10 +205,6 @@ def test_manifest_dump_from_path_unit_docs_example(
     manifest = Manifest.from_path(manifest_path)
     path = tmp_path / "manifest.toml"
     manifest.dump(path=path)
-    loaded_manifest = Manifest.from_path(path)
-
-    path = manifest.dump(path=tmp_path)
-
     try:
         loaded_manifest = Manifest.from_path(path)
     except ValidationError as e:
@@ -278,6 +224,20 @@ def test_manifest_dump_version_string(tmp_path: Path) -> None:
     path = manifest.dump(path=tmp_path)
 
     assert 'version = "1.0.0"' in path.read_text()
+
+
+@pytest.mark.parametrize(
+    "relative_path", ["sequences.fasta", "structures.pdb", "msas.a3m"]
+)
+def test_manifest_dump_relative_path(
+    tmp_path: Path, manifest_path: Path, relative_path: str
+) -> None:
+    """The protein data path should be dumped as relative paths."""
+    manifest = Manifest.from_path(manifest_path)
+
+    path = manifest.dump(path=tmp_path)
+
+    assert f'path = "{relative_path}"' in path.read_text()
 
 
 def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
