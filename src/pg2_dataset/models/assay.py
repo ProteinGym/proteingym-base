@@ -2,15 +2,7 @@ from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
-
-
-class AssayDataType(StrEnum):
-    """Supported assay data types."""
-
-    CATEGORICAL = "categorical"
-    NUMERICAL = "numerical"
-    BOOLEAN = "boolean"
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 
 
 class AssayCondition(BaseModel):
@@ -30,28 +22,11 @@ class AssayCondition(BaseModel):
     unit: str | None = None
     """The unit of the condition."""
 
-    type: AssayDataType
-    """The data type of the condition."""
-
     value: int | float | bool | str | None = None
     """The value of the condition, can be a any type."""
 
     description: str | None = None
     """Optional description of the condition."""
-
-    @field_serializer("type")
-    def serialize_type(self, type: AssayDataType) -> str:
-        return type.value
-
-    @classmethod
-    def assign_from_name(
-        cls, name: str, available_conditions: list["AssayCondition"]
-    ) -> "AssayCondition":
-        """Auto-assign conditions based on the name."""
-        for condition in available_conditions:
-            if condition.name == name:
-                return condition.model_copy(deep=True)
-        raise ValueError(f"Condition '{name}' not found in available conditions.")
 
 
 class AssayManifestSection(BaseModel):
@@ -78,7 +53,7 @@ class AssayManifestSection(BaseModel):
     target: str
     """The target feature name given in the file."""
 
-    conditions: dict[str, int | float | bool | str] = {}
+    conditions: dict[str, int | float | bool | str] = Field(default_factory=dict)
     """The condition key:value pairs, key is the name of the assay condition (defined in
     dataset manifest and value of the condition."""
 
@@ -89,6 +64,15 @@ class AssayManifestSection(BaseModel):
     def serialize_path(self, path: Path) -> str:
         """Serialize the path as a Posix path."""
         return path.as_posix()
+
+    @model_validator(mode="after")
+    def validate_feature_names(self) -> "AssayManifestSection":
+        """Validate whether feature names are present in the `path` file."""
+        df = pl.read_csv(self.path)
+        for v in (self.sequence, self.target):
+            if v not in df.columns:
+                raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
+        return self
 
 
 class AssayFormat(StrEnum):
@@ -114,51 +98,31 @@ class Assay(BaseModel):
     records: list[tuple[str, int | float | bool | str]]
     """The records of the assay, pairs of Sequence and target values."""
 
-    sequence: str = "sequence"
-    """The sequence feature name in the assay records."""
-
-    target: str = "target"
-    """The target feature name in the assay records."""
-
-    conditions: list[AssayCondition] = Field(default_factory=list)
+    conditions: dict[str, int | float | bool | str] = Field(default_factory=dict)
     """The conditions of the assay, defined in the manifest."""
 
     description: str | None = None
     """The description of the assay."""
 
+    sequence_feature_name: str = Field(default="sequence")
+    """The sequence feature name in the assay records."""
+
+    target_feature_name: str = Field(default="target")
+    """The target feature name in the assay records."""
+
     @classmethod
-    def from_manifest_section(
-        cls, section: AssayManifestSection, conditions: list[AssayCondition]
-    ) -> "Assay":
+    def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
-        df = pl.read_csv(section.path)
-        if section.sequence not in df.columns:
-            return ValueError(
-                f"Sequence column '{section.sequence}' not found in the file."
-            )
-        if section.target not in df.columns:
-            return ValueError(
-                f"Target column '{section.target}' not found in the file."
-            )
+        df = pl.read_csv(section.path, columns=[section.sequence, section.target])
         records = []
         for row in df.iter_rows(named=True):
             records.append((row[section.sequence], row[section.target]))
 
-        assay_conditions = []
-        for condition_name, condition_value in section.conditions.items():
-            try:
-                condition = AssayCondition.assign_from_name(condition_name, conditions)
-                condition.value = condition_value
-                assay_conditions.append(condition)
-            except ValueError as err:
-                raise err
         return cls(
             name=section.description,
-            sequence=section.sequence,
-            target=section.target,
             records=records,
             description=section.description,
-            conditions=assay_conditions,
+            conditions=section.conditions,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -172,8 +136,8 @@ class Assay(BaseModel):
 
         return AssayManifestSection(
             description=self.description,
-            sequence=self.sequence,
-            target=self.target,
+            sequence=self.sequence_feature_name,
+            target=self.target_feature_name,
             conditions={cond.name: cond.value for cond in self.conditions},
             path=path,
         )
@@ -195,10 +159,13 @@ class Assay(BaseModel):
                 NotImplementedError if the file type is not supported.
         """
         path = path or Path.cwd()
-        df = pl.DataFrame(self.records, schema=[self.sequence, self.target]).transpose()
+        if path.is_dir():
+            assay_path = path / f"{self.name}{format.value}"
+        df = pl.DataFrame(
+            self.records, schema=[self.sequence_feature_name, self.target_feature_name]
+        ).transpose()
         match format:
             case AssayFormat.CSV:
-                assay_path = path / f"{self.name}{format.value}"
                 df.write_csv(assay_path)
             case _:
                 raise NotImplementedError(f"Unsupported file type: {format.value}")

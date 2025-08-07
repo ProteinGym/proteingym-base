@@ -4,7 +4,6 @@ version = "1.0.0"
 
 [[ conditions ]]
 name = "engineering_round"
-type = "numerical"
 
 [[ sequences ]]
 sequence_type = "wild_type"

@@ -61,12 +61,11 @@ description = "This is an example dataset for demonstration purposes."
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
-type = "numerical"
 
 [[assays]]
 path = "assays.csv"
-sequence = "mutated_sequence"
-target = "DMS_score"
+sequence = "sequence"
+target = "target"
 [ assays.conditions ]
 PH = "7"
 

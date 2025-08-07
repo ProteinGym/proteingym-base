@@ -10,6 +10,7 @@ from pydantic import (
     Field,
     GetJsonSchemaHandler,
     field_serializer,
+    model_validator,
 )
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
@@ -125,6 +126,18 @@ class Manifest(BaseModel):
         """Serialize the version to a string."""
         return str(version)
 
+    @model_validator(mode="after")
+    def _validate_assay_conditions(self) -> "Manifest":
+        """Validate that all assay conditions are defined in the manifest."""
+        for assay in self.assays:
+            for condition_name in assay.conditions.keys():
+                if condition_name not in [cond.name for cond in self.conditions]:
+                    raise ValueError(
+                        f"Condition '{condition_name}' not found in available"
+                        "conditions."
+                    )
+        return self
+
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the manifest to a TOML file.
 
@@ -223,9 +236,7 @@ class Dataset(BaseModel):
 
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
 
-        assays = [
-            Assay.from_manifest_section(a, manifest.conditions) for a in manifest.assays
-        ]
+        assays = [Assay.from_manifest_section(a) for a in manifest.assays]
 
         return cls(
             name=manifest.name,

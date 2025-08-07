@@ -28,7 +28,7 @@ def mock_msa_file(tmp_path: Path) -> Path:
 def mock_assay_file(tmp_path: Path) -> Path:
     """Create a mock assay csv file for testing."""
     assay_file = tmp_path / "assay.csv"
-    assay_file.touch()
+    assay_file.write_text("sequence,target\nF1I,1.59\nF1L,0.6", encoding="utf-8")
     return assay_file
 
 
@@ -56,12 +56,11 @@ description = "This is an example dataset for demonstration purposes."
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
-type = "numerical"
 
 [[assays]]
 path = "{mock_assay_file.as_posix()}"
-sequence = "mutated_sequence"
-target = "DMS_score"
+sequence = "sequence"
+target = "target"
 [ assays.conditions ]
 PH = "7"
 
