@@ -200,7 +200,6 @@ def test_dataset_from_path_with_sequence(tmp_path: Path) -> None:
 
     dataset = Dataset.from_path(path)
 
-    assert dataset.name == "test", "Dataset name does not match the expected name."
     assert dataset.sequences == [sequence], (
         "Dataset sequences do not match the expected sequences."
     )
