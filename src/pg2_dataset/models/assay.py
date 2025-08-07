@@ -2,7 +2,16 @@ from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializationInfo,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 
 class AssayCondition(BaseModel):
@@ -44,6 +53,9 @@ class AssayManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
+    name: str
+    """The name of the assay."""
+
     description: str | None = None
     """Description of the assay."""
 
@@ -60,9 +72,18 @@ class AssayManifestSection(BaseModel):
     path: Path
     """The path to the assay file, csv only."""
 
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        return path
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
     @model_validator(mode="after")
@@ -92,7 +113,7 @@ class Assay(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    name: str | None = None
+    name: str
     """The name of the assay."""
 
     records: list[tuple[str, int | float | bool | str]]
@@ -119,7 +140,7 @@ class Assay(BaseModel):
             records.append((row[section.sequence], row[section.target]))
 
         return cls(
-            name=section.description,
+            name=section.name,
             records=records,
             description=section.description,
             conditions=section.conditions,
@@ -135,6 +156,7 @@ class Assay(BaseModel):
         """
 
         return AssayManifestSection(
+            name=self.name,
             description=self.description,
             sequence=self.sequence_feature_name,
             target=self.target_feature_name,
@@ -159,14 +181,17 @@ class Assay(BaseModel):
                 NotImplementedError if the file type is not supported.
         """
         path = path or Path.cwd()
+        print(path)
         if path.is_dir():
-            assay_path = path / f"{self.name}{format.value}"
+            path = path / f"{self.name}{format.value}"
         df = pl.DataFrame(
-            self.records, schema=[self.sequence_feature_name, self.target_feature_name]
-        ).transpose()
+            self.records,
+            schema=[self.sequence_feature_name, self.target_feature_name],
+            orient="row",
+        )
         match format:
             case AssayFormat.CSV:
-                df.write_csv(assay_path)
+                df.write_csv(path)
             case _:
                 raise NotImplementedError(f"Unsupported file type: {format.value}")
-        return assay_path
+        return path

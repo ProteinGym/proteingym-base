@@ -101,7 +101,7 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    conditions: list[AssayCondition] = Field(default_factory=list)
+    assay_conditions: list[AssayCondition] = Field(default_factory=list)
     """The conditions for the assays defined in the dataset."""
 
     assays: list[AssayManifestSection] = Field(default_factory=list)
@@ -135,7 +135,7 @@ class Manifest(BaseModel):
         """Validate that all assay conditions are defined in the manifest."""
         for assay in self.assays:
             for condition_name in assay.conditions.keys():
-                if condition_name not in [cond.name for cond in self.conditions]:
+                if condition_name not in [cond.name for cond in self.assay_conditions]:
                     raise ValueError(
                         f"Condition '{condition_name}' not found in available"
                         "conditions."
@@ -206,8 +206,8 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    conditions: list[AssayCondition] = Field(default_factory=list)
-    """The list of conditions relevant to the dataset."""
+    assay_conditions: list[AssayCondition] = Field(default_factory=list)
+    """The list of assay conditions relevant to the dataset."""
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
@@ -249,7 +249,7 @@ class Dataset(BaseModel):
         return cls(
             name=manifest.name,
             description=manifest.description,
-            conditions=manifest.conditions,
+            assay_conditions=manifest.assay_conditions,
             assays=assays,
             sequences=sequences,
             structures=structures,

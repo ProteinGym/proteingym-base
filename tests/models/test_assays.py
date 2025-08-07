@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from pg2_dataset.models.assay import (
     Assay,
     AssayCondition,
+    AssayFormat,
     AssayManifestSection,
 )
 
@@ -40,6 +41,7 @@ def test_assay_condition_invalid_inputs() -> None:
 def test_assay_manifest_section(assay_file) -> None:
     """Test creating an AssayManifestSection."""
     AssayManifestSection(
+        name="test_assay",
         description="Test assay",
         sequence="sequence",
         target="target",
@@ -55,6 +57,7 @@ def test_assay_manifest_section_invalid_columns(assay_file) -> None:
         match=r"Feature 'invalid_feature' not found in the file: .*assay.csv",
     ):
         AssayManifestSection(
+            name="test_assay",
             description="Test assay",
             sequence="invalid_feature",
             target="target",
@@ -66,19 +69,24 @@ def test_assay_manifest_section_invalid_columns(assay_file) -> None:
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [("F1I", 1.56), ("F1L", 2.0)]
-    Assay(conditions={"test_cond1": "true", "test_cond2": 42}, records=records)
+    Assay(
+        name="assay",
+        conditions={"test_cond1": "true", "test_cond2": 42},
+        records=records,
+    )
     with pytest.raises(
         ValidationError,
         match=r"validation error for Assay\nconditions\n.*Input should be a valid "
         "dictionary",
     ):
-        Assay(conditions="bad_condition", records=[("F1I", 1)])
+        Assay(name="assay", conditions="bad_condition", records=[("F1I", 1)])
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:
     """Test creating an Assay from a manifest section."""
     Assay.from_manifest_section(
         AssayManifestSection(
+            name="assay",
             sequence="sequence",
             target="target",
             path=assay_file,
@@ -90,7 +98,24 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
 def test_as_manifest_section(assay_file: Path) -> None:
     """Test converting an Assay to a manifest section."""
     assay = Assay(
+        name="assay",
         records=[("ARFS", 1), ("SDFSDf", 2)],
     )
     manifest = assay.as_manifest_section(path=assay_file)
     assert manifest.path == assay_file
+
+
+def test_assay_dump(tmp_path) -> None:
+    """Test dumping an Assay to a file."""
+    assay = Assay(
+        name="assay",
+        records=[("F1I", 1.56), ("F1L", 2.0)],
+        sequence_feature_name="sequence",
+        target_feature_name="target",
+    )
+    dumped_path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    assert dumped_path == tmp_path / "assay.csv"
+    assert (tmp_path / "assay.csv").exists()
+    content = dumped_path.read_text()
+    assert "F1I,1.56" in content
+    assert "F1L,2.0" in content

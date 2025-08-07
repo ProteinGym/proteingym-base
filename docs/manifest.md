@@ -57,12 +57,13 @@ version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[conditions]]
+[[assay_conditions]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
 
 [[assays]]
+name = "assay"
 path = "assays.csv"
 sequence = "sequence"
 target = "target"
