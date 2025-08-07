@@ -147,7 +147,7 @@ def test_manifest_from_path_has_protein_data(
     """The manifest optionally has protein data. See if they are loaded correctly."""
     manifest = Manifest.from_path(manifest_path)
     assert len(getattr(manifest, protein_data_attribute)) == 1, (
-        f"Expecting at least one {protein_data_attribute}"
+        f"Expecting one {protein_data_attribute}"
     )
 
 
