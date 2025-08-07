@@ -161,14 +161,14 @@ class DatasetArchiveLayout:
     MANIFEST_FILE = "manifest.lock"
     """The internal manifest file inside the dataset archive."""
 
-    MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY = "msas/"
-    """The directory for multiple sequence alignments (MSAs)."""
-
     SEQUENCES_DIRECTORY = "sequences/"
     """The directory for sequences."""
 
     STRUCTURES_DIRECTORY = "structures/"
     """The directory for structures."""
+
+    MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY = "msas/"
+    """The directory for multiple sequence alignments (MSAs)."""
 
 
 class Dataset(BaseModel):
@@ -267,9 +267,9 @@ class Dataset(BaseModel):
         manifest = Manifest(
             name=self.name,
             description=self.description,
-            msas=self._create_manifest_sections(self.msas, path),
             sequences=self._create_manifest_sections(self.sequences, path),
             structures=self._create_manifest_sections(self.structures, path),
+            msas=self._create_manifest_sections(self.msas, path),
         )
         return manifest
 
@@ -295,11 +295,6 @@ class Dataset(BaseModel):
             )
             self._write_paths_to_zip(
                 zip,
-                *[msa.path for msa in manifest.msas],
-                arcname_prefix=DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY,
-            )
-            self._write_paths_to_zip(
-                zip,
                 *[sequence.path for sequence in manifest.sequences],
                 arcname_prefix=DatasetArchiveLayout.SEQUENCES_DIRECTORY,
             )
@@ -307,6 +302,11 @@ class Dataset(BaseModel):
                 zip,
                 *[structure.path for structure in manifest.structures],
                 arcname_prefix=DatasetArchiveLayout.STRUCTURES_DIRECTORY,
+            )
+            self._write_paths_to_zip(
+                zip,
+                *[msa.path for msa in manifest.msas],
+                arcname_prefix=DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY,
             )
         return archive_path
 
