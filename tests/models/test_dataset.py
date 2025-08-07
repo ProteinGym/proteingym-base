@@ -33,10 +33,8 @@ def mock_msa_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def manifest_contents(
-    mock_sequence_file: Path, mock_structure_file: Path, mock_msa_file: Path
-) -> str:
-    return f"""
+def manifest_contents() -> str:
+    return """
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
@@ -53,30 +51,35 @@ path = "assays.csv"
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "{mock_sequence_file.as_posix()}"
+path = "sequences.fasta"
 
 [[structures]]
-path = "{mock_structure_file.as_posix()}"
+path = "structures.pdb"
 
 [[msas]]
-path = "{mock_msa_file.as_posix()}"
+path = "msas.a3m"
 """
 
 
 @pytest.fixture
-def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
+def manifest_path(
+    tmp_path: Path,
+    mock_msa_file: Path,
+    mock_sequence_file: Path,
+    mock_structure_file: Path,
+    manifest_contents: str,
+) -> Path:
     """A (temporary) manifest file."""
+    # Mock files need to exist for the manifest validation to pass
+    _ = mock_msa_file
+    _ = mock_sequence_file
+    _ = mock_structure_file
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
 
 
-def test_manifest_contents_in_documentation(
-    mock_sequence_file: Path,
-    mock_structure_file: Path,
-    mock_msa_file: Path,
-    manifest_contents: str,
-) -> None:
+def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
     """Check if the manifest contents are present in the documentation.
 
     If this tests fails, it indicates that the documentation is not up-to-date
@@ -88,14 +91,7 @@ def test_manifest_contents_in_documentation(
     documentation_file_path = Path(__file__).parent.parent.parent / Path(
         "docs/manifest.md"
     )
-    documentation_contents = (
-        documentation_file_path.read_text(encoding="utf-8")
-        # For testing purporses, these files have to exists while in the
-        # documentation placeholders are used.
-        .replace("sequence.fasta", mock_sequence_file.as_posix())
-        .replace("structures.pdb", mock_structure_file.as_posix())
-        .replace("msas.a3m", mock_msa_file.as_posix())
-    )
+    documentation_contents = documentation_file_path.read_text(encoding="utf-8")
 
     assert documentation_file_path.exists(), (
         f"Documentation file does not exist: {documentation_file_path}"
@@ -103,16 +99,6 @@ def test_manifest_contents_in_documentation(
     assert manifest_contents in documentation_contents, (
         "Test manifest contents not found in documentation."
     )
-
-
-def test_manifest_from_path_like(manifest_contents: str) -> None:
-    """Happy flow for loading a Manifest from a path-like object."""
-    try:
-        Manifest.from_path(io.StringIO(manifest_contents))
-    except ValidationError as e:
-        raise AssertionError("ValidationError raised") from e
-    else:
-        assert True, "Manifest loaded successfully from path-like object."
 
 
 def test_manifest_from_path_like_minimal_contents() -> None:
@@ -179,10 +165,17 @@ def test_manifest_from_non_existing_path(tmp_path: Path) -> None:
         Manifest.from_path(non_existing_path)
 
 
-def test_manifest_from_path_like_has_assays(manifest_contents: str) -> None:
-    """The manifest optionally has assays. See if they are loaded correctly."""
-    manifest = Manifest.from_path(io.StringIO(manifest_contents))
-    assert len(manifest.assays) == 1, "Expecting one assay"
+@pytest.mark.parametrize(
+    "protein_data_attribute", ["assays", "sequences", "structures", "msas"]
+)
+def test_manifest_from_path_has_protein_data(
+    manifest_path: Path, protein_data_attribute: str
+) -> None:
+    """The manifest optionally has protein data. See if they are loaded correctly."""
+    manifest = Manifest.from_path(manifest_path)
+    assert len(getattr(manifest, protein_data_attribute)) == 1, (
+        f"Expecting at least one {protein_data_attribute}"
+    )
 
 
 def test_manifest_version() -> None:

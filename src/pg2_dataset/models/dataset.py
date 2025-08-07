@@ -119,7 +119,7 @@ class Manifest(BaseModel):
         """Create a Manifest instance from a TOML file or string."""
         context = {
             # Resolve paths defined as relative paths to the manifest file
-            "relative_to_path": path.parent,
+            "relative_to_path": path.parent if isinstance(path, Path) else None,
         }
         return cls.model_validate(toml.load(path), context=context)
 
