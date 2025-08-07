@@ -117,7 +117,11 @@ class Manifest(BaseModel):
     @classmethod
     def from_path(cls, path: Path | IO["str"]) -> "Manifest":
         """Create a Manifest instance from a TOML file or string."""
-        return cls(**toml.load(path))
+        context = {
+            # Resolve paths defined as relative paths to the manifest file
+            "relative_to_path": path.parent,
+        }
+        return cls.model_validate(toml.load(path), context=context)
 
     @field_serializer("version")
     def serialize_version(self, version: Version) -> str:
