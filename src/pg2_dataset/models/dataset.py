@@ -1,3 +1,4 @@
+import collections
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import IO, Annotated, Any, Callable
@@ -255,26 +256,49 @@ class Dataset(BaseModel):
             dataset_manifest = Manifest.from_path(DatasetArchiveLayout.MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
-    def _create_manifest_sections(self, objects: list[Any], path: Path) -> list[Any]:
-        """Create manifest sections for sequences and structures."""
-        manifest_sections = [
-            obj.as_manifest_section(path=obj.dump(path=path)) for obj in objects
-        ]
-        return manifest_sections
+    def _dump_data(self, path: Path) -> dict[type, list[Path]]:
+        """Dump the data into the directory.
 
-    def _create_manifest(self, path: Path) -> Manifest:
+        See :class:DatasetArchiveLayout for the archive layout.
+        """
+        data_paths = collections.defaultdict(list)
+        for type_, directory, objects in (
+            (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
+            (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
+            (
+                MSA,
+                DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY,
+                self.msas,
+            ),
+        ):
+            subpath = path / directory
+            subpath.mkdir()
+            for obj in objects:
+                data_path = obj.dump(path=subpath)
+                data_paths[type_].append(data_path)
+        return data_paths
+
+    def _create_manifest(self, data_paths: dict[type, list[Path]]) -> Manifest:
         """Create a manifest for the dataset."""
-        path_sequences = path / DatasetArchiveLayout.SEQUENCES_DIRECTORY
-        path_structures = path / DatasetArchiveLayout.STRUCTURES_DIRECTORY
-        path_msas = path / DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY
-        for directory in path_sequences, path_structures, path_msas:
-            directory.mkdir()
         manifest = Manifest(
             name=self.name,
             description=self.description,
-            sequences=self._create_manifest_sections(self.sequences, path_sequences),
-            structures=self._create_manifest_sections(self.structures, path_structures),
-            msas=self._create_manifest_sections(self.msas, path_msas),
+            sequences=[
+                s.as_manifest_section(path=path)
+                for s, path in zip(
+                    self.sequences, data_paths.get(Sequence, []), strict=True
+                )
+            ],
+            structures=[
+                s.as_manifest_section(path=path)
+                for s, path in zip(
+                    self.structures, data_paths.get(Structure, []), strict=True
+                )
+            ],
+            msas=[
+                m.as_manifest_section(path=path)
+                for m, path in zip(self.msas, data_paths.get(MSA, []), strict=True)
+            ],
         )
         return manifest
 
@@ -292,7 +316,10 @@ class Dataset(BaseModel):
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
         archive_path = path / f"{self.name}.zip"
-        manifest = self._create_manifest(temporary_directory)
+        # The manifest Pydantic base model checks if the data path exists,
+        # hence, we dump the data before creating and dumping the Manifest
+        data_paths = self._dump_data(temporary_directory)
+        manifest = self._create_manifest(data_paths)
         manifest_path = manifest.dump(path=temporary_directory)
         with ZipFile(archive_path, "w") as zip:
             self._write_paths_to_zip(
