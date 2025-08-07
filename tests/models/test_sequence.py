@@ -18,7 +18,7 @@ from pg2_dataset.models.sequence import (
 
 
 def test_sequence_manifest_section_minimal(tmp_path: Path) -> None:
-    """Only path is required for a minimal sequence manifest section."""
+    """Check with a minimal sequence manifest section."""
     path = tmp_path / "sequence.fasta"
     path.touch()
 
