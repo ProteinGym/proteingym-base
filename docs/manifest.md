@@ -69,7 +69,7 @@ path = "assays.csv"
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "sequence.fasta"
+path = "sequences.fasta"
 
 [[structures]]
 path = "structures.pdb"
