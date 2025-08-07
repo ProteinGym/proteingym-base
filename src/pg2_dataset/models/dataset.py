@@ -304,6 +304,7 @@ class Dataset(BaseModel):
         Returns:
             Path: The path to the dumped dataset archive.
         """
+        # TODO: Support both directory and file path
         path = path or Path.cwd()
         # While we prefer to avoid IO to disk, TemporaryDirectory is used for
         # convenience because it unifies the `:method:dump` signatures to write
