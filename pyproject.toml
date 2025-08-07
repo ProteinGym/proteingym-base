@@ -18,6 +18,9 @@ dependencies = [
     "biopython>=1.85",
 ]
 
+[project.scripts]
+pg2-dataset = "pg2_dataset.cli.cli:app"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
