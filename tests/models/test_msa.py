@@ -204,7 +204,7 @@ def test_dataset_dump_with_msa(
         assert multiple_sequence_alignment.alignment == loaded_msa.alignment
 
 
-def test_dataset_dump_with_msas(
+def test_dataset_dump_with_msas_contains_archive_names(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> None:
     """Same as `test_dataset_dump_with_msa`, but with MSAs."""
@@ -215,12 +215,13 @@ def test_dataset_dump_with_msas(
 
     path = dataset.dump(path=tmp_path)
 
-    assert not expected - set(ZipFile(path).namelist()), (
-        f"Expected the following files in the archive: {expected}"
+    archive_names = ZipFile(path).namelist()
+    assert not expected - set(archive_names), (
+        f"Expected the following archive names {expected}"
     )
 
 
-def test_dataset_from_path_with_msa(
+def test_dataset_with_msas_dump_from_path_unit(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> None:
     """Read a dataset from a path with a MSA."""

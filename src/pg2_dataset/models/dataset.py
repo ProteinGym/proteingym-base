@@ -256,13 +256,13 @@ class Dataset(BaseModel):
             dataset_manifest = Manifest.from_path(DatasetArchiveLayout.MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
-    def _dump_data(self, path: Path) -> dict[type, list[Path]]:
+    def _dump_data(self, temporary_directory: Path) -> dict[type, list[Path]]:
         """Dump the data into the directory.
 
         See :class:DatasetArchiveLayout for the archive layout.
         """
         data_paths = collections.defaultdict(list)
-        for type_, directory, objects in (
+        for type_, subdirectory, objects in (
             (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
             (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
             (
@@ -271,7 +271,7 @@ class Dataset(BaseModel):
                 self.msas,
             ),
         ):
-            subpath = path / directory
+            subpath = temporary_directory / subdirectory
             subpath.mkdir()
             for obj in objects:
                 data_path = obj.dump(path=subpath)
