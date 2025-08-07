@@ -143,13 +143,16 @@ def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
 
 def test_msa_as_manifest_section(fasta_file: Path) -> None:
     """A MSA can be converted to a manifest section."""
+    expected = MSAManifestSection(
+        path=fasta_file,
+        name="test_msa",
+        description=None,
+    )
     msa = MSA(name="test_msa", value=MultipleSeqAlignment([]))
 
     section = msa.as_manifest_section(path=fasta_file)
 
-    assert section.path == fasta_file
-    assert section.name == "test_msa"
-    assert section.description is None
+    assert section == expected
 
 
 def test_msa_dump_to_file(
@@ -205,18 +208,15 @@ def test_dataset_dump_with_msas(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> None:
     """Same as `test_dataset_dump_with_msa`, but with MSAs."""
+    expected = {"msas/msa1.fasta", "msas/msa2.fasta"}
     msa1 = MSA(name="msa1", value=multiple_sequence_alignment)
     msa2 = MSA(name="msa2", value=multiple_sequence_alignment)
     dataset = Dataset(name="test", msas=[msa1, msa2])
 
     path = dataset.dump(path=tmp_path)
 
-    zip = ZipFile(path)
-    assert "msas/msa1.fasta" in zip.namelist(), (
-        "First MSA file not found in dataset dump."
-    )
-    assert "msas/msa2.fasta" in zip.namelist(), (
-        "Second MSA file not found in dataset dump."
+    assert not expected - set(ZipFile(path).namelist()), (
+        f"Expected the following files in the archive: {expected}"
     )
 
 
