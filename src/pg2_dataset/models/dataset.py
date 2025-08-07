@@ -185,6 +185,12 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
+    conditions: list[AssayCondition] = Field(default_factory=list)
+    """The list of conditions relevant to the dataset."""
+
+    assays: list[Assay] = Field(default_factory=list)
+    """The assays present in the dataset."""
+
     sequences: list[Sequence] = Field(default_factory=list)
     """The sequences included in the dataset."""
 
@@ -193,12 +199,6 @@ class Dataset(BaseModel):
 
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
-
-    conditions: list[AssayCondition] = Field(default_factory=list)
-    """The list of conditions relevant to the dataset."""
-
-    assays: list[Assay] = Field(default_factory=list)
-    """The assays present in the dataset."""
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
@@ -231,10 +231,10 @@ class Dataset(BaseModel):
             name=manifest.name,
             description=manifest.description,
             conditions=manifest.conditions,
+            assays=assays,
             sequences=sequences,
             structures=structures,
             msas=msas,
-            assays=assays,
         )
 
     @classmethod
