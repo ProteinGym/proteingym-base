@@ -69,7 +69,7 @@ path = "assays.csv"
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "example_data/NEIME_2019/sequences"
+path = "sequences.fasta"
 
 [[structures]]
 path = "structures.pdb"

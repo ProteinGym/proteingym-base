@@ -117,7 +117,11 @@ class Manifest(BaseModel):
     @classmethod
     def from_path(cls, path: Path | IO["str"]) -> "Manifest":
         """Create a Manifest instance from a TOML file or string."""
-        return cls(**toml.load(path))
+        context = {
+            # Resolve paths defined as relative paths to the manifest file
+            "relative_to_path": path.parent if isinstance(path, Path) else None,
+        }
+        return cls.model_validate(toml.load(path), context=context)
 
     @field_serializer("version")
     def serialize_version(self, version: Version) -> str:
@@ -126,6 +130,9 @@ class Manifest(BaseModel):
 
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the manifest to a TOML file.
+
+        The paths in the manifest are serialized as relative paths to the
+        manifest path.
 
         Args:
             path (Path | None): The path to dump the manifest to. If
@@ -142,8 +149,9 @@ class Manifest(BaseModel):
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
         include = {key for key, value in self.model_dump().items() if value}
+        context = {"relative_to_path": path.parent}
         with path.open("w", encoding="utf-8") as f:
-            toml.dump(self.model_dump(include=include), f)
+            toml.dump(self.model_dump(include=include, context=context), f)
         return path
 
 

@@ -6,7 +6,16 @@ from pathlib import Path
 from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser
 from Bio.PDB.binary_cif import BinaryCIFParser
 from Bio.PDB.Structure import Structure as BioStructure
-from pydantic import BaseModel, ConfigDict, Field, FilePath, field_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    FilePath,
+    SerializationInfo,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+)
 
 
 class StructureManifestSection(BaseModel):
@@ -32,9 +41,18 @@ class StructureManifestSection(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the protein structure."""
 
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        return path
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
 
