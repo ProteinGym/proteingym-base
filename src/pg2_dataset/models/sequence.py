@@ -10,7 +10,9 @@ from pydantic import (
     DirectoryPath,
     FilePath,
     SerializationInfo,
+    ValidationInfo,
     field_serializer,
+    field_validator,
 )
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
@@ -39,6 +41,13 @@ class SequenceManifestSection(BaseModel):
 
     path: FilePath | DirectoryPath
     """The path to the sequence file."""
+
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        return path
 
     @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:

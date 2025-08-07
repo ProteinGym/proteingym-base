@@ -32,6 +32,27 @@ def test_sequence_manifest_section_minimal(tmp_path: Path) -> None:
         assert True, "SequenceManifestSection created successfully with minimal fields."
 
 
+def test_sequence_manifest_section_with_relative_path(tmp_path: Path) -> None:
+    """The path can be relative to another path."""
+    path = tmp_path / "sequence.fasta"
+    path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    try:
+        SequenceManifestSection.model_validate(
+            {
+                "sequence_type": "wild_type",
+                "sequence_alphabet": "DNA",
+                "path": "sequence.fasta",
+            },
+            context=context,
+        )
+    except ValidationError as e:
+        raise AssertionError("Could not create SequenceManifestSection") from e
+    else:
+        assert True, "SequenceManifestSection created successfully with minimal fields."
+
+
 def test_sequence_manifest_section_missing_path() -> None:
     """A validation error is raised if path is missing."""
     match = (
