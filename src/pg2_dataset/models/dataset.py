@@ -215,16 +215,9 @@ class Dataset(BaseModel):
         Returns:
             Dataset: The dataset created from the manifest.
         """
-        sequences = [
-            seq
-            for manifest_section in manifest.sequences
-            for seq in Sequence.from_manifest_section(manifest_section)
-        ]
-
+        sequences = [Sequence.from_manifest_section(s) for s in manifest.sequences]
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
-
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
-
         return cls(
             name=manifest.name,
             description=manifest.description,
