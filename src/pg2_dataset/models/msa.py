@@ -128,6 +128,11 @@ class MSA(BaseModel):
         Args:
             path (Path | None): The directory path to save the MSA file in.
                 Defaults to the current working directory.
+            format (MSAFormat): The format to save the MSA in. Defaults to
+                MSAFormat.FASTA.
+
+        Raises:
+            ValueError: If the format is not supported.
 
         Returns:
             Path: The path to the saved MSA file.
