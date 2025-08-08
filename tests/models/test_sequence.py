@@ -113,6 +113,23 @@ def test_sequence_manifest_section_serialize_path_as_posix_relative_to(
     assert section.model_dump(context=context).get("path") == "sequence.fasta"
 
 
+def test_sequence_manifest_section_raises_validation_error_for_unsupported_format(
+    tmp_path: Path,
+) -> None:
+    """The manifest section raises a validation error for unsupported formats."""
+    path = tmp_path / "sequence.unsupported"
+    path.touch()
+
+    match = (
+        "validation error for SequenceManifestSection\npath\n  Value error, "
+        "Unsupported sequence format: unsupported"
+    )
+    with pytest.raises(ValidationError, match=match):
+        SequenceManifestSection(
+            sequence_type="wild_type", sequence_alphabet="DNA", path=path
+        )
+
+
 @pytest.mark.parametrize(
     "name, value, description, type, alphabet",
     [

@@ -17,6 +17,13 @@ from pydantic import (
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 
 
+class SequenceFormat(StrEnum):
+    """Enumeration for sequence file formats."""
+
+    FASTA = "fasta"
+    FASTQ = "fastq"
+
+
 class SequenceManifestSection(BaseModel):
     """This is the manifest section for Sequences.
 
@@ -43,6 +50,9 @@ class SequenceManifestSection(BaseModel):
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
+        format = path.suffix[1:].lower()
+        if format not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {format}")
         return path
 
     @field_serializer("path", check_fields=True)
@@ -51,13 +61,6 @@ class SequenceManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
-
-
-class SequenceFormat(StrEnum):
-    """Enumeration for sequence file formats."""
-
-    FASTA = "fasta"
-    FASTQ = "fastq"
 
 
 class Sequence(BaseModel):
@@ -89,10 +92,7 @@ class Sequence(BaseModel):
     @classmethod
     def from_manifest_section(cls, section: SequenceManifestSection) -> "Sequence":
         """Create a Sequence from a manifest section."""
-        format = section.path.suffix[1:].lower()
-        if format not in SequenceFormat:
-            raise ValueError(f"Unsupported sequence format: {format}")
-        seq = SeqIO.read(section.path, format=format)
+        seq = SeqIO.read(section.path, format=section.path.suffix[1:].lower())
         return cls(
             name=seq.name,
             value=seq.seq,
