@@ -87,6 +87,21 @@ class MSA(BaseModel):
         value = AlignIO.read(section.path, section.path.suffix[1:].lower())
         return MSA(name=name, value=value, description=section.description)
 
+    def as_manifest_section(self, *, path: Path) -> MSAManifestSection:
+        """Create a manifest section from the MSA instance.
+
+        Args:
+            path (Path): The path to the MSA file. As created by the dump method.
+
+        Returns:
+            MSAManifestSection: The manifest section for the MSA.
+        """
+        return MSAManifestSection(
+            path=path,
+            name=self.name,
+            description=self.description,
+        )
+
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the multiple sequence alignment to a file.
 

@@ -1,3 +1,4 @@
+import collections
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import IO, Annotated, Any, Callable
@@ -10,13 +11,11 @@ from pydantic import (
     Field,
     GetJsonSchemaHandler,
     field_serializer,
-    model_validator,
 )
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from pg2_dataset.models.assay import Assay, AssayCondition, AssayManifestSection
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
@@ -101,10 +100,10 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_conditions: list[AssayCondition] = Field(default_factory=list)
+    assay_conditions: list[dict[str, str]] = Field(default_factory=dict)
     """The conditions for the assays defined in the dataset."""
 
-    assays: list[AssayManifestSection] = Field(default_factory=list)
+    assays: list[dict[str, str]] = Field(default_factory=list)
     """The assays included in the dataset."""
 
     sequences: list[SequenceManifestSection] = Field(default_factory=list)
@@ -129,23 +128,6 @@ class Manifest(BaseModel):
     def serialize_version(self, version: Version) -> str:
         """Serialize the version to a string."""
         return str(version)
-
-    @model_validator(mode="after")
-    def _validate_assay_conditions(self) -> "Manifest":
-        """Validate that all assay conditions are defined in the manifest."""
-        defined_condition_names = {
-            condition.name for condition in self.assay_conditions
-        }
-        for assay in self.assays:
-            undefined_condition_names = (
-                set(assay.conditions.keys()) - defined_condition_names
-            )
-            if undefined_condition_names:
-                raise ValueError(
-                    f"Assay {assay.name} contains undefined conditions:"
-                    f"{undefined_condition_names}"
-                )
-        return self
 
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the manifest to a TOML file.
@@ -180,14 +162,14 @@ class DatasetArchiveLayout:
     MANIFEST_FILE = "manifest.lock"
     """The internal manifest file inside the dataset archive."""
 
-    ASSAYS_DIRECTORY = "assays/"
-    """The directory for assays."""
-
     SEQUENCES_DIRECTORY = "sequences/"
     """The directory for sequences."""
 
     STRUCTURES_DIRECTORY = "structures/"
     """The directory for structures."""
+
+    MSAS_DIRECTORY = "msas/"
+    """The directory for multiple sequence alignments (MSAs)."""
 
 
 class Dataset(BaseModel):
@@ -210,12 +192,6 @@ class Dataset(BaseModel):
 
     description: str | None = None
     """A brief description of the dataset."""
-
-    assay_conditions: list[AssayCondition] = Field(default_factory=list)
-    """The list of assay conditions relevant to the dataset."""
-
-    assays: list[Assay] = Field(default_factory=list)
-    """The assays present in the dataset."""
 
     sequences: list[Sequence] = Field(default_factory=list)
     """The sequences included in the dataset."""
@@ -249,13 +225,9 @@ class Dataset(BaseModel):
 
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
 
-        assays = [Assay.from_manifest_section(a) for a in manifest.assays]
-
         return cls(
             name=manifest.name,
             description=manifest.description,
-            assay_conditions=manifest.assay_conditions,
-            assays=assays,
             sequences=sequences,
             structures=structures,
             msas=msas,
@@ -284,21 +256,58 @@ class Dataset(BaseModel):
             dataset_manifest = Manifest.from_path(DatasetArchiveLayout.MANIFEST_FILE)
             return cls.from_manifest(dataset_manifest)
 
-    def _create_manifest_sections(self, objects: list[Any], path: Path) -> list[Any]:
-        """Create manifest sections for sequences and structures."""
-        manifest_sections = [
-            obj.as_manifest_section(path=obj.dump(path=path)) for obj in objects
-        ]
-        return manifest_sections
+    def _dump_data(self, temporary_directory: Path) -> dict[type, list[Path]]:
+        """Dump the data into the directory.
 
-    def _create_manifest(self, path: Path) -> Manifest:
-        """Create a manifest for the dataset."""
+        See :class:DatasetArchiveLayout for the archive layout.
+
+        Returns:
+            dict[type, list[Path]]: A dictionary mapping the data type -
+                Sequence, Structure and MSA - to the list of paths to the dumped
+                data.
+        """
+        data_paths = collections.defaultdict(list)
+        for type_, subdirectory, objects in (
+            (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
+            (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
+            (MSA, DatasetArchiveLayout.MSAS_DIRECTORY, self.msas),
+        ):
+            subpath = temporary_directory / subdirectory
+            subpath.mkdir()
+            for obj in objects:
+                data_path = obj.dump(path=subpath)
+                data_paths[type_].append(data_path)
+        return data_paths
+
+    def _create_manifest(self, data_paths: dict[type, list[Path]]) -> Manifest:
+        """Create a manifest for the dataset.
+
+        The manifest contains the metadata and sections for each data type.
+
+        Args:
+            data_paths (dict[type, list[Path]]): A dictionary mapping the data
+                type - Sequence, Structure and MSA - to the list of paths to the
+                dumped data.
+        """
         manifest = Manifest(
             name=self.name,
             description=self.description,
-            sequences=self._create_manifest_sections(self.sequences, path),
-            structures=self._create_manifest_sections(self.structures, path),
-            assays=self._create_manifest_sections(self.assays, path),
+            sequences=[
+                s.as_manifest_section(path=path)
+                for s, path in zip(
+                    self.sequences, data_paths.get(Sequence, []), strict=True
+                )
+            ],
+            structures=[
+                s.as_manifest_section(path=path)
+                for s, path in zip(
+                    self.structures, data_paths.get(Structure, []), strict=True
+                )
+            ],
+            msas=[
+                m.as_manifest_section(path=path)
+                for m, path in zip(self.msas, data_paths.get(MSA, []), strict=True)
+            ],
         )
         return manifest
 
@@ -311,13 +320,15 @@ class Dataset(BaseModel):
     ) -> None:
         """Write paths to a ZIP archive."""
         for path in paths:
-            arcname = arcname_prefix + (arcname or path.name)
-            zip.write(path, arcname=arcname)
+            zip.write(path, arcname=arcname_prefix + (arcname or path.name))
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
         archive_path = path / f"{self.name}.zip"
-        manifest = self._create_manifest(temporary_directory)
+        # The manifest Pydantic base model checks if the data path exists,
+        # hence, we dump the data before creating and dumping the Manifest
+        data_paths = self._dump_data(temporary_directory)
+        manifest = self._create_manifest(data_paths)
         manifest_path = manifest.dump(path=temporary_directory)
         with ZipFile(archive_path, "w") as zip:
             self._write_paths_to_zip(
@@ -335,8 +346,8 @@ class Dataset(BaseModel):
             )
             self._write_paths_to_zip(
                 zip,
-                *[assay.path for assay in manifest.assays],
-                arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
+                *[msa.path for msa in manifest.msas],
+                arcname_prefix=DatasetArchiveLayout.MSAS_DIRECTORY,
             )
         return archive_path
 
