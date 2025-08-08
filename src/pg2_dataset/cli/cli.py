@@ -1,5 +1,6 @@
-from typing import Annotated
 from pathlib import Path
+from typing import Annotated
+
 import typer
 
 from pg2_dataset.models.dataset import Dataset, Manifest

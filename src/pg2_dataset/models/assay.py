@@ -136,7 +136,7 @@ class Assay(BaseModel):
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
-        
+
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
         return cls(
             name=section.name or section.path.stem,
@@ -147,7 +147,7 @@ class Assay(BaseModel):
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
         """Create `AssayManifestSection` from the assay.
-        
+
         Args:
             path (Path): The path to the assay file.
 

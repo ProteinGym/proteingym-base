@@ -4,7 +4,6 @@ from zipfile import ZipFile
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.models import assay
 from pg2_dataset.models.assay import (
     Assay,
     AssayCondition,
@@ -18,10 +17,12 @@ from pg2_dataset.models.dataset import Dataset, DatasetArchiveLayout, Manifest
 def assay_file(tmp_path: Path) -> Path:
     """Fixture to create a temporary assay file."""
     path = tmp_path / "assay.csv"
-    path.write_text("""
+    path.write_text(
+        """
 sequence,target
 F1I,1.59
-F1L,0.6""".lstrip())
+F1L,0.6""".lstrip()
+    )
     return path
 
 
@@ -132,6 +133,7 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
     assert assay.name == "assay"
     assert len(assay.records) == 2
 
+
 def test_as_manifest_section(assay_file: Path) -> None:
     """Test converting an Assay to a manifest section."""
     assay = Assay(
@@ -165,7 +167,9 @@ def test_manifest_validate_assay_conditions(assay_file: Path) -> None:
         Manifest(
             name="test_manifest",
             assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
-            assays=[{"path": assay_file, "conditions": {"pH": 7.0, "temperature": 37.0}}],
+            assays=[
+                {"path": assay_file, "conditions": {"pH": 7.0, "temperature": 37.0}}
+            ],
         )
     except ValidationError as e:
         AssertionError(f"Manifest raised ValidationError: {e}")
@@ -203,9 +207,13 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
     archive_path = dataset.dump(path=tmp_path)
     assert archive_path.exists(), "Dataset archive was not created"
 
-    zip = ZipFile(archive_path)
-    assert DatasetArchiveLayout.ASSAYS_DIRECTORY + "assay1.csv" in zip.namelist()
-    assert DatasetArchiveLayout.ASSAYS_DIRECTORY + "assay2.csv" in zip.namelist()
+    zipped_file_names = ZipFile(archive_path).namelist()
+    assert (
+        DatasetArchiveLayout.ASSAYS_DIRECTORY / "assay1.csv"
+    ).as_posix() in zipped_file_names
+    assert (
+        DatasetArchiveLayout.ASSAYS_DIRECTORY / "assay2.csv"
+    ).as_posix() in zipped_file_names
 
 
 def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
