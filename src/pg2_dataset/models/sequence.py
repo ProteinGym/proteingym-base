@@ -14,7 +14,21 @@ from pydantic import (
     field_validator,
 )
 
-from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
+
+class SequenceType(StrEnum):
+    """This class defines the types of sequences that are supported by PG2 Dataset.
+    Any sequence that needs to be added to the dataset should be of one of these types.
+    """
+
+    WILD_TYPE = "wild_type"
+    STARTING_SEQUENCE = "starting_sequence"
+    ENGINEERED_SEQUENCE = "engineered_sequence"
+
+
+class SequenceAlphabet(StrEnum):
+    DNA = "DNA"
+    RNA = "RNA"
+    AA = "AA"
 
 
 class SequenceFormat(StrEnum):
@@ -39,8 +53,11 @@ class SequenceManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    sequence_type: str
-    sequence_alphabet: str
+    type: SequenceType
+    """The type of the sequence, e.g., wild_type, starting_sequence, engineered_sequence."""
+
+    alphabet: SequenceAlphabet
+    """The alphabet of the sequence, e.g., DNA, RNA, AA."""
 
     path: FilePath
     """The path to the sequence file."""
@@ -48,6 +65,7 @@ class SequenceManifestSection(BaseModel):
     @field_validator("path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
+
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         format = path.suffix[1:].lower()
@@ -58,6 +76,7 @@ class SequenceManifestSection(BaseModel):
     @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
+
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
@@ -91,18 +110,29 @@ class Sequence(BaseModel):
 
     @classmethod
     def from_manifest_section(cls, section: SequenceManifestSection) -> "Sequence":
-        """Create a Sequence from a manifest section."""
-        seq = SeqIO.read(section.path, format=section.path.suffix[1:].lower())
+        """Create a `Sequence` instance from a manifest section.
+        
+        Args:
+            section (SequenceManifestSection): The manifest section containing the sequence data.
+        Returns:
+            Sequence: An instance of the Sequence class.
+        """
+
+        # Read the sequence from the file using Biopython
+        try:
+            sequene = SeqIO.read(section.path, format=section.path.suffix[1:].lower())
+        except Exception as e:
+            raise ValueError(f"Error reading sequence file `{section.path}`: {e}")
         return cls(
-            name=seq.name,
-            value=seq.seq,
-            description=seq.description,
-            type=section.sequence_type,
-            alphabet=section.sequence_alphabet,
+            name=sequene.name,
+            value=sequene.seq,
+            description=sequene.description,
+            type=section.type,
+            alphabet=section.alphabet,
         )
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
-        """Convert the sequence to a manifest section.
+        """Create `SequenceManifestSection` from the sequence.
 
         Args:
             path (Path): The path to the sequence file (as created by
@@ -111,6 +141,7 @@ class Sequence(BaseModel):
         Returns:
             SequenceManifestSection: The manifest section for the sequence.
         """
+
         return SequenceManifestSection(
             path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
         )
@@ -133,6 +164,7 @@ class Sequence(BaseModel):
         Raises:
             ValueError: If the path does not have a valid sequence file extension.
         """
+
         if format not in SequenceFormat:
             raise ValueError(f"Unsupported sequence format: {format}")
         path = path or Path.cwd()
