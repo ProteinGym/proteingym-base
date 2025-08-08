@@ -6,6 +6,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    FilePath,
     SerializationInfo,
     ValidationInfo,
     field_serializer,
@@ -31,8 +32,8 @@ class AssayCondition(BaseModel):
     unit: str | None = None
     """The unit of the condition."""
 
-    value: int | float | bool | str | None = None
-    """The value of the condition, can be a any type."""
+    value: bool | int | float | str | None = None
+    """The value of the condition, can be a bool, int, float, or str."""
 
     description: str | None = None
     """Optional description of the condition."""
@@ -53,23 +54,23 @@ class AssayManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    name: str
+    name: str | None = None
     """The name of the assay."""
 
     description: str | None = None
     """Description of the assay."""
 
-    sequence: str
+    sequence: str = Field(default="sequence")
     """The sequence feature name given in the file."""
 
-    target: str
+    target: str = Field(default="target")
     """The target feature name given in the file."""
 
-    conditions: dict[str, int | float | bool | str] = Field(default_factory=dict)
+    conditions: dict[str, bool | int | float | str] = Field(default_factory=dict)
     """The condition key:value pairs, key is the name of the assay condition (defined in
     dataset manifest and value of the condition."""
 
-    path: Path
+    path: FilePath
     """The path to the assay file, csv only."""
 
     @field_validator("path", mode="before", check_fields=True)
@@ -89,7 +90,7 @@ class AssayManifestSection(BaseModel):
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
-        df = pl.read_csv(self.path)
+        df = pl.read_csv(self.path, n_rows=0)
         for v in (self.sequence, self.target):
             if v not in df.columns:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
@@ -135,13 +136,9 @@ class Assay(BaseModel):
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
-        records = []
-        for row in df.iter_rows(named=True):
-            records.append((row[section.sequence], row[section.target]))
-
         return cls(
-            name=section.name,
-            records=records,
+            name=section.name or section.path.stem,
+            records=list(df.iter_rows()),
             description=section.description,
             conditions=section.conditions,
         )
@@ -170,18 +167,17 @@ class Assay(BaseModel):
         """Dump the assay data to a file.
 
         Supported formats:
-            - CSV (.csv)
+        - CSV (.csv)
 
         Args:
             path (Path): The output directory to dump the assay file in. If
                 None, the current working directory is used.
             format (AssayFormat): The file format
 
-            Raises:
-                NotImplementedError if the file type is not supported.
+        Raises:
+            NotImplementedError if the file type is not supported.
         """
         path = path or Path.cwd()
-        print(path)
         if path.is_dir():
             path = path / f"{self.name}{format.value}"
         df = pl.DataFrame(

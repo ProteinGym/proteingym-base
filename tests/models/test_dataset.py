@@ -25,6 +25,7 @@ name = "assay"
 path = "assays.csv"
 sequence = "sequence"
 target = "target"
+
 [ assays.conditions ]
 PH = "7"
 

@@ -133,13 +133,18 @@ class Manifest(BaseModel):
     @model_validator(mode="after")
     def _validate_assay_conditions(self) -> "Manifest":
         """Validate that all assay conditions are defined in the manifest."""
+        defined_condition_names = {
+            condition.name for condition in self.assay_conditions
+        }
         for assay in self.assays:
-            for condition_name in assay.conditions.keys():
-                if condition_name not in [cond.name for cond in self.assay_conditions]:
-                    raise ValueError(
-                        f"Condition '{condition_name}' not found in available"
-                        "conditions."
-                    )
+            undefined_condition_names = (
+                set(assay.conditions.keys()) - defined_condition_names
+            )
+            if undefined_condition_names:
+                raise ValueError(
+                    f"Assay {assay.name} contains undefined conditions:"
+                    f"{undefined_condition_names}"
+                )
         return self
 
     def dump(self, *, path: Path | None = None) -> Path:
