@@ -97,6 +97,29 @@ def test_assay() -> None:
         Assay(name="assay", conditions="bad_condition", records=[("F1I", 1)])
 
 
+def test_assay_hidden_variables(tmp_path: Path) -> None:
+    """Test that sequence and target feature names are excluded from the model."""
+    assay = Assay(
+        name="assay",
+        records=[("F1I", 1.56), ("F1L", 2.0)],
+        sequence_feature_name="new_sequence",
+        target_feature_name="new_target",
+    )
+    file_path = assay.dump(path=tmp_path)
+    assay_models_keys = assay.model_dump().keys()
+    assert all(
+        hidden_var not in assay_models_keys
+        for hidden_var in [
+            "sequence_feature_name",
+            "target_feature_name",
+        ]
+    )
+
+    manifest_section = assay.as_manifest_section(path=file_path)
+    assert manifest_section.sequence == "new_sequence"
+    assert manifest_section.target == "new_target"
+
+
 def test_assay_from_manifest_section(assay_file: Path) -> None:
     """Test creating an Assay from a manifest section."""
     Assay.from_manifest_section(

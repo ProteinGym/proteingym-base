@@ -42,7 +42,7 @@ class AssayCondition(BaseModel):
     """The value of the condition, can be a bool, int, float, or str."""
 
     description: str | None = None
-    """Optional description of the condition."""
+    """Description of the condition."""
 
 
 class AssayManifestSection(BaseModel):
@@ -126,10 +126,10 @@ class Assay(BaseModel):
     description: str | None = None
     """The description of the assay."""
 
-    sequence_feature_name: str = Field(default="sequence")
+    sequence_feature_name: str = Field(default="sequence", exclude=True)
     """The sequence feature name in the assay records."""
 
-    target_feature_name: str = Field(default="target")
+    target_feature_name: str = Field(default="target", exclude=True)
     """The target feature name in the assay records."""
 
     @classmethod

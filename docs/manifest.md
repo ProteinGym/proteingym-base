@@ -64,7 +64,7 @@ unit = "pH"
 
 [[assays]]
 name = "assay"
-path = "assays.csv"
+path = "assay.csv"
 sequence = "sequence"
 target = "target"
 
@@ -90,10 +90,10 @@ the protein data types.
 
 | **Field**          | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                                |
 | ------------------ | --------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`          | `string`              | Yes          | `"1.0.0"`     | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
+| `version`          | `string`              | Yes          | `"1.0.0"`   | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
 | `name`             | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                       |
 | `description`      | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                            |
-| `assay_conditions` | `dict[str, str]` | No           | Empty dict  | The conditions for the assays defined in the dataset.                                                                                                                                                                                          |
+| `assay_conditions` | `dict[str, str]`      | No           | Empty dict  | The conditions for the assays defined in the dataset.                                                                                                                                                                                          |
 | `assays`           | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                      |
 | `sequences`        | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                         |
 | `structures`       | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                        |
