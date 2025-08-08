@@ -319,6 +319,10 @@ class Dataset(BaseModel):
         arcname_prefix: Path = Path(),
     ) -> None:
         """Write paths to a ZIP archive."""
+        assert arcname is None or len(paths) <= 1, (
+            "Cannot have multiple paths with an arcname, "
+            "because it creates a name collision"
+        )
         for path in paths:
             zip.write(path, arcname=arcname_prefix / (arcname or path.name))
 
