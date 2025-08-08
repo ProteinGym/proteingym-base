@@ -103,25 +103,25 @@ the protein data types.
 
 The assay conditions section contains a list of assay conditions defined in the dataset.
 
-| **Field**     | **Type**         | **Required** | **Default** | **Description**                                    |
-| ------------- | ---------------- | ------------ | ----------- | -------------------------------------------------- |
-| `name`        | `string`         | Yes          | N/A         | The assay condition name                                  |
-| `description` | `string \| None` | No           | `None`      | A brief description.                               |
-| `unit`        | `string \| None` | No           | `None`      | The unit of measurement.                           |
-| `value`        | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the condition. |
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**                                    |
+| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------------------------------- |
+| `name`        | `string`                              | Yes          | N/A         | The assay condition name                           |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.                               |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.                           |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the condition.                        |
 
 
 ### Assays
 
 The assays section contains a list of assays included in the dataset.
 
-| **Field**    | **Type**    | **Required** | **Default**  | **Description**                                                |
-| ------------ | ----------- | ------------ | ------------ | -------------------------------------------------------------- |
-| `name`       | `string`    | No          | `None`          | The name of the assay.                                        |
-| `path`       | `string`    | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
-| `target`     | `string`    | Yes          | `"target"`         | The target (column) in the assay.                              |
-| `sequence`   | `string`    | No          | `"sequence"` | The sequence (column) in the assay.                            |
-| `conditions` | `list[str]` | No           | Empty list   | The conditions (columns) in the assay.                         |
+| **Field**    | **Type**         | **Required** | **Default**  | **Description**                                                |
+| ------------ | ---------------- | ------------ | ------------ | -------------------------------------------------------------- |
+| `name`       | `string`         | No           | `None`       | The name of the assay.                                         |
+| `path`       | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
+| `target`     | `string`         | No           | `"target"`   | The target feature name in the assay.                          |
+| `sequence`   | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                        |
+| `conditions` | `dict[str, str]` | No           | Empty dict   | The conditions of the assay.                                   |
 
 Example of an assay file:
 
@@ -144,9 +144,11 @@ sequence = "mutated_sequence"
 
 The sequences section contains a list of sequences included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                  |
-| --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
+| **Field**           | **Type** | **Required** | **Default** | **Description**                                                                                                                                                     |
+| ------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`              | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
+| `sequence_alphabet` | `string` | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                        |
+| `sequence_type`     | `string` | Yes          | N/A         | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                                                        |
 
 ### Structures
 
