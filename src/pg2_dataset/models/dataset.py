@@ -168,7 +168,7 @@ class DatasetArchiveLayout:
     STRUCTURES_DIRECTORY = "structures/"
     """The directory for structures."""
 
-    MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY = "msas/"
+    MSAS_DIRECTORY = "msas/"
     """The directory for multiple sequence alignments (MSAs)."""
 
 
@@ -265,11 +265,7 @@ class Dataset(BaseModel):
         for type_, subdirectory, objects in (
             (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
             (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
-            (
-                MSA,
-                DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY,
-                self.msas,
-            ),
+            (MSA, DatasetArchiveLayout.MSAS_DIRECTORY, self.msas),
         ):
             subpath = temporary_directory / subdirectory
             subpath.mkdir()
@@ -338,7 +334,7 @@ class Dataset(BaseModel):
             self._write_paths_to_zip(
                 zip,
                 *[msa.path for msa in manifest.msas],
-                arcname_prefix=DatasetArchiveLayout.MULTIPLE_SEQUENCE_ALIGNMENTS_DIRECTORY,
+                arcname_prefix=DatasetArchiveLayout.MSAS_DIRECTORY,
             )
         return archive_path
 
