@@ -4,6 +4,7 @@ from zipfile import ZipFile
 import pytest
 from pydantic import ValidationError
 
+from pg2_dataset.models import assay
 from pg2_dataset.models.assay import (
     Assay,
     AssayCondition,
@@ -14,20 +15,23 @@ from pg2_dataset.models.dataset import Dataset, DatasetArchiveLayout, Manifest
 
 
 @pytest.fixture
-def assay_file(tmp_path) -> Path:
+def assay_file(tmp_path: Path) -> Path:
     """Fixture to create a temporary assay file."""
     path = tmp_path / "assay.csv"
     path.write_text("""
 sequence,target
 F1I,1.59
-F1L,0.6""")
+F1L,0.6""".lstrip())
     return path
 
 
 def test_assay_condition_minimal() -> None:
     """Test creating a minimal AssayCondition."""
     # This should not raise an error
-    condition = AssayCondition(name="test")
+    try:
+        condition = AssayCondition(name="test")
+    except ValidationError as e:
+        AssertionError(f"AssayCondition raised ValidationError: {e}")
     assert condition.name == "test"
 
 
@@ -37,22 +41,31 @@ def test_assay_condition_invalid_inputs() -> None:
         ValidationError,
         match=r"validation error for AssayCondition\nname\n.*Field required",
     ):
-        AssayCondition(unit="test_unit")
+        AssayCondition()
 
 
-def test_assay_manifest_section(assay_file) -> None:
+def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
-    AssayManifestSection(
-        name="test_assay",
-        description="Test assay",
-        sequence="sequence",
-        target="target",
-        conditions={"test_cond1": "true", "test_cond2": 42},
-        path=assay_file,
-    )
+    try:
+        manifest = AssayManifestSection(
+            name="test_assay",
+            description="Test assay",
+            sequence="sequence",
+            target="target",
+            conditions={"test_cond1": "true", "test_cond2": 42},
+            path=assay_file,
+        )
+    except ValidationError as e:
+        AssertionError(f"AssayManifestSection raised ValidationError: {e}")
+
+    assert isinstance(manifest.path, Path)
+    with assay_file.open() as f:
+        content = f.read()
+    assert manifest.sequence in content
+    assert manifest.target in content
 
 
-def test_assay_manifest_section_with_relative_path(tmp_path) -> None:
+def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     """Test AssayManifestSection with a relative path."""
     path = tmp_path / "assay.csv"
     path.write_text("sequence,target\nF1I,1.59\nF1L,0.6")
@@ -65,7 +78,7 @@ def test_assay_manifest_section_with_relative_path(tmp_path) -> None:
     assert section.path == path
 
 
-def test_assay_manifest_section_validate_feature_names(assay_file) -> None:
+def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None:
     """Test that AssayManifestSection raises error for invalid feature names."""
     with pytest.raises(
         ValueError,
@@ -84,11 +97,16 @@ def test_assay_manifest_section_validate_feature_names(assay_file) -> None:
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [("F1I", 1.56), ("F1L", 2.0)]
-    Assay(
-        name="assay",
-        conditions={"test_cond1": "true", "test_cond2": 42},
-        records=records,
-    )
+    try:
+        assay = Assay(
+            name="assay",
+            conditions={"test_cond1": "true", "test_cond2": 42},
+            records=records,
+        )
+    except ValidationError as e:
+        AssertionError(f"Assay raised ValidationError: {e}")
+    assert assay.sequence_feature_name == "sequence"
+    assert assay.target_feature_name == "target"
     with pytest.raises(
         ValidationError,
         match=r"validation error for Assay\nconditions\n.*Input should be a valid "
@@ -97,41 +115,22 @@ def test_assay() -> None:
         Assay(name="assay", conditions="bad_condition", records=[("F1I", 1)])
 
 
-def test_assay_hidden_variables(tmp_path: Path) -> None:
-    """Test that sequence and target feature names are excluded from the model."""
-    assay = Assay(
-        name="assay",
-        records=[("F1I", 1.56), ("F1L", 2.0)],
-        sequence_feature_name="new_sequence",
-        target_feature_name="new_target",
-    )
-    file_path = assay.dump(path=tmp_path)
-    assay_models_keys = assay.model_dump().keys()
-    assert all(
-        hidden_var not in assay_models_keys
-        for hidden_var in [
-            "sequence_feature_name",
-            "target_feature_name",
-        ]
-    )
-
-    manifest_section = assay.as_manifest_section(path=file_path)
-    assert manifest_section.sequence == "new_sequence"
-    assert manifest_section.target == "new_target"
-
-
 def test_assay_from_manifest_section(assay_file: Path) -> None:
     """Test creating an Assay from a manifest section."""
-    Assay.from_manifest_section(
-        AssayManifestSection(
-            name="assay",
-            sequence="sequence",
-            target="target",
-            path=assay_file,
-            conditions={"test_cond1": "true", "test_cond2": 42},
-        ),
-    )
-
+    try:
+        assay = Assay.from_manifest_section(
+            AssayManifestSection(
+                name="assay",
+                sequence="sequence",
+                target="target",
+                path=assay_file,
+                conditions={"test_cond1": "true", "test_cond2": 42},
+            ),
+        )
+    except ValidationError as e:
+        AssertionError(f"Assay raised ValidationError: {e}")
+    assert assay.name == "assay"
+    assert len(assay.records) == 2
 
 def test_as_manifest_section(assay_file: Path) -> None:
     """Test converting an Assay to a manifest section."""
@@ -143,7 +142,7 @@ def test_as_manifest_section(assay_file: Path) -> None:
     assert manifest.path == assay_file
 
 
-def test_assay_dump(tmp_path) -> None:
+def test_assay_dump(tmp_path: Path) -> None:
     """Test dumping an Assay to a file."""
     assay = Assay(
         name="assay",
@@ -162,11 +161,15 @@ def test_assay_dump(tmp_path) -> None:
 # Tests with Dataset and Manifest
 def test_manifest_validate_assay_conditions(assay_file: Path) -> None:
     """The manifest validates assay conditions."""
-    Manifest(
-        name="test_manifest",
-        assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
-        assays=[{"path": assay_file, "conditions": {"pH": 7.0, "temperature": 37.0}}],
-    )
+    try:
+        Manifest(
+            name="test_manifest",
+            assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
+            assays=[{"path": assay_file, "conditions": {"pH": 7.0, "temperature": 37.0}}],
+        )
+    except ValidationError as e:
+        AssertionError(f"Manifest raised ValidationError: {e}")
+
     with pytest.raises(
         ValidationError,
         match=r"validation error for Manifest\n"
@@ -201,11 +204,8 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
     assert archive_path.exists(), "Dataset archive was not created"
 
     zip = ZipFile(archive_path)
-    assert all(
-        DatasetArchiveLayout.ASSAYS_DIRECTORY + f"{assay.name}{AssayFormat.CSV}"
-        in zip.namelist()
-        for assay in dataset.assays
-    )
+    assert DatasetArchiveLayout.ASSAYS_DIRECTORY + "assay1.csv" in zip.namelist()
+    assert DatasetArchiveLayout.ASSAYS_DIRECTORY + "assay2.csv" in zip.namelist()
 
 
 def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:

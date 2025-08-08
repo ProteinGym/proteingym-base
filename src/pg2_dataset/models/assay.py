@@ -96,9 +96,10 @@ class AssayManifestSection(BaseModel):
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
-        df = pl.read_csv(self.path, n_rows=0)
+        with self.path.open("r") as f:
+            header = f.readline()
         for v in (self.sequence, self.target):
-            if v not in df.columns:
+            if v not in header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
 
@@ -126,15 +127,16 @@ class Assay(BaseModel):
     description: str | None = None
     """The description of the assay."""
 
-    sequence_feature_name: str = Field(default="sequence", exclude=True)
+    sequence_feature_name: str = "sequence"
     """The sequence feature name in the assay records."""
 
-    target_feature_name: str = Field(default="target", exclude=True)
+    target_feature_name: str = "target"
     """The target feature name in the assay records."""
 
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
+        
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
         return cls(
             name=section.name or section.path.stem,
@@ -145,6 +147,7 @@ class Assay(BaseModel):
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
         """Create `AssayManifestSection` from the assay.
+        
         Args:
             path (Path): The path to the assay file.
 
@@ -157,7 +160,7 @@ class Assay(BaseModel):
             description=self.description,
             sequence=self.sequence_feature_name,
             target=self.target_feature_name,
-            conditions={cond.name: cond.value for cond in self.conditions},
+            conditions=self.conditions,
             path=path,
         )
 
@@ -177,6 +180,7 @@ class Assay(BaseModel):
         Raises:
             NotImplementedError if the file type is not supported.
         """
+
         path = path or Path.cwd()
         if path.is_dir():
             path = path / f"{self.name}{format.value}"
