@@ -199,8 +199,8 @@ def test_sequence_dump(tmp_path: Path) -> None:
     assert isinstance(sequence_record, SeqRecord)
 
 
-def test_dataset_dump_with_sequences(tmp_path: Path) -> None:
-    """Test the zip file created by the Dataset dump with sequences.
+def test_dataset_dump_with_sequence(tmp_path: Path) -> None:
+    """Test the zip file created by the Dataset dump with a sequence.
 
     The created archive:
     - Should not contain a bad file.
@@ -229,3 +229,62 @@ def test_dataset_dump_with_sequences(tmp_path: Path) -> None:
         string_io = io.StringIO(sequence_file.read().decode("utf-8"))
         loaded_sequence = SeqIO.read(string_io, "fasta")
         assert bio_sequence == loaded_sequence.seq
+
+
+def test_dataset_dump_with_sequences_contains_archive_names(tmp_path: Path) -> None:
+    """Same as `test_dataset_dump_with_sequences`, but with multiple sequences."""
+    expected = {"sequences/sequence1.fasta", "sequences/sequence2.fasta"}
+    sequence1 = Sequence(
+        name="sequence1",
+        value=Seq("CCCCCCCCCCCCC"),
+        description="Test sequence 1",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    sequence2 = Sequence(
+        name="sequence2",
+        value=Seq("AAAAAAAAAAAA"),
+        description="Test sequence 2",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    dataset = Dataset(name="test", sequences=[sequence1, sequence2])
+
+    path = dataset.dump(path=tmp_path)
+
+    archive_names = ZipFile(path).namelist()
+    assert not expected - set(archive_names), (
+        f"Expected the following archive names {expected}"
+    )
+
+
+def test_dataset_with_sequences_dump_from_path_unit(tmp_path: Path) -> None:
+    """Dumping a dataset with sequences should return the same after reading"""
+    sequence1 = Sequence(
+        name="sequence1",
+        value=Seq("CCCCCCCCCCCCC"),
+        description="Test sequence 1",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    sequence2 = Sequence(
+        name="sequence2",
+        value=Seq("AAAAAAAAAAAA"),
+        description="Test sequence 2",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    dataset = Dataset(name="test", sequences=[sequence1, sequence2])
+
+    path = dataset.dump(path=tmp_path)
+
+    loaded_dataset = Dataset.from_path(path)
+
+    # TODO (#255): Implement Dataset.__eq__ and use it here instead of multiple asserts
+    assert loaded_dataset.name == dataset.name
+    assert len(loaded_dataset.sequences) == len(dataset.sequences)
+    for loaded_sequence, sequence in zip(
+        loaded_dataset.sequences, dataset.sequences, strict=True
+    ):
+        assert loaded_sequence.name == sequence.name
+        assert loaded_sequence.value == sequence.value

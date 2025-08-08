@@ -268,7 +268,7 @@ def test_dataset_with_structures(
     assert dataset.structures[1].value.strictly_equals(bio_structure)
 
 
-def test_dataset_dump_with_structures(
+def test_dataset_dump_with_structure(
     tmp_path: Path, bio_structure: BioStructure
 ) -> None:
     """The dataset can be dumped with structures.
@@ -293,3 +293,41 @@ def test_dataset_dump_with_structures(
         string_io = io.StringIO(structure_file.read().decode("utf-8"))
         loaded_structure = PDBParser().get_structure("test", string_io)
         assert bio_structure == loaded_structure
+
+
+def test_dataset_dump_with_structures_contains_archive_names(
+    tmp_path: Path, bio_structure: BioStructure
+) -> None:
+    """Same as `test_dataset_dump_with_structure`, but with multiple structures."""
+    expected = {"structures/structure1.pdb", "structures/structure2.pdb"}
+    structure1 = Structure(name="structure1", value=bio_structure)
+    structure2 = Structure(name="structure2", value=bio_structure)
+    dataset = Dataset(name="test", structures=[structure1, structure2])
+
+    path = dataset.dump(path=tmp_path)
+
+    archive_names = ZipFile(path).namelist()
+    assert not expected - set(archive_names), (
+        f"Expected the following archive names {expected}"
+    )
+
+
+def test_dataset_with_structure_dump_from_path_unit(
+    tmp_path: Path, bio_structure: BioStructure
+) -> None:
+    """Dumping a dataset with structure should return the same after reading"""
+    structure = Structure(name=bio_structure.id, value=bio_structure)
+    dataset = Dataset(name="test", structures=[structure])
+
+    path = dataset.dump(path=tmp_path)
+
+    loaded_dataset = Dataset.from_path(path)
+
+    # TODO (#255): Implement Dataset.__eq__ and use it here instead of multiple asserts
+    assert loaded_dataset.name == dataset.name
+    assert len(loaded_dataset.structures) == len(dataset.structures)
+    for loaded_structure, structure in zip(
+        loaded_dataset.structures, dataset.structures, strict=True
+    ):
+        assert loaded_structure.name == structure.name
+        assert loaded_structure.value == structure.value

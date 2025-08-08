@@ -178,19 +178,19 @@ class Manifest(BaseModel):
 class DatasetArchiveLayout:
     """The layout of the dataset archive."""
 
-    MANIFEST_FILE = "manifest.lock"
+    MANIFEST_FILE = Path("manifest.lock")
     """The internal manifest file inside the dataset archive."""
 
-    ASSAYS_DIRECTORY = "assays/"
+    ASSAYS_DIRECTORY = Path("assays/")
     """The directory for assays."""
 
-    SEQUENCES_DIRECTORY = "sequences/"
+    SEQUENCES_DIRECTORY = Path("sequences/")
     """The directory for sequences."""
 
-    STRUCTURES_DIRECTORY = "structures/"
+    STRUCTURES_DIRECTORY = Path("structures/")
     """The directory for structures."""
 
-    MSAS_DIRECTORY = "msas/"
+    MSAS_DIRECTORY = Path("msas/")
     """The directory for multiple sequence alignments (MSAs)."""
 
 
@@ -345,12 +345,16 @@ class Dataset(BaseModel):
         self,
         zip: ZipFile,
         *paths: Path,
-        arcname: str | None = None,
-        arcname_prefix: str = "",
+        arcname: Path | None = None,
+        arcname_prefix: Path = Path(),
     ) -> None:
         """Write paths to a ZIP archive."""
+        assert arcname is None or len(paths) <= 1, (
+            "Cannot have multiple paths with an arcname, "
+            "because it creates a name collision"
+        )
         for path in paths:
-            zip.write(path, arcname=arcname_prefix + (arcname or path.name))
+            zip.write(path, arcname=arcname_prefix / (arcname or path.name))
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
