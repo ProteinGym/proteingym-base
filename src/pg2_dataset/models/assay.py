@@ -66,10 +66,10 @@ class AssayManifestSection(BaseModel):
     description: str | None = None
     """Description of the assay."""
 
-    sequence: str = Field(default="sequence")
+    sequence: str = "sequence"
     """The sequence feature name given in the file."""
 
-    target: str = Field(default="target")
+    target: str = "target"
     """The target feature name given in the file."""
 
     conditions: dict[str, bool | int | float | str] = Field(default_factory=dict)
