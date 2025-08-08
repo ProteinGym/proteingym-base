@@ -22,9 +22,6 @@ class SequenceManifestSection(BaseModel):
 
     They can be loaded from multiple directories.  This object is used to
     validate the sequence manifest.
-
-    TODO:
-        Discuss if this should be part of the manifest or of the dataset.
     """
 
     model_config = ConfigDict(
