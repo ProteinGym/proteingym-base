@@ -7,7 +7,6 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import (
     BaseModel,
     ConfigDict,
-    DirectoryPath,
     FilePath,
     SerializationInfo,
     ValidationInfo,
@@ -18,14 +17,18 @@ from pydantic import (
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 
 
+class SequenceFormat(StrEnum):
+    """Enumeration for sequence file formats."""
+
+    FASTA = "fasta"
+    FASTQ = "fastq"
+
+
 class SequenceManifestSection(BaseModel):
     """This is the manifest section for Sequences.
 
     They can be loaded from multiple directories.  This object is used to
     validate the sequence manifest.
-
-    TODO:
-        Discuss if this should be part of the manifest or of the dataset.
     """
 
     model_config = ConfigDict(
@@ -39,7 +42,7 @@ class SequenceManifestSection(BaseModel):
     sequence_type: str
     sequence_alphabet: str
 
-    path: FilePath | DirectoryPath
+    path: FilePath
     """The path to the sequence file."""
 
     @field_validator("path", mode="before", check_fields=True)
@@ -47,6 +50,9 @@ class SequenceManifestSection(BaseModel):
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
+        format = path.suffix[1:].lower()
+        if format not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {format}")
         return path
 
     @field_serializer("path", check_fields=True)
@@ -55,13 +61,6 @@ class SequenceManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
-
-
-class SequenceFormat(StrEnum):
-    """Enumeration for sequence file formats."""
-
-    FASTA = "fasta"
-    FASTQ = "fastq"
 
 
 class Sequence(BaseModel):
@@ -91,29 +90,16 @@ class Sequence(BaseModel):
     """The alphabet of the sequence."""
 
     @classmethod
-    def from_manifest_section(
-        cls, section: SequenceManifestSection
-    ) -> list["Sequence"]:
-        """Create a list of Sequence from a manifest section."""
-
-        if section.path.is_dir():
-            files = list(section.path.glob("*.*"))
-        elif section.path.is_file():
-            files = [section.path]
-
-        files = [f for f in files if f.suffix[1:] in SequenceFormat]
-        sequences = [SeqIO.read(file, format=file.suffix[1:]) for file in files]
-
-        return [
-            cls(
-                name=seq.name,
-                value=seq.seq,
-                description=seq.description,
-                type=section.sequence_type,
-                alphabet=section.sequence_alphabet,
-            )
-            for seq in sequences
-        ]
+    def from_manifest_section(cls, section: SequenceManifestSection) -> "Sequence":
+        """Create a Sequence from a manifest section."""
+        seq = SeqIO.read(section.path, format=section.path.suffix[1:].lower())
+        return cls(
+            name=seq.name,
+            value=seq.seq,
+            description=seq.description,
+            type=section.sequence_type,
+            alphabet=section.sequence_alphabet,
+        )
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
         """Convert the sequence to a manifest section.
