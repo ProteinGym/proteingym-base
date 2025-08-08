@@ -141,6 +141,24 @@ def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
     assert isinstance(msa.value, MultipleSeqAlignment)
 
 
+@pytest.fixture
+def a3m_file(tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment) -> Path:
+    """A3M structure file for testing."""
+    path = tmp_path / "structure.a3m"
+    AlignIO.write(multiple_sequence_alignment, path, "fasta")
+    return path
+
+
+def test_msa_from_manifest_section_with_a3m(a3m_file: Path) -> None:
+    """A MSA can be created from a manifest section with A3M file."""
+    section = MSAManifestSection(path=a3m_file, format="fasta")
+
+    msa = MSA.from_manifest_section(section)
+
+    assert msa.name == "structure"
+    assert isinstance(msa.value, MultipleSeqAlignment)
+
+
 def test_msa_as_manifest_section(fasta_file: Path) -> None:
     """A MSA can be converted to a manifest section."""
     expected = MSAManifestSection(
