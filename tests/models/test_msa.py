@@ -77,7 +77,7 @@ def test_msa_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
 def test_msa_manifest_section_serialize_format_as_string(tmp_path: Path) -> None:
     """The format is serialized as a string.
 
-    The StrEnum is tricky to test as it is both an string and enum, hence,
+    The StrEnum is tricky to test as it is both a string and enum, hence,
     we test it with a TOML serialization to be sure it is serialized correctly.
     """
     path = tmp_path / "test.msa"
