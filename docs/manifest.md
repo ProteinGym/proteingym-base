@@ -82,7 +82,6 @@ path = "structures.pdb"
 [[ msas ]]
 path = "msas.a3m"
 format = "fasta"
-
 ```
 
 ### Top-level

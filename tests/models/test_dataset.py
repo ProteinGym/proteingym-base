@@ -37,8 +37,9 @@ path = "sequences.fasta"
 [[structures]]
 path = "structures.pdb"
 
-[[msas]]
+[[ msas ]]
 path = "msas.a3m"
+format = "fasta"
 """
 
 
