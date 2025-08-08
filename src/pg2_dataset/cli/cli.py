@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -9,7 +10,7 @@ app = typer.Typer()
 
 @app.command("create")
 def create(
-    manifest_path: str = Annotated[str, typer.Option(help="Path to the manifest file")],
+    manifest_path: Annotated[Path, typer.Option(help="Path to the manifest file")],
 ):
     """Creates a Dataset instance from a manifest TOML file.
 

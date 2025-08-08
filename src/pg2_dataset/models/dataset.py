@@ -11,11 +11,13 @@ from pydantic import (
     Field,
     GetJsonSchemaHandler,
     field_serializer,
+    model_validator,
 )
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
+from pg2_dataset.models.assay import Assay, AssayCondition, AssayManifestSection
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
@@ -100,10 +102,10 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_conditions: list[dict[str, str]] = Field(default_factory=dict)
+    assay_conditions: list[AssayCondition] = Field(default_factory=list)
     """The conditions for the assays defined in the dataset."""
 
-    assays: list[dict[str, str]] = Field(default_factory=list)
+    assays: list[AssayManifestSection] = Field(default_factory=list)
     """The assays included in the dataset."""
 
     sequences: list[SequenceManifestSection] = Field(default_factory=list)
@@ -114,6 +116,23 @@ class Manifest(BaseModel):
 
     msas: list[MSAManifestSection] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
+
+    @model_validator(mode="after")
+    def _validate_assay_conditions(self) -> "Manifest":
+        """Validate that all assay conditions are defined in the manifest."""
+        defined_condition_names = {
+            condition.name for condition in self.assay_conditions
+        }
+        for assay in self.assays:
+            undefined_condition_names = (
+                set(assay.conditions.keys()) - defined_condition_names
+            )
+            if undefined_condition_names:
+                raise ValueError(
+                    f"Assay {assay.name} contains undefined conditions:"
+                    f"{undefined_condition_names}"
+                )
+        return self
 
     @classmethod
     def from_path(cls, path: Path | IO["str"]) -> "Manifest":
@@ -162,6 +181,9 @@ class DatasetArchiveLayout:
     MANIFEST_FILE = Path("manifest.lock")
     """The internal manifest file inside the dataset archive."""
 
+    ASSAYS_DIRECTORY = Path("assays/")
+    """The directory for assays."""
+
     SEQUENCES_DIRECTORY = Path("sequences/")
     """The directory for sequences."""
 
@@ -193,6 +215,12 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
+    assay_conditions: list[AssayCondition] = Field(default_factory=list)
+    """The list of assay conditions relevant to the dataset."""
+
+    assays: list[Assay] = Field(default_factory=list)
+    """The assays present in the dataset."""
+
     sequences: list[Sequence] = Field(default_factory=list)
     """The sequences included in the dataset."""
 
@@ -215,12 +243,15 @@ class Dataset(BaseModel):
         Returns:
             Dataset: The dataset created from the manifest.
         """
+        assays = [Assay.from_manifest_section(a) for a in manifest.assays]
         sequences = [Sequence.from_manifest_section(s) for s in manifest.sequences]
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
         return cls(
             name=manifest.name,
             description=manifest.description,
+            assay_conditions=manifest.assay_conditions,
+            assays=assays,
             sequences=sequences,
             structures=structures,
             msas=msas,
@@ -261,6 +292,7 @@ class Dataset(BaseModel):
         """
         data_paths = collections.defaultdict(list)
         for type_, subdirectory, objects in (
+            (Assay, DatasetArchiveLayout.ASSAYS_DIRECTORY, self.assays),
             (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
             (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
             (MSA, DatasetArchiveLayout.MSAS_DIRECTORY, self.msas),
@@ -285,6 +317,11 @@ class Dataset(BaseModel):
         manifest = Manifest(
             name=self.name,
             description=self.description,
+            assay_conditions=self.assay_conditions,
+            assays=[
+                a.as_manifest_section(path=path)
+                for a, path in zip(self.assays, data_paths.get(Assay, []), strict=True)
+            ],
             sequences=[
                 s.as_manifest_section(path=path)
                 for s, path in zip(
@@ -330,6 +367,11 @@ class Dataset(BaseModel):
         with ZipFile(archive_path, "w") as zip:
             self._write_paths_to_zip(
                 zip, manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE
+            )
+            self._write_paths_to_zip(
+                zip,
+                *[assay.path for assay in manifest.assays],
+                arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
             )
             self._write_paths_to_zip(
                 zip,

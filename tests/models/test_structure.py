@@ -256,7 +256,6 @@ def test_dataset_with_structures(
             StructureManifestSection(path=cif_file, name=bio_structure.id),
         ],
     )
-
     dataset = Dataset.from_manifest(manifest)
 
     assert len(dataset.structures) == 2
