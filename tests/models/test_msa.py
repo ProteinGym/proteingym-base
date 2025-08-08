@@ -3,6 +3,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+import toml
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
@@ -10,7 +11,7 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.msa import MSA, MSAManifestSection
+from pg2_dataset.models.msa import MSA, MSAFormat, MSAManifestSection
 
 
 def test_msa_manifest_section_minimal(tmp_path: Path) -> None:
@@ -71,6 +72,21 @@ def test_msa_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
     section = MSAManifestSection(path=path)
 
     assert section.model_dump().get("path") == path.as_posix()
+
+
+def test_msa_manifest_section_serialize_format_as_string(tmp_path: Path) -> None:
+    """The format is serialized as a string.
+
+    The StrEnum is tricky to test as it is both an string and enum, hence,
+    we test it with a TOML serialization to be sure it is serialized correctly.
+    """
+    path = tmp_path / "test.msa"
+    path.touch()
+
+    section = MSAManifestSection(path=path, format=MSAFormat.FASTA)
+
+    section_in_toml = toml.dumps(section.model_dump())
+    assert "fasta" in section_in_toml
 
 
 def test_msa_manifest_section_serialize_path_as_posix_relative_to(
