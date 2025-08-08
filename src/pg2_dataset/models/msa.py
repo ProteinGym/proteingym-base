@@ -64,6 +64,11 @@ class MSAManifestSection(BaseModel):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
+    @field_serializer("format", check_fields=True)
+    def _serialize_str_enum(self, format: MSAFormat) -> str:
+        """Serialize a StrEnum as a string."""
+        return format.value
+
 
 class MSA(BaseModel):
     """Multiple Sequence Alignment (MSA) model."""
