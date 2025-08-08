@@ -1,5 +1,5 @@
 from typing import Annotated
-
+from pathlib import Path
 import typer
 
 from pg2_dataset.models.dataset import Dataset, Manifest
@@ -9,7 +9,7 @@ app = typer.Typer()
 
 @app.command("create")
 def create(
-    manifest_path: str = Annotated[str, typer.Option(help="Path to the manifest file")],
+    manifest_path: Annotated[Path, typer.Option(help="Path to the manifest file")],
 ):
     """Creates a Dataset instance from a manifest TOML file.
 
