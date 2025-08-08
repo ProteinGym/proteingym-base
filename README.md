@@ -109,9 +109,8 @@ uv run jupyter lab
 You can load the data using the manifest:
 
 ``` python
->>> from pathlib import Path
 >>> from pg2_dataset import Dataset, Manifest
->>> manifest = Manifest.from_path(Path("manifests/neime_2019.toml"))
+>>> manifest = Manifest.from_path("manifests/neime_2019.toml")
 >>> manifest.name
 'NEIME_2019'
 >>> dataset = Dataset.from_manifest(manifest)
