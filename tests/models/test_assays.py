@@ -1,4 +1,5 @@
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 from pydantic import ValidationError
@@ -9,6 +10,7 @@ from pg2_dataset.models.assay import (
     AssayFormat,
     AssayManifestSection,
 )
+from pg2_dataset.models.dataset import Dataset, DatasetArchiveLayout, Manifest
 
 
 @pytest.fixture
@@ -132,3 +134,76 @@ def test_assay_dump(tmp_path) -> None:
     content = dumped_path.read_text()
     assert "F1I,1.56" in content
     assert "F1L,2.0" in content
+
+
+# Tests with Dataset and Manifest
+def test_manifest_validate_assay_conditions(assay_file: Path) -> None:
+    """The manifest validates assay conditions."""
+    Manifest(
+        name="test_manifest",
+        assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
+        assays=[{"path": assay_file, "conditions": {"pH": 7.0, "temperature": 37.0}}],
+    )
+    with pytest.raises(
+        ValidationError,
+        match=r"validation error for Manifest\n"
+        r".*Value error, Assay .* contains undefined conditions",
+    ):
+        Manifest(
+            name="test_manifest",
+            assay_conditions=[{"name": "pH"}],
+            assays=[{"path": assay_file, "conditions": {"temperature": 37.0}}],
+        )
+
+
+def test_dataset_with_dump_assays(tmp_path: Path) -> None:
+    """Test creating a Dataset with dumped assays."""
+    assay1 = Assay(
+        name="assay1",
+        records=[("F1I", 1.56), ("F1L", 2.0)],
+        sequence_feature_name="sequence",
+        target_feature_name="target",
+    )
+    assay2 = Assay(
+        name="assay2",
+        records=[("F2I", 1.0), ("F2L", 3.0)],
+        sequence_feature_name="sequence",
+        target_feature_name="target",
+    )
+    dataset = Dataset(
+        name="test_dataset",
+        assays=[assay1, assay2],
+    )
+    archive_path = dataset.dump(path=tmp_path)
+    assert archive_path.exists(), "Dataset archive was not created"
+
+    zip = ZipFile(archive_path)
+    assert all(
+        DatasetArchiveLayout.ASSAYS_DIRECTORY + f"{assay.name}{AssayFormat.CSV}"
+        in zip.namelist()
+        for assay in dataset.assays
+    )
+
+
+def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
+    """Test a Dataset instance equality from dumped assays."""
+    assay1 = Assay(
+        name="assay1",
+        records=[("F1I", 1.56), ("F1L", 2.0)],
+        sequence_feature_name="sequence",
+        target_feature_name="target",
+    )
+    dataset = Dataset(
+        name="test_dataset",
+        assays=[assay1],
+    )
+    archive_path = dataset.dump(path=tmp_path)
+    loaded_dataset = Dataset.from_path(archive_path)
+    assert loaded_dataset.name == dataset.name
+    assert len(loaded_dataset.assays) == len(dataset.assays)
+    for original_assay, loaded_assay in zip(
+        dataset.assays, loaded_dataset.assays, strict=True
+    ):
+        assert isinstance(loaded_assay, Assay)
+        assert original_assay.name == loaded_assay.name
+        assert original_assay.records == loaded_assay.records

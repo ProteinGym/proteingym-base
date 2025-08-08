@@ -158,28 +158,6 @@ def test_manifest_from_path_has_protein_data(
     )
 
 
-def test_manifest_validate_assay_conditions(tmp_path: Path) -> None:
-    """The manifest validates assay conditions."""
-    assay_file = tmp_path / "test_assay.csv"
-    assay_file.touch()
-    assay_file.write_text("sequence,target\n")
-    Manifest(
-        name="test_manifest",
-        assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
-        assays=[{"path": assay_file, "conditions": {"pH": 7.0, "temperature": 37.0}}],
-    )
-    with pytest.raises(
-        ValidationError,
-        match=r"validation error for Manifest\n"
-        r".*Value error, Assay .* contains undefined conditions",
-    ):
-        Manifest(
-            name="test_manifest",
-            assay_conditions=[{"name": "pH"}],
-            assays=[{"path": assay_file, "conditions": {"temperature": 37.0}}],
-        )
-
-
 def test_manifest_version() -> None:
     """The manifest version should support comparisions."""
     manifest_v1 = Manifest(name="test", version="1.0.0")
