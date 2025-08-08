@@ -260,6 +260,11 @@ class Dataset(BaseModel):
         """Dump the data into the directory.
 
         See :class:DatasetArchiveLayout for the archive layout.
+
+        Returns:
+            dict[type, list[Path]]: A dictionary mapping the data type -
+                Sequence, Structure and MSA - to the list of paths to the dumped
+                data.
         """
         data_paths = collections.defaultdict(list)
         for type_, subdirectory, objects in (
@@ -275,7 +280,15 @@ class Dataset(BaseModel):
         return data_paths
 
     def _create_manifest(self, data_paths: dict[type, list[Path]]) -> Manifest:
-        """Create a manifest for the dataset."""
+        """Create a manifest for the dataset.
+
+        The manifest contains the metadata and sections for each data type.
+
+        Args:
+            data_paths (dict[type, list[Path]]): A dictionary mapping the data
+                type - Sequence, Structure and MSA - to the list of paths to the
+                dumped data.
+        """
         manifest = Manifest(
             name=self.name,
             description=self.description,
