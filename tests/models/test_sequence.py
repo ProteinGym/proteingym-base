@@ -63,7 +63,7 @@ def test_sequence_manifest_section_missing_path() -> None:
         SequenceManifestSection(
             sequence_type="wild_type",
             sequence_alphabet="DNA",
-            path="non_existent.fasta",
+            path=Path("non_existent.fasta"),
         )
 
 
