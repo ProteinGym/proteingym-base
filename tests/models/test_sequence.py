@@ -10,7 +10,124 @@ from pydantic import ValidationError
 
 from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
+from pg2_dataset.models.sequence import (
+    Sequence,
+    SequenceFormat,
+    SequenceManifestSection,
+)
+
+
+def test_sequence_manifest_section_minimal(tmp_path: Path) -> None:
+    """Check with a minimal sequence manifest section."""
+    path = tmp_path / "sequence.fasta"
+    path.touch()
+
+    try:
+        SequenceManifestSection(
+            sequence_type="wild_type", sequence_alphabet="DNA", path=path
+        )
+    except ValidationError as e:
+        raise AssertionError("Could not create SequenceManifestSection") from e
+    else:
+        assert True, "SequenceManifestSection created successfully with minimal fields."
+
+
+def test_sequence_manifest_section_with_relative_path(tmp_path: Path) -> None:
+    """The path can be relative to another path."""
+    path = tmp_path / "sequence.fasta"
+    path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    try:
+        SequenceManifestSection.model_validate(
+            {
+                "sequence_type": "wild_type",
+                "sequence_alphabet": "DNA",
+                "path": "sequence.fasta",
+            },
+            context=context,
+        )
+    except ValidationError as e:
+        raise AssertionError("Could not create SequenceManifestSection") from e
+    else:
+        assert True, "SequenceManifestSection created successfully with minimal fields."
+
+
+def test_sequence_manifest_section_missing_path() -> None:
+    """A validation error is raised if path is missing."""
+    match = (
+        "validation error for SequenceManifestSection\npath\n  "
+        "Path does not point to a file"
+    )
+    with pytest.raises(ValidationError, match=match):
+        SequenceManifestSection(
+            sequence_type="wild_type",
+            sequence_alphabet="DNA",
+            path=Path("non_existent.fasta"),
+        )
+
+
+@pytest.mark.parametrize("field", ["sequence_type", "sequence_alphabet"])
+def test_sequence_manifest_section_empty_string_field(
+    tmp_path: Path, field: str
+) -> None:
+    """A validation error is raised if string <field> is empty."""
+    path = tmp_path / "sequence.fasta"
+    path.touch()
+
+    match = (
+        f"validation error for SequenceManifestSection\n{field}\n  "
+        "String should have at least 1 character"
+    )
+    with pytest.raises(ValidationError, match=match):
+        SequenceManifestSection(
+            path=path,
+            **{"sequence_type": "wild_type", "sequence_alphabet": "DNA", field: ""},
+        )
+
+
+def test_sequence_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
+    """The path is serialized as a Posix path."""
+    path = tmp_path / "sequence.fasta"
+    path.touch()
+
+    section = SequenceManifestSection(
+        sequence_type="wild_type", sequence_alphabet="DNA", path=path
+    )
+
+    assert section.model_dump().get("path") == path.as_posix()
+
+
+def test_sequence_manifest_section_serialize_path_as_posix_relative_to(
+    tmp_path: Path,
+) -> None:
+    """The path is serialized as a Posix path relatie to another path."""
+    path = tmp_path / "sequence.fasta"
+    path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    section = SequenceManifestSection(
+        sequence_type="wild_type", sequence_alphabet="DNA", path=path
+    )
+
+    assert section.model_dump(context=context).get("path") == "sequence.fasta"
+
+
+def test_sequence_manifest_section_raises_validation_error_for_unsupported_format(
+    tmp_path: Path,
+) -> None:
+    """The manifest section raises a validation error for unsupported formats."""
+    path = tmp_path / "sequence.unsupported"
+    path.touch()
+
+    match = (
+        "validation error for SequenceManifestSection\npath\n  Value error, "
+        "Unsupported sequence format: unsupported"
+    )
+    with pytest.raises(ValidationError, match=match):
+        SequenceManifestSection(
+            sequence_type="wild_type", sequence_alphabet="DNA", path=path
+        )
 
 
 @pytest.mark.parametrize(
@@ -70,8 +187,8 @@ def test_sequence_dump(tmp_path: Path) -> None:
         type=SequenceType("wild_type"),
         alphabet=SequenceAlphabet("DNA"),
     )
-    file_path = sequence.dump(path=tmp_path)
-
+    sequence.dump(path=Path(tmp_path))
+    file_path = Path(tmp_path) / f"test_seq.{SequenceFormat.FASTA.value}"
     assert file_path.exists()
     with open(file_path, "r") as f:
         content = f.read()
@@ -80,44 +197,6 @@ def test_sequence_dump(tmp_path: Path) -> None:
 
     sequence_record = SeqIO.read(file_path, "fasta")
     assert isinstance(sequence_record, SeqRecord)
-
-
-@pytest.mark.parametrize(
-    "sequence_type, sequence_alphabet, path",
-    [
-        (
-            "wild_type",
-            "DNA",
-            "tests/test_data/io/files",
-        ),
-    ],
-)
-def test_sequence_manifest(sequence_type, sequence_alphabet, path):
-    manifest = SequenceManifestSection(
-        sequence_type=sequence_type,
-        sequence_alphabet=sequence_alphabet,
-        path=path,
-    )
-    assert manifest.sequence_type == sequence_type
-    assert manifest.sequence_alphabet == sequence_alphabet
-
-
-@pytest.mark.parametrize(
-    "sequence_type, sequence_alphabet, path",
-    [
-        ("wild_type", None, "path/"),
-        (None, "DNA", "path/"),
-    ],
-)
-@pytest.mark.xfail(raises=ValidationError)
-def test_sequence_manifest_missing_data(sequence_type, sequence_alphabet, path):
-    manifest = SequenceManifestSection(
-        sequence_type=sequence_type,
-        sequence_alphabet=sequence_alphabet,
-        path=Path(path),
-    )
-    assert len(manifest.sequence_type) > 0
-    assert len(manifest.sequence_alphabet) > 0
 
 
 def test_dataset_dump_with_sequences(tmp_path: Path) -> None:

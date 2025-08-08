@@ -2,7 +2,16 @@ from pathlib import Path
 
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
-from pydantic import BaseModel, ConfigDict, Field, FilePath, field_serializer
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    FilePath,
+    SerializationInfo,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+)
 
 
 class MSAManifestSection(BaseModel):
@@ -31,9 +40,18 @@ class MSAManifestSection(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the multiple sequence alignment."""
 
-    @field_serializer("path")
-    def serialize_path(self, path: Path) -> str:
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        return path
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
 
@@ -68,6 +86,21 @@ class MSA(BaseModel):
         name = section.name or section.path.stem
         value = AlignIO.read(section.path, section.path.suffix[1:].lower())
         return MSA(name=name, value=value, description=section.description)
+
+    def as_manifest_section(self, *, path: Path) -> MSAManifestSection:
+        """Create a manifest section from the MSA instance.
+
+        Args:
+            path (Path): The path to the MSA file. As created by the dump method.
+
+        Returns:
+            MSAManifestSection: The manifest section for the MSA.
+        """
+        return MSAManifestSection(
+            path=path,
+            name=self.name,
+            description=self.description,
+        )
 
     def dump(self, *, path: Path | None = None) -> Path:
         """Dump the multiple sequence alignment to a file.
