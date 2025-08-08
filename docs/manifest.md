@@ -61,10 +61,15 @@ description = "This is an example dataset for demonstration purposes."
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
-data_type = "float"
 
 [[assays]]
-path = "assays.csv"
+name = "assay"
+path = "assay.csv"
+sequence = "sequence"
+target = "target"
+
+[ assays.conditions ]
+PH = "7"
 
 [[ sequences ]]
 sequence_type = "wild_type"
@@ -85,10 +90,10 @@ the protein data types.
 
 | **Field**          | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                                |
 | ------------------ | --------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`          | `string`              | Yes          | `"1.0"`     | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
+| `version`          | `string`              | Yes          | `"1.0.0"`   | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. |
 | `name`             | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                       |
 | `description`      | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                            |
-| `assay_conditions` | `list[map[str, str]]` | No           | Empty list  | The conditions for the assays defined in the dataset.                                                                                                                                                                                          |
+| `assay_conditions` | `dict[str, str]`      | No           | Empty dict  | The conditions for the assays defined in the dataset.                                                                                                                                                                                          |
 | `assays`           | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                      |
 | `sequences`        | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                         |
 | `structures`       | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                        |
@@ -98,23 +103,25 @@ the protein data types.
 
 The assay conditions section contains a list of assay conditions defined in the dataset.
 
-| **Field**     | **Type**         | **Required** | **Default** | **Description**                                    |
-| ------------- | ---------------- | ------------ | ----------- | -------------------------------------------------- |
-| `name`        | `string`         | Yes          | N/A         | The (column) name                                  |
-| `description` | `string \| None` | No           | `None`      | A brief description.                               |
-| `unit`        | `string \| None` | No           | `None`      | The unit of measurement.                           |
-| `data_type`   | `string`         | Yes          | N/A         | The data type: `float`, `int`, `string` or `bool`. |
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**                                    |
+| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------------------------------- |
+| `name`        | `string`                              | Yes          | N/A         | The assay condition name                           |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.                               |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.                           |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the condition.                        |
+
 
 ### Assays
 
 The assays section contains a list of assays included in the dataset.
 
-| **Field**    | **Type**    | **Required** | **Default**  | **Description**                                                |
-| ------------ | ----------- | ------------ | ------------ | -------------------------------------------------------------- |
-| `path`       | `string`    | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
-| `target`     | `string`    | Yes          | N/A          | The target (column) in the assay.                              |
-| `sequence`   | `string`    | No           | `"sequence"` | The sequence (column) in the assay.                            |
-| `conditions` | `list[str]` | No           | Empty list   | The conditions (columns) in the assay.                         |
+| **Field**    | **Type**         | **Required** | **Default**  | **Description**                                                |
+| ------------ | ---------------- | ------------ | ------------ | -------------------------------------------------------------- |
+| `name`       | `string`         | No           | `None`       | The name of the assay.                                         |
+| `path`       | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
+| `target`     | `string`         | No           | `"target"`   | The target feature name in the assay.                          |
+| `sequence`   | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                        |
+| `conditions` | `dict[str, str]` | No           | Empty dict   | The conditions of the assay.                                   |
 
 Example of an assay file:
 
@@ -137,9 +144,11 @@ sequence = "mutated_sequence"
 
 The sequences section contains a list of sequences included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                  |
-| --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fa`. |
+| **Field**           | **Type** | **Required** | **Default** | **Description**                                                                                                                                                     |
+| ------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`              | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
+| `sequence_alphabet` | `string` | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                        |
+| `sequence_type`     | `string` | Yes          | N/A         | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                                                        |
 
 ### Structures
 

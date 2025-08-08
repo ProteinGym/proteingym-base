@@ -19,10 +19,15 @@ description = "This is an example dataset for demonstration purposes."
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
-data_type = "float"
 
 [[assays]]
-path = "assays.csv"
+name = "assay"
+path = "assay.csv"
+sequence = "sequence"
+target = "target"
+
+[ assays.conditions ]
+PH = "7"
 
 [[ sequences ]]
 sequence_type = "wild_type"
@@ -44,9 +49,11 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     sequence_file = tmp_path / "sequences.fasta"
     structure_file = tmp_path / "structures.pdb"
     msa_file = tmp_path / "msas.a3m"
-    for path in sequence_file, structure_file, msa_file:
+    assay_file = tmp_path / "assay.csv"
+    for path in sequence_file, structure_file, msa_file, assay_file:
         path.touch()
-
+    # Write header in the assay file
+    assay_file.write_text("sequence,target\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file

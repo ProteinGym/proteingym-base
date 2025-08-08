@@ -2,8 +2,22 @@ name = "PG2-Dataset"
 description = "This is an example dataset"
 version = "1.0.0"
 
+[[assay_conditions]]
+name = "PH"
+description = "pH level of the samples"
+unit = "pH"
 
 [[ sequences ]]
 sequence_type = "wild_type"
 sequence_alphabet = "DNA"
-path = "example_data/NEIME_2019/sequences"
+path = "../example_data/NEIME_2019/sequences/A0A1I9GEU1.fasta"
+
+[[ structures ]]
+path = "../example_data/NEIME_2019/Structures/computational.pdb"
+
+[[ assays ]]
+sequence = "mutated_sequence"
+target = "DMS_score"
+path = "../example_data/NEIME_2019/Assays/Assay1.csv"
+[ assays.conditions ]
+PH = 7
