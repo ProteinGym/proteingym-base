@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pg2-dataset = "pg2_dataset.cli.cli:app"
+pg2-dataset = "pg2_dataset.cli:app"
 
 [build-system]
 requires = ["hatchling"]

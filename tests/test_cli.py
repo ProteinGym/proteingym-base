@@ -1,6 +1,6 @@
 from typer.testing import CliRunner
 
-from pg2_dataset.cli.cli import app
+from pg2_dataset.cli import app
 
 
 def test_cli_callback() -> None:
