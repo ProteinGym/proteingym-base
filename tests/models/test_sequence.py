@@ -56,9 +56,8 @@ def test_sequence_manifest_section_with_relative_path(tmp_path: Path) -> None:
 def test_sequence_manifest_section_missing_path() -> None:
     """A validation error is raised if path is missing."""
     match = (
-        r"(?s)2 validation errors for SequenceManifestSection"
-        r".*Path does not point to a file"
-        r".*Path does not point to a directory"
+        "validation error for SequenceManifestSection\npath\n  "
+        "Path does not point to a file"
     )
     with pytest.raises(ValidationError, match=match):
         SequenceManifestSection(
