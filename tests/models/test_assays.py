@@ -50,8 +50,21 @@ def test_assay_manifest_section(assay_file) -> None:
     )
 
 
-def test_assay_manifest_section_invalid_columns(assay_file) -> None:
-    """Test that AssayManifestSection raises error for invalid columns."""
+def test_assay_manifest_section_with_relative_path(tmp_path) -> None:
+    """Test AssayManifestSection with a relative path."""
+    path = tmp_path / "assay.csv"
+    path.write_text("sequence,target\nF1I,1.59\nF1L,0.6")
+    context = {"relative_to_path": tmp_path}
+
+    section = AssayManifestSection.model_validate(
+        {"path": "assay.csv"},
+        context=context,
+    )
+    assert section.path == path
+
+
+def test_assay_manifest_section_validate_feature_names(assay_file) -> None:
+    """Test that AssayManifestSection raises error for invalid feature names."""
     with pytest.raises(
         ValueError,
         match=r"Feature 'invalid_feature' not found in the file: .*assay.csv",

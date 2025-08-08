@@ -15,6 +15,12 @@ from pydantic import (
 )
 
 
+class AssayFormat(StrEnum):
+    """Supported assay file formats."""
+
+    CSV = ".csv"
+
+
 class AssayCondition(BaseModel):
     """Definition of an assay condition."""
 
@@ -95,12 +101,6 @@ class AssayManifestSection(BaseModel):
             if v not in df.columns:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
-
-
-class AssayFormat(StrEnum):
-    """Supported assay file formats."""
-
-    CSV = ".csv"
 
 
 class Assay(BaseModel):
