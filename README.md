@@ -5,7 +5,7 @@
 A standardisation for using protein data within protein gym.
 
 - [Protein Gym Dataset](#protein-gym-dataset)
-  - [1.2. Schema](#12-schema)
+  - [Dataset Manifest](#dataset-manifest)
   - [1.3. Getting Started](#13-getting-started)
     - [1.3.1. develop locally](#131-develop-locally)
     - [1.3.2. Load data](#132-load-data)
@@ -18,63 +18,19 @@ A standardisation for using protein data within protein gym.
   - [1.6. Example Manifest](#16-example-manifest)
   - [1.7. Tutorials](#17-tutorials)
 
+## Dataset Manifest
 
-## 1.2. Schema
+The dataset manifest is a configuration file that describes the dataset metadata
+and assets:
+- Assays
+- Structures
+- Sequences
+- MSAs (Multiple Sequence Alignments)
 
-``` mermaid
-classDiagram
-    class ModelManifest{
-        train_entrypoint: Path|None
-        predict_entrypoint: Path
-        train_artifacts: list[Artifact]
-        hyper_parameters: list[HyperParameter]
-    }
-    class MeasurementWithUncertainty{
-        value: float
-        uncertainty: PositiveFloat
-    }
-    class Dataset{
-        +records: list[Record]
-        +structure: Structure
-        +msa: MSA
-        +alphabet: SequenceAlphabet
-        +assay_meta: list[AssayMeta]
-        +reference_sequences: list[str]
-        +meta: DatasetMeta
-        +splits: dict[tuple[Round, Sequence, SplitStrategy], TrainValidTestEnum]
-        +add_split(strategy: Callable) None
-        +data_frame_by_target(target: str) pd.DataFrame
-        +data_frame() pd.DataFrame
-        +iter_by_rounds() Generator[Dataset]
-        +split() tuple[Dataset, Dataset, Dataset]
-    }
-    Dataset <|-- Record
-    class Record{
-      +engineering_round: int
-      +sequence: str
-      +$key: float|str|MeasurementWithUncertainty
-    }
-    class AssayMeta{
-        +target: str
-        +features: dict[str, type]
-        +description: str
-        +$constant: any
-    }
-    Dataset <|-- AssayMeta
-    Dataset <|-- DatasetMeta
-    Record <|-- MeasurementWithUncertainty
-    class DatasetMeta {
-        +doi: Uri
-        +source: Uri
-        +xref: CrossReference
-    }
-```
+The full schema of the manifest is described in the
+[schema](./docs/manifest.md). Below example code uses the [NEIME 2019
+dataset](./manifests/neime_2019.toml).
 
-Validators
-
-- Every $target should have a corresponding AssayMeta
-- No missing values in records for listed features assay metadata for target
-- ...
 
 ## 1.3. Getting Started
 ### 1.3.1. develop locally
