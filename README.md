@@ -138,17 +138,11 @@ from pg2_dataset
 
 ### 1.3.3. Persist data
 
-You can persist data in ProteinGym2's standardized format as follows
+You can persist data in ProteinGym2's standardized archive format as follows
 
 ``` python
->>> import tempfile
->>> from pathlib import Path
->>> file = tempfile.NamedTemporaryFile()  # Temporary file is used here for testing purposes
->>>
->>> file_path = Path(file.name)  # Use any (non-temporary) location where you want to persist the data
->>> dataset.persist(file_path)  
->>>
->>> file_path.is_file() and file_path.stat().st_size > 0  # The file contains the dataset
+>>> archive_path = dataset.dump(path="example_data/")
+>>> archive_path.is_file() and archive_path.stat().st_size > 0  # The archive contains the dataset
 True
 
 ```
