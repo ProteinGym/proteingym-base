@@ -78,6 +78,7 @@ You can quickly load the archived data:
 >>> persisted_dataset.name
 'NEIME_2019'
 >>> archive_path.unlink()  # (FOR TESTING PURPOSES ONLY: remove the archive file for cleanup)
+
 ```
 
 ### Access protein data
