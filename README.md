@@ -155,6 +155,7 @@ You can quickly load the persisted data instead of re-ingesting it:
 >>> persisted_dataset = Dataset.from_path(archive_path)  
 >>> persisted_dataset.name
 'NEIME_2019'
+>>> archive_path.unlink()  # (FOR TESTING PURPOSES ONLY: remove the archive file for cleanup)
 
 ```
 
