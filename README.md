@@ -44,11 +44,11 @@ Below is a quickstart example of how to use this package.
 
 You can load the data using a [manifest](./docs/manifest.md) file. In the
 example code below we load the [NEIME 2019](#example-data) dataset
-[manifest](./manifests/neime_2019.toml):
+[manifest](./example_data/neime_2019.toml):
 
 ``` python
 >>> from pg2_dataset import Dataset, Manifest
->>> manifest = Manifest.from_path("manifests/neime_2019.toml")
+>>> manifest = Manifest.from_path("example_data/neime_2019.toml")
 >>> manifest.name
 'NEIME_2019'
 >>> dataset = Dataset.from_manifest(manifest)
@@ -160,4 +160,4 @@ For a full overview of available data see the following table:
 
 |      | Dataset name | Link to website    | Relative path to manifest                              |
 | :--- | :----------- | :----------------- | :----------------------------------------------------- |
-| 1.   | NEIME2019    | www.proteingym.org | [manifests/neime_2019.toml](manifests/neime_2019.toml) |
+| 1.   | NEIME2019    | www.proteingym.org | [example_data/neime_2019.toml](example_data/neime_2019.toml) |
