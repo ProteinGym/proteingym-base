@@ -51,7 +51,7 @@ def build(
     specified directory path.
 
     Args:
-        manifest_path (Path): The path to the manifest TOML file. 
+        manifest_path (Path): The path to the manifest TOML file.
         output_path (Path | None): The directory path to dump the dataset archive. If
         `None`, the current working directory is used. Defaults to `None`.
 

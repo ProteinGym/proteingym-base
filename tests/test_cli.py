@@ -25,6 +25,7 @@ def test_cli_version() -> None:
     assert result.stdout.startswith("v")
     assert __version__ in result.stdout
 
+
 def test_cli_help() -> None:
     """CLI shows help message when --help is used."""
 
@@ -80,4 +81,3 @@ def test_build_command_with_output_path(tmp_path: Path) -> None:
         app, ["build", manifest.as_posix(), "--output-path", output_dir.as_posix()]
     )
     assert (output_dir / f"{dataset_name}.zip").as_posix() in result.stdout
-
