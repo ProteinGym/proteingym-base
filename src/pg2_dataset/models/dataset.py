@@ -392,16 +392,18 @@ class Dataset(BaseModel):
             )
         return archive_path
 
-    def dump(self, *, path: Path | None = None) -> Path:
+    def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the dataset.
 
         Args:
-            path (Path | None): The path to dump the dataset in. If None, the
-                current working directory is used. Defaults to None.
+            path (Path | str | None): The path to dump the dataset in. If None,
+                the current working directory is used. Defaults to None.
 
         Returns:
             Path: The path to the dumped dataset archive.
         """
+        if isinstance(path, str):  # User-friendly interface to support str
+            path = Path(path)
         path = path or Path.cwd()
         # While we prefer to avoid IO to disk, TemporaryDirectory is used for
         # convenience because it unifies the `:method:dump` signatures to write
