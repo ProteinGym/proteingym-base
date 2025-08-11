@@ -152,12 +152,10 @@ True
 You can quickly load the persisted data instead of re-ingesting it:
 
 ``` python
->>> from pg2_dataset.dataset import Dataset
->>> persisted_dataset = Dataset.from_path(file_path)  
+>>> persisted_dataset = Dataset.from_path(archive_path)  
 >>> persisted_dataset.name
 'NEIME_2019'
->>> file.close()
->>>
+
 ```
 
 ### 1.3.4 Loading MSA data
@@ -191,8 +189,8 @@ What `Alignment` object will be returned by the MSA depends on the backend used.
 ---
 
 Biopython will return a list of `SeqRecord` [objects](https://biopython.org/docs/latest/api/Bio.SeqRecord.html#module-Bio.SeqRecord):
+
 ```python
->>> from pg2_dataset.dataset import Manifest
 >>> ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
 >>> alignment = ds.msa.msa
 
