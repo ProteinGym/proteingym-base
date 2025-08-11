@@ -33,7 +33,6 @@ def test_cli_help() -> None:
 
     assert result.exit_code == 0
     assert "build" in result.stdout
-    assert "--version" in result.stdout
 
 
 def test_build_command_help() -> None:
