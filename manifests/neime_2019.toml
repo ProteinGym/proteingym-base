@@ -3,6 +3,7 @@ name = "NEIME_2019"
 
 [[ assays ]]
 path = "../example_data/NEIME_2019/Assays/Assay1.csv"
+target = "DMS_score"
 sequence = "mutated_sequence"
 
 [[ structures ]]
