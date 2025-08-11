@@ -4,9 +4,7 @@
 
 A standardisation for using protein data within protein gym.
 
-## 1.1. Table of Contents
 - [Protein Gym Dataset](#protein-gym-dataset)
-  - [1.1. Table of Contents](#11-table-of-contents)
   - [1.2. Schema](#12-schema)
   - [1.3. Getting Started](#13-getting-started)
     - [1.3.1. develop locally](#131-develop-locally)
