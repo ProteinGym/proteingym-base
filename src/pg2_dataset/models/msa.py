@@ -1,3 +1,4 @@
+from enum import StrEnum
 from pathlib import Path
 
 from Bio import AlignIO
@@ -12,6 +13,12 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+
+
+class MSAFormat(StrEnum):
+    """Enumeration for MSA file formats."""
+
+    FASTA = "fasta"
 
 
 class MSAManifestSection(BaseModel):
@@ -37,6 +44,9 @@ class MSAManifestSection(BaseModel):
     description: str | None = None
     """The description of the multiple sequence alignment."""
 
+    format: MSAFormat = MSAFormat.FASTA
+    """The format of the multiple sequence alignment file."""
+
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the multiple sequence alignment."""
 
@@ -53,6 +63,11 @@ class MSAManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
+
+    @field_serializer("format", check_fields=True)
+    def _serialize_str_enum(self, format: MSAFormat) -> str:
+        """Serialize a StrEnum as a string."""
+        return format.value
 
 
 class MSA(BaseModel):
@@ -84,7 +99,7 @@ class MSA(BaseModel):
             NotImplementedError if the file type is not supported.
         """
         name = section.name or section.path.stem
-        value = AlignIO.read(section.path, section.path.suffix[1:].lower())
+        value = AlignIO.read(section.path, section.format.value)
         return MSA(name=name, value=value, description=section.description)
 
     def as_manifest_section(self, *, path: Path) -> MSAManifestSection:
@@ -102,7 +117,9 @@ class MSA(BaseModel):
             description=self.description,
         )
 
-    def dump(self, *, path: Path | None = None) -> Path:
+    def dump(
+        self, *, path: Path | None = None, format: MSAFormat = MSAFormat.FASTA
+    ) -> Path:
         """Dump the multiple sequence alignment to a file.
 
         Biopython is used for writing the MSA to a file, see
@@ -111,6 +128,11 @@ class MSA(BaseModel):
         Args:
             path (Path | None): The directory path to save the MSA file in.
                 Defaults to the current working directory.
+            format (MSAFormat): The format to save the MSA in. Defaults to
+                MSAFormat.FASTA.
+
+        Raises:
+            ValueError: If the format is not supported.
 
         Returns:
             Path: The path to the saved MSA file.
@@ -120,9 +142,10 @@ class MSA(BaseModel):
             sequence alignment. This metadata should be stored with dumping the
             dataset.
         """
-        format = "fasta"
+        if format not in MSAFormat:
+            raise ValueError(f"Format {format} is not supported for MSA dumping.")
         path = path or Path.cwd()
         if path.is_dir():
-            path /= f"{self.name}.{format}"
-        AlignIO.write(self.value, path, format=format)
+            path /= f"{self.name}.{format.value}"
+        AlignIO.write(self.value, path, format=format.value)
         return path

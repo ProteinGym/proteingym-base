@@ -3,6 +3,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+import toml
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
@@ -10,7 +11,7 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.msa import MSA, MSAManifestSection
+from pg2_dataset.models.msa import MSA, MSAFormat, MSAManifestSection
 
 
 def test_msa_manifest_section_minimal(tmp_path: Path) -> None:
@@ -71,6 +72,21 @@ def test_msa_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
     section = MSAManifestSection(path=path)
 
     assert section.model_dump().get("path") == path.as_posix()
+
+
+def test_msa_manifest_section_serialize_format_as_string(tmp_path: Path) -> None:
+    """The format is serialized as a string.
+
+    The StrEnum is tricky to test as it is both a string and enum, hence,
+    we test it with a TOML serialization to be sure it is serialized correctly.
+    """
+    path = tmp_path / "test.msa"
+    path.touch()
+
+    section = MSAManifestSection(path=path, format=MSAFormat.FASTA)
+
+    section_in_toml = toml.dumps(section.model_dump())
+    assert "fasta" in section_in_toml
 
 
 def test_msa_manifest_section_serialize_path_as_posix_relative_to(
@@ -134,6 +150,24 @@ def fasta_file(
 def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
     """A MSA can be created from a manifest section with FASTA file."""
     section = MSAManifestSection(path=fasta_file)
+
+    msa = MSA.from_manifest_section(section)
+
+    assert msa.name == "structure"
+    assert isinstance(msa.value, MultipleSeqAlignment)
+
+
+@pytest.fixture
+def a3m_file(tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment) -> Path:
+    """A3M structure file for testing."""
+    path = tmp_path / "structure.a3m"
+    AlignIO.write(multiple_sequence_alignment, path, "fasta")
+    return path
+
+
+def test_msa_from_manifest_section_with_a3m(a3m_file: Path) -> None:
+    """A MSA can be created from a manifest section with A3M file."""
+    section = MSAManifestSection(path=a3m_file, format="fasta")
 
     msa = MSA.from_manifest_section(section)
 

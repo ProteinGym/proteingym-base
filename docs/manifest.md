@@ -57,12 +57,12 @@ version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[assay_conditions]]
+[[ assay_conditions ]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
 
-[[assays]]
+[[ assays ]]
 name = "assay"
 path = "assay.csv"
 sequence = "sequence"
@@ -76,11 +76,12 @@ sequence_type = "wild_type"
 sequence_alphabet = "DNA"
 path = "sequences.fasta"
 
-[[structures]]
+[[ structures ]]
 path = "structures.pdb"
 
-[[msas]]
+[[ msas ]]
 path = "msas.a3m"
+format = "fasta"
 ```
 
 ### Top-level
@@ -165,3 +166,4 @@ The MSAs section contains a list of multiple sequence alignments included in the
 | **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                            |
 | --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `path`    | `string` | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
+| `format`  | `string` | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
