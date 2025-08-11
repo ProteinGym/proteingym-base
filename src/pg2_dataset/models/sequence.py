@@ -82,9 +82,8 @@ class SequenceManifestSection(BaseModel):
         return path.as_posix()
 
     @field_serializer("type", "alphabet", check_fields=True)
-    def serialize_enums(self, value: SequenceType) -> str:
-        """Serialize the sequence type enum as a string."""
-
+    def serialize_enums(self, value: SequenceType | SequenceAlphabet) -> str:
+        """Serialize StrEnum fields as strings."""
         return value.value
 
 
