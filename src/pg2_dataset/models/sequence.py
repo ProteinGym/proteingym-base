@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import Enum, StrEnum
 from pathlib import Path
 
 from Bio import SeqIO
@@ -14,14 +14,28 @@ from pydantic import (
     field_validator,
 )
 
-from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
-
 
 class SequenceFormat(StrEnum):
     """Enumeration for sequence file formats."""
 
     FASTA = "fasta"
     FASTQ = "fastq"
+
+
+class SequenceType(str, Enum):
+    """The sequence types."""
+
+    WILD_TYPE = "wild_type"
+    STARTING_SEQUENCE = "starting_sequence"
+    ENGINEERED_SEQUENCE = "engineered_sequence"
+
+
+class SequenceAlphabet(str, Enum):
+    """The sequence alphabets."""
+
+    DNA = "DNA"
+    RNA = "RNA"
+    AA = "AA"
 
 
 class SequenceManifestSection(BaseModel):

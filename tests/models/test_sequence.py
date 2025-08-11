@@ -8,12 +8,13 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
-from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset
 from pg2_dataset.models.sequence import (
     Sequence,
+    SequenceAlphabet,
     SequenceFormat,
     SequenceManifestSection,
+    SequenceType,
 )
 
 
