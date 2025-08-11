@@ -1,11 +1,11 @@
-# Protein Gym 2 Dataset
+# Protein Gym Dataset
 
 [![codecov](https://codecov.io/gh/ProteinGym2/pg2-dataset/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym2/pg2-dataset)
 
 A standardisation for using protein data within protein gym.
 
 ## 1.1. Table of Contents
-- [Protein Gym 2 Dataset](#protein-gym-2-dataset)
+- [Protein Gym Dataset](#protein-gym-dataset)
   - [1.1. Table of Contents](#11-table-of-contents)
   - [1.2. Schema](#12-schema)
   - [1.3. Getting Started](#13-getting-started)
