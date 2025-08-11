@@ -114,7 +114,7 @@ You can load the data using the manifest:
 >>> manifest.name
 'NEIME_2019'
 >>> dataset = Dataset.from_manifest(manifest)
->>> dataset.assays is not None and dataset.structure is not None 
+>>> dataset.assays is not None and dataset.structures is not None 
 True
 
 ```
