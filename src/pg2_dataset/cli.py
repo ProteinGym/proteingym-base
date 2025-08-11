@@ -22,20 +22,18 @@ def main(
     """Main entry point for the CLI.
 
     Args:
-        ctx: The context for the CLI.
-        version: If True, show the version and exit.
-
-    Returns: None
+        ctx (typer.Context): The context for the CLI.
+        version (bool): If `True`, show the package version. Defaults to `False`.
 
     Raises:
-        typer.Exit: If version is True, exits after showing the version.
+        typer.Exit: If version is `True`, exits after showing the version.
     """
 
     if version:
         typer.echo(f"v{__version__}")
         raise typer.Exit()
 
-    if ctx.invoked_subcommand is None:
+    if not ctx.invoked_subcommand:
         typer.echo("Welcome to the PG2 Dataset CLI!")
         typer.echo("Use --help to see available commands.")
 
@@ -47,15 +45,16 @@ def build(
         Path | None, typer.Option("--output-path", help="Path to the output directory")
     ] = None,
 ):
-    """Creates a Dataset instance from a manifest TOML file and dumps it as zip to a
+    """Build a ProteinGym2 Dataset from manifest.
+
+    Creates a Dataset instance from a manifest TOML file and dumps it as zip to a
     specified directory path.
 
     Args:
-        manifest_path: The path to the manifest TOML file.
-        output_path: The directory path to dump the dataset archive.
+        manifest_path (Path): The path to the manifest TOML file. 
+        output_path (Path | None): The directory path to dump the dataset archive. If
+        `None`, the current working directory is used. Defaults to `None`.
 
-    Returns:
-        None
 
     Outputs:
         A zip file containing the dataset, saved in the specified path.
