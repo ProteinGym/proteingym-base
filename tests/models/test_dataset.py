@@ -15,12 +15,12 @@ version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[assay_conditions]]
+[[ assay_conditions ]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
 
-[[assays]]
+[[ assays ]]
 name = "assay"
 path = "assay.csv"
 sequence = "sequence"
@@ -34,11 +34,12 @@ type = "wild_type"
 alphabet = "DNA"
 path = "sequences.fasta"
 
-[[structures]]
+[[ structures ]]
 path = "structures.pdb"
 
-[[msas]]
+[[ msas ]]
 path = "msas.a3m"
+format = "fasta"
 """
 
 
