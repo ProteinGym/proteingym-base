@@ -33,6 +33,7 @@ def test_cli_help() -> None:
 
     assert result.exit_code == 0
     assert "build" in result.stdout
+    assert "version" in result.stdout
 
 
 def test_build_command_help() -> None:
@@ -44,7 +45,7 @@ def test_build_command_help() -> None:
     assert result.exit_code == 0
     assert "Creates a Dataset instance from a manifest TOML file" in result.stdout
     assert "manifest_path" in result.stdout
-    assert "--path" in result.stdout
+    assert "output_path" in result.stdout
 
 
 def test_build_command_invalid_manifest_contents(tmp_path: Path) -> None:
@@ -76,6 +77,6 @@ def test_build_command_with_output_path(tmp_path: Path) -> None:
 
     runner = CliRunner()
     result = runner.invoke(
-        app, ["build", manifest.as_posix(), "--path", output_dir.as_posix()]
+        app, ["build", manifest.as_posix(), "--output-path", output_dir.as_posix()]
     )
     assert (output_dir / f"{dataset_name}.zip").as_posix() in result.stdout

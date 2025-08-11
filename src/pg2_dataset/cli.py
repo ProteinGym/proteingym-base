@@ -43,8 +43,8 @@ def main(
 @app.command("build")
 def build(
     manifest_path: Annotated[Path, typer.Argument(help="Path to the manifest file")],
-    path: Annotated[
-        Path | None, typer.Option("--path", help="Path to the output directory")
+    output_path: Annotated[
+        Path | None, typer.Option("--output-path", help="Path to the output directory")
     ] = None,
 ):
     """Creates a Dataset instance from a manifest TOML file and dumps it as zip to a
@@ -52,7 +52,7 @@ def build(
 
     Args:
         manifest_path: The path to the manifest TOML file.
-        path: The directory path to dump the dataset archive.
+        output_path: The directory path to dump the dataset archive.
 
     Returns:
         None
@@ -68,5 +68,5 @@ def build(
     dataset = Dataset.from_manifest(dataset_manifest)
 
     typer.echo("Building dataset archive...")
-    archive_path = dataset.dump(path=path)
+    archive_path = dataset.dump(path=output_path)
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
