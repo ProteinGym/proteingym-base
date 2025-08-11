@@ -1,5 +1,7 @@
 # Protein Gym 2 Dataset
 
+[![codecov](https://codecov.io/gh/ProteinGym2/pg2-dataset/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym2/pg2-dataset)
+
 A standardisation for using protein data within protein gym.
 
 ## 1.1. Table of Contents

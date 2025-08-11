@@ -7,7 +7,7 @@ on:
 
   push:
     branches:
-      - main 
+      - main
     tags:
       - v*
 
@@ -47,12 +47,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: ".python-version"
-    
+
       - name: Install the project
         run: uv sync --all-extras --dev
-  
+
       - name: Run tests
         run: uv run pytest
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   test-release:
     if: contains(github.ref, 'refs/tags/')
@@ -79,7 +84,7 @@ jobs:
         run: |
           uv venv
           uv pip install dist/pg2_dataset-*.whl
-          uv run --with pg2_dataset --no-project --no-cache -- python -c "import pg2_dataset" 
+          uv run --with pg2_dataset --no-project --no-cache -- python -c "import pg2_dataset"
 
   github-release:
     runs-on: ubuntu-latest
