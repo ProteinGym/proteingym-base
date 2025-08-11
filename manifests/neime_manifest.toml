@@ -8,8 +8,8 @@ description = "pH level of the samples"
 unit = "pH"
 
 [[ sequences ]]
-sequence_type = "wild_type"
-sequence_alphabet = "DNA"
+type = "wild_type"
+alphabet = "DNA"
 path = "../example_data/NEIME_2019/sequences/A0A1I9GEU1.fasta"
 
 [[ structures ]]

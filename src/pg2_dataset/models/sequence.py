@@ -53,10 +53,10 @@ class SequenceManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    sequence_type: SequenceType
+    type: SequenceType
     """The type of the sequence."""
 
-    sequence_alphabet: SequenceAlphabet
+    alphabet: SequenceAlphabet
     """The alphabet of the sequence."""
 
     path: FilePath
@@ -79,7 +79,7 @@ class SequenceManifestSection(BaseModel):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
-    @field_serializer("sequence_type", "sequence_alphabet", check_fields=True)
+    @field_serializer("type", "alphabet", check_fields=True)
     def _serialize_str_enum(self, str_enum: StrEnum) -> str:
         """Serialize a StrEnum as a string."""
         return str_enum.value
@@ -119,8 +119,8 @@ class Sequence(BaseModel):
             name=seq.name,
             value=seq.seq,
             description=seq.description,
-            type=section.sequence_type,
-            alphabet=section.sequence_alphabet,
+            type=section.type,
+            alphabet=section.alphabet,
         )
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
@@ -134,7 +134,7 @@ class Sequence(BaseModel):
             SequenceManifestSection: The manifest section for the sequence.
         """
         return SequenceManifestSection(
-            path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
+            path=path, alphabet=self.alphabet, type=self.type
         )
 
     def dump(
