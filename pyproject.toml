@@ -46,7 +46,7 @@ packages = ["src/pg2_dataset"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--doctest-modules --doctest-glob='*.md' --cov=pg2_dataset --cov-report html --cov-fail-under=80" 
+addopts = "--doctest-modules --doctest-glob='*.md' --cov=pg2_dataset --cov-branch --cov-report xml --cov-fail-under=80"
 
 [tool.ruff]
 line-length = 88
