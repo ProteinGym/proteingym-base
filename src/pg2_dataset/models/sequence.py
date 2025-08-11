@@ -54,7 +54,7 @@ class SequenceManifestSection(BaseModel):
     """Configuration for the Pydantic model."""
 
     type: SequenceType
-    """The type of the sequence, e.g., wild_type, starting_sequence, engineered_sequence."""
+    """The type of the sequence, e.g., wild_type, starting_sequence, etc."""
 
     alphabet: SequenceAlphabet
     """The alphabet of the sequence, e.g., DNA, RNA, AA."""
@@ -80,6 +80,12 @@ class SequenceManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
+
+    @field_serializer("type", "alphabet", check_fields=True)
+    def serialize_enums(self, value: SequenceType) -> str:
+        """Serialize the sequence type enum as a string."""
+        
+        return value.value
 
 
 class Sequence(BaseModel):
@@ -111,22 +117,22 @@ class Sequence(BaseModel):
     @classmethod
     def from_manifest_section(cls, section: SequenceManifestSection) -> "Sequence":
         """Create a `Sequence` instance from a manifest section.
-        
+
         Args:
-            section (SequenceManifestSection): The manifest section containing the sequence data.
+            section (SequenceManifestSection): Manifest section with the sequence data.
         Returns:
             Sequence: An instance of the Sequence class.
         """
 
         # Read the sequence from the file using Biopython
         try:
-            sequene = SeqIO.read(section.path, format=section.path.suffix[1:].lower())
+            sequence = SeqIO.read(section.path, format=section.path.suffix[1:].lower())
         except Exception as e:
-            raise ValueError(f"Error reading sequence file `{section.path}`: {e}")
+            raise ValueError(f"Error reading file `{section.path}`: {e}") from e
         return cls(
-            name=sequene.name,
-            value=sequene.seq,
-            description=sequene.description,
+            name=sequence.name,
+            value=sequence.seq,
+            description=sequence.description,
             type=section.type,
             alphabet=section.alphabet,
         )
@@ -143,7 +149,7 @@ class Sequence(BaseModel):
         """
 
         return SequenceManifestSection(
-            path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
+            path=path, alphabet=self.alphabet, type=self.type
         )
 
     def dump(
