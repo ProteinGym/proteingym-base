@@ -26,7 +26,7 @@ and assets:
 
 The full schema of the manifest is described in the
 [schema](./docs/manifest.md). Below example code uses the [NEIME 2019
-dataset](./manifests/neime_2019.toml).
+dataset](#example-data).
 
 ## Installation
 
@@ -42,7 +42,9 @@ Below is a quickstart example of how to use this package.
 
 ### Load data
 
-You can load the data using a [manifest](./manifests/neime_2019.toml) file:
+You can load the data using a [manifest](./docs/manifest.md) file. In the
+example code below we load the [NEIME 2019](#example-data) dataset
+[manifest](./manifests/neime_2019.toml):
 
 ``` python
 >>> from pg2_dataset import Dataset, Manifest
