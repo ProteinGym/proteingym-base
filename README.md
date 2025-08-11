@@ -52,7 +52,7 @@ example code below we load the [NEIME 2019](#example-data) dataset
 >>> manifest.name
 'NEIME_2019'
 >>> dataset = Dataset.from_manifest(manifest)
->>> dataset.assays is not None and dataset.structures is not None 
+>>> len(dataset.assays) > 0 and len(dataset.structures) > 0
 True
 
 ```
