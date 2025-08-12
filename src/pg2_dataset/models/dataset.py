@@ -273,6 +273,8 @@ class Dataset(BaseModel):
             ValueError: If multiple manifest files are found in the ZIP archive.
             FileNotFoundError: If no manifest file is found in the ZIP archive.
         """
+        # We are using a temporary directory to extract the ZIP archive
+        # because we want to avoid IO to disk in the main directory.
         with TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             with ZipFile(path, "r") as zip_file:
