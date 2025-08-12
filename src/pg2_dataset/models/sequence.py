@@ -74,7 +74,7 @@ class Sequence(BaseModel):
         str_min_length=1,
     )
 
-    name: str | None = None
+    name: str
     """The name of the sequence."""
 
     value: Seq

@@ -288,3 +288,38 @@ def test_dataset_with_sequences_dump_from_path_unit(tmp_path: Path) -> None:
     ):
         assert loaded_sequence.name == sequence.name
         assert loaded_sequence.value == sequence.value
+
+
+def test_dataset_fails_with_duplicate_sequence_names() -> None:
+    """A dataset with duplicate sequence names should raise a ValueError."""
+    duplicate_names = ["duplicate1", "duplicate2"]
+    sequence1 = Sequence(
+        name=duplicate_names[0],
+        value=Seq("CCCCCCCCCCCCC"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    sequence2 = Sequence(
+        name=duplicate_names[0],
+        value=Seq("AAAAAAAAAAAA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    sequence3 = Sequence(
+        name=duplicate_names[1],
+        value=Seq("GGGGGGGGGGGGG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    sequence4 = Sequence(
+        name=duplicate_names[1],
+        value=Seq("TTTTTTTTTTTTT"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match=rf"Duplicate names found in:.*Sequences:.*{', '.join(duplicate_names)}",
+    ):
+        Dataset(name="test", sequences=[sequence1, sequence2, sequence3, sequence4])
