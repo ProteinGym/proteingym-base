@@ -1,4 +1,4 @@
-from enum import Enum, StrEnum
+from enum import StrEnum
 from pathlib import Path
 
 from Bio import SeqIO
@@ -22,7 +22,7 @@ class SequenceFormat(StrEnum):
     FASTQ = "fastq"
 
 
-class SequenceType(str, Enum):
+class SequenceType(StrEnum):
     """The sequence types."""
 
     WILD_TYPE = "wild_type"
@@ -30,7 +30,7 @@ class SequenceType(str, Enum):
     ENGINEERED_SEQUENCE = "engineered_sequence"
 
 
-class SequenceAlphabet(str, Enum):
+class SequenceAlphabet(StrEnum):
     """The sequence alphabets."""
 
     DNA = "DNA"
