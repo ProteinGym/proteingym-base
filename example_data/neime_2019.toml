@@ -17,7 +17,7 @@ PH = 7
 
 [[ sequences ]]
 sequence_type = "wild_type"
-sequence_alphabet = "DNA"
+sequence_alphabet = "AA"
 path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
 
 [[ structures ]]
