@@ -243,13 +243,10 @@ class Dataset(BaseModel):
             ValueError: If duplicate names are found in any of the data types.
         """
 
-        def _get_duplicate_names(items: list[BaseModel]) -> list[str] | None:
+        def _get_duplicate_names(items: list[BaseModel]) -> list[str]:
             """Get duplicate names from a list of items."""
             name_counts = collections.Counter(item.name for item in items if item.name)
-            duplicates = [name for name, count in name_counts.items() if count > 1]
-            if not duplicates:
-                return None
-            return duplicates
+            return [name for name, count in name_counts.items() if count > 1]
 
         data_types = {
             Assay: self.assays,
