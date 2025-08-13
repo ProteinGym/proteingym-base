@@ -18,6 +18,9 @@ dependencies = [
     "biopython>=1.85",
 ]
 
+[project.scripts]
+pg2-dataset = "pg2_dataset.__main__:app"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -42,8 +45,8 @@ path = "src/pg2_dataset/__about__.py"
 packages = ["src/pg2_dataset"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "--doctest-modules --doctest-glob='*.md' --cov=pg2_dataset --cov-report html --cov-fail-under=80" 
+testpaths = ["tests", "README.md"]
+addopts = "--doctest-modules --doctest-glob='*.md' --cov=pg2_dataset --cov-branch --cov-report xml --cov-fail-under=80"
 
 [tool.ruff]
 line-length = 88

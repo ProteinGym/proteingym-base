@@ -1,0 +1,28 @@
+name = "NEIME_2019"
+description = "The NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) datase"
+version = "1.0.0"
+
+[[ assay_conditions ]]
+name = "PH"
+description = "pH level of the samples"
+unit = "pH"
+
+[[ assays ]]
+sequence = "mutated_sequence"
+target = "DMS_score"
+path = "./NEIME_2019/Assays/Assay1.csv"
+
+[ assays.conditions ]
+PH = 7
+
+[[ sequences ]]
+sequence_type = "wild_type"
+sequence_alphabet = "AA"
+path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
+
+[[ structures ]]
+path = "./NEIME_2019/Structures/computational.pdb"
+
+[[ msas ]]
+path = "../example_data/NEIME_2019/MSA/msa.a2m"
+format = "fasta"

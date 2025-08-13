@@ -21,7 +21,6 @@ from pg2_dataset.models.assay import Assay, AssayCondition, AssayManifestSection
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
-from pg2_dataset.utils import zip_context
 
 
 class _VersionPydanticAnnotation:
@@ -135,8 +134,10 @@ class Manifest(BaseModel):
         return self
 
     @classmethod
-    def from_path(cls, path: Path | IO["str"]) -> "Manifest":
+    def from_path(cls, path: Path | str | IO["str"]) -> "Manifest":
         """Create a Manifest instance from a TOML file or string."""
+        if isinstance(path, str):  # User-friendly interface to support str
+            path = Path(path)
         context = {
             # Resolve paths defined as relative paths to the manifest file
             "relative_to_path": path.parent if isinstance(path, Path) else None,
@@ -261,8 +262,8 @@ class Dataset(BaseModel):
     def from_path(cls, path: Path) -> "Dataset":
         """Create a `Dataset` from a ZIP archive.
 
-        The zip_context context manager is used to extract the contents of the zip,
-        load the dataset, and clean up the extracted contents.
+        Extract the contents to a temporary directory and load the dataset
+        from the manifest file.
 
         Args:
             path: The path to the ZIP archive.
@@ -274,10 +275,15 @@ class Dataset(BaseModel):
             ValueError: If multiple manifest files are found in the ZIP archive.
             FileNotFoundError: If no manifest file is found in the ZIP archive.
         """
-        # The zip_context context manager is used to extract the contents of the zip,
-        # load the dataset, and clean up the extracted contents.
-        with zip_context(path):
-            dataset_manifest = Manifest.from_path(DatasetArchiveLayout.MANIFEST_FILE)
+        # We are using a temporary directory to extract the ZIP archive
+        # because we want to avoid IO to disk in the main directory.
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            with ZipFile(path, "r") as zip_file:
+                zip_file.extractall(temp_path)
+            dataset_manifest = Manifest.from_path(
+                temp_path / DatasetArchiveLayout.MANIFEST_FILE
+            )
             return cls.from_manifest(dataset_manifest)
 
     def _dump_data(self, temporary_directory: Path) -> dict[type, list[Path]]:
@@ -390,16 +396,18 @@ class Dataset(BaseModel):
             )
         return archive_path
 
-    def dump(self, *, path: Path | None = None) -> Path:
+    def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the dataset.
 
         Args:
-            path (Path | None): The path to dump the dataset in. If None, the
-                current working directory is used. Defaults to None.
+            path (Path | str | None): The path to dump the dataset in. If None,
+                the current working directory is used. Defaults to None.
 
         Returns:
             Path: The path to the dumped dataset archive.
         """
+        if isinstance(path, str):  # User-friendly interface to support str
+            path = Path(path)
         path = path or Path.cwd()
         # While we prefer to avoid IO to disk, TemporaryDirectory is used for
         # convenience because it unifies the `:method:dump` signatures to write

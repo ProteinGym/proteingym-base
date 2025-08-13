@@ -2,6 +2,44 @@
 
 This file contains documentation about contributing to this project.
 
+## Develop locally
+
+After cloning the repository, you can start developing locally by installing the
+project with your environment using [`uv`](https://docs.astral.sh/uv/):
+
+```shell
+$ source .venv/bin/activate  # Load your virtual environment
+$ uc sync
+```
+
+To install all optional dependencies, run:
+
+```shell
+$ uc sync --all-extras
+```
+
+### Pre-commit hooks
+
+Install pre-commit hooks to ensure code quality and consistency:
+
+```shell
+$ pre-commit install
+```
+
+### Test
+
+To run the unit tests, use the following command:
+
+```shell
+$ uv run pytest
+```
+
+To run the static tests, run:
+
+```shell
+$ pre-commit run --all-files
+```
+
 ## How to release
 
 This section describes how to release the package in this project.
