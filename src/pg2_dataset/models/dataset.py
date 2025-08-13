@@ -21,7 +21,6 @@ from pg2_dataset.models.assay import Assay, AssayCondition, AssayManifestSection
 from pg2_dataset.models.msa import MSA, MSAManifestSection
 from pg2_dataset.models.sequence import Sequence, SequenceManifestSection
 from pg2_dataset.models.structure import Structure, StructureManifestSection
-from pg2_dataset.utils import zip_context
 
 
 class _VersionPydanticAnnotation:
@@ -263,8 +262,8 @@ class Dataset(BaseModel):
     def from_path(cls, path: Path) -> "Dataset":
         """Create a `Dataset` from a ZIP archive.
 
-        The zip_context context manager is used to extract the contents of the zip,
-        load the dataset, and clean up the extracted contents.
+        Extract the contents to a temporary directory and load the dataset
+        from the manifest file.
 
         Args:
             path: The path to the ZIP archive.
@@ -276,10 +275,15 @@ class Dataset(BaseModel):
             ValueError: If multiple manifest files are found in the ZIP archive.
             FileNotFoundError: If no manifest file is found in the ZIP archive.
         """
-        # The zip_context context manager is used to extract the contents of the zip,
-        # load the dataset, and clean up the extracted contents.
-        with zip_context(path):
-            dataset_manifest = Manifest.from_path(DatasetArchiveLayout.MANIFEST_FILE)
+        # We are using a temporary directory to extract the ZIP archive
+        # because we want to avoid IO to disk in the main directory.
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            with ZipFile(path, "r") as zip_file:
+                zip_file.extractall(temp_path)
+            dataset_manifest = Manifest.from_path(
+                temp_path / DatasetArchiveLayout.MANIFEST_FILE
+            )
             return cls.from_manifest(dataset_manifest)
 
     def _dump_data(self, temporary_directory: Path) -> dict[type, list[Path]]:
