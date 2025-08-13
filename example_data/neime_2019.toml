@@ -6,14 +6,18 @@ version = "1.0.0"
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
+value = 7
+
+[[ assay_conditions ]]
+name = "T"
+description = "Temperature level of the samples"
+unit = "C"
+value = 37
 
 [[ assays ]]
 sequence = "mutated_sequence"
 target = "DMS_score"
 path = "./NEIME_2019/Assays/Assay1.csv"
-
-[ assays.conditions ]
-PH = 7
 
 [[ sequences ]]
 sequence_type = "wild_type"
@@ -22,6 +26,13 @@ path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
 
 [[ structures ]]
 path = "./NEIME_2019/Structures/computational.pdb"
+name = "A0A1I9GEU1"
+description = "ALPHAFOLD MONOMER V2.0 PREDICTION FOR PILIN"
+
+[structures.metadata]
+source = "alphafold"
+version = "v2.0"
+avg_plddt = "90"
 
 [[ msas ]]
 path = "../example_data/NEIME_2019/MSA/msa.a2m"
