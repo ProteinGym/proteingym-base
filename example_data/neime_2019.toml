@@ -35,5 +35,5 @@ version = "v2.0"
 avg_plddt = "90"
 
 [[ msas ]]
-path = "../example_data/NEIME_2019/MSA/msa.a2m"
+path = "./NEIME_2019/MSA/msa.a2m"
 format = "fasta"
