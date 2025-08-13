@@ -305,6 +305,7 @@ def test_dataset_with_sequences_dump_from_path_unit(tmp_path: Path) -> None:
         assert loaded_sequence.name == sequence.name
         assert loaded_sequence.value == sequence.value
 
+
 def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
     """Test loading multiple sequences from a file."""
     with open(tmp_path / "sequences.fasta", "w") as f:
@@ -319,7 +320,10 @@ def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
                 "sequence_type": "wild_type",
                 "sequence_alphabet": "DNA",
             }
-        ]
+        ],
     )
     dataset = Dataset.from_manifest(dataset_manifest)
     assert len(dataset.sequences) == 2
+    assert all(isinstance(seq, Sequence) for seq in dataset.sequences)
+    assert dataset.sequences[0].name == "seq1"
+    assert dataset.sequences[1].name == "seq2"
