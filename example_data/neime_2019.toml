@@ -16,8 +16,8 @@ path = "./NEIME_2019/Assays/Assay1.csv"
 PH = 7
 
 [[ sequences ]]
-sequence_type = "wild_type"
-sequence_alphabet = "AA"
+type = "wild_type"
+alphabet = "AA"
 path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
 
 [[ structures ]]
