@@ -180,14 +180,13 @@ def test_invalid_sequence(name, value, description, type, alphabet):
 
 
 def test_sequence_from_manifest_section_multiple_seqs_in_file(tmp_path: Path) -> None:
-    with open(tmp_path / "sequences.fasta", "w") as f:
-        f.write(">seq1\nATCG\n")
-        f.write(">seq2\nAUGC\n")
+    fasta_file = tmp_path / "sequences.fasta"
+    fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
 
     section = SequenceManifestSection(
         sequence_type="wild_type",
         sequence_alphabet="DNA",
-        path=tmp_path / "sequences.fasta",
+        path=fasta_file,
     )
 
     sequences = list(Sequence.from_manifest_section(section))
@@ -308,15 +307,14 @@ def test_dataset_with_sequences_dump_from_path_unit(tmp_path: Path) -> None:
 
 def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
     """Test loading multiple sequences from a file."""
-    with open(tmp_path / "sequences.fasta", "w") as f:
-        f.write(">seq1\nATCG\n")
-        f.write(">seq2\nAUGC\n")
+    fasta_file = tmp_path / "sequences.fasta"
+    fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
 
     dataset_manifest = Manifest(
         name="test",
         sequences=[
             {
-                "path": tmp_path / "sequences.fasta",
+                "path": fasta_file,
                 "sequence_type": "wild_type",
                 "sequence_alphabet": "DNA",
             }

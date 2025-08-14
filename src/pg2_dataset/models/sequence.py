@@ -1,6 +1,6 @@
+from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
-from typing import Iterator
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -94,16 +94,15 @@ class Sequence(BaseModel):
     def from_manifest_section(
         cls, section: SequenceManifestSection
     ) -> Iterator["Sequence"]:
-        """Create a Sequence from sequence manifest section.
+        """Create Sequence(s) from a sequence manifest section.
 
         Args:
             section (SequenceManifestSection): The sequence manifest section to create
-            the Sequence from.
+                the Sequence from.
 
         Yields:
             Sequence: The created Sequence object.
         """
-
         sequences = SeqIO.parse(section.path, format=section.path.suffix[1:].lower())
         for seq in sequences:
             yield cls(
