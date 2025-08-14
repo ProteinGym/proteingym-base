@@ -30,8 +30,8 @@ target = "target"
 PH = "7"
 
 [[ sequences ]]
-sequence_type = "wild_type"
-sequence_alphabet = "DNA"
+type = "wild_type"
+alphabet = "DNA"
 path = "sequences.fasta"
 
 [[ structures ]]

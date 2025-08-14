@@ -1,4 +1,5 @@
 import collections
+import itertools
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import IO, Annotated, Any, Callable
@@ -231,6 +232,46 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
+    @model_validator(mode="after")
+    def _validate_unique_names(self) -> "Dataset":
+        """Ensure that the names are unique within each data type.
+
+        Checks each data type (assays, sequences, structures, msas) to ensure
+        that the names are unique. Raises error if duplicates are found.
+
+        Returns:
+            Dataset: The validated dataset instance.
+
+        Raises:
+            ValueError: If duplicate names are found in any of the data types.
+        """
+
+        def _get_duplicate_names(items: list[BaseModel]) -> list[str]:
+            """Get duplicate names from a list of items."""
+            name_counts = collections.Counter(item.name for item in items if item.name)
+            return [name for name, count in name_counts.items() if count > 1]
+
+        data_types = {
+            Assay: self.assays,
+            Sequence: self.sequences,
+            Structure: self.structures,
+            MSA: self.msas,
+        }
+
+        duplicates = {
+            data_class: _get_duplicate_names(items)
+            for data_class, items in data_types.items()
+        }
+
+        if any(duplicates.values()):
+            error_lines = [
+                f"{data_class.__name__}s: {', '.join(names)}"
+                for data_class, names in duplicates.items()
+                if names
+            ]
+            raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
+        return self
+
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
         """Create a `Dataset` from a `Manifest` instance.
@@ -245,7 +286,9 @@ class Dataset(BaseModel):
             Dataset: The dataset created from the manifest.
         """
         assays = [Assay.from_manifest_section(a) for a in manifest.assays]
-        sequences = [Sequence.from_manifest_section(s) for s in manifest.sequences]
+        sequences = itertools.chain(
+            *[Sequence.from_manifest_section(s) for s in manifest.sequences]
+        )
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
         return cls(

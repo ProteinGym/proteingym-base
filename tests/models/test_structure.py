@@ -249,23 +249,27 @@ def test_dataset_with_structures(
     pdb_file: Path, cif_file: Path, bio_structure: BioStructure
 ) -> None:
     """A Dataset can be created with structures from the manifest."""
+    bio_structure1 = bio_structure.copy()
+    bio_structure1.id = "structure1"
+    bio_structure2 = bio_structure.copy()
+    bio_structure2.id = "structure2"
     manifest = Manifest(
         name="test",
         structures=[
-            StructureManifestSection(path=pdb_file, name=bio_structure.id),
-            StructureManifestSection(path=cif_file, name=bio_structure.id),
+            StructureManifestSection(path=pdb_file, name=bio_structure1.id),
+            StructureManifestSection(path=cif_file, name=bio_structure2.id),
         ],
     )
     dataset = Dataset.from_manifest(manifest)
 
     assert len(dataset.structures) == 2
-    assert dataset.structures[0].value.strictly_equals(bio_structure)
+    assert dataset.structures[0].value.strictly_equals(bio_structure1)
 
     # There is an inconsistency in biopython that loads the full name of an Atom
     # differently for a PDB and CIF file - the full name is trimmed.
     # Hence, we overwrite the fullname here before the assertion.
-    list(bio_structure.get_atoms())[0].fullname = "CA"
-    assert dataset.structures[1].value.strictly_equals(bio_structure)
+    list(bio_structure2.get_atoms())[0].fullname = "CA"
+    assert dataset.structures[1].value.strictly_equals(bio_structure2)
 
 
 def test_dataset_dump_with_structure(
@@ -331,3 +335,20 @@ def test_dataset_with_structure_dump_from_path_unit(
     ):
         assert loaded_structure.name == structure.name
         assert loaded_structure.value == structure.value
+
+
+def test_dataset_failes_with_duplicate_structure_names() -> None:
+    """A dataset fails if there are duplicate structure names."""
+    duplicate_names = ["duplicate1", "duplicate2"]
+    structure1 = Structure(name=duplicate_names[0], value=BioStructure("test"))
+    structure2 = Structure(name=duplicate_names[0], value=BioStructure("test"))
+    structure3 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
+    structure4 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
+
+    with pytest.raises(
+        ValidationError,
+        match=rf"Duplicate names found in:.*Structures:.*{', '.join(duplicate_names)}",
+    ):
+        Dataset(
+            name="test", structures=[structure1, structure2, structure3, structure4]
+        )
