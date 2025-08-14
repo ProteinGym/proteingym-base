@@ -16,6 +16,7 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+from pydantic.types import constr
 
 
 class StructureManifestSection(BaseModel):
@@ -32,7 +33,7 @@ class StructureManifestSection(BaseModel):
     path: FilePath
     """The path to the protein structure file."""
 
-    name: str | None = None
+    name: constr(pattern="^[a-zA-Z0-9_]+$") | None = None
     """The name of the protein structure. If None, the file stem will be used."""
 
     description: str | None = None
