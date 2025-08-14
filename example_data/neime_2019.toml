@@ -20,9 +20,6 @@ path = "./NEIME_2019/Assays/Assay1.csv"
 T = 37
 PH = 7
 
-[ assays.conditions ]
-T = 37
-
 [[ sequences ]]
 type = "wild_type"
 alphabet = "AA"
