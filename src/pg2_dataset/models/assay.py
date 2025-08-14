@@ -61,6 +61,9 @@ class AssayManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
+    path: FilePath
+    """The path to the assay file, csv only."""
+
     name: constr(pattern="^[a-zA-Z0-9_]+$") | None = None
     """The name of the assay."""
 
@@ -76,9 +79,6 @@ class AssayManifestSection(BaseModel):
     conditions: dict[str, bool | int | float | str] = Field(default_factory=dict)
     """The condition key:value pairs, key is the name of the assay condition (defined in
     dataset manifest and value of the condition."""
-
-    path: FilePath
-    """The path to the assay file, csv only."""
 
     @field_validator("path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
