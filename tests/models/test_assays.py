@@ -45,6 +45,17 @@ def test_assay_condition_invalid_inputs() -> None:
         AssayCondition()
 
 
+@pytest.mark.parametrize("name", [None, "foo", "1bar", "1foo2bar3"])
+def test_assay_manifest_section_valid_name(assay_file: Path, name: str | None) -> None:
+    """The following names should be valid"""
+    try:
+        section = AssayManifestSection(path=assay_file, name=name)
+    except ValidationError as e:
+        raise AssertionError("Invalid AssayManifestSection") from e
+    else:
+        assert section.name == name, "Valid name"
+
+
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
