@@ -174,6 +174,36 @@ def test_invalid_sequence(name, value, description, type, alphabet):
     assert isinstance(sequence.alphabet, SequenceAlphabet)
 
 
+@pytest.mark.parametrize("name", ["foo", "1bar", "1foo2bar3"])
+def test_sequence_valid_name(name: str) -> None:
+    """The following names should be valid"""
+    try:
+        sequence = Sequence(
+            name=name,
+            value=Seq("ATCG"),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.DNA,
+        )
+    except ValidationError as e:
+        raise AssertionError("Invalid Sequence") from e
+    else:
+        assert sequence.name == name, "Valid name"
+
+
+@pytest.mark.parametrize("invalid_name", ["name with space", "name$with&characters"])
+def test_sequence_invalid_name(invalid_name: str) -> None:
+    """The following names should be invalid"""
+
+    match = "validation error for Sequence\nname\n  String should match pattern"
+    with pytest.raises(ValidationError, match=match):
+        Sequence(
+            name=invalid_name,
+            value=Seq("ATCG"),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.DNA,
+        )
+
+
 def test_sequence_from_manifest_section_multiple_seqs_in_file(tmp_path: Path) -> None:
     fasta_file = tmp_path / "sequences.fasta"
     fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
@@ -333,7 +363,6 @@ def test_dataset_fails_with_duplicate_sequence_names() -> None:
         match=rf"Duplicate names found in:.*Sequences:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", sequences=[sequence1, sequence2, sequence3, sequence4])
-
 
 
 def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:

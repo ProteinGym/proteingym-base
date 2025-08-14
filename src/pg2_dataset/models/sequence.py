@@ -14,6 +14,7 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+from pydantic.types import constr
 
 
 class SequenceFormat(StrEnum):
@@ -97,7 +98,7 @@ class Sequence(BaseModel):
         str_min_length=1,
     )
 
-    name: str
+    name: constr(pattern="^[a-zA-Z0-9_]+$")
     """The name of the sequence."""
 
     value: Seq
