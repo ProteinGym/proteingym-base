@@ -63,8 +63,7 @@ def test_assay_manifest_section_invalid_name(
 ) -> None:
     """The following names should be invalid"""
     match = (
-        "validation error for AssayManifestSection\nname\n  "
-        "String should match pattern",
+        "validation error for AssayManifestSection\nname\n  String should match pattern"
     )
     with pytest.raises(ValidationError, match=match):
         AssayManifestSection(path=assay_file, name=invalid_name)
