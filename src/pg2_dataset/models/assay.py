@@ -13,6 +13,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.types import constr
 
 
 class AssayFormat(StrEnum):
@@ -60,7 +61,7 @@ class AssayManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    name: str | None = None
+    name: constr(pattern="^[a-zA-Z0-9_]+$") | None = None
     """The name of the assay."""
 
     description: str | None = None
