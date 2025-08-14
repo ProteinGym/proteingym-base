@@ -13,13 +13,14 @@ name = "T"
 description = "Temperature level of the samples"
 unit = "C"
 
-[ assay.conditions ]
-T = 37
 
 [[ assays ]]
 sequence = "mutated_sequence"
 target = "DMS_score"
 path = "./NEIME_2019/Assays/Assay1.csv"
+
+[ assays.conditions ]
+T = 37
 
 [[ sequences ]]
 sequence_type = "wild_type"
