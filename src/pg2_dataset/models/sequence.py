@@ -131,8 +131,8 @@ class Sequence(BaseModel):
                 name=seq.name,
                 value=seq.seq,
                 description=seq.description,
-                type=section.sequence_type,
-                alphabet=section.sequence_alphabet,
+                type=section.type,
+                alphabet=section.alphabet,
             )
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:

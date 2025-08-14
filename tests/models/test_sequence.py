@@ -179,8 +179,8 @@ def test_sequence_from_manifest_section_multiple_seqs_in_file(tmp_path: Path) ->
     fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
 
     section = SequenceManifestSection(
-        sequence_type="wild_type",
-        sequence_alphabet="DNA",
+        type="wild_type",
+        alphabet="DNA",
         path=fasta_file,
     )
 
@@ -310,8 +310,8 @@ def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
         sequences=[
             {
                 "path": fasta_file,
-                "sequence_type": "wild_type",
-                "sequence_alphabet": "DNA",
+                "type": "wild_type",
+                "alphabet": "DNA",
             }
         ],
     )
