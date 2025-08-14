@@ -335,7 +335,6 @@ def test_dataset_fails_with_duplicate_sequence_names() -> None:
         Dataset(name="test", sequences=[sequence1, sequence2, sequence3, sequence4])
 
 
-
 def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
     """Test loading multiple sequences from a file."""
     fasta_file = tmp_path / "sequences.fasta"
