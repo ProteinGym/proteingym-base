@@ -85,6 +85,36 @@ def test_structure_manifest_section_empty_string_field(
         StructureManifestSection(path=path, **{field: ""})
 
 
+@pytest.mark.parametrize("name", [None, "foo", "1bar", "1foo2bar3"])
+def test_structure_manifest_section_valid_name(
+    tmp_path: Path, name: str | None
+) -> None:
+    """The following names should be valid"""
+    path = tmp_path / "test.pdb"
+    path.touch()
+    try:
+        section = StructureManifestSection(path=path, name=name)
+    except ValidationError as e:
+        raise AssertionError("Invalid StructureManifestSection") from e
+    else:
+        assert section.name == name, "Valid name"
+
+
+@pytest.mark.parametrize("invalid_name", ["name with space", "name$with&characters"])
+def test_structure_manifest_section_invalid_name(
+    tmp_path: Path, invalid_name: str
+) -> None:
+    """The following names should be invalid"""
+    path = tmp_path / "test.pdb"
+    path.touch()
+    match = (
+        "validation error for StructureManifestSection\nname\n  "
+        "String should match pattern"
+    )
+    with pytest.raises(ValidationError, match=match):
+        StructureManifestSection(path=path, name=invalid_name)
+
+
 def test_structure_manifest_section_serialize_path_as_posix(tmp_path: Path) -> None:
     """The path is serialized as a Posix path."""
     path = tmp_path / "structure.pdb"
