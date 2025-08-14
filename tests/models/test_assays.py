@@ -79,8 +79,8 @@ def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     assert section.path == path
 
 
-def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None:
-    """Test that AssayManifestSection raises error for invalid feature names."""
+def test_assay_manifest_section_validate_sequence_not_in_file(assay_file: Path) -> None:
+    """The sequence name should be in the given file."""
     with pytest.raises(
         ValueError,
         match=r"Feature 'invalid_feature' not found in the file: .*assay.csv",
