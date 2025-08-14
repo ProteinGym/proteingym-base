@@ -16,3 +16,5 @@ wheels/
 # Testing and coverage
 .coverage
 .coverage.*
+coverage
+coverage.*
