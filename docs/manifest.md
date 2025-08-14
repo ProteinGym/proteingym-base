@@ -145,11 +145,11 @@ sequence = "mutated_sequence"
 
 The sequences section contains a list of sequences included in the dataset.
 
-| **Field**  | **Type** | **Required** | **Default** | **Description**                                                                                                                                                     |
-| ---------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`     | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
-| `alphabet` | `string` | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                            |
-| `type`     | `string` | Yes          | N/A         | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                           |
+| **Field**  | **Type**         | **Required** | **Default** | **Description**                                                                                                                                                     |
+| ---------- | ---------------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`     | `string`         | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
+| `alphabet` | `string`         | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                            |
+| `type`     | `string` \| None | No           | None        | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                           |
 
 ### Structures
 
