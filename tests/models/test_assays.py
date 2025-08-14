@@ -32,8 +32,9 @@ def test_assay_condition_minimal() -> None:
     try:
         condition = AssayCondition(name="test")
     except ValidationError as e:
-        AssertionError(f"AssayCondition raised ValidationError: {e}")
-    assert condition.name == "test"
+        raise AssertionError("Cannot create minimal AssayCondition") from e
+    else:
+        assert condition.name == "test"
 
 
 def test_assay_condition_invalid_inputs() -> None:
