@@ -273,3 +273,20 @@ def test_dataset_with_msas_dump_from_path_unit(
     for loaded_msa, msa in zip(loaded_dataset.msas, dataset.msas, strict=True):
         assert loaded_msa.name == msa.name
         assert loaded_msa.value.alignment == msa.value.alignment
+
+
+def test_dataset_fails_with_duplicate_msa_names(
+    multiple_sequence_alignment: MultipleSeqAlignment,
+) -> None:
+    """A dataset with duplicate MSA names should raise a ValidationError."""
+    duplicate_names = ["duplicate1", "duplicate2"]
+    msa1 = MSA(name=duplicate_names[0], value=multiple_sequence_alignment)
+    msa2 = MSA(name=duplicate_names[0], value=multiple_sequence_alignment)
+    msa3 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
+    msa4 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
+
+    with pytest.raises(
+        ValidationError,
+        match=rf"Duplicate names found in:.*MSAs:.*{', '.join(duplicate_names)}",
+    ):
+        Dataset(name="test", msas=[msa1, msa2, msa3, msa4])
