@@ -56,6 +56,19 @@ def test_assay_manifest_section_valid_name(assay_file: Path, name: str | None) -
         assert section.name == name, "Valid name"
 
 
+@pytest.mark.parametrize("invalid_name", ["name with space", "name$with&characters"])
+def test_assay_manifest_section_invalid_name(
+    assay_file: Path, invalid_name: str
+) -> None:
+    """The following names should be invalid"""
+    match = (
+        "validation error for AssayManifestSection\nname\n  "
+        "String should match pattern",
+    )
+    with pytest.raises(ValidationError, match=match):
+        AssayManifestSection(path=assay_file, name=invalid_name)
+
+
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
