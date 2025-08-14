@@ -3,17 +3,19 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+import toml
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
-from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
 from pg2_dataset.models.dataset import Dataset
 from pg2_dataset.models.sequence import (
     Sequence,
+    SequenceAlphabet,
     SequenceFormat,
     SequenceManifestSection,
+    SequenceType,
 )
 
 
@@ -23,9 +25,7 @@ def test_sequence_manifest_section_minimal(tmp_path: Path) -> None:
     path.touch()
 
     try:
-        SequenceManifestSection(
-            sequence_type="wild_type", sequence_alphabet="DNA", path=path
-        )
+        SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
     except ValidationError as e:
         raise AssertionError("Could not create SequenceManifestSection") from e
     else:
@@ -41,8 +41,8 @@ def test_sequence_manifest_section_with_relative_path(tmp_path: Path) -> None:
     try:
         SequenceManifestSection.model_validate(
             {
-                "sequence_type": "wild_type",
-                "sequence_alphabet": "DNA",
+                "type": "wild_type",
+                "alphabet": "DNA",
                 "path": "sequence.fasta",
             },
             context=context,
@@ -61,28 +61,9 @@ def test_sequence_manifest_section_missing_path() -> None:
     )
     with pytest.raises(ValidationError, match=match):
         SequenceManifestSection(
-            sequence_type="wild_type",
-            sequence_alphabet="DNA",
+            type="wild_type",
+            alphabet="DNA",
             path=Path("non_existent.fasta"),
-        )
-
-
-@pytest.mark.parametrize("field", ["sequence_type", "sequence_alphabet"])
-def test_sequence_manifest_section_empty_string_field(
-    tmp_path: Path, field: str
-) -> None:
-    """A validation error is raised if string <field> is empty."""
-    path = tmp_path / "sequence.fasta"
-    path.touch()
-
-    match = (
-        f"validation error for SequenceManifestSection\n{field}\n  "
-        "String should have at least 1 character"
-    )
-    with pytest.raises(ValidationError, match=match):
-        SequenceManifestSection(
-            path=path,
-            **{"sequence_type": "wild_type", "sequence_alphabet": "DNA", field: ""},
         )
 
 
@@ -91,9 +72,7 @@ def test_sequence_manifest_section_serialize_path_as_posix(tmp_path: Path) -> No
     path = tmp_path / "sequence.fasta"
     path.touch()
 
-    section = SequenceManifestSection(
-        sequence_type="wild_type", sequence_alphabet="DNA", path=path
-    )
+    section = SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
 
     assert section.model_dump().get("path") == path.as_posix()
 
@@ -106,11 +85,29 @@ def test_sequence_manifest_section_serialize_path_as_posix_relative_to(
     path.touch()
     context = {"relative_to_path": tmp_path}
 
-    section = SequenceManifestSection(
-        sequence_type="wild_type", sequence_alphabet="DNA", path=path
-    )
+    section = SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
 
     assert section.model_dump(context=context).get("path") == "sequence.fasta"
+
+
+def test_sequence_manifest_section_serialize_strenum_as_string(tmp_path: Path) -> None:
+    """The sequence type and alphabet is serialized as a string.
+
+    The StrEnum is tricky to test as it is both a string and enum, hence,
+    we test it with a TOML serialization to be sure it is serialized correctly.
+    """
+    path = tmp_path / "sequence.fasta"
+    path.touch()
+
+    section = SequenceManifestSection(
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+        path=path,
+    )
+
+    section_in_toml = toml.dumps(section.model_dump())
+    assert SequenceType.WILD_TYPE.value in section_in_toml
+    assert SequenceAlphabet.DNA.value in section_in_toml
 
 
 def test_sequence_manifest_section_raises_validation_error_for_unsupported_format(
@@ -125,9 +122,7 @@ def test_sequence_manifest_section_raises_validation_error_for_unsupported_forma
         "Unsupported sequence format: unsupported"
     )
     with pytest.raises(ValidationError, match=match):
-        SequenceManifestSection(
-            sequence_type="wild_type", sequence_alphabet="DNA", path=path
-        )
+        SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
 
 
 @pytest.mark.parametrize(
