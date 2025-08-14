@@ -12,7 +12,9 @@ value = 7
 name = "T"
 description = "Temperature level of the samples"
 unit = "C"
-value = 37
+
+[ assay.conditions ]
+T = 37
 
 [[ assays ]]
 sequence = "mutated_sequence"
