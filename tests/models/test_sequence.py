@@ -9,7 +9,6 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
-
 from pg2_dataset.models.dataset import Dataset, Manifest
 from pg2_dataset.models.sequence import (
     Sequence,

@@ -112,7 +112,6 @@ class Sequence(BaseModel):
     alphabet: SequenceAlphabet
     """The alphabet of the sequence."""
 
-
     @classmethod
     def from_manifest_section(
         cls, section: SequenceManifestSection
@@ -135,7 +134,6 @@ class Sequence(BaseModel):
                 type=section.sequence_type,
                 alphabet=section.sequence_alphabet,
             )
-
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
         """Convert the sequence to a manifest section.
