@@ -77,7 +77,7 @@ classDiagram
     class Sequence {
         +object value
         +string description
-        +SequenceType sequence_type
+        +SequenceType type
         +SequenceAlphabet alphabet
         +dict metadata
         +func biopython_loader()

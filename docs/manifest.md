@@ -72,8 +72,8 @@ target = "target"
 PH = "7"
 
 [[ sequences ]]
-sequence_type = "wild_type"
-sequence_alphabet = "DNA"
+type = "wild_type"
+alphabet = "DNA"
 path = "sequences.fasta"
 
 [[ structures ]]
@@ -104,12 +104,12 @@ the protein data types.
 
 The assay conditions section contains a list of assay conditions defined in the dataset.
 
-| **Field**     | **Type**                              | **Required** | **Default** | **Description**                                    |
-| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------------------------------- |
-| `name`        | `string`                              | Yes          | N/A         | The assay condition name                           |
-| `description` | `string \| None`                      | No           | `None`      | A brief description.                               |
-| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.                           |
-| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the condition.                        |
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**             |
+| ------------- | ------------------------------------- | ------------ | ----------- | --------------------------- |
+| `name`        | `string`                              | Yes          | N/A         | The assay condition name    |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.        |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.    |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the condition. |
 
 
 ### Assays
@@ -145,11 +145,11 @@ sequence = "mutated_sequence"
 
 The sequences section contains a list of sequences included in the dataset.
 
-| **Field**           | **Type** | **Required** | **Default** | **Description**                                                                                                                                                     |
-| ------------------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`              | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
-| `sequence_alphabet` | `string` | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                        |
-| `sequence_type`     | `string` | Yes          | N/A         | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                                                        |
+| **Field**  | **Type** | **Required** | **Default** | **Description**                                                                                                                                                     |
+| ---------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`     | `string` | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
+| `alphabet` | `string` | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                            |
+| `type`     | `string` | Yes          | N/A         | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                           |
 
 ### Structures
 

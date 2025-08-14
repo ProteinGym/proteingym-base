@@ -45,7 +45,7 @@ path = "src/pg2_dataset/__about__.py"
 packages = ["src/pg2_dataset"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "README.md"]
 addopts = "--doctest-modules --doctest-glob='*.md' --cov=pg2_dataset --cov-branch --cov-report xml --cov-fail-under=80"
 
 [tool.ruff]

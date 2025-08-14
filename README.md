@@ -1,235 +1,131 @@
-# Protein Gym 2 Dataset
+# Protein Gym Dataset
 
 [![codecov](https://codecov.io/gh/ProteinGym2/pg2-dataset/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym2/pg2-dataset)
 
 A standardisation for using protein data within protein gym.
 
-## 1.1. Table of Contents
-- [Protein Gym 2 Dataset](#protein-gym-2-dataset)
-  - [1.1. Table of Contents](#11-table-of-contents)
-  - [1.2. Schema](#12-schema)
-  - [1.3. Getting Started](#13-getting-started)
-    - [1.3.1. develop locally](#131-develop-locally)
-    - [1.3.2. Load data](#132-load-data)
-    - [1.3.3. loading from non-local](#133-loading-from-non-local)
-    - [1.3.3. Persist data](#133-persist-data)
-    - [1.3.3. Load persisted data](#133-load-persisted-data)
-    - [1.3.4 Loading MSA data](#134-loading-msa-data)
-  - [1.4. Engineering rounds](#14-engineering-rounds)
-  - [1.5. Example Data](#15-example-data)
-  - [1.6. Example Manifest](#16-example-manifest)
-  - [1.7. Tutorials](#17-tutorials)
+- [Protein Gym Dataset](#protein-gym-dataset)
+  - [Dataset Manifest](#dataset-manifest)
+  - [Installation](#installation)
+  - [Quickstart example](#quickstart-example)
+    - [Load data](#load-data)
+    - [Archive data](#archive-data)
+      - [Load archived data](#load-archived-data)
+    - [Access protein data](#access-protein-data)
+      - [Multiple Sequence Alignment (MSA)](#multiple-sequence-alignment-msa)
+    - [Example Data](#example-data)
 
+## Dataset Manifest
 
-## 1.2. Schema
+The dataset manifest is a configuration file that describes the dataset metadata
+and assets:
+- Assays
+- Structures
+- Sequences
+- MSAs (Multiple Sequence Alignments)
 
-``` mermaid
-classDiagram
-    class ModelManifest{
-        train_entrypoint: Path|None
-        predict_entrypoint: Path
-        train_artifacts: list[Artifact]
-        hyper_parameters: list[HyperParameter]
-    }
-    class MeasurementWithUncertainty{
-        value: float
-        uncertainty: PositiveFloat
-    }
-    class Dataset{
-        +records: list[Record]
-        +structure: Structure
-        +msa: MSA
-        +alphabet: SequenceAlphabet
-        +assay_meta: list[AssayMeta]
-        +reference_sequences: list[str]
-        +meta: DatasetMeta
-        +splits: dict[tuple[Round, Sequence, SplitStrategy], TrainValidTestEnum]
-        +add_split(strategy: Callable) None
-        +data_frame_by_target(target: str) pd.DataFrame
-        +data_frame() pd.DataFrame
-        +iter_by_rounds() Generator[Dataset]
-        +split() tuple[Dataset, Dataset, Dataset]
-    }
-    Dataset <|-- Record
-    class Record{
-      +engineering_round: int
-      +sequence: str
-      +$key: float|str|MeasurementWithUncertainty
-    }
-    class AssayMeta{
-        +target: str
-        +features: dict[str, type]
-        +description: str
-        +$constant: any
-    }
-    Dataset <|-- AssayMeta
-    Dataset <|-- DatasetMeta
-    Record <|-- MeasurementWithUncertainty
-    class DatasetMeta {
-        +doi: Uri
-        +source: Uri
-        +xref: CrossReference
-    }
-```
+The full schema of the manifest is described in the
+[schema](./docs/manifest.md). Below example code uses the [NEIME 2019
+dataset](#example-data).
 
-Validators
+## Installation
 
-- Every $target should have a corresponding AssayMeta
-- No missing values in records for listed features assay metadata for target
-- ...
+To install the package, you can use pip:
 
-## 1.3. Getting Started
-### 1.3.1. develop locally
-
-after the following commands, you are good to go:
-```
-uv sync
-source .venv/bin/activate
-
-pre-commit install
-```
-
-to install all optional dependencies for Structures and MSA:
-```
-uv sync --all-extras
-```
-
-to test:
 ```shell
-uv run pytest
+$ pip install git+https://github.com/ProteinGym2/pg2-dataset.git
 ```
 
-to play around:
-```
-uv run jupyter lab
-```
+## Quickstart example
 
-### 1.3.2. Load data
+Below is a quickstart example of how to use this package.
 
-You can load the data using the manifest:
+### Load data
+
+You can load the data using a [manifest](./docs/manifest.md) file. In the
+example code below we load the [NEIME 2019](#example-data) dataset
+[manifest](./example_data/neime_2019.toml):
 
 ``` python
->>> from pg2_dataset.dataset import Manifest
->>> manifest = Manifest.from_path("manifests/neime_2019.toml")
+>>> from pg2_dataset import Dataset, Manifest
+>>> manifest = Manifest.from_path("example_data/neime_2019.toml")
 >>> manifest.name
 'NEIME_2019'
->>> dataset = manifest.ingest()
->>> dataset.assays is not None and dataset.structure is not None 
+>>> dataset = Dataset.from_manifest(manifest)
+>>> len(dataset.assays) > 0 and len(dataset.structures) > 0
 True
 
 ```
 
-After loading the manifest, go ahead with using its data for model training or prediction.
+This wil gather data from the locations specified in the manifest into a single
+`Dataset` object. Go ahead with using its data for model training or prediction.
 
-### 1.3.3. loading from non-local
+### Archive data
 
-> [!CAUTION]
-> This is probably out of date but good to include nonetheless. What is the current status on this?
-
-You can load a data frame from either a DVC data registry, Google cloud storage starting with `gs://` or a relative path locally, we will add the support of S3 in the later release. 
-
-As shown in the following example, the mandatory fields of records dataset are `features`, `targets` and `sequence_feature`. You can either use `records_file_path` or `toml_file` to configure the path to load the records:
-
-```python
-from pg2_dataset
-
-#fill out example here.
-```
-
-### 1.3.3. Persist data
-
-You can persist data in ProteinGym2's standardized format as follows
+You can persist data in a Protein Gym archive for easy sharing and reloading.
 
 ``` python
->>> import tempfile
->>> from pathlib import Path
->>> file = tempfile.NamedTemporaryFile()  # Temporary file is used here for testing purposes
->>>
->>> file_path = Path(file.name)  # Use any (non-temporary) location where you want to persist the data
->>> dataset.persist(file_path)  
->>>
->>> file_path.is_file() and file_path.stat().st_size > 0  # The file contains the dataset
+>>> archive_path = dataset.dump(path="example_data/")
+>>> archive_path.is_file() and archive_path.stat().st_size > 0  # The archive contains the dataset
 True
 
 ```
 
-### 1.3.3. Load persisted data
+#### Load archived data
 
-You can quickly load the persisted data instead of re-ingesting it:
+You can quickly load the archived data:
 
 ``` python
->>> from pg2_dataset.dataset import Dataset
->>> persisted_dataset = Dataset.from_path(file_path)  
+>>> persisted_dataset = Dataset.from_path(archive_path)
 >>> persisted_dataset.name
 'NEIME_2019'
->>> file.close()
->>>
+>>> archive_path.unlink()  # (FOR TESTING PURPOSES ONLY: remove the archive file for cleanup)
+
 ```
 
-### 1.3.4 Loading MSA data
+### Access protein data
 
-When loading MSA data either [biopython](https://biopython.org/) or [biotite](https://www.biotite-python.org/latest/index.html) is required to be installed.
-We recommend the use of biopython as it has support for alignments outside the fasta format. To install either biopython or biotite as optional packages run the following in your command line:
+The `Dataset` object provides access to the protein data:
+- Assays
+- Sequences
+- Structures
+- MSAs (Multiple Sequence Alignments)
 
-`uv sync --extra biotite` for biotite
+#### Multiple Sequence Alignment (MSA)
 
-`uv sync --extra biopython` for biopython
+When loading MSA, [biotite](https://www.biotite-python.org/latest/index.html) is
+required to be installed: `uv sync --extra biotite`.
 
->[!CAUTION]
->Biotite only supports loading from fasta. So any aligment outside the fasta format (ending with .fa or .fasta) will throw an error
+> [!CAUTION]
+> Biotite only supports loading from fasta. So any aligment outside the fasta format (ending with .fa or .fasta) will throw an error.
 
-When loading MSA data configure the following section in the toml:
+When loading MSA data, configure the following section in the toml:
+
 ```toml
-[msa_meta]
-file_path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/msa.fasta"
-file_format = "fasta"
-gap_chars = ["."]
+[[ msas ]]
+path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/msa.fasta"
+format = "fasta"
 ```
-| Field | Description | Example Value | Required |
-| ----- | ----------- | ------------- | -------- |
-| `file_path` | Path to MSA file or directory. If a directory is provided, all MSA files inside will be loaded. | `"example_data/NEIME_2019/MSA/msa.a2m"` or `"example_data;/NEIME_2019/MSA/"` | Yes
-| `file_format` | Required by biopython to determine the MSA file format. See [supported formats](https://biopython.org/wiki/AlignIO). | Biopython only
-| `gap_chars` | Characters used to represent gaps in the alignment. Can be list ofmultiple values. | `["."]`, `["-", "."]` | Biotite only
 
+[biotite get the alignment](https://www.biotite-python.org/latest/apidoc/biotite.sequence.io.fasta.get_alignment.html)
+as an [`Alignment` object](https://biopython.org/docs/latest/api/Bio.AlignIO.html):
 
-What `Alignment` object will be returned by the MSA depends on the backend used. See the examples below for [biopython](https://biopython.org/docs/latest/api/Bio.AlignIO.html) or [biotite](https://www.biotite-python.org/latest/apidoc/biotite.sequence.io.fasta.get_alignment.html).
-
----
-
-Biopython will return a list of `SeqRecord` [objects](https://biopython.org/docs/latest/api/Bio.SeqRecord.html#module-Bio.SeqRecord):
 ```python
->>> from pg2_dataset.dataset import Manifest
->>> ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
->>> alignment = ds.msa.msa
+>>> from Bio.Align import Alignment, MultipleSeqAlignment
+>>> isinstance(dataset.msas[0].value, MultipleSeqAlignment)  # The first MSA in the dataset
+True
 
 ```
----
 
-Biotite will return a `Alignment` [object](https://biopython.org/docs/latest/api/Bio.AlignIO.html):
-```python
->>> from pg2_dataset.dataset import Manifest
->>> ds = Manifest.from_path("manifests/neime_2019.toml").ingest()
->>> alignment = ds.msa.msa
+### Example Data
 
-```
----
-
-## 1.4. Engineering rounds
-
-PG2 will support the concept of engineering rounds. When IFF develops new enzymes, we do iterative design where the target might change every round. E.g. if the goal is engineering a better enzyme X for cleaning stain Y, we usually reach the wanted Y performance in a few rounds with different targets in different rounds. In the first round we could try to achieve maximum stability, second round might be after expression in the biological host or a third round for getting the best cleaning performance on a specific stain Y. 
-
-By supporting engineering rounds we allow for the easy modeling of methods where we can train on round 1, predict round 2 data, train round 1+2, predict round 3 data, etc. Or for benchmarking on older data and see if a tool would have been helpful along the round design.
-
-## 1.5. Example Data
-
-We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset as example.
+The NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset is used as an example.
 This dataset is stored in `example_data/NEIME_2019` and contains the following:
 
 >[!CAUTION]
 > AssayMeta and DatasetMeta are just examples of possible meta tags one might think of.
 > Current information in there is not associated to the dataset at all and not obtained
 > from official sources.
-
 
 >[!CAUTION]
 > In Assay.csv we also contain the split and engineer round column. 
@@ -241,18 +137,18 @@ This dataset is stored in `example_data/NEIME_2019` and contains the following:
 .
 ├── example_data
 │   └── NEIME_2019
-│       ├── A0A1I9GEU1.fasta        #Parent sequence
-│       ├── AssayMeta.json          #Example of possible AssayMeta
+│       ├── A0A1I9GEU1.fasta        # Parent sequence
+│       ├── AssayMeta.json          # Example of possible AssayMeta
 │       ├── Assays                  
-│       │   └── Assay.csv           #Tabular format of assay
-│       ├── DataSetMeta.json        #Example of possible DatasetMeta
+│       │   └── Assay.csv           # Tabular format of assay
+│       ├── DataSetMeta.json        # Example of possible DatasetMeta
 │       ├── MSA
-│       │   ├── msa_weights.npy     #weights file for MSA as obtained from PG1.
-│       │   ├── msa.a2m             #MSA file in .a2m format
-│       │   ├── msa.a3m             #MSA file in .a3m format
-│       │   └── msa.psi             #MSA file in .psi format
-│       └── Structures              #5 types of example structures with different
-│           │                       #file types and sources for examples:
+│       │   ├── msa_weights.npy     # weights file for MSA as obtained from PG1.
+│       │   ├── msa.a2m             # MSA file in .a2m format
+│       │   ├── msa.a3m             # MSA file in .a3m format
+│       │   └── msa.psi             # MSA file in .psi format
+│       └── Structures              # 5 types of example structures with different
+│           │                       # file types and sources for examples:
 │           ├── experimental.cif
 │           ├── experimental.bcif
 │           ├── experimental.pdb
@@ -262,32 +158,6 @@ This dataset is stored in `example_data/NEIME_2019` and contains the following:
 
 For a full overview of available data see the following table:
 
-| | Dataset name | Link to website | Relative path to manifest |
-| :--- | :--- | :--- | :--- |
-| 1. | NEIME2019 | www.proteingym.org | [manifests/neime_2019.toml](manifests/neime_2019.toml) |
-
-## 1.6. Example Manifest
-
-We use the NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset as example.
-This manifest for this dataset is stored in `manifests/neime_2019.manifest` and contains the following:
-
-```toml
-name = "NEIME_2019"                                     # Name of the dataset
-
-[assays_meta]                                           # Meta data of the assay
-file_path = "example_data/NEIME_2019/Assays/Assay1.csv" # File path to Assay file
-columns = ["mutated_sequence", "mutant", "DMS_score", "DMS_score_bin", "split", "engineering_round"] # Relevant columns to load
-sequence_feature = "mutated_sequence"                   # Column of the sequence
-split_feature="split"                                   # Column of the stored split information
-engineering_round_feature="engineering_round"           # Column of the engineering round
-
-[structures_meta]                                       # Meta data of the structures
-file_path = "example_data/NEIME_2019/experimental.cif"  # Path to structure file or directory containing multiple files.
-
-[assays_meta.assays.DMS_score]                          # Meta data of the DMS Score assay
-```
-
-## 1.7. Tutorials
-
->[!CAUTION]
-> Should add section with tutorials here. E.g. pointing to the CI/CD notebooks.
+|      | Dataset name | Link to website    | Relative path to manifest                              |
+| :--- | :----------- | :----------------- | :----------------------------------------------------- |
+| 1.   | NEIME2019    | www.proteingym.org | [example_data/neime_2019.toml](example_data/neime_2019.toml) |

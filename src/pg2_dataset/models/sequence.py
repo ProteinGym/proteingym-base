@@ -15,14 +15,28 @@ from pydantic import (
     field_validator,
 )
 
-from pg2_dataset.models.constants import SequenceAlphabet, SequenceType
-
 
 class SequenceFormat(StrEnum):
     """Enumeration for sequence file formats."""
 
     FASTA = "fasta"
     FASTQ = "fastq"
+
+
+class SequenceType(StrEnum):
+    """The sequence types."""
+
+    WILD_TYPE = "wild_type"
+    STARTING_SEQUENCE = "starting_sequence"
+    ENGINEERED_SEQUENCE = "engineered_sequence"
+
+
+class SequenceAlphabet(StrEnum):
+    """The sequence alphabets."""
+
+    DNA = "DNA"
+    RNA = "RNA"
+    AA = "AA"
 
 
 class SequenceManifestSection(BaseModel):
@@ -40,8 +54,11 @@ class SequenceManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    sequence_type: str
-    sequence_alphabet: str
+    type: SequenceType
+    """The type of the sequence."""
+
+    alphabet: SequenceAlphabet
+    """The alphabet of the sequence."""
 
     path: FilePath
     """The path to the sequence file."""
@@ -62,6 +79,11 @@ class SequenceManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
+
+    @field_serializer("type", "alphabet", check_fields=True)
+    def _serialize_str_enum(self, str_enum: StrEnum) -> str:
+        """Serialize a StrEnum as a string."""
+        return str_enum.value
 
 
 class Sequence(BaseModel):
@@ -90,6 +112,7 @@ class Sequence(BaseModel):
     alphabet: SequenceAlphabet
     """The alphabet of the sequence."""
 
+
     @classmethod
     def from_manifest_section(
         cls, section: SequenceManifestSection
@@ -113,6 +136,7 @@ class Sequence(BaseModel):
                 alphabet=section.sequence_alphabet,
             )
 
+
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
         """Convert the sequence to a manifest section.
 
@@ -124,7 +148,7 @@ class Sequence(BaseModel):
             SequenceManifestSection: The manifest section for the sequence.
         """
         return SequenceManifestSection(
-            path=path, sequence_alphabet=self.alphabet, sequence_type=self.type
+            path=path, alphabet=self.alphabet, type=self.type
         )
 
     def dump(
