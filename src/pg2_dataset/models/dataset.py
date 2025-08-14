@@ -1,4 +1,5 @@
 import collections
+import itertools
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import IO, Annotated, Any, Callable
@@ -245,7 +246,9 @@ class Dataset(BaseModel):
             Dataset: The dataset created from the manifest.
         """
         assays = [Assay.from_manifest_section(a) for a in manifest.assays]
-        sequences = [Sequence.from_manifest_section(s) for s in manifest.sequences]
+        sequences = itertools.chain(
+            *[Sequence.from_manifest_section(s) for s in manifest.sequences]
+        )
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
         return cls(

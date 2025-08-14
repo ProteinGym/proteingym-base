@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
 
@@ -112,16 +113,27 @@ class Sequence(BaseModel):
     """The alphabet of the sequence."""
 
     @classmethod
-    def from_manifest_section(cls, section: SequenceManifestSection) -> "Sequence":
-        """Create a Sequence from a manifest section."""
-        seq = SeqIO.read(section.path, format=section.path.suffix[1:].lower())
-        return cls(
-            name=seq.name,
-            value=seq.seq,
-            description=seq.description,
-            type=section.type,
-            alphabet=section.alphabet,
-        )
+    def from_manifest_section(
+        cls, section: SequenceManifestSection
+    ) -> Iterator["Sequence"]:
+        """Create Sequence(s) from a sequence manifest section.
+
+        Args:
+            section (SequenceManifestSection): The sequence manifest section to create
+                the Sequence from.
+
+        Yields:
+            Sequence: The created Sequence object.
+        """
+        sequences = SeqIO.parse(section.path, format=section.path.suffix[1:].lower())
+        for seq in sequences:
+            yield cls(
+                name=seq.name,
+                value=seq.seq,
+                description=seq.description,
+                type=section.type,
+                alphabet=section.alphabet,
+            )
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
         """Convert the sequence to a manifest section.

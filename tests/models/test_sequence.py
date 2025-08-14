@@ -9,7 +9,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
-from pg2_dataset.models.dataset import Dataset
+from pg2_dataset.models.dataset import Dataset, Manifest
 from pg2_dataset.models.sequence import (
     Sequence,
     SequenceAlphabet,
@@ -174,6 +174,21 @@ def test_invalid_sequence(name, value, description, type, alphabet):
     assert isinstance(sequence.alphabet, SequenceAlphabet)
 
 
+def test_sequence_from_manifest_section_multiple_seqs_in_file(tmp_path: Path) -> None:
+    fasta_file = tmp_path / "sequences.fasta"
+    fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
+
+    section = SequenceManifestSection(
+        type="wild_type",
+        alphabet="DNA",
+        path=fasta_file,
+    )
+
+    sequences = list(Sequence.from_manifest_section(section))
+    assert len(sequences) == 2
+    assert all(isinstance(seq, Sequence) for seq in sequences)
+
+
 def test_sequence_dump(tmp_path: Path) -> None:
     sequence = Sequence(
         name="test_seq",
@@ -283,3 +298,25 @@ def test_dataset_with_sequences_dump_from_path_unit(tmp_path: Path) -> None:
     ):
         assert loaded_sequence.name == sequence.name
         assert loaded_sequence.value == sequence.value
+
+
+def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
+    """Test loading multiple sequences from a file."""
+    fasta_file = tmp_path / "sequences.fasta"
+    fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
+
+    dataset_manifest = Manifest(
+        name="test",
+        sequences=[
+            {
+                "path": fasta_file,
+                "type": "wild_type",
+                "alphabet": "DNA",
+            }
+        ],
+    )
+    dataset = Dataset.from_manifest(dataset_manifest)
+    assert len(dataset.sequences) == 2
+    assert all(isinstance(seq, Sequence) for seq in dataset.sequences)
+    assert dataset.sequences[0].name == "seq1"
+    assert dataset.sequences[1].name == "seq2"
