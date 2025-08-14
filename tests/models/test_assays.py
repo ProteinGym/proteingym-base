@@ -10,7 +10,8 @@ from pg2_dataset.models.assay import (
     AssayFormat,
     AssayManifestSection,
 )
-from pg2_dataset.models.dataset import Dataset, DatasetArchiveLayout, Manifest
+from pg2_dataset.models.dataset import Dataset, DatasetArchiveLayout
+from pg2_dataset.models.manifest import Manifest
 
 
 @pytest.fixture
