@@ -13,6 +13,7 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+from pydantic.types import constr
 
 
 class MSAFormat(StrEnum):
@@ -35,7 +36,7 @@ class MSAManifestSection(BaseModel):
     path: FilePath
     """The path to the multiple sequence alignment file."""
 
-    name: str | None = None
+    name: constr(pattern="^[a-zA-Z0-9_]+$") | None = None
     """The name of the multiple sequence alignment.
 
     If None, the file stem will be used.
