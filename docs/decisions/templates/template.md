@@ -29,6 +29,9 @@ The change that we're proposing or have agreed to implement.
 | 1      | High     | Medium   | Low      |
 | 2      | Medium   | High     | Medium   |
 
+Describe the dinstinctive fields in the decision matrix and how they influenced
+the final decision.
+
 ## Consequences
 
 What becomes easier or more difficult to do and any risks introduced by the change that will need to be mitigated.
