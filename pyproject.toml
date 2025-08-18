@@ -3,7 +3,11 @@ name = "pg2-dataset"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "tintinrevient", email = "zhaobenben007@googlemail.com" }
+    { name = "Henning Redestig", email = "henning.redestig@iff.com"},
+    { name = "Karel van der Weg", email = "karel.weg@iff.com"},
+    { name = "Shu Zhao", email = "shu.zhao@xebia.com"},
+    { name = "Prashant Srivastava", email = "Prashant.Srivastava@xebia.com"},
+    { name = "Cor Zuurmond", email = "cor.zuurmond@xebia.com"},
 ]
 dynamic = ["version"]  # Dynamically set hatch version using git tags
 classifiers = ["Private :: Do Not Upload"]  # Do not upload to public PYPI (by accident)
