@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
-
+from typing import Annotated
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -13,6 +13,7 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
+    BeforeValidator
 )
 
 
@@ -100,13 +101,13 @@ class Sequence(BaseModel):
     name: str
     """The name of the sequence."""
 
-    value: Seq
+    value: Annotated[Seq, BeforeValidator(lambda x: Seq(x) if isinstance(x, str) else x)]
     """The value of the sequence, a Seq object."""
 
     description: str | None = None
     """The description of the sequence."""
 
-    type: SequenceType
+    type: SequenceType | None = None
     """The type of the sequence."""
 
     alphabet: SequenceAlphabet
@@ -128,7 +129,7 @@ class Sequence(BaseModel):
         sequences = SeqIO.parse(section.path, format=section.path.suffix[1:].lower())
         for seq in sequences:
             yield cls(
-                name=seq.name,
+                name=seq.name if seq.name else seq.seq,
                 value=seq.seq,
                 description=seq.description,
                 type=section.type,

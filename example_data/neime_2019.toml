@@ -16,6 +16,7 @@ unit = "C"
 sequence = "mutated_sequence"
 target = "DMS_score"
 path = "./NEIME_2019/Assays/Assay1.csv"
+sequence_alphabet = "AA"
 [ assays.conditions ]
 T = 37
 PH = 7

@@ -13,7 +13,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-
+from pg2_dataset.models.sequence import Sequence, SequenceAlphabet
 
 class AssayFormat(StrEnum):
     """Supported assay file formats."""
@@ -69,6 +69,9 @@ class AssayManifestSection(BaseModel):
     sequence: str = "sequence"
     """The sequence feature name given in the file."""
 
+    sequence_alphabet: SequenceAlphabet
+    """The alphabet of the sequences of the assay."""
+
     target: str = "target"
     """The target feature name given in the file."""
 
@@ -103,6 +106,10 @@ class AssayManifestSection(BaseModel):
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
 
+    @field_serializer("sequence_alphabet")
+    def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
+        """Serialize the sequence alphabet as a string."""
+        return sequence_alphabet.value
 
 class Assay(BaseModel):
     """An assay in the dataset."""
@@ -118,8 +125,10 @@ class Assay(BaseModel):
     name: str
     """The name of the assay."""
 
-    records: list[tuple[str, int | float | bool | str]]
+    records: list[tuple[Sequence, int | float | bool | str]]
     """The records of the assay, pairs of Sequence and target values."""
+
+    sequence_alphabet: SequenceAlphabet
 
     conditions: dict[str, int | float | bool | str] = Field(default_factory=dict)
     """The conditions of the assay, defined in the manifest."""
@@ -138,9 +147,17 @@ class Assay(BaseModel):
         """Create an Assay instance from a manifest section."""
 
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
+        df = df.with_columns(
+            pl.col(section.sequence).map_elements(
+                lambda x: Sequence(name=x[:10], value=x, alphabet=section.sequence_alphabet),
+                return_dtype=pl.Object
+                )
+        )
+
         return cls(
             name=section.name or section.path.stem,
             records=list(df.iter_rows()),
+            sequence_alphabet=section.sequence_alphabet,
             description=section.description,
             conditions=section.conditions,
         )
@@ -159,6 +176,7 @@ class Assay(BaseModel):
             name=self.name,
             description=self.description,
             sequence=self.sequence_feature_name,
+            sequence_alphabet=self.sequence_alphabet,
             target=self.target_feature_name,
             conditions=self.conditions,
             path=path,
@@ -188,6 +206,9 @@ class Assay(BaseModel):
             self.records,
             schema=[self.sequence_feature_name, self.target_feature_name],
             orient="row",
+        )
+        df = df.with_columns(
+            pl.col(self.sequence_feature_name).map_elements(lambda seq: str(seq.value), return_dtype=pl.String)
         )
         match format:
             case AssayFormat.CSV:
