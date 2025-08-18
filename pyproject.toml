@@ -3,20 +3,23 @@ name = "pg2-dataset"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "tintinrevient", email = "zhaobenben007@googlemail.com" }
+    { name = "Henning Redestig", email = "henning.redestig@iff.com"},
+    { name = "Karel van der Weg", email = "karel.weg@iff.com"},
+    { name = "Shu Zhao", email = "shu.zhao@xebia.com"},
+    { name = "Prashant Srivastava", email = "Prashant.Srivastava@xebia.com"},
+    { name = "Cor Zuurmond", email = "cor.zuurmond@xebia.com"},
 ]
 dynamic = ["version"]  # Dynamically set hatch version using git tags
 classifiers = ["Private :: Do Not Upload"]  # Do not upload to public PYPI (by accident)
 requires-python = ">=3.12"
 dependencies = [
-    "cloudpathlib[gs,s3]>=0.21.0",
-    "dvc[gs,s3]>=3.59.1",
-    "polars[pyarrow]>=1.30.0",
-    "pandas==2.2.3",
-    "pydantic>=2.11.4",
-    "toml>=0.10.2",
-    "biopython>=1.85",
-    "msgpack>=1.1.0",
+    "typer>=0.16.0,<1.0.0",
+    "toml>=0.10.2,<1.0.0",
+    "pydantic>=2.11.4,<3.0.0",
+    "semver>=3.0.4,<4.0.0",
+    "biopython>=1.85.0,<2.0.0",
+    "msgpack>=1.1.0,<2.0.0",
+    "polars[pyarrow]>=1.30.0,<2.0.0",
 ]
 
 [project.scripts]
@@ -25,9 +28,6 @@ pg2-dataset = "pg2_dataset.__main__:app"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[project.optional-dependencies]
-biotite = ["biotite>=1.3.0"]
 
 [dependency-groups]
 dev = [
