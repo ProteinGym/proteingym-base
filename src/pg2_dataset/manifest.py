@@ -84,7 +84,7 @@ class Manifest(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    version: Annotated[Version, _VersionPydanticAnnotation] = Version(1, 0)
+    version: Annotated[Version, _VersionPydanticAnnotation]
     """The version of the manifest schema.
 
     The version follows the semantic version format: `<major>.<minor>`. A major
