@@ -9,11 +9,11 @@ dynamic = ["version"]  # Dynamically set hatch version using git tags
 classifiers = ["Private :: Do Not Upload"]  # Do not upload to public PYPI (by accident)
 requires-python = ">=3.12"
 dependencies = [
-    "polars[pyarrow]>=1.30.0",
-    "pydantic>=2.11.4",
     "toml>=0.10.2",
+    "pydantic>=2.11.4",
     "biopython>=1.85",
     "msgpack>=1.1.0",
+    "polars[pyarrow]>=1.30.0",
 ]
 
 [project.scripts]
