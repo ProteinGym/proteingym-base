@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Annotated
 
@@ -11,6 +12,26 @@ app = typer.Typer(
     name="pg2-dataset",
     help="CLI for managing ProteinGym2 (PG2) Dataset(s).",
 )
+
+
+def setup_logger(*, level: int = logging.CRITICAL) -> None:
+    """Set up the logger for the application.
+
+    Args:
+        log_level (int): The logging level to set. Defaults to
+           `logging.CRITICAL`.
+    """
+    logger = logging.getLogger("pg2_dataset")
+    logger.setLevel(level)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(level)
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
 
 @app.callback(invoke_without_command=True)
