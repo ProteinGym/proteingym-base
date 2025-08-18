@@ -151,21 +151,22 @@ class Manifest(BaseModel):
         """Serialize the version to a string."""
         return str(version)
 
-    def dump(self, *, path: Path | None = None) -> Path:
+    def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the manifest to a TOML file.
 
         The paths in the manifest are serialized as relative paths to the
         manifest path.
 
         Args:
-            path (Path | None): The path to dump the manifest to. If
-                None, the current working directory is used as path. If path is
-                a directory, the manifest name is used as file name. Defaults to
-                None.
+            path (Path | str | None): The path to dump the manifest to. If None,
+              the current working directory is used as path. If path is a
+              directory, the manifest name is used as file name. Defaults to None.
 
         Returns:
             Path: The path to the dumped manifest file.
         """
+        if isinstance(path, str):  # User-friendly interface to support str
+            path = Path(path)
         path = path or Path.cwd()
         if path.is_dir():
             path = path / f"{self.name}.toml"
