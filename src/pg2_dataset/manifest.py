@@ -68,6 +68,10 @@ class _VersionPydanticAnnotation:
         return handler(core_schema.str_schema())
 
 
+MANIFEST_LATEST_VERSION: Version = Version(1)
+"""The latest version of the manifest schema."""
+
+
 class Manifest(BaseModel):
     """Dataset manifest representing a dataset's metadata and resources.
 
