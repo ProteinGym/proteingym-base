@@ -1054,11 +1054,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "biopython", specifier = ">=1.85" },
-    { name = "msgpack", specifier = ">=1.1.0" },
-    { name = "polars", extras = ["pyarrow"], specifier = ">=1.30.0" },
-    { name = "pydantic", specifier = ">=2.11.4" },
-    { name = "toml", specifier = ">=0.10.2" },
+    { name = "biopython", specifier = ">=1.85.0,<2.0.0" },
+    { name = "msgpack", specifier = ">=1.1.0,<2.0.0" },
+    { name = "polars", extras = ["pyarrow"], specifier = ">=1.30.0,<2.0.0" },
+    { name = "pydantic", specifier = ">=2.11.4,<3.0.0" },
+    { name = "toml", specifier = ">=0.10.2,<1.0.0" },
 ]
 
 [package.metadata.requires-dev]
