@@ -10,7 +10,6 @@ classifiers = ["Private :: Do Not Upload"]  # Do not upload to public PYPI (by a
 requires-python = ">=3.12"
 dependencies = [
     "polars[pyarrow]>=1.30.0",
-    "pandas==2.2.3",
     "pydantic>=2.11.4",
     "toml>=0.10.2",
     "biopython>=1.85",
