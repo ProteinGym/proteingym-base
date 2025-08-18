@@ -11,7 +11,8 @@ Attributes :
         loading and validating dataset from metadata.
 """
 
-from .models.dataset import Dataset, Manifest
+from .models.dataset import Dataset
+from .models.manifest import Manifest
 
 __all__ = [
     "Dataset",
