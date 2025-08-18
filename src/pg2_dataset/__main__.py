@@ -3,9 +3,8 @@ from typing import Annotated
 
 import typer
 
+from pg2_dataset import Dataset, Manifest
 from pg2_dataset.__about__ import __version__
-from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.manifest import Manifest
 
 app = typer.Typer(
     name="pg2-dataset",

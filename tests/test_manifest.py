@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.models.manifest import Manifest
+from pg2_dataset.manifest import Manifest
 
 
 @pytest.fixture
@@ -68,9 +68,7 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
 
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
-    documentation_file_path = Path(__file__).parent.parent.parent / Path(
-        "docs/manifest.md"
-    )
+    documentation_file_path = Path(__file__).parent.parent / Path("docs/manifest.md")
     documentation_contents = documentation_file_path.read_text(encoding="utf-8")
 
     assert documentation_file_path.exists(), (

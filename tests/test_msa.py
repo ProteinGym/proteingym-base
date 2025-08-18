@@ -10,8 +10,8 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
-from pg2_dataset.models.dataset import Dataset
-from pg2_dataset.models.msa import MSA, MSAFormat, MSAManifestSection
+from pg2_dataset.dataset import Dataset
+from pg2_dataset.msa import MSA, MSAFormat, MSAManifestSection
 
 
 def test_msa_manifest_section_minimal(tmp_path: Path) -> None:

@@ -1,7 +1,7 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from pg2_dataset.models.dataset import Dataset
+from pg2_dataset.dataset import Dataset
 
 
 def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:

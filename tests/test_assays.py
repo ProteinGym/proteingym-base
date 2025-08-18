@@ -4,14 +4,14 @@ from zipfile import ZipFile
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.models.assay import (
+from pg2_dataset.assay import (
     Assay,
     AssayCondition,
     AssayFormat,
     AssayManifestSection,
 )
-from pg2_dataset.models.dataset import Dataset, DatasetArchiveLayout
-from pg2_dataset.models.manifest import Manifest
+from pg2_dataset.dataset import Dataset, DatasetArchiveLayout
+from pg2_dataset.manifest import Manifest
 
 
 @pytest.fixture
