@@ -127,9 +127,9 @@ class Sequence(BaseModel):
             Sequence: The created Sequence object.
         """
         sequences = SeqIO.parse(section.path, format=section.path.suffix[1:].lower())
-        for seq in sequences:
+        for i, seq in enumerate(sequences):
             yield cls(
-                name=seq.name if seq.name else seq.seq,
+                name=seq.name if seq.name else f"{section.path.stem}_{i}",
                 value=seq.seq,
                 description=seq.description,
                 type=section.type,

@@ -148,8 +148,11 @@ class Assay(BaseModel):
 
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
         df = df.with_columns(
+            # Sequences are created from sequence strings present in the file
+            # The sequence name is taken from the string itself as the name is not 
+            # provided in the assay file.
             pl.col(section.sequence).map_elements(
-                lambda x: Sequence(name=x[:10], value=x, alphabet=section.sequence_alphabet),
+                lambda x: Sequence(name=x, value=x, alphabet=section.sequence_alphabet),
                 return_dtype=pl.Object
                 )
         )

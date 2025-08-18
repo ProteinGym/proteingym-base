@@ -244,8 +244,9 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
     assay1 = Assay(
         name="assay1",
         records=[
-            (Sequence(name="seq1", value="ABC", alphabet="AA"), 1.0),
-            (Sequence(name="seq2", value="DEF", alphabet="AA"), 3.0)
+            # The sequence names are kept same as 
+            (Sequence(name="ABC", value="ABC", alphabet="AA"), 1.0),
+            (Sequence(name="DEF", value="DEF", alphabet="AA"), 3.0)
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
