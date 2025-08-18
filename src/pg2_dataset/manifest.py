@@ -87,9 +87,10 @@ class Manifest(BaseModel):
     version: Annotated[Version, _VersionPydanticAnnotation]
     """The version of the manifest schema.
 
-    The version follows the semantic version format: `<major>.<minor>`. A major
-    version change indicates breaking changes, while a minor version change
-    indicates backward-compatible additions or changes.
+    The version follows the semantic version format: `<major>.<minor>.<patch>`
+    A major version change indicates breaking changes, while a minor version
+    change indicates backward-compatible additions or changes. A patch version
+    change indicates bug fixes or minor improvements.
     """
 
     name: str
