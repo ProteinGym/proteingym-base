@@ -12,7 +12,7 @@ from pydantic import (
 )
 
 from pg2_dataset.assay import Assay, AssayCondition
-from pg2_dataset.manifest import Manifest
+from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
 from pg2_dataset.msa import MSA
 from pg2_dataset.sequence import Sequence
 from pg2_dataset.structure import Structure
@@ -205,6 +205,7 @@ class Dataset(BaseModel):
                 dumped data.
         """
         manifest = Manifest(
+            version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
             assay_conditions=self.assay_conditions,
