@@ -25,8 +25,8 @@ We will use Architecture Decision Records, as [described by Michael Nygard](http
 
 ## Considered Options
 
-- Markdown file: Use a simple text file format to document decisions.
-  - Dedicated tool: Use a specialized tool for managing architecture decisions.
+- Markdown file in git: Use a simple text file format to document decisions.
+  - with dedicated tool: Use a specialized tool for managing architecture decisions.
 - Wiki: Use a wiki platform to document decisions.
 
 ## Decision matrix
