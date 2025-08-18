@@ -3,6 +3,7 @@ from zipfile import ZipFile
 
 import pytest
 from pydantic import ValidationError
+from semver import Version
 
 from pg2_dataset.assay import (
     Assay,
@@ -49,7 +50,7 @@ def test_assay_condition_invalid_inputs() -> None:
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
-        manifest = AssayManifestSection(
+        section = AssayManifestSection(
             name="test_assay",
             description="Test assay",
             sequence="sequence",
@@ -60,11 +61,11 @@ def test_assay_manifest_section(assay_file: Path) -> None:
     except ValidationError as e:
         AssertionError(f"AssayManifestSection raised ValidationError: {e}")
 
-    assert isinstance(manifest.path, Path)
+    assert isinstance(section.path, Path)
     with assay_file.open() as f:
         content = f.read()
-    assert manifest.sequence in content
-    assert manifest.target in content
+    assert section.sequence in content
+    assert section.target in content
 
 
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
@@ -161,11 +162,11 @@ def test_assay_dump(tmp_path: Path) -> None:
     assert "F1L,2.0" in content
 
 
-# Tests with Dataset and Manifest
-def test_manifest_validate_assay_conditions(assay_file: Path) -> None:
-    """The manifest validates assay conditions."""
+def test_manifest_with_valid_assay_conditions(assay_file: Path) -> None:
+    """Test creating a Manifest with valid assay conditions."""
     try:
-        Manifest(
+        manifest = Manifest(
+            version=Version(1, 0),
             name="test_manifest",
             assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
             assays=[
@@ -174,13 +175,19 @@ def test_manifest_validate_assay_conditions(assay_file: Path) -> None:
         )
     except ValidationError as e:
         AssertionError(f"Manifest raised ValidationError: {e}")
+    else:
+        assert manifest.assay_conditions, "Valid assay conditions should be present"
 
+
+def test_manifest_with_undefined_assay_condition(assay_file: Path) -> None:
+    """Test creating a Manifest with undefined assay conditions."""
     with pytest.raises(
         ValidationError,
         match=r"validation error for Manifest\n"
         r".*Value error, Assay .* contains undefined conditions",
     ):
         Manifest(
+            version=Version(1, 0),
             name="test_manifest",
             assay_conditions=[{"name": "pH"}],
             assays=[{"path": assay_file, "conditions": {"temperature": 37.0}}],
