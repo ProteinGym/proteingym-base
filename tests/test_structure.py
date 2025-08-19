@@ -165,6 +165,39 @@ def bio_structure() -> BioStructure:
 
 
 @pytest.fixture
+def bio_structure2() -> BioStructure:
+    """Minimal biopython structure for testing."""
+    structure = BioStructure("test2")
+
+    model = Model(id=0)
+    structure.add(model)
+
+    chain = Chain(id="B")
+    model.add(chain)
+
+    residue = Residue(
+        id=(" ", 1, " "),
+        resname="PHE",
+        segid="",
+    )
+    chain.add(residue)
+
+    atom = Atom(
+        name="CA",
+        coord=np.array([10.0, 20.0, 30.0], dtype=float),
+        bfactor=20.0,
+        occupancy=1.0,
+        altloc=" ",
+        fullname=" CA ",  # PDB atom name field (4 characters)
+        serial_number=1,
+        element="N",
+    )
+    residue.add(atom)
+
+    return structure
+
+
+@pytest.fixture
 def pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     """PDB structure file for testing."""
     io = PDBIO()
@@ -175,10 +208,10 @@ def pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
 
 
 @pytest.fixture
-def cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
+def cif_file(tmp_path: Path, bio_structure2: BioStructure) -> Path:
     """CIF structure file for testing."""
     io = MMCIFIO()
-    io.set_structure(bio_structure)
+    io.set_structure(bio_structure2)
     path = tmp_path / "structure.cif"
     io.save(path.as_posix())
     return path
@@ -247,24 +280,24 @@ def test_structure_dump_to_cif(tmp_path: Path, bio_structure: BioStructure) -> N
 
 
 def test_dataset_with_structures(
-    pdb_file: Path, cif_file: Path, bio_structure: BioStructure
+    pdb_file: Path,
+    cif_file: Path,
+    bio_structure: BioStructure,
+    bio_structure2: BioStructure,
 ) -> None:
     """A Dataset can be created with structures from the manifest."""
-    bio_structure1 = bio_structure.copy()
-    bio_structure1.id = "structure1"
-    bio_structure2 = bio_structure.copy()
-    bio_structure2.id = "structure2"
+
     manifest = Manifest(
         name="test",
         structures=[
-            StructureManifestSection(path=pdb_file, name=bio_structure1.id),
+            StructureManifestSection(path=pdb_file, name=bio_structure.id),
             StructureManifestSection(path=cif_file, name=bio_structure2.id),
         ],
     )
     dataset = Dataset.from_manifest(manifest)
 
     assert len(dataset.structures) == 2
-    assert dataset.structures[0].value.strictly_equals(bio_structure1)
+    assert dataset.structures[0].value.strictly_equals(bio_structure)
 
     # There is an inconsistency in biopython that loads the full name of an Atom
     # differently for a PDB and CIF file - the full name is trimmed.
@@ -290,27 +323,28 @@ def test_dataset_dump_with_structure(
 
     zip = ZipFile(path)
     assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "structures/test.pdb" in zip.namelist(), (
+    assert f"structures/{structure._id}.pdb" in zip.namelist(), (
         "Structure file not found in dataset dump."
     )
 
-    with zip.open("structures/test.pdb", "r") as structure_file:
+    with zip.open(f"structures/{structure._id}.pdb", "r") as structure_file:
         string_io = io.StringIO(structure_file.read().decode("utf-8"))
         loaded_structure = PDBParser().get_structure("test", string_io)
         assert bio_structure == loaded_structure
 
 
 def test_dataset_dump_with_structures_contains_archive_names(
-    tmp_path: Path, bio_structure: BioStructure
+    tmp_path: Path, bio_structure: BioStructure, bio_structure2: BioStructure
 ) -> None:
     """Same as `test_dataset_dump_with_structure`, but with multiple structures."""
     expected = {"structures/structure1.pdb", "structures/structure2.pdb"}
     structure1 = Structure(name="structure1", value=bio_structure)
-    structure2 = Structure(name="structure2", value=bio_structure)
+    structure2 = Structure(name="structure2", value=bio_structure2)
     dataset = Dataset(name="test", structures=[structure1, structure2])
 
     path = dataset.dump(path=tmp_path)
 
+    expected = {f"structures/{structure1._id}.pdb", f"structures/{structure2._id}.pdb"}
     archive_names = ZipFile(path).namelist()
     assert not expected - set(archive_names), (
         f"Expected the following archive names {expected}"
@@ -338,17 +372,19 @@ def test_dataset_with_structure_dump_from_path_unit(
         assert loaded_structure.value == structure.value
 
 
-def test_dataset_failes_with_duplicate_structure_names() -> None:
-    """A dataset fails if there are duplicate structure names."""
-    duplicate_names = ["duplicate1", "duplicate2"]
-    structure1 = Structure(name=duplicate_names[0], value=BioStructure("test"))
-    structure2 = Structure(name=duplicate_names[0], value=BioStructure("test"))
-    structure3 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
-    structure4 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
+def test_dataset_fails_with_duplicate_structures(
+    bio_structure: BioStructure, bio_structure2: BioStructure
+) -> None:
+    """A dataset fails if there are duplicate structures."""
+    structure1 = Structure(name="duplicate1", value=bio_structure)
+    structure2 = Structure(name="duplicate1", value=bio_structure)
+    structure3 = Structure(name="duplicate2", value=bio_structure2)
+    structure4 = Structure(name="duplicate2", value=bio_structure2)
 
+    dup_structures = [structure1.name, structure3.name]
     with pytest.raises(
         ValidationError,
-        match=rf"Duplicate names found in:.*Structures:.*{', '.join(duplicate_names)}",
+        match=rf"Duplicate data found in.*Structures:.*{', '.join(dup_structures)}",
     ):
         Dataset(
             name="test", structures=[structure1, structure2, structure3, structure4]

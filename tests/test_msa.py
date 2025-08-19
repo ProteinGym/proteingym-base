@@ -138,6 +138,20 @@ def multiple_sequence_alignment() -> MultipleSeqAlignment:
 
 
 @pytest.fixture
+def multiple_sequence_alignment2() -> MultipleSeqAlignment:
+    """Another minimal biopython multiple sequence alignment for testing."""
+    alignment = MultipleSeqAlignment([])
+
+    a = SeqRecord(Seq("DDAFAES"), id="Alpha")
+    b = SeqRecord(Seq("DDA-AES"), id="Beta")
+    c = SeqRecord(Seq("DDAAGGT"), id="Gamma")
+    alignment = MultipleSeqAlignment(
+        [a, b, c], annotations={"tool": "demo"}, column_annotations={"stats": "CCCXCCC"}
+    )
+    return alignment
+
+
+@pytest.fixture
 def fasta_file(
     tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
 ) -> Path:
@@ -230,25 +244,29 @@ def test_dataset_dump_with_msa(
 
     zip = ZipFile(path)
     assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "msas/msa.fasta" in zip.namelist(), "MSA file not found in dataset dump."
+    assert f"msas/{msa._id}.fasta" in zip.namelist(), (
+        "MSA file not found in dataset dump."
+    )
 
-    with zip.open("msas/msa.fasta", "r") as msa_file:
+    with zip.open(f"msas/{msa._id}.fasta", "r") as msa_file:
         string_io = io.StringIO(msa_file.read().decode("utf-8"))
         loaded_msa = AlignIO.read(string_io, "fasta")
         assert multiple_sequence_alignment.alignment == loaded_msa.alignment
 
 
 def test_dataset_dump_with_msas_contains_archive_names(
-    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+    tmp_path: Path,
+    multiple_sequence_alignment: MultipleSeqAlignment,
+    multiple_sequence_alignment2: MultipleSeqAlignment,
 ) -> None:
     """Same as `test_dataset_dump_with_msa`, but with MSAs."""
-    expected = {"msas/msa1.fasta", "msas/msa2.fasta"}
     msa1 = MSA(name="msa1", value=multiple_sequence_alignment)
-    msa2 = MSA(name="msa2", value=multiple_sequence_alignment)
+    msa2 = MSA(name="msa2", value=multiple_sequence_alignment2)
     dataset = Dataset(name="test", msas=[msa1, msa2])
 
     path = dataset.dump(path=tmp_path)
 
+    expected = {f"msas/{msa1._id}.fasta", f"msas/{msa2._id}.fasta"}
     archive_names = ZipFile(path).namelist()
     assert not expected - set(archive_names), (
         f"Expected the following archive names {expected}"
@@ -256,11 +274,13 @@ def test_dataset_dump_with_msas_contains_archive_names(
 
 
 def test_dataset_with_msas_dump_from_path_unit(
-    tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment
+    tmp_path: Path,
+    multiple_sequence_alignment: MultipleSeqAlignment,
+    multiple_sequence_alignment2: MultipleSeqAlignment,
 ) -> None:
     """Dumping a dataset with MSAs should return the same after reading"""
     msa1 = MSA(name="msa1", value=multiple_sequence_alignment)
-    msa2 = MSA(name="msa2", value=multiple_sequence_alignment)
+    msa2 = MSA(name="msa2", value=multiple_sequence_alignment2)
     dataset = Dataset(name="test", msas=[msa1, msa2])
 
     path = dataset.dump(path=tmp_path)
@@ -275,18 +295,19 @@ def test_dataset_with_msas_dump_from_path_unit(
         assert loaded_msa.value.alignment == msa.value.alignment
 
 
-def test_dataset_fails_with_duplicate_msa_names(
+def test_dataset_fails_with_duplicate_msas(
     multiple_sequence_alignment: MultipleSeqAlignment,
+    multiple_sequence_alignment2: MultipleSeqAlignment,
 ) -> None:
     """A dataset with duplicate MSA names should raise a ValidationError."""
-    duplicate_names = ["duplicate1", "duplicate2"]
-    msa1 = MSA(name=duplicate_names[0], value=multiple_sequence_alignment)
-    msa2 = MSA(name=duplicate_names[0], value=multiple_sequence_alignment)
-    msa3 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
-    msa4 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
+    msa1 = MSA(name="duplicate1", value=multiple_sequence_alignment)
+    msa2 = MSA(name="duplicate1", value=multiple_sequence_alignment)
+    msa3 = MSA(name="duplicate2", value=multiple_sequence_alignment2)
+    msa4 = MSA(name="duplicate2", value=multiple_sequence_alignment2)
 
+    duplicate_msas = [msa1.name, msa3.name]
     with pytest.raises(
         ValidationError,
-        match=rf"Duplicate names found in:.*MSAs:.*{', '.join(duplicate_names)}",
+        match=rf"Duplicate data found in .*MSAs:.*{', '.join(duplicate_msas)}",
     ):
         Dataset(name="test", msas=[msa1, msa2, msa3, msa4])

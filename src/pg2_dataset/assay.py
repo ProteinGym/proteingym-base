@@ -1,4 +1,6 @@
+import json
 from enum import StrEnum
+from hashlib import md5
 from pathlib import Path
 
 import polars as pl
@@ -118,6 +120,9 @@ class Assay(BaseModel):
     name: str
     """The name of the assay."""
 
+    _id: str
+    """The unique identifier for the assay."""
+
     records: list[tuple[str, int | float | bool | str]]
     """The records of the assay, pairs of Sequence and target values."""
 
@@ -132,6 +137,16 @@ class Assay(BaseModel):
 
     target_feature_name: str = "target"
     """The target feature name in the assay records."""
+
+    def __hash__(self):
+        return int(self._id[:16], 16)
+
+    @model_validator(mode="after")
+    def set_id(self) -> "Assay":
+        """Set the unique identifier for the assay."""
+        records_json = json.dumps(self.records) + json.dumps(self.conditions)
+        self._id = md5(records_json.encode("utf-8")).hexdigest()
+        return self
 
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":

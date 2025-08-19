@@ -241,16 +241,16 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
         assert original_assay.records == loaded_assay.records
 
 
-def test_dataset_fails_with_duplicate_assay_names() -> None:
+def test_dataset_fails_with_duplicate_assays() -> None:
     """A dataset fails if there are duplicate assay names."""
-    duplicate_names = ["duplicate1", "duplicate2"]
-    assay1 = Assay(name=duplicate_names[0], records=[("F1I", 1.56)])
-    assay2 = Assay(name=duplicate_names[0], records=[("F1L", 2.0)])
-    assay3 = Assay(name=duplicate_names[1], records=[("F2I", 1.0)])
-    assay4 = Assay(name=duplicate_names[1], records=[("F2L", 3.0)])
+    assay1 = Assay(name="assay1", records=[("F1I", 1.56)])
+    assay2 = Assay(name="assay1", records=[("F1I", 1.56)])
+    assay3 = Assay(name="assay2", records=[("F2I", 1.0)])
+    assay4 = Assay(name="assay2", records=[("F2I", 1.0)])
 
+    duplicate_assays = [assay1.name, assay3.name]
     with pytest.raises(
         ValidationError,
-        match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
+        match=rf"Duplicate data found in .*Assays:.*{', '.join(duplicate_assays)}",
     ):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])

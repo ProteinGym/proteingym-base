@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from enum import StrEnum
+from hashlib import md5
 from pathlib import Path
 
 from Bio import SeqIO
@@ -13,6 +14,7 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
 
@@ -100,6 +102,9 @@ class Sequence(BaseModel):
     name: str
     """The name of the sequence."""
 
+    _id: str
+    """The unique identifier for the sequence."""
+
     value: Seq
     """The value of the sequence, a Seq object."""
 
@@ -111,6 +116,15 @@ class Sequence(BaseModel):
 
     alphabet: SequenceAlphabet
     """The alphabet of the sequence."""
+
+    def __hash__(self):
+        return int(self._id[:16], 16)
+
+    @model_validator(mode="after")
+    def set_id(self) -> "Sequence":
+        """Set the unique identifier for the sequence."""
+        self._id = md5(str(self.value).encode()).hexdigest()
+        return self
 
     @classmethod
     def from_manifest_section(
@@ -171,7 +185,7 @@ class Sequence(BaseModel):
             raise ValueError(f"Unsupported sequence format: {format}")
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}.{format.value}"
+            path = path / f"{self._id}.{format.value}"
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )

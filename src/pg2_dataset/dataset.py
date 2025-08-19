@@ -74,11 +74,11 @@ class Dataset(BaseModel):
     """The multiple sequence alignments included in the dataset."""
 
     @model_validator(mode="after")
-    def _validate_unique_names(self) -> "Dataset":
-        """Ensure that the names are unique within each data type.
+    def _validate_unique_ids(self) -> "Dataset":
+        """Ensure that the IDs are unique within each data type.
 
         Checks each data type (assays, sequences, structures, msas) to ensure
-        that the names are unique. Raises error if duplicates are found.
+        that the IDs are unique. Raises error if duplicates are found.
 
         Returns:
             Dataset: The validated dataset instance.
@@ -87,10 +87,10 @@ class Dataset(BaseModel):
             ValueError: If duplicate names are found in any of the data types.
         """
 
-        def _get_duplicate_names(items: list[BaseModel]) -> list[str]:
-            """Get duplicate names from a list of items."""
-            name_counts = collections.Counter(item.name for item in items if item.name)
-            return [name for name, count in name_counts.items() if count > 1]
+        def _get_duplicate_items(items: list[BaseModel]) -> list[str]:
+            """Get duplicate data from a list of items."""
+            duplicates = collections.Counter(item for item in items)
+            return [item.name for item, count in duplicates.items() if count > 1]
 
         data_types = {
             Assay: self.assays,
@@ -100,7 +100,7 @@ class Dataset(BaseModel):
         }
 
         duplicates = {
-            data_class: _get_duplicate_names(items)
+            data_class: _get_duplicate_items(items)
             for data_class, items in data_types.items()
         }
 
@@ -110,7 +110,7 @@ class Dataset(BaseModel):
                 for data_class, names in duplicates.items()
                 if names
             ]
-            raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
+            raise ValueError(f"Duplicate data found in {'\n'.join(error_lines)}")
         return self
 
     @classmethod

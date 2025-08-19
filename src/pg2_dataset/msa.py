@@ -1,4 +1,5 @@
 from enum import StrEnum
+from hashlib import md5
 from pathlib import Path
 
 from Bio import AlignIO
@@ -12,6 +13,7 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
 
@@ -85,11 +87,23 @@ class MSA(BaseModel):
     name: str
     """The name of the MSA."""
 
+    _id: str | None = None
+    """The unique identifier for the MSA."""
+
     value: MultipleSeqAlignment
     """The value of the MSA, typically a file path or binary data."""
 
     description: str | None = None
     """A brief description of the MSA."""
+
+    def __hash__(self):
+        return int(self._id[:16], 16)
+
+    @model_validator(mode="after")
+    def set_id(self) -> "MSA":
+        """Set the unique identifier for the sequence."""
+        self._id = md5(str(self.value).encode()).hexdigest()
+        return self
 
     @classmethod
     def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
@@ -146,6 +160,6 @@ class MSA(BaseModel):
             raise ValueError(f"Format {format} is not supported for MSA dumping.")
         path = path or Path.cwd()
         if path.is_dir():
-            path /= f"{self.name}.{format.value}"
+            path /= f"{self._id}.{format.value}"
         AlignIO.write(self.value, path, format=format.value)
         return path

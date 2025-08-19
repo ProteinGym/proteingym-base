@@ -1,6 +1,8 @@
 """The protein structure of the dataset."""
 
+import io
 from enum import StrEnum
+from hashlib import md5
 from pathlib import Path
 
 from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser
@@ -15,6 +17,7 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
 
@@ -79,6 +82,9 @@ class Structure(BaseModel):
     name: str
     """The name of the protein structure."""
 
+    _id: str
+    """The unique identifier for the protein structure."""
+
     value: BioStructure
     """The value of the protein structure, typically a file path or binary data."""
 
@@ -87,6 +93,20 @@ class Structure(BaseModel):
 
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the protein structure."""
+
+    def __hash__(self):
+        return int(self._id[:16], 16)
+
+    @model_validator(mode="after")
+    def set_id(self) -> "Structure":
+        """Set the unique identifier for the structure."""
+        buffer = io.StringIO()
+        io_writer = PDBIO()
+        io_writer.set_structure(self.value)
+        io_writer.save(buffer)
+        buffer.seek(0)
+        self._id = md5(buffer.read().encode("utf-8")).hexdigest()
+        return self
 
     @classmethod
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
@@ -152,7 +172,7 @@ class Structure(BaseModel):
             NotImplementedError if the file type is not supported.
         """
         path = path or Path.cwd()
-        structure_path = path / f"{self.name}{format.value}"
+        structure_path = path / f"{self._id}{format.value}"
         match format:
             case StructureFormat.PDB:
                 io = PDBIO()

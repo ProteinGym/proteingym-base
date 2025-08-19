@@ -199,7 +199,7 @@ def test_sequence_dump(tmp_path: Path) -> None:
         alphabet=SequenceAlphabet("DNA"),
     )
     sequence.dump(path=Path(tmp_path))
-    file_path = Path(tmp_path) / f"test_seq.{SequenceFormat.FASTA.value}"
+    file_path = Path(tmp_path) / f"{sequence._id}.{SequenceFormat.FASTA.value}"
     assert file_path.exists()
     with open(file_path, "r") as f:
         content = f.read()
@@ -232,11 +232,11 @@ def test_dataset_dump_with_sequence(tmp_path: Path) -> None:
 
     zip = ZipFile(path)
     assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "sequences/seq.fasta" in zip.namelist(), (
+    assert f"sequences/{sequence._id}.fasta" in zip.namelist(), (
         "Sequence file not found in dataset dump."
     )
 
-    with zip.open("sequences/seq.fasta", "r") as sequence_file:
+    with zip.open(f"sequences/{sequence._id}.fasta", "r") as sequence_file:
         string_io = io.StringIO(sequence_file.read().decode("utf-8"))
         loaded_sequence = SeqIO.read(string_io, "fasta")
         assert bio_sequence == loaded_sequence.seq
@@ -244,7 +244,6 @@ def test_dataset_dump_with_sequence(tmp_path: Path) -> None:
 
 def test_dataset_dump_with_sequences_contains_archive_names(tmp_path: Path) -> None:
     """Same as `test_dataset_dump_with_sequences`, but with multiple sequences."""
-    expected = {"sequences/sequence1.fasta", "sequences/sequence2.fasta"}
     sequence1 = Sequence(
         name="sequence1",
         value=Seq("CCCCCCCCCCCCC"),
@@ -260,9 +259,9 @@ def test_dataset_dump_with_sequences_contains_archive_names(tmp_path: Path) -> N
         alphabet=SequenceAlphabet.DNA,
     )
     dataset = Dataset(name="test", sequences=[sequence1, sequence2])
-
     path = dataset.dump(path=tmp_path)
 
+    expected = {f"sequences/{sequence1._id}.fasta", f"sequences/{sequence2._id}.fasta"}
     archive_names = ZipFile(path).namelist()
     assert not expected - set(archive_names), (
         f"Expected the following archive names {expected}"
@@ -301,37 +300,37 @@ def test_dataset_with_sequences_dump_from_path_unit(tmp_path: Path) -> None:
         assert loaded_sequence.value == sequence.value
 
 
-def test_dataset_fails_with_duplicate_sequence_names() -> None:
+def test_dataset_fails_with_duplicate_sequences() -> None:
     """A dataset with duplicate sequence names should raise a ValueError."""
-    duplicate_names = ["duplicate1", "duplicate2"]
     sequence1 = Sequence(
-        name=duplicate_names[0],
+        name="duplicate1",
         value=Seq("CCCCCCCCCCCCC"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.DNA,
     )
     sequence2 = Sequence(
-        name=duplicate_names[0],
-        value=Seq("AAAAAAAAAAAA"),
+        name="duplicate1",
+        value=Seq("CCCCCCCCCCCCC"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.DNA,
     )
     sequence3 = Sequence(
-        name=duplicate_names[1],
+        name="duplicate2",
         value=Seq("GGGGGGGGGGGGG"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.DNA,
     )
     sequence4 = Sequence(
-        name=duplicate_names[1],
-        value=Seq("TTTTTTTTTTTTT"),
+        name="duplicate2",
+        value=Seq("GGGGGGGGGGGGG"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.DNA,
     )
 
+    duplicate_sequences = [sequence1.name, sequence3.name]
     with pytest.raises(
         ValidationError,
-        match=rf"Duplicate names found in:.*Sequences:.*{', '.join(duplicate_names)}",
+        match=rf"Duplicate data found in.*Sequences:.*{', '.join(duplicate_sequences)}",
     ):
         Dataset(name="test", sequences=[sequence1, sequence2, sequence3, sequence4])
 
