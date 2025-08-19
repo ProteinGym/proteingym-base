@@ -13,7 +13,9 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from pg2_dataset.models.sequence import Sequence, SequenceAlphabet
+
+from pg2_dataset.sequence import Sequence, SequenceAlphabet
+
 
 class AssayFormat(StrEnum):
     """Supported assay file formats."""
@@ -111,6 +113,7 @@ class AssayManifestSection(BaseModel):
         """Serialize the sequence alphabet as a string."""
         return sequence_alphabet.value
 
+
 class Assay(BaseModel):
     """An assay in the dataset."""
 
@@ -149,12 +152,12 @@ class Assay(BaseModel):
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
-            # The sequence name is taken from the string itself as the name is not 
+            # The sequence name is taken from the string itself as the name is not
             # provided in the assay file.
             pl.col(section.sequence).map_elements(
                 lambda x: Sequence(name=x, value=x, alphabet=section.sequence_alphabet),
-                return_dtype=pl.Object
-                )
+                return_dtype=pl.Object,
+            )
         )
 
         return cls(
@@ -211,7 +214,9 @@ class Assay(BaseModel):
             orient="row",
         )
         df = df.with_columns(
-            pl.col(self.sequence_feature_name).map_elements(lambda seq: str(seq.value), return_dtype=pl.String)
+            pl.col(self.sequence_feature_name).map_elements(
+                lambda seq: str(seq.value), return_dtype=pl.String
+            )
         )
         match format:
             case AssayFormat.CSV:

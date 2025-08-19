@@ -14,6 +14,7 @@ from pg2_dataset.dataset import Dataset, DatasetArchiveLayout
 from pg2_dataset.manifest import Manifest
 from pg2_dataset.sequence import Sequence, SequenceAlphabet
 
+
 @pytest.fixture
 def assay_file(tmp_path: Path) -> Path:
     """Fixture to create a temporary assay file."""
@@ -101,7 +102,7 @@ def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [
         (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.56),
-        (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0)
+        (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0),
     ]
 
     try:
@@ -120,7 +121,12 @@ def test_assay() -> None:
         match=r"validation error for Assay\nconditions\n.*Input should be a valid "
         "dictionary",
     ):
-        Assay(name="assay", conditions="bad_condition", sequence_alphabet="AA", records=records)
+        Assay(
+            name="assay",
+            conditions="bad_condition",
+            sequence_alphabet="AA",
+            records=records,
+        )
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:
@@ -149,7 +155,7 @@ def test_as_manifest_section(assay_file: Path) -> None:
         sequence_alphabet=SequenceAlphabet.DNA,
         records=[
             (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.56),
-            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0)
+            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0),
         ],
     )
     manifest = assay.as_manifest_section(path=assay_file)
@@ -162,7 +168,7 @@ def test_assay_dump(tmp_path: Path) -> None:
         name="assay",
         records=[
             (Sequence(name="seq1", value="ABC", alphabet="AA"), 1.56),
-            (Sequence(name="seq2", value="DEF", alphabet="AA"), 2.0)
+            (Sequence(name="seq2", value="DEF", alphabet="AA"), 2.0),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -184,7 +190,11 @@ def test_manifest_validate_assay_conditions(assay_file: Path) -> None:
             name="test_manifest",
             assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
             assays=[
-                {"path": assay_file, "sequence_type": SequenceAlphabet.DNA, "conditions": {"pH": 7.0, "temperature": 37.0}}
+                {
+                    "path": assay_file,
+                    "sequence_type": SequenceAlphabet.DNA,
+                    "conditions": {"pH": 7.0, "temperature": 37.0},
+                }
             ],
         )
     except ValidationError as e:
@@ -198,7 +208,13 @@ def test_manifest_validate_assay_conditions(assay_file: Path) -> None:
         Manifest(
             name="test_manifest",
             assay_conditions=[{"name": "pH"}],
-            assays=[{"path": assay_file, "sequence_alphabet": SequenceAlphabet.DNA,"conditions": {"temperature": 37.0}}],
+            assays=[
+                {
+                    "path": assay_file,
+                    "sequence_alphabet": SequenceAlphabet.DNA,
+                    "conditions": {"temperature": 37.0},
+                }
+            ],
         )
 
 
@@ -208,7 +224,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
         name="assay1",
         records=[
             (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.56),
-            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0)
+            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -218,7 +234,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
         name="assay2",
         records=[
             (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.0),
-            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 3.0)
+            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 3.0),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -245,9 +261,9 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
     assay1 = Assay(
         name="assay1",
         records=[
-            # The sequence names are kept same as 
+            # The sequence names are kept same as
             (Sequence(name="ABC", value="ABC", alphabet="AA"), 1.0),
-            (Sequence(name="DEF", value="DEF", alphabet="AA"), 3.0)
+            (Sequence(name="DEF", value="DEF", alphabet="AA"), 3.0),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -274,10 +290,34 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
 def test_dataset_fails_with_duplicate_assay_names() -> None:
     """A dataset fails if there are duplicate assay names."""
     duplicate_names = ["duplicate1", "duplicate2"]
-    assay1 = Assay(name=duplicate_names[0], records=[(Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.0)], sequence_alphabet="AA")
-    assay2 = Assay(name=duplicate_names[0], records=[(Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 2.0)], sequence_alphabet="AA")
-    assay3 = Assay(name=duplicate_names[1], records=[(Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.0)], sequence_alphabet="AA")
-    assay4 = Assay(name=duplicate_names[1], records=[(Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 3.0)], sequence_alphabet="AA")
+    assay1 = Assay(
+        name=duplicate_names[0],
+        records=[
+            (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.0)
+        ],
+        sequence_alphabet="AA",
+    )
+    assay2 = Assay(
+        name=duplicate_names[0],
+        records=[
+            (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 2.0)
+        ],
+        sequence_alphabet="AA",
+    )
+    assay3 = Assay(
+        name=duplicate_names[1],
+        records=[
+            (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 1.0)
+        ],
+        sequence_alphabet="AA",
+    )
+    assay4 = Assay(
+        name=duplicate_names[1],
+        records=[
+            (Sequence(name="seq1", value="ABC", alphabet=SequenceAlphabet.DNA), 3.0)
+        ],
+        sequence_alphabet="AA",
+    )
 
     with pytest.raises(
         ValidationError,

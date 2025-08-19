@@ -66,6 +66,7 @@ unit = "pH"
 name = "assay"
 path = "assay.csv"
 sequence = "sequence"
+sequence_alphabet = "AA"
 target = "target"
 
 [ assays.conditions ]

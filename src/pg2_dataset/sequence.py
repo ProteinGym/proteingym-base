@@ -2,18 +2,19 @@ from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
+
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import (
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     FilePath,
     SerializationInfo,
     ValidationInfo,
     field_serializer,
     field_validator,
-    BeforeValidator
 )
 
 
@@ -101,7 +102,9 @@ class Sequence(BaseModel):
     name: str
     """The name of the sequence."""
 
-    value: Annotated[Seq, BeforeValidator(lambda x: Seq(x) if isinstance(x, str) else x)]
+    value: Annotated[
+        Seq, BeforeValidator(lambda x: Seq(x) if isinstance(x, str) else x)
+    ]
     """The value of the sequence, a Seq object."""
 
     description: str | None = None
