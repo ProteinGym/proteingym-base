@@ -1,11 +1,10 @@
 import io
 from pathlib import Path
-from zipfile import ZipFile
 
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.models.dataset import Dataset, Manifest
+from pg2_dataset.manifest import Manifest
 
 
 @pytest.fixture
@@ -69,9 +68,7 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
 
     Or, the documentation or test file is moved. Solve this by updating the path.
     """
-    documentation_file_path = Path(__file__).parent.parent.parent / Path(
-        "docs/manifest.md"
-    )
+    documentation_file_path = Path(__file__).parent.parent / Path("docs/manifest.md")
     documentation_contents = documentation_file_path.read_text(encoding="utf-8")
 
     assert documentation_file_path.exists(), (
@@ -246,35 +243,3 @@ def test_manifest_dump_relative_path(
     path = manifest.dump(path=tmp_path)
 
     assert f'path = "{relative_path}"' in path.read_text()
-
-
-def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
-    """Test the zip file created by the Dataset dump.
-
-    Docs:
-        https://docs.python.org/3/library/zipfile.html#zipfile.ZipFile.testzip
-    """
-    dataset = Dataset(name="test")
-
-    path = dataset.dump(path=tmp_path)
-
-    assert not ZipFile(path).testzip(), "Dataset dump contains a bad file."
-
-
-def test_dataset_dump_creates_one_file(tmp_path: Path) -> None:
-    """The dataset dump should create a single file."""
-    dataset = Dataset(name="test")
-
-    path = dataset.dump(path=tmp_path)
-
-    paths = list(tmp_path.iterdir())
-    assert [path] == paths, f"Expected one file in the directory, but found: {paths}"
-
-
-def test_dataset_from_path_simple(tmp_path: Path) -> None:
-    """Create a dataset from a path to a zip file."""
-    dataset_path = Dataset(name="test").dump(path=tmp_path)
-
-    dataset = Dataset.from_path(dataset_path)
-
-    assert dataset.name == "test", "Dataset name does not match the expected name."

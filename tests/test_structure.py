@@ -15,8 +15,9 @@ from Bio.PDB.Residue import Residue
 from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
 
-from pg2_dataset.models.dataset import Dataset, Manifest
-from pg2_dataset.models.structure import (
+from pg2_dataset.dataset import Dataset
+from pg2_dataset.manifest import Manifest
+from pg2_dataset.structure import (
     Structure,
     StructureFormat,
     StructureManifestSection,

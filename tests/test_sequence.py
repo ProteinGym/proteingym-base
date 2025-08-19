@@ -9,8 +9,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
-from pg2_dataset.models.dataset import Dataset, Manifest
-from pg2_dataset.models.sequence import (
+from pg2_dataset.dataset import Dataset
+from pg2_dataset.manifest import Manifest
+from pg2_dataset.sequence import (
     Sequence,
     SequenceAlphabet,
     SequenceFormat,
@@ -333,7 +334,6 @@ def test_dataset_fails_with_duplicate_sequence_names() -> None:
         match=rf"Duplicate names found in:.*Sequences:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", sequences=[sequence1, sequence2, sequence3, sequence4])
-
 
 
 def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:

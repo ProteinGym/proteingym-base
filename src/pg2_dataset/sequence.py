@@ -55,7 +55,7 @@ class SequenceManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    type: SequenceType
+    type: SequenceType | None = None
     """The type of the sequence."""
 
     alphabet: SequenceAlphabet

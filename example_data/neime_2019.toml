@@ -22,9 +22,9 @@ T = 37
 PH = 7
 
 [[ sequences ]]
+path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
 type = "wild_type"
 alphabet = "AA"
-path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
 
 [[ structures ]]
 path = "./NEIME_2019/Structures/computational.pdb"
