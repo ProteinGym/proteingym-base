@@ -19,6 +19,7 @@ class AssayFormat(StrEnum):
     """Supported assay file formats."""
 
     CSV = ".csv"
+    """A comma separated text file"""
 
 
 class AssayCondition(BaseModel):
