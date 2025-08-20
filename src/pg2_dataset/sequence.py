@@ -34,6 +34,9 @@ class SequenceType(StrEnum):
     STARTING_SEQUENCE = "starting_sequence"
     """A non-wild-type reference sequence for the design campaign"""
 
+    ENGINEERED_SEQUENCE = "engineered_sequence"
+    """A sequence with engineered mutations in them, e.g. non-WT and not the reference sequence"""
+
     CONTROL = "control_sequence"
     """Control sequences with know properties similar to the tested samples"""
 
