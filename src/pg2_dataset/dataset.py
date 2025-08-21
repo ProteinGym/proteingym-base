@@ -45,6 +45,7 @@ class Dataset(BaseModel):
     """
 
     model_config = ConfigDict(
+        arbitrary_types_allowed=True,  # Required for protein data types
         extra="forbid",
         frozen=True,
         use_attribute_docstrings=True,
