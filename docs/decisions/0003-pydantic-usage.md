@@ -1,4 +1,4 @@
-# 2. Pydantic usage
+# 3. Pydantic usage
 
 Date: 2025-08-18
 Status: Accepted
