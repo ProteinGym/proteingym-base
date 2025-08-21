@@ -59,7 +59,7 @@ def test_build_command_invalid_manifest_contents(tmp_path: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(app, ["build", str(invalid_manifest)])
     assert result.exit_code == 1
-    assert "validation error for Manifest" in str(result.exception)
+    assert "validation errors for Manifest" in str(result.exception)
 
 
 def test_build_command_with_output_path(tmp_path: Path) -> None:

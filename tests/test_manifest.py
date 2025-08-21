@@ -81,7 +81,7 @@ def test_manifest_contents_in_documentation(manifest_contents: str) -> None:
 
 def test_manifest_from_path_like_minimal_contents() -> None:
     """The manifest requires only a name at minimum."""
-    manifest_contents_minimal = io.StringIO("name = 'dataset'")
+    manifest_contents_minimal = io.StringIO("version = '1.0.0'\nname = 'dataset'")
 
     try:
         Manifest.from_path(manifest_contents_minimal)
@@ -91,9 +91,22 @@ def test_manifest_from_path_like_minimal_contents() -> None:
         assert True, "Manifest loaded successfully from path-like object."
 
 
+def test_manifest_from_path_like_requires_version_field() -> None:
+    """The manifest version is a required field."""
+    manifest_contents_without_version = io.StringIO("name = 'dataset'")
+
+    with pytest.raises(
+        ValidationError,
+        match="validation error for Manifest\nversion\n  Field required",
+    ):
+        Manifest.from_path(manifest_contents_without_version)
+
+
 def test_manifest_from_path_like_requires_name_field() -> None:
     """The manifest name is a required field."""
-    manifest_contents_without_name = io.StringIO("description = 'example description'")
+    manifest_contents_without_name = io.StringIO(
+        "version = '1.0.0'\ndescription = 'example description'"
+    )
 
     with pytest.raises(
         ValidationError, match="validation error for Manifest\nname\n  Field required"
@@ -103,7 +116,7 @@ def test_manifest_from_path_like_requires_name_field() -> None:
 
 def test_manifest_from_path_like_requires_name_field_with_non_zero_length() -> None:
     """The manifest name is required to have non-zero length."""
-    manifest_contents_without_name = io.StringIO("name = ''")
+    manifest_contents_without_name = io.StringIO("version = '1.0.0'\nname = ''")
 
     match = (
         "validation error for Manifest\nname\n  String should have at least 1 character"
@@ -174,7 +187,7 @@ def test_manifest_version() -> None:
 
 def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
     """The manifest dump should create a file with content."""
-    manifest = Manifest(name="test")
+    manifest = Manifest(version="1.0.0", name="test")
 
     path = manifest.dump(path=tmp_path)
 
@@ -184,7 +197,7 @@ def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
 
 def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
     """The manifest dump creates a file that can be loaded back with same content."""
-    manifest = Manifest(name="test")
+    manifest = Manifest(version="1.0.0", name="test")
 
     path = manifest.dump(path=tmp_path)
 

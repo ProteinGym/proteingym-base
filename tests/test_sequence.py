@@ -10,7 +10,7 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from pg2_dataset.dataset import Dataset
-from pg2_dataset.manifest import Manifest
+from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
 from pg2_dataset.sequence import (
     Sequence,
     SequenceAlphabet,
@@ -342,6 +342,7 @@ def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
     fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
 
     dataset_manifest = Manifest(
+        version=MANIFEST_LATEST_VERSION,
         name="test",
         sequences=[
             {
