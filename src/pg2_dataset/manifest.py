@@ -68,7 +68,7 @@ class _VersionPydanticAnnotation:
         return handler(core_schema.str_schema())
 
 
-MANIFEST_LATEST_VERSION: Version = Version(1)
+MANIFEST_LATEST_VERSION: Version = Version(1, 0)
 """The latest version of the manifest schema."""
 
 
