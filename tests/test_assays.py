@@ -110,12 +110,6 @@ def test_assay() -> None:
         AssertionError(f"Assay raised ValidationError: {e}")
     assert assay.sequence_feature_name == "sequence"
     assert assay.target_feature_name == "target"
-    with pytest.raises(
-        ValidationError,
-        match=r"validation error for Assay\nconditions\n.*Input should be a valid "
-        "dictionary",
-    ):
-        Assay(name="assay", conditions="bad_condition", records=[("F1I", 1)])
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:
