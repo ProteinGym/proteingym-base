@@ -6,9 +6,21 @@ Status: Accepted
 ## Context and Problem Statement
 
 The project uses Pydantic for data validation and (de)serialization. However,
-the project misuses/overuses Pydantic features, leading to unnecessary complexity
-by not following a clear separation of concerns. This decision aims to clarify
-the intended usage of Pydantic in the project.
+Pydantic introduces a risk for misusing/overusing its features, leading to
+unnecessary complexity when not following a clear separation of concerns. This
+decision aims to clarify the intended usage of Pydantic in the project.
+
+We use [Pydantic models](https://docs.pydantic.dev/latest/concepts/models/)
+that introduce (usefull) features for data validation and serialization.
+The validation and serialization functionality is inherited through Pydantic's 
+[`BaseModel`](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel),
+extending what would have been vanilla Python dataclasses with (implicit) validation,
+coercing and parsing data.
+
+When introducing data validation (with Pydantic), a decision has to be taken
+where to validate. Following the "fail early" paradigm, we prefer to validate
+as early as possible, while keeping the validation logic close to the relevant
+context.
 
 ## Decision
 
@@ -22,7 +34,8 @@ Use Pydantic:
 - Uses Pydantic's features for data validation.
 - Fail as early as possible when user-provided data does not conform to the
   expected schema.
-- Avoid overusing Pydantic.
+- Avoid overusing Pydantic by validating data that can be trusted. (Pydantic is
+  intended for validating [untrusted data](https://docs.pydantic.dev/latest/concepts/models/))
 
 ## Considered Options
 
