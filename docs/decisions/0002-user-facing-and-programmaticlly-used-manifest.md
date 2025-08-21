@@ -33,7 +33,7 @@ Furthermore, this package can augment the metadata in the external manifest with
 runtime metadata, like creation time, to create the metadata for the internal
 manifest.
 
-Currently we have an "external" user-facing manifest only. If we reuse that
+Currently we have an external user-facing manifest only. If we reuse that
 within the dataset archive, then it is likely to become inaccurate when
 archiving the dataset. 
 
@@ -46,7 +46,7 @@ unavailable at this time
 
 Additionally, a user needs to open the dataset archive to quickly reference the
 manifest (from a text editor) while we want users to only use the arhive 
-through our package. Therefore, it is probably better to ship the (external)
+through our package. Therefore, it is better to ship the (external)
 manifest **next to** the persisted dataset instead **within** .
 
 ## Decision
