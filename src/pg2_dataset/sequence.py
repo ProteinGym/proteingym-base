@@ -21,6 +21,7 @@ class SequenceFormat(StrEnum):
 
     FASTA = "fasta"
     """Fasta file format for biological sequences (usually amino acid sequences)"""
+    
     FASTQ = "fastq"
     """FASTQ file format for biological sequences (usually nucleotide sequences)"""
 
@@ -35,8 +36,10 @@ class SequenceType(StrEnum):
     """A non-wild-type reference sequence for the design campaign"""
 
     ENGINEERED_SEQUENCE = "engineered_sequence"
-    """A sequence with engineered mutations in them,
-    e.g. non-WT and not the reference sequence"""
+    """A sequence with engineered mutations in them.
+    
+    For example, non-WT and not the reference sequence
+    """
 
     CONTROL = "control_sequence"
     """Control sequences with know properties similar to the tested samples"""
@@ -50,8 +53,10 @@ class SequenceAlphabet(StrEnum):
 
     DNA = "DNA"
     """DNA sequences containing ACGT nucleotides"""
+    
     RNA = "RNA"
     """RNA sequence containing ACGU nucleotides"""
+    
     AA = "AA"
     """Amino acid sequence containing the twenty natural occuring nucleotides"""
 
