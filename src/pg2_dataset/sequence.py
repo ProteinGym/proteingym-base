@@ -1,3 +1,4 @@
+import dataclasses
 from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
@@ -108,16 +109,9 @@ class SequenceManifestSection(BaseModel):
         return str_enum.value
 
 
-class Sequence(BaseModel):
+@dataclasses.dataclass
+class Sequence:
     """A sequence in the dataset."""
-
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-        extra="forbid",
-        frozen=True,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
 
     name: str
     """The name of the sequence."""
@@ -125,14 +119,14 @@ class Sequence(BaseModel):
     value: Seq
     """The value of the sequence, a Seq object."""
 
-    description: str | None = None
-    """The description of the sequence."""
-
     type: SequenceType
     """The type of the sequence."""
 
     alphabet: SequenceAlphabet
     """The alphabet of the sequence."""
+
+    description: str | None = None
+    """The description of the sequence."""
 
     @classmethod
     def from_manifest_section(
