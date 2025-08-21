@@ -21,7 +21,7 @@ class SequenceFormat(StrEnum):
 
     FASTA = "fasta"
     """Fasta file format for biological sequences (usually amino acid sequences)"""
-    
+
     FASTQ = "fastq"
     """FASTQ file format for biological sequences (usually nucleotide sequences)"""
 
@@ -37,7 +37,7 @@ class SequenceType(StrEnum):
 
     ENGINEERED_SEQUENCE = "engineered_sequence"
     """A sequence with engineered mutations in them.
-    
+
     For example, non-WT and not the reference sequence
     """
 
@@ -53,10 +53,10 @@ class SequenceAlphabet(StrEnum):
 
     DNA = "DNA"
     """DNA sequences containing ACGT nucleotides"""
-    
+
     RNA = "RNA"
     """RNA sequence containing ACGU nucleotides"""
-    
+
     AA = "AA"
     """Amino acid sequence containing the twenty natural occuring nucleotides"""
 

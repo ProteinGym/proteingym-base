@@ -64,7 +64,7 @@ class StructureFormat(StrEnum):
 
     MMCIF = ".cif"
     """Macromolecular Crystallographic Information File format.
-    
+
     This is the new default format used by the Protein Data Bank
     """
 
