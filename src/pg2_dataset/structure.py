@@ -60,9 +60,16 @@ class StructureFormat(StrEnum):
     """Supported structure file formats."""
 
     PDB = ".pdb"
-    MMCIF = ".cif"
-    BINARY_CIF = ".bcif"
+    """Protein Data Bank format"""
 
+    MMCIF = ".cif"
+    """Macromolecular Crystallographic Information File format.
+
+    This is the new default format used by the Protein Data Bank
+    """
+
+    BINARY_CIF = ".bcif"
+    """Binary encoding of the mmCIF format """
 
 class Structure(BaseModel):
     """A protein structure in the dataset."""

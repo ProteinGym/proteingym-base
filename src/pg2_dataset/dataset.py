@@ -12,7 +12,7 @@ from pydantic import (
 )
 
 from pg2_dataset.assay import Assay, AssayCondition
-from pg2_dataset.manifest import Manifest
+from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
 from pg2_dataset.msa import MSA
 from pg2_dataset.sequence import Sequence
 from pg2_dataset.structure import Structure
@@ -159,8 +159,10 @@ class Dataset(BaseModel):
             ValueError: If multiple manifest files are found in the ZIP archive.
             FileNotFoundError: If no manifest file is found in the ZIP archive.
         """
-        # We are using a temporary directory to extract the ZIP archive
-        # because we want to avoid IO to disk in the main directory.
+        # While a SE practice is to avoid IO to disk where possible,
+        # we use a temporary directory here to extract the dataset archive as
+        # Pydantic expects the file path to exist, while still hiding the IO
+        # from the users.
         with TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             with ZipFile(path, "r") as zip_file:
@@ -205,6 +207,7 @@ class Dataset(BaseModel):
                 dumped data.
         """
         manifest = Manifest(
+            version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
             assay_conditions=self.assay_conditions,
@@ -293,11 +296,12 @@ class Dataset(BaseModel):
         if isinstance(path, str):  # User-friendly interface to support str
             path = Path(path)
         path = path or Path.cwd()
-        # While we prefer to avoid IO to disk, TemporaryDirectory is used for
-        # convenience because it unifies the `:method:dump` signatures to write
-        # to a directory.
+        # While a SE practice is to avoid IO to disk where possible,
+        # we use a temporary directory here to extract the dataset archive as
+        # Pydantic expects the file path to exist, while still hiding the IO
+        # from the users.
         with TemporaryDirectory() as temp_dir:
-            # TemporaryDirectory returns a string, we prefer a Path object.
-            temp_dir = Path(temp_dir)
-            archive_path = self._create_archive(path, temporary_directory=temp_dir)
+            archive_path = self._create_archive(
+                path, temporary_directory=Path(temp_dir)
+            )
         return archive_path

@@ -16,7 +16,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from pydantic import ValidationError
 
 from pg2_dataset.dataset import Dataset
-from pg2_dataset.manifest import Manifest
+from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
 from pg2_dataset.structure import (
     Structure,
     StructureFormat,
@@ -255,6 +255,7 @@ def test_dataset_with_structures(
     bio_structure2 = bio_structure.copy()
     bio_structure2.id = "structure2"
     manifest = Manifest(
+        version=MANIFEST_LATEST_VERSION,
         name="test",
         structures=[
             StructureManifestSection(path=pdb_file, name=bio_structure1.id),

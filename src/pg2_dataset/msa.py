@@ -19,6 +19,7 @@ class MSAFormat(StrEnum):
     """Enumeration for MSA file formats."""
 
     FASTA = "fasta"
+    """MSAs following the fasta format, also for a2m files."""
 
 
 class MSAManifestSection(BaseModel):
