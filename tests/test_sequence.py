@@ -10,7 +10,7 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from pg2_dataset.dataset import Dataset
-from pg2_dataset.manifest import Manifest, MANIFEST_LATEST_VERSION
+from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
 from pg2_dataset.sequence import (
     Sequence,
     SequenceAlphabet,
