@@ -1,3 +1,4 @@
+import dataclasses
 from enum import StrEnum
 from pathlib import Path
 
@@ -71,17 +72,9 @@ class MSAManifestSection(BaseModel):
         return format.value
 
 
-class MSA(BaseModel):
+@dataclasses.dataclass
+class MSA:
     """Multiple Sequence Alignment (MSA) model."""
-
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,  # Allow Biopython alignments
-        extra="forbid",
-        frozen=True,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the MSA."""

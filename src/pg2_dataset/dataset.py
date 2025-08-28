@@ -42,9 +42,14 @@ class Dataset(BaseModel):
 
     The dataset provides access to metadata and protein data such as assays,
     sequences, structures, and multiple sequence alignments (MSAs).
+
+    In this BaseModel, we only use Pydantic validation feature only, not the
+    (de)serialization feature because protein data is not persisted as mappings
+    (dictionaries).
     """
 
     model_config = ConfigDict(
+        arbitrary_types_allowed=True,  # Required for protein data types
         extra="forbid",
         frozen=True,
         use_attribute_docstrings=True,

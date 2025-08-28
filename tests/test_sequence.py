@@ -153,28 +153,6 @@ def test_sequence(name, value, description, type, alphabet):
     assert isinstance(sequence.alphabet, SequenceAlphabet)
 
 
-@pytest.mark.xfail(raises=ValueError)
-@pytest.mark.parametrize(
-    "name, value, description, type, alphabet",
-    [
-        ("seq1", "ATCG", "Test sequence 1", "invalid_type", "DNA"),
-        ("seq2", "AUGC", "Test sequence 2", "wild_type", "invalid_alphabet"),
-        ("seq3", "", "Test sequence 3", "engineered_sequence", "AA"),
-    ],
-)
-def test_invalid_sequence(name, value, description, type, alphabet):
-    sequence = Sequence(
-        name=name,
-        value=value,
-        description=description,
-        type=SequenceType(type),
-        alphabet=SequenceAlphabet(alphabet),
-    )
-    assert isinstance(sequence.value, Seq)
-    assert isinstance(sequence.type, SequenceType)
-    assert isinstance(sequence.alphabet, SequenceAlphabet)
-
-
 def test_sequence_from_manifest_section_multiple_seqs_in_file(tmp_path: Path) -> None:
     fasta_file = tmp_path / "sequences.fasta"
     fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")

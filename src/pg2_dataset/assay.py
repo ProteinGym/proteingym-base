@@ -1,3 +1,4 @@
+import dataclasses
 from enum import StrEnum
 from pathlib import Path
 
@@ -105,16 +106,9 @@ class AssayManifestSection(BaseModel):
         return self
 
 
-class Assay(BaseModel):
+@dataclasses.dataclass
+class Assay:
     """An assay in the dataset."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=True,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the assay."""
@@ -122,7 +116,9 @@ class Assay(BaseModel):
     records: list[tuple[str, int | float | bool | str]]
     """The records of the assay, pairs of Sequence and target values."""
 
-    conditions: dict[str, int | float | bool | str] = Field(default_factory=dict)
+    conditions: dict[str, int | float | bool | str] = dataclasses.field(
+        default_factory=dict
+    )
     """The conditions of the assay, defined in the manifest."""
 
     description: str | None = None
