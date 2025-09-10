@@ -140,7 +140,8 @@ purpose of this "special" archive. (That the archive has splits.)
 ## Considered Options
 
 - Add a split index to the [archive](../dataset_archive.md)
-- `Superset`: a dataset of datasets
+- `Superset`: a dataset of datasets. See Wikipedia on
+  [subset](https://en.wikipedia.org/wiki/Subset).
 
 ### 1. Add a split index to the archive
 
