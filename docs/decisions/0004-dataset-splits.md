@@ -40,11 +40,11 @@ The superset: a dataset of datasets.
 The command line interface (CLI) should be as follows:
 
 ```shell
-$ pg2-dataset splits ./path/to/dataset_with_validation.splits
+$ pg2-dataset splits ./path/to/dataset_with_validation.splits.pgdata
 train1.pgdata test1.pgdata val1.pgdata
 train2.pgdata test2.pgdata val2.pgdata
 train3.pgdata test3.pgdata val3.pgdata
-$ pg2-dataset splits ./path/to/dataset_without_validation.splits
+$ pg2-dataset splits ./path/to/dataset_without_validation.splits.pgdata
 train1.pgdata test1.pgdata
 train2.pgdata test2.pgdata
 ```
@@ -56,14 +56,82 @@ The Python API should be as follows:
 ```python
 from pg2_dataset import Dataset 
 
-for train_set, test_set, val_set in Dataset.load_splits("./path/to/dataset_with_validation.splits"):
+for train_set, test_set, val_set in Dataset.load_splits("./path/to/dataset_with_validation.splits.pgdata"):
     ...  # Do something with the splits
 
-for train_set, test_set in Dataset.load_splits("./path/to/dataset_without_validation.splits"):
+for train_set, test_set in Dataset.load_splits("./path/to/dataset_without_validation.splits.pgdata"):
     ...  # Do something with the splits
 ```
 
 > Note: the `Dataset` class is just an example, the actual class can be different.
+
+### Splits marker
+
+Our library should be able to know if a dataset consists of splits, or not.
+Furthermore, a user should also be able to check if a dataset is a split.
+
+#### Splits marker decision
+
+A archive with dataset splits has the suffix `.splits.pgdata`.
+
+#### Decision Drivers for splits marker
+
+- differentiate: The splits marker should be able to differentiate between a
+  dataset with splits and a dataset without splits.
+- user-friendly: The splits marker should be user-friendly and easy to use.
+
+#### Considered splits marker
+
+- Suffix: use a specific suffix for datasets with splits, e.g. `.splits`
+- Flag in archive manifest: add a flag in the archive manifest file to indicate
+  if a dataset has splits. Note: this has to be done in the **archive** manifest
+  file as the splits do not exist yet before archiving.
+
+### Decision matrix for splits marker
+
+| Option                   | Differentiate | User-friendly |
+| ------------------------ | ------------- | ------------- |
+| Suffix                   | High          | High          |
+| Flag in archive manifest | High          | Medium        |
+
+The flag in the archive manifest requires a user to run a command to check if a
+dataset has splits, while the suffix can be checked by just looking at the file
+name. Therefore, the suffix is more user-friendly.
+
+##### Suffix decision
+
+The chosen suffix is `.splits.pgdata` .
+
+##### Decision drivers for suffix
+
+- Non-breaking : The suffix should not break existing workflows.
+- Consistent : The suffix should be consistent with existing conventions.
+- Explicit : The suffix should clearly indicate the purpose of the dataset.
+
+##### Considered suffixes
+
+The following additional suffixes were considered:
+- `.splits`
+- `.superset`
+
+These suffixes can go before or after the `.pgdata` suffix, e.g.: `.splits.pgdata` or
+`.pgdata.splits`. Or, without the `.pgdata` suffix, e.g.: `.splits` or
+`.superset`.
+
+##### Decision matrix for suffix
+
+| Option              | Non-breaking | Consistent | Explicit |
+| ------------------- | ------------ | ---------- | -------- |
+| `.splits.pgdata`    | High         | High       | High     |
+| `.pgdata.splits`    | High         | Medium     | High     |
+| `.splits`           | Low          | Low        | High     |
+| `.superset.pgdata`  | High         | High       | Medium   |
+| `.pgdata.superset`  | High         | Medium     | Medium   |
+| `.superset`         | Low          | Low        | Medium   |
+
+The `.splits.pgdata` suffix is the most straigh-forward option as the archives
+remain to end with `.pgdata` and the `.splits` suffix clearly indicates the
+purpose of this "special" archive. (That the archive has splits.)
 
 ## Considered Options
 
