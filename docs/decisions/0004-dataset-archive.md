@@ -48,7 +48,7 @@ a free license.
 
 ## Consequences
 
-The archives get extension `.pgdata` and are ZIP files internally.
+The archives get extension `.pgdata` after implementing this decision.
 
 ## Archive file extension
 
