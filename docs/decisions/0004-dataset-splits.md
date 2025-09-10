@@ -18,6 +18,58 @@ A counterintuitive example: the random split. Even for the random split, one cou
 create such a split randomly, then share *their* split with other so that
 everyone has the same *random* split.
 
+### Dataset slice
+
+The term "dataset slice" is used to refer to a subset of a dataset. Slice is common
+term in programming to create a subset of a data structure, for example 
+[array slicing](https://en.wikipedia.org/wiki/Array_slicing) or search for "slice"
+and your programming language of choice. Note that "slice" is used 
+both as a verb ([function](https://docs.python.org/3/library/functions.html#slice)) 
+and a noun ([object](https://docs.python.org/3/glossary.html#term-slice)). Also see 
+[slicings in Python](https://docs.python.org/3/reference/expressions.html#slicings).
+
+For the protein gym [data model](../data_model.md), a dataset slice is a subset
+of a dataset that is created by selecting specific assay, sequences, structures, or
+MSAs. 
+
+### Dataset operators
+
+The introduction of splits introduces the notion for dataset operators for
+communicating about the relationships between datasets, dataset splits, and
+dataset slices. 
+
+For example, when splitting a dataset, for each split the following is true:
+
+```
+dataset contains split
+split is contained in dataset
+```
+
+> See Wikipedia on this [subsets](https://en.wikipedia.org/wiki/Set_(mathematics)#Subsets)
+
+When splitting a dataset the following operations hold true:
+
+```
+split_1 union split_2 equals dataset
+split_1 intersection split_2 equals empty set
+dataset difference split_1 equals split_2
+```
+
+> Assuming a dataset is split here into two splits: split_1 and split_2.
+
+The difference between a dataset split and slice is that splits are always
+[disjoint](https://en.wikipedia.org/wiki/Disjoint_sets) while slices can overlap.
+
+```
+split_1 intersection split_2 equals empty set      # Always disjoint
+slice_1 intersection slice_2 not equals empty set  # Can overlap
+```
+
+For the protein gym [data model](../data_model.md), this implies that a dataset
+split needs to account for the interdependencies between the protein data types.
+For example, the sequences split from an assay need to be split from the
+list of sequences list.
+
 ## Decision
 
 The superset: a dataset of datasets.
