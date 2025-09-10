@@ -5,6 +5,7 @@
 A standardisation for using protein data within protein gym.
 
 - [Protein Gym Dataset](#protein-gym-dataset)
+  - [Project Structure](#project-structure)
   - [Dataset Manifest](#dataset-manifest)
   - [Installation](#installation)
   - [Quickstart example](#quickstart-example)
@@ -14,6 +15,31 @@ A standardisation for using protein data within protein gym.
     - [Access protein data](#access-protein-data)
       - [Multiple Sequence Alignment (MSA)](#multiple-sequence-alignment-msa)
     - [Example Data](#example-data)
+
+## Project Structure
+
+``` tree
+├── docs                       <-- Folder with documentation
+│   ├── decisions/             <-- Architecture decision records
+│   └── *.md                   <-- Other documentation files
+├── example_data/              <-- Example data folder
+│   ├── NEIME_2019/            <-- NEIME 2019 dataset
+│   └── neime_2019.toml        <-- NEIME 2019 manifest file
+├── notebooks/                 <-- Jupyter notebooks
+│   └── *.ipynb                <-- Demonstration notebooks
+├── src/                       <-- Source code folder
+│   └── pg2_dataset/           <-- Main package
+├── tests/                     <-- Test folder
+│   └── test_*.py              <-- Test files
+├── .adr-dir                   <-- Architecture decision records folder
+├── .gitignore                 <-- Git ignore file
+├── .pre-commit-config.yaml    <-- Pre-commit configuration file
+├── .python-version            <-- Python version file
+├── CONTRIBUTING.md            <-- Contribution guide
+├── pyproject.toml             <-- Project configuration file
+├── README.md                  <-- This README file
+└── uv.lock                    <-- Dependency lock file
+```
 
 ## Dataset Manifest
 
