@@ -4,6 +4,20 @@ from zipfile import ZipFile
 from pg2_dataset.dataset import Dataset
 
 
+def test_dataset_dump_extension(tmp_path: Path) -> None:
+    """The dataset dump should create a .pgdata file.
+
+    Docs:
+        ../docs/decisions/0003-dataset-archive.md
+    """
+    dataset = Dataset(name="test")
+
+    path = dataset.dump(path=tmp_path)
+
+    assert path.suffix == ".pgdata", f"Expected .pgdata file, but got: {path.suffix}"
+    assert path.as_posix().endswith(".pgdata"), f"Expected .pgdata file, but got: {path}"
+
+
 def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
     """Test the zip file created by the Dataset dump.
 
