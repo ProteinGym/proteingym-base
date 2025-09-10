@@ -52,7 +52,7 @@ The archives get extension `.pgdata` after implementing this decision.
 
 ## Archive file extension
 
-The archive file extension is user-facing, therefore it gets additional attention.
+The archive file extension is user-facing, therefore it gets its own (sub)decision.
 
 ### Decision for archive file extension
 
