@@ -34,6 +34,10 @@ The superset: a dataset of datasets.
   consistent for archived datasets only and be applied while archiving data.
   Datasets created from manifests files do not have to result in consistent
   splits.
+- Flexibility : A flexible implementation is preferred. For example, for
+  boosting algorithms, one might want to have training sets from different
+  datasets and a separate test set. While this is not a common use case, a
+  programmatic user might want to create such a dataset combination.
 
 ### User-interfaces
 
@@ -209,13 +213,14 @@ Additionally, an index file tracks how the dimensions of the splits:
 
 ## Decision matrix
 
-| Option                            | Split strategy agnostic | Adjustable dimensions | Consistent for archived datasets |
-| --------------------------------- | ----------------------- | --------------------- | -------------------------------- |
-| Add a split index to the archive  | High                    | High                  | High                             |
-| `Superset`: a dataset of datasets | High                    | High                  | High                             |
+| Option                            | Split strategy agnostic | Adjustable dimensions | Consistent for archived datasets | Flexibility |
+| --------------------------------- | ----------------------- | --------------------- | -------------------------------- | ----------- |
+| Add a split index to the archive  | High                    | High                  | High                             | Medium      |
+| `Superset`: a dataset of datasets | High                    | High                  | High                             | High        |
 
-Both options score equally well on the decision drivers. However, the `Superset`
-option is a better separation of concerns and possibly a cleaner implementation.
+Both options score equally well on the most important decision drivers. However,
+the `Superset` option introduces a clearer separation of concerns that is more
+flexible.
 
 ## Consequences
 
