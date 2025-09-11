@@ -284,6 +284,12 @@ def test_dataset_equals_itself(dataset: Dataset) -> None:
     assert dataset == dataset
 
 
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_contains_itself(dataset: Dataset) -> None:
+    """A dataset should contain itself."""
+    assert dataset in dataset
+
+
 def test_dataset_slice_raises_type_error(empty_dataset: Dataset) -> None:
     """Slicing a dataset with a Python builtin type should raise a TypeError."""
     with pytest.raises(
