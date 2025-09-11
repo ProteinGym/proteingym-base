@@ -4,9 +4,11 @@ Module for testing dataset operators.
 
 
 import pytest
+from Bio.Seq import Seq
 
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.assay import Assay
+from pg2_dataset.sequence import Sequence, SequenceType, SequenceAlphabet
 
 
 @pytest.fixture
@@ -41,9 +43,32 @@ def dataset_with_assay() -> Dataset:
 
 
 @pytest.fixture
-def datasets(empty_dataset: Dataset, dataset_with_assay: Dataset) -> list[Dataset]:
+def dataset_with_sequence() -> Dataset:
+    """A dataset containing a single sequence."""
+    sequence = Sequence(
+        name="seq1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    dataset = Dataset(
+        name="dataset_with_single_sequence",
+        description="A dataset containing a single sequence.",
+        assay_conditions=[],
+        assays=[],
+        sequences=[sequence],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
+def datasets(
+    empty_dataset: Dataset, dataset_with_assay: Dataset, dataset_with_sequence: Dataset
+) -> list[Dataset]:
     """All test datasets."""
-    return [empty_dataset, dataset_with_assay]
+    return [empty_dataset, dataset_with_assay, dataset_with_sequence]
 
 
 @pytest.fixture
@@ -64,13 +89,20 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
     return dataset
 
 
-@pytest.mark.parametrize("dataset", ["empty_dataset", "dataset_with_single_assay"], indirect=True)
+ALL_DATASET_NAMES = [
+    "empty_dataset",
+    "dataset_with_single_assay",
+    "dataset_with_single_sequence",
+]
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
 def test_dataset_equals_itself(dataset: Dataset) -> None:
     """A dataset should equal itself."""
     assert dataset == dataset
 
 
-@pytest.mark.parametrize("dataset", ["empty_dataset", "dataset_with_single_assay"], indirect=True)
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
 def test_dataset_contains_itself(dataset: Dataset) -> None:
     """A dataset should contain itself."""
     assert dataset in dataset
