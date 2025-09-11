@@ -245,3 +245,15 @@ def test_dataset_with_single_msa_not_in(
 ) -> None:
     """A dataset with a single msa should not be contained in the other dataset."""
     assert dataset_with_msa not in dataset
+
+
+dataset2 = dataset  # To have a second fixture for union tests
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+@pytest.mark.parametrize("dataset2", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_union_contains_both(dataset: Dataset, dataset2: Dataset) -> None:
+    """The union of two datasets should contain both datasets."""
+    union = dataset | dataset2
+    assert dataset in union
+    assert dataset2 in union
