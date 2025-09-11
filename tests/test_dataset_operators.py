@@ -18,3 +18,17 @@ def test_dataset_equals_itself() -> None:
         msas=[],
     )
     assert dataset == dataset
+
+
+def test_dataset_contains_itself() -> None:
+    """A dataset should contain itself."""
+    dataset = Dataset(
+        name="Test Dataset",
+        description="A dataset for testing purposes.",
+        assay_conditions=[],
+        assays=[],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    assert dataset in dataset
