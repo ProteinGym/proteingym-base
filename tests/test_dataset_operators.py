@@ -290,6 +290,14 @@ def test_dataset_contains_itself(dataset: Dataset) -> None:
     assert dataset in dataset
 
 
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_always_contains_empty_dataset(
+    empty_dataset: Dataset, dataset: Dataset
+) -> None:
+    """An empty dataset should be contained in any dataset."""
+    assert empty_dataset in dataset
+
+
 def test_dataset_slice_raises_type_error(empty_dataset: Dataset) -> None:
     """Slicing a dataset with a Python builtin type should raise a TypeError."""
     with pytest.raises(
