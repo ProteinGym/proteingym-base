@@ -93,7 +93,7 @@ class MSA:
         """
         if not isinstance(item, MSA):
             return False
-        return self.value == item.value
+        return self.value.alignment == item.value.alignment
 
     @classmethod
     def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
