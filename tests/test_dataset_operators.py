@@ -298,6 +298,23 @@ def test_dataset_always_contains_empty_dataset(
     assert empty_dataset in dataset
 
 
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_sequence",
+        "dataset_with_single_structure",
+        "dataset_with_single_msa",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_assay_not_in(
+    dataset_with_assay: Dataset, dataset: Dataset
+) -> None:
+    """A dataset with a single assay should not be contained in the other dataset."""
+    assert dataset_with_assay not in dataset
+
+
 def test_dataset_slice_raises_type_error(empty_dataset: Dataset) -> None:
     """Slicing a dataset with a Python builtin type should raise a TypeError."""
     with pytest.raises(
