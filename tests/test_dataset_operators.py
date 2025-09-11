@@ -49,6 +49,23 @@ def dataset_with_assay() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_assays() -> Dataset:
+    """A dataset containing multiple assays."""
+    assay1 = Assay(name="assay1", records=[("SEQ1", 1.0)])
+    assay2 = Assay(name="assay2", records=[("SEQ2", 2.0)])
+    dataset = Dataset(
+        name="dataset_with_multiple_assays",
+        description="A dataset containing multiple assays.",
+        assay_conditions=[],
+        assays=[assay1, assay2],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
 def dataset_with_sequence() -> Dataset:
     """A dataset containing a single sequence."""
     sequence = Sequence(
@@ -63,6 +80,33 @@ def dataset_with_sequence() -> Dataset:
         assay_conditions=[],
         assays=[],
         sequences=[sequence],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
+def dataset_with_sequences() -> Dataset:
+    """A dataset containing multiple sequences."""
+    sequence1 = Sequence(
+        name="seq1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    sequence2 = Sequence(
+        name="seq2",
+        value=Seq("GFEDCA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    dataset = Dataset(
+        name="dataset_with_multiple_sequences",
+        description="A dataset containing multiple sequences.",
+        assay_conditions=[],
+        assays=[],
+        sequences=[sequence1, sequence2],
         structures=[],
         msas=[],
     )
@@ -85,6 +129,33 @@ def dataset_with_structure() -> Dataset:
         assays=[],
         sequences=[],
         structures=[structure],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
+def dataset_with_structures() -> Dataset:
+    """A dataset containing multiple structures."""
+    structure1 = Structure(
+        name="structure1",
+        value=BioStructure("structure1"),
+        description="A test structure",
+        metadata={"source": "test"},
+    )
+    structure2 = Structure(
+        name="structure2",
+        value=BioStructure("structure2"),
+        description="A test structure",
+        metadata={"source": "test"},
+    )
+    dataset = Dataset(
+        name="dataset_with_multiple_structures",
+        description="A dataset containing multiple structures.",
+        assay_conditions=[],
+        assays=[],
+        sequences=[],
+        structures=[structure1, structure2],
         msas=[],
     )
     return dataset
@@ -117,20 +188,57 @@ def dataset_with_msa() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_msas() -> Dataset:
+    """A dataset containing multiple MSAs."""
+    alignment1 = MultipleSeqAlignment(
+        [
+            SeqRecord(Seq("ACDEFG"), id="seq1"),
+            SeqRecord(Seq("GFEDCA"), id="seq2"),
+        ]
+    )
+    alignment2 = MultipleSeqAlignment(
+        [
+            SeqRecord(Seq("ADCGFE"), id="seq3"),
+            SeqRecord(Seq("FEDCBA"), id="seq4"),
+        ]
+    )
+    msa1 = MSA(name="msa1", value=alignment1, description="A test MSA")
+    msa2 = MSA(name="msa2", value=alignment2, description="A test MSA")
+    dataset = Dataset(
+        name="dataset_with_multiple_msas",
+        description="A dataset containing multiple MSAs.",
+        assay_conditions=[],
+        assays=[],
+        sequences=[],
+        structures=[],
+        msas=[msa1, msa2],
+    )
+    return dataset
+
+
+@pytest.fixture
 def datasets(
     empty_dataset: Dataset,
     dataset_with_assay: Dataset,
+    dataset_with_assays: Dataset,
     dataset_with_sequence: Dataset,
+    dataset_with_sequences: Dataset,
     dataset_with_structure: Dataset,
+    dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
+    dataset_with_msas: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
     return [
         empty_dataset,
         dataset_with_assay,
+        dataset_with_assays,
         dataset_with_sequence,
+        dataset_with_sequences,
         dataset_with_structure,
+        dataset_with_structures,
         dataset_with_msa,
+        dataset_with_msas,
     ]
 
 
@@ -155,9 +263,13 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
 ALL_DATASET_NAMES = [
     "empty_dataset",
     "dataset_with_single_assay",
+    "dataset_with_multiple_assays",
     "dataset_with_single_sequence",
+    "dataset_with_multiple_sequences",
     "dataset_with_single_structure",
+    "dataset_with_multiple_structures",
     "dataset_with_single_msa",
+    "dataset_with_multiple_msas",
 ]
 
 
