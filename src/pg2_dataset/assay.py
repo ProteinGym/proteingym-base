@@ -1,6 +1,7 @@
 import dataclasses
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 from pydantic import (
@@ -129,6 +130,19 @@ class Assay:
 
     target_feature_name: str = "target"
     """The target feature name in the assay records."""
+
+    def __contains__(self, item: Any) -> bool:
+        """Implements the 'in' operator for Assay.
+
+        If the given item is an Assay, checks if all its records and conditions
+        are contained in this assay.
+        """
+        if isinstance(item, Assay):
+            return (
+                set(item.records).issubset(self.records)
+                and all(k in self.conditions and self.conditions[k] == v for k, v in item.conditions.items())
+            )
+        return False
 
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
