@@ -3,11 +3,14 @@ Module for testing dataset operators.
 """
 
 import pytest
+from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 
 from pg2_dataset.assay import Assay
 from pg2_dataset.dataset import Dataset
+from pg2_dataset.msa import MSA
 from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
 from pg2_dataset.structure import Structure
 
@@ -86,11 +89,38 @@ def dataset_with_structure() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_msa() -> Dataset:
+    """A dataset containing a single MSA."""
+    alignment = MultipleSeqAlignment(
+        [
+            SeqRecord(Seq("ACDEFG"), id="seq1"),
+            SeqRecord(Seq("GFEDCA"), id="seq2"),
+        ]
+    )
+    msa = MSA(
+        name="msa1",
+        value=alignment,
+        description="A test MSA",
+    )
+    dataset = Dataset(
+        name="dataset_with_single_msa",
+        description="A dataset containing a single MSA.",
+        assay_conditions=[],
+        assays=[],
+        sequences=[],
+        structures=[],
+        msas=[msa],
+    )
+    return dataset
+
+
+@pytest.fixture
 def datasets(
     empty_dataset: Dataset,
     dataset_with_assay: Dataset,
     dataset_with_sequence: Dataset,
     dataset_with_structure: Dataset,
+    dataset_with_msa: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
     return [
@@ -98,6 +128,7 @@ def datasets(
         dataset_with_assay,
         dataset_with_sequence,
         dataset_with_structure,
+        dataset_with_msa,
     ]
 
 
@@ -124,6 +155,7 @@ ALL_DATASET_NAMES = [
     "dataset_with_single_assay",
     "dataset_with_single_sequence",
     "dataset_with_single_structure",
+    "dataset_with_single_msa",
 ]
 
 
