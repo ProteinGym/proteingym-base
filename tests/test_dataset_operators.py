@@ -278,6 +278,12 @@ ALL_DATASET_NAMES = [
 ]
 
 
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_equals_itself(dataset: Dataset) -> None:
+    """A dataset should equal itself."""
+    assert dataset == dataset
+
+
 def test_dataset_slice_raises_type_error(empty_dataset: Dataset) -> None:
     """Slicing a dataset with a Python builtin type should raise a TypeError."""
     with pytest.raises(
@@ -308,3 +314,4 @@ def test_dataset_slice_all_dataset_with_multiple_assays(
     """Slicing a dataset with [:] should return the same dataset."""
     dataset_slice = DatasetSlice(assays=[slc] * len(dataset_with_assays.assays))
     assert dataset_with_assays == dataset_with_assays[dataset_slice]
+    assert dataset == dataset
