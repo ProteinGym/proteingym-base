@@ -83,10 +83,10 @@ class Dataset(BaseModel):
         """Implements the 'in' operator for Dataset."""
         if isinstance(item, Dataset):
             return (
-                set(item.assays).issubset(self.assays)
-                and set(item.sequences).issubset(self.sequences)
-                and set(item.structures).issubset(self.structures)
-                and set(item.msas).issubset(self.msas)
+                all(assay in item.assays for assay in self.assays)
+                and all(seq in item.sequences for seq in self.sequences)
+                and all(struct in item.structures for struct in self.structures)
+                and all(msa in item.msas for msa in self.msas)
             )
         return False
 
