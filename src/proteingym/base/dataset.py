@@ -4,6 +4,7 @@ import itertools
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 from zipfile import ZipFile
 
 from pydantic import (
@@ -98,6 +99,17 @@ class Dataset(BaseModel):
 
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
+
+    def __contains__(self, item: Any) -> bool:
+        """Implements the 'in' operator for Dataset."""
+        if isinstance(item, Dataset):
+            return (
+                set(item.assays).issubset(self.assays)
+                and set(item.sequences).issubset(self.sequences)
+                and set(item.structures).issubset(self.structures)
+                and set(item.msas).issubset(self.msas)
+            )
+        return False
 
     def __getitem__(self, item: DatasetSlice) -> "Dataset":
         """Get a slice of the dataset.
