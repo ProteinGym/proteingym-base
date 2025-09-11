@@ -79,6 +79,38 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
+    def __or__(self, other: "Dataset") -> "Dataset":
+        """Implements the union operator (|) for Dataset.
+
+        Returns a new Dataset containing the union of:
+        - assays
+        - sequences
+        - structures
+        - msas
+        """
+        assays = self.assays + [
+            assay for assay in other.assays if assay not in self.assays
+        ]
+        sequences = self.sequences + [
+            sequence for sequence in other.sequences if sequence not in self.sequences
+        ]
+        structures = self.structures + [
+            structure
+            for structure in other.structures
+            if structure not in self.structures
+        ]
+        msas = self.msas + [msa for msa in other.msas if msa not in self.msas]
+        return Dataset(
+            name=f"{self.name}_or_{other.name}",  # TODO: What name should this get?
+            description=f"Union of {self.name} and {other.name}",
+            # TODO: Test dataset with assay conditions
+            assay_conditions=self.assay_conditions + other.assay_conditions,
+            assays=assays,
+            sequences=sequences,
+            structures=structures,
+            msas=msas,
+        )
+
     def __contains__(self, item: Any) -> bool:
         """Implements the 'in' operator for Dataset."""
         if not isinstance(item, Dataset):
