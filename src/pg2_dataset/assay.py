@@ -138,9 +138,9 @@ class Assay:
         are contained in this assay.
         """
         if isinstance(item, Assay):
-            return (
-                set(item.records).issubset(self.records)
-                and all(k in self.conditions and self.conditions[k] == v for k, v in item.conditions.items())
+            return set(item.records).issubset(self.records) and all(
+                k in self.conditions and self.conditions[k] == v
+                for k, v in item.conditions.items()
             )
         return False
 

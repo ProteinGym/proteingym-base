@@ -131,7 +131,7 @@ class Sequence:
 
     def __eq__(self, item: Any) -> bool:
         """Implements the equality (==) operator for Sequence.
-        
+
         For equality, we only look at the sequence value.
         """
         if isinstance(item, Sequence):

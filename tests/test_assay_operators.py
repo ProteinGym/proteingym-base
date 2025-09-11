@@ -27,4 +27,3 @@ def test_assay_with_record_contains_itself():
     """An assay with a record should contain itself."""
     assay = Assay(name="Test Assay", records=[("SEQ1", 1.0)])
     assert assay in assay
-

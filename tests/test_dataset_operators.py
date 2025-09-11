@@ -2,13 +2,12 @@
 Module for testing dataset operators.
 """
 
-
 import pytest
 from Bio.Seq import Seq
 
-from pg2_dataset.dataset import Dataset
 from pg2_dataset.assay import Assay
-from pg2_dataset.sequence import Sequence, SequenceType, SequenceAlphabet
+from pg2_dataset.dataset import Dataset
+from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 @pytest.fixture
@@ -74,7 +73,7 @@ def datasets(
 @pytest.fixture
 def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
     """A generic dataset for testing.
-    
+
     Args:
         request (pytest.FixtureRequest): The pytest request object.
             Expecting to contain the dataset name in `request.param`.
