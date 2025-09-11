@@ -81,31 +81,30 @@ class Dataset(BaseModel):
 
     def __contains__(self, item: Any) -> bool:
         """Implements the 'in' operator for Dataset."""
-        if isinstance(item, Dataset):
-            # If a protein data type is empty,
-            # it is a (mathematical) subset of any other
-            is_assay_subset = (
-                all(assay in self.assays for assay in item.assays)
-                or len(item.assays) == 0
-            )
-            is_sequence_subset = (
-                all(seq in self.sequences for seq in item.sequences)
-                or len(item.sequences) == 0
-            )
-            is_structure_subset = (
-                all(struct in self.structures for struct in item.structures)
-                or len(item.structures) == 0
-            )
-            is_msa_subset = (
-                all(msa in self.msas for msa in item.msas) or len(item.msas) == 0
-            )
-            return (
-                is_assay_subset
-                and is_sequence_subset
-                and is_structure_subset
-                and is_msa_subset
-            )
-        return False
+        if not isinstance(item, Dataset):
+            return False
+        # If a protein data type is empty,
+        # it is a (mathematical) subset of any other
+        is_assay_subset = (
+            all(assay in self.assays for assay in item.assays) or len(item.assays) == 0
+        )
+        is_sequence_subset = (
+            all(seq in self.sequences for seq in item.sequences)
+            or len(item.sequences) == 0
+        )
+        is_structure_subset = (
+            all(struct in self.structures for struct in item.structures)
+            or len(item.structures) == 0
+        )
+        is_msa_subset = (
+            all(msa in self.msas for msa in item.msas) or len(item.msas) == 0
+        )
+        return (
+            is_assay_subset
+            and is_sequence_subset
+            and is_structure_subset
+            and is_msa_subset
+        )
 
     @model_validator(mode="after")
     def _validate_unique_names(self) -> "Dataset":

@@ -95,9 +95,9 @@ class Structure:
 
         For equality, we only look at the structure value.
         """
-        if isinstance(item, Structure):
-            return self.value == item.value
-        return False
+        if not isinstance(item, Structure):
+            return False
+        return self.value == item.value
 
     @classmethod
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":

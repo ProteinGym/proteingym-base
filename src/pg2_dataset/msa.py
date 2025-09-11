@@ -91,9 +91,9 @@ class MSA:
 
         For equality, we only look at the msa value.
         """
-        if isinstance(item, MSA):
-            return self.value == item.value
-        return False
+        if not isinstance(item, MSA):
+            return False
+        return self.value == item.value
 
     @classmethod
     def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":

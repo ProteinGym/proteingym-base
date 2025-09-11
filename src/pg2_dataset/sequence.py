@@ -134,9 +134,9 @@ class Sequence:
 
         For equality, we only look at the sequence value.
         """
-        if isinstance(item, Sequence):
-            return self.value == item.value
-        return False
+        if not isinstance(item, Sequence):
+            return False
+        return self.value == item.value
 
     @classmethod
     def from_manifest_section(
