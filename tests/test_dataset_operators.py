@@ -9,7 +9,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from proteingym.base.assay import Assay, AssayTarget
-from proteingym.base.dataset import Dataset, DatasetSlice
+from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
@@ -366,34 +366,13 @@ def test_dataset_with_single_msa_not_in(
     assert dataset_with_msa not in dataset
 
 
-def test_dataset_slice_raises_type_error(empty_dataset: Dataset) -> None:
-    """Slicing a dataset with a Python builtin type should raise a TypeError."""
-    with pytest.raises(
-        TypeError, match="Dataset can only be sliced with a DatasetSlice"
-    ):
-        empty_dataset[:]
+dataset2 = dataset  # To have a second fixture for union tests
 
 
-def test_dataset_slice_all_empty_dataset(empty_dataset: Dataset) -> None:
-    """Slicing a dataset with [:] should return the same dataset."""
-    assert empty_dataset == empty_dataset[DatasetSlice(assays=[])]
-
-
-@pytest.mark.parametrize("slc", [slice(None), [True]])
-def test_dataset_slice_all_dataset_with_single_assay(
-    slc: slice | list[bool],
-    dataset_with_assay: Dataset,
-) -> None:
-    """Slicing a dataset with [:] should return the same dataset."""
-    assert dataset_with_assay == dataset_with_assay[DatasetSlice(assays=[slc])]
-
-
-@pytest.mark.parametrize("slc", [slice(None), [True]])
-def test_dataset_slice_all_dataset_with_multiple_assays(
-    slc: slice | list[bool],
-    dataset_with_assays: Dataset,
-) -> None:
-    """Slicing a dataset with [:] should return the same dataset."""
-    dataset_slice = DatasetSlice(assays=[slc] * len(dataset_with_assays.assays))
-    assert dataset_with_assays == dataset_with_assays[dataset_slice]
-    assert dataset == dataset
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+@pytest.mark.parametrize("dataset2", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_union_contains_both(dataset: Dataset, dataset2: Dataset) -> None:
+    """The union of two datasets should contain both datasets."""
+    union = dataset | dataset2
+    assert dataset in union
+    assert dataset2 in union
