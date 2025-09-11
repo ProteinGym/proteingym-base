@@ -378,6 +378,8 @@ def test_dataset_union_contains_both(dataset: Dataset, dataset2: Dataset) -> Non
     union = dataset | dataset2
     assert dataset in union
     assert dataset2 in union
+    assert dataset != union
+    assert dataset2 != union
 
 
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
