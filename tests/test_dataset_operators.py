@@ -228,11 +228,15 @@ def datasets(
     empty_dataset: Dataset,
     dataset_with_assay: Dataset,
     dataset_with_assays: Dataset,
+    dataset_with_assays: Dataset,
     dataset_with_sequence: Dataset,
+    dataset_with_sequences: Dataset,
     dataset_with_sequences: Dataset,
     dataset_with_structure: Dataset,
     dataset_with_structures: Dataset,
+    dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
+    dataset_with_msas: Dataset,
     dataset_with_msas: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
@@ -240,11 +244,15 @@ def datasets(
         empty_dataset,
         dataset_with_assay,
         dataset_with_assays,
+        dataset_with_assays,
         dataset_with_sequence,
+        dataset_with_sequences,
         dataset_with_sequences,
         dataset_with_structure,
         dataset_with_structures,
+        dataset_with_structures,
         dataset_with_msa,
+        dataset_with_msas,
         dataset_with_msas,
     ]
 
@@ -271,11 +279,15 @@ ALL_DATASET_NAMES = [
     "empty_dataset",
     "dataset_with_single_assay",
     "dataset_with_multiple_assays",
+    "dataset_with_multiple_assays",
     "dataset_with_single_sequence",
+    "dataset_with_multiple_sequences",
     "dataset_with_multiple_sequences",
     "dataset_with_single_structure",
     "dataset_with_multiple_structures",
+    "dataset_with_multiple_structures",
     "dataset_with_single_msa",
+    "dataset_with_multiple_msas",
     "dataset_with_multiple_msas",
 ]
 
