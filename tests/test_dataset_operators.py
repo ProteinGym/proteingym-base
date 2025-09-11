@@ -2,6 +2,8 @@
 Module for testing dataset operators.
 """
 
+from functools import reduce
+
 import pytest
 from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
@@ -257,3 +259,12 @@ def test_dataset_union_contains_both(dataset: Dataset, dataset2: Dataset) -> Non
     union = dataset | dataset2
     assert dataset in union
     assert dataset2 in union
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_with_everything_all_contains_other(
+    datasets: list[Dataset], dataset: Dataset
+) -> None:
+    """A dataset with everything should always contain any other dataset."""
+    dataset_with_all = reduce(lambda d1, d2: d1 | d2, datasets)
+    assert dataset in dataset_with_all
