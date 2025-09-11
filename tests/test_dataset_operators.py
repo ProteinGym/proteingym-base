@@ -194,3 +194,54 @@ def test_dataset_with_single_assay_not_in(
 ) -> None:
     """A dataset with a single assay should not be contained in the other dataset."""
     assert dataset_with_assay not in dataset
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_assay",
+        "dataset_with_single_structure",
+        "dataset_with_single_msa",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_sequence_not_in(
+    dataset_with_sequence: Dataset, dataset: Dataset
+) -> None:
+    """A dataset with a single sequence should not be contained in the other dataset."""
+    assert dataset_with_sequence not in dataset
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_assay",
+        "dataset_with_single_sequence",
+        "dataset_with_single_msa",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_structure_not_in(
+    dataset_with_structure: Dataset, dataset: Dataset
+) -> None:
+    """A dataset with a single struct should not be contained in the other dataset."""
+    assert dataset_with_structure not in dataset
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_assay",
+        "dataset_with_single_sequence",
+        "dataset_with_single_structure",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_msa_not_in(
+    dataset_with_msa: Dataset, dataset: Dataset
+) -> None:
+    """A dataset with a single msa should not be contained in the other dataset."""
+    assert dataset_with_msa not in dataset
