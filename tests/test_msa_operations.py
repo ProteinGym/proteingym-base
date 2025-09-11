@@ -50,3 +50,12 @@ def test_msa_with_data_equals_itself() -> None:
         description="A test MSA",
     )
     assert msa == msa
+
+
+def test_msa_compares_value() -> None:
+    """An MSA should compare based on its value."""
+    alignment2 = MultipleSeqAlignment([])
+    alignment1 = MultipleSeqAlignment([])
+    msa1 = MSA(name="msa1", value=alignment1, description="A test MSA")
+    msa2 = MSA(name="msa2", value=alignment2, description="A test MSA")
+    assert msa1 == msa2
