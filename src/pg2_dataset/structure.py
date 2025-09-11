@@ -3,6 +3,7 @@
 import dataclasses
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser
 from Bio.PDB.binary_cif import BinaryCIFParser
@@ -88,6 +89,15 @@ class Structure:
 
     metadata: dict[str, str] = dataclasses.field(default_factory=dict)
     """Additional metadata for the protein structure."""
+
+    def __eq__(self, item: Any) -> bool:
+        """Implements the equality (==) operator for Structure.
+
+        For equality, we only look at the structure value.
+        """
+        if isinstance(item, Structure):
+            return self.value == item.value
+        return False
 
     @classmethod
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
