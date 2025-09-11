@@ -3,11 +3,13 @@ Module for testing dataset operators.
 """
 
 import pytest
+from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 
 from pg2_dataset.assay import Assay
 from pg2_dataset.dataset import Dataset
 from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
+from pg2_dataset.structure import Structure
 
 
 @pytest.fixture
@@ -63,11 +65,40 @@ def dataset_with_sequence() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_structure() -> Dataset:
+    """A dataset containing a single structure."""
+    structure = Structure(
+        name="structure1",
+        value=BioStructure("structure1"),
+        description="A test structure",
+        metadata={"source": "test"},
+    )
+    dataset = Dataset(
+        name="dataset_with_single_structure",
+        description="A dataset containing a single structure.",
+        assay_conditions=[],
+        assays=[],
+        sequences=[],
+        structures=[structure],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
 def datasets(
-    empty_dataset: Dataset, dataset_with_assay: Dataset, dataset_with_sequence: Dataset
+    empty_dataset: Dataset,
+    dataset_with_assay: Dataset,
+    dataset_with_sequence: Dataset,
+    dataset_with_structure: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
-    return [empty_dataset, dataset_with_assay, dataset_with_sequence]
+    return [
+        empty_dataset,
+        dataset_with_assay,
+        dataset_with_sequence,
+        dataset_with_structure,
+    ]
 
 
 @pytest.fixture
@@ -92,6 +123,7 @@ ALL_DATASET_NAMES = [
     "empty_dataset",
     "dataset_with_single_assay",
     "dataset_with_single_sequence",
+    "dataset_with_single_structure",
 ]
 
 
