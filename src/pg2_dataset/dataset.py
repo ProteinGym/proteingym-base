@@ -82,11 +82,28 @@ class Dataset(BaseModel):
     def __contains__(self, item: Any) -> bool:
         """Implements the 'in' operator for Dataset."""
         if isinstance(item, Dataset):
-            return (
+            # If a protein data type is empty,
+            # it is a (mathematical) subset of any other
+            is_assay_subset = (
                 all(assay in item.assays for assay in self.assays)
-                and all(seq in item.sequences for seq in self.sequences)
-                and all(struct in item.structures for struct in self.structures)
-                and all(msa in item.msas for msa in self.msas)
+                or len(item.assays) == 0
+            )
+            is_sequence_subset = (
+                all(seq in item.sequences for seq in self.sequences)
+                or len(item.sequences) == 0
+            )
+            is_structure_subset = (
+                all(struct in item.structures for struct in self.structures)
+                or len(item.structures) == 0
+            )
+            is_msa_subset = (
+                all(msa in item.msas for msa in self.msas) or len(item.msas) == 0
+            )
+            return (
+                is_assay_subset
+                and is_sequence_subset
+                and is_structure_subset
+                and is_msa_subset
             )
         return False
 

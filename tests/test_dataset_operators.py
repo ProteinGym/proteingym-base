@@ -169,3 +169,11 @@ def test_dataset_equals_itself(dataset: Dataset) -> None:
 def test_dataset_contains_itself(dataset: Dataset) -> None:
     """A dataset should contain itself."""
     assert dataset in dataset
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_always_contains_empty_dataset(
+    empty_dataset: Dataset, dataset: Dataset
+) -> None:
+    """An empty dataset should be contained in any dataset."""
+    assert empty_dataset in dataset
