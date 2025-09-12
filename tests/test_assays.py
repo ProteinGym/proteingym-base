@@ -130,6 +130,7 @@ def test_assay() -> None:
         )
 
 
+
 def test_assay_from_manifest_section(assay_file: Path) -> None:
     """Test creating an Assay from a manifest section."""
     try:

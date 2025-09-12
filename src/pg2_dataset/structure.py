@@ -1,5 +1,6 @@
 """The protein structure of the dataset."""
 
+import dataclasses
 from enum import StrEnum
 from pathlib import Path
 
@@ -72,17 +73,9 @@ class StructureFormat(StrEnum):
     """Binary encoding of the mmCIF format """
 
 
-class Structure(BaseModel):
+@dataclasses.dataclass
+class Structure:
     """A protein structure in the dataset."""
-
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,  # Allow BioPython structures
-        extra="forbid",
-        frozen=True,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the protein structure."""
@@ -93,7 +86,7 @@ class Structure(BaseModel):
     description: str | None = None
     """The description of the protein structure."""
 
-    metadata: dict[str, str] = Field(default_factory=dict)
+    metadata: dict[str, str] = dataclasses.field(default_factory=dict)
     """Additional metadata for the protein structure."""
 
     @classmethod
