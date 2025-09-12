@@ -145,8 +145,8 @@ def test_assay_dump(tmp_path: Path) -> None:
     assay = Assay(
         name="assay",
         records=[("F1I", 1.56), ("F1L", 2.0)],
-        sequence_feature_name="sequence",
-        target_feature_name="target",
+        _sequence_feature_name="sequence",
+        _target_feature_name="target",
     )
     dumped_path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
     assert dumped_path == tmp_path / "assay.csv"
@@ -193,14 +193,14 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
     assay1 = Assay(
         name="assay1",
         records=[("F1I", 1.56), ("F1L", 2.0)],
-        sequence_feature_name="sequence",
-        target_feature_name="target",
+        _sequence_feature_name="sequence",
+        _target_feature_name="target",
     )
     assay2 = Assay(
         name="assay2",
         records=[("F2I", 1.0), ("F2L", 3.0)],
-        sequence_feature_name="sequence",
-        target_feature_name="target",
+        _sequence_feature_name="sequence",
+        _target_feature_name="target",
     )
     dataset = Dataset(
         name="test_dataset",
@@ -223,8 +223,8 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
     assay1 = Assay(
         name="assay1",
         records=[("F1I", 1.56), ("F1L", 2.0)],
-        sequence_feature_name="sequence",
-        target_feature_name="target",
+        _sequence_feature_name="sequence",
+        _target_feature_name="target",
     )
     dataset = Dataset(
         name="test_dataset",

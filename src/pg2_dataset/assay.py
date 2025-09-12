@@ -124,11 +124,19 @@ class Assay:
     description: str | None = None
     """The description of the assay."""
 
-    sequence_feature_name: str = "sequence"
+    _sequence_feature_name: str = "sequence"
     """The sequence feature name in the assay records."""
 
-    target_feature_name: str = "target"
+    _target_feature_name: str = "target"
     """The target feature name in the assay records."""
+
+    @property
+    def sequence_feature_name(self) -> str:
+        return self._sequence_feature_name
+
+    @property
+    def target_feature_name(self) -> str:
+        return self._target_feature_name
 
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
