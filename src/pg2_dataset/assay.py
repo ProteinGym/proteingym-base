@@ -2,6 +2,7 @@ from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
+from Bio.Seq import Seq
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -156,7 +157,9 @@ class Assay(BaseModel):
             # The sequence name is taken from the string itself as the name is not
             # provided in the assay file.
             pl.col(section.sequence).map_elements(
-                lambda x: Sequence(name=x, value=x, alphabet=section.sequence_alphabet),
+                lambda seq: Sequence(
+                    name=seq, value=Seq(seq), alphabet=section.sequence_alphabet
+                ),
                 return_dtype=pl.Object,
             )
         )
@@ -215,6 +218,8 @@ class Assay(BaseModel):
             orient="row",
         )
         df = df.with_columns(
+            # The sequence column is converted to string for saving
+            # it to tabular text format.
             pl.col(self.sequence_feature_name).map_elements(
                 lambda seq: str(seq.value), return_dtype=pl.String
             )

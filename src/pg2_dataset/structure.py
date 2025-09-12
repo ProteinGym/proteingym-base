@@ -71,6 +71,7 @@ class StructureFormat(StrEnum):
     BINARY_CIF = ".bcif"
     """Binary encoding of the mmCIF format """
 
+
 class Structure(BaseModel):
     """A protein structure in the dataset."""
 
