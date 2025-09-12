@@ -192,3 +192,19 @@ class Assay:
             case _:
                 raise NotImplementedError(f"Unsupported file type: {format.value}")
         return path
+
+    def to_df(self) -> pl.DataFrame:
+        """Convert the assay records to a Polars DataFrame.
+
+        Returns:
+            pl.DataFrame: The assay records as a DataFrame.
+        """
+
+        df = pl.DataFrame(
+            self.records,
+            schema=[self.sequence_feature_name, self.target_feature_name],
+            orient="row",
+        )
+        for k, v in self.conditions.items():
+            df = df.with_columns(pl.lit(v).alias(k))
+        return df

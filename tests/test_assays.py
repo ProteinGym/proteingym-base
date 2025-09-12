@@ -1,6 +1,7 @@
 from pathlib import Path
 from zipfile import ZipFile
 
+import polars as pl
 import pytest
 from pydantic import ValidationError
 from semver import Version
@@ -255,3 +256,19 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
+
+
+def test_assay_to_df() -> None:
+    """Test converting an Assay to a DataFrame."""
+
+    assay = Assay(
+        name="assay",
+        conditions={"test_cond1": "true", "test_cond2": 42},
+        records=[("F1I", 1.56), ("F1L", 2.0)],
+    )
+    df = assay.to_df()
+    assert isinstance(df, pl.DataFrame)
+    assert all(col in df.columns for col in ["sequence", "target"])
+    assert all(col in df.columns for col in ["test_cond1", "test_cond2"])
+    assert df["sequence"].to_list() == ["F1I", "F1L"]
+    assert df["target"].to_list() == [1.56, 2.0]
