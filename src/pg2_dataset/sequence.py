@@ -119,9 +119,6 @@ class Sequence:
     value: Seq
     """The value of the sequence, a Seq object."""
 
-    description: str | None = None
-    """The description of the sequence."""
-
     type: SequenceType
     """The type of the sequence."""
 
