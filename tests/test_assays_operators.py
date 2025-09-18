@@ -36,7 +36,7 @@ def test_assay_with_record_contains_itself() -> None:
 
 
 def test_assay_contains_subset() -> None:
-    """An assay with a record should equal itself."""
+    """An subset should be part of the assay."""
     assay = Assay(name="Test Assay", records=[("SEQ1", 1.0), ("SEQ2", 2.0)])
     subset = Assay(name="Subset of test Assay", records=[("SEQ2", 2.0)])
     assert subset in assay
