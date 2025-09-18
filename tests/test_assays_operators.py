@@ -69,7 +69,7 @@ def test_assay_equals_with_condition_mismatch() -> None:
     assay2 = Assay(
         name="Test assay 2",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition2": 1},
+        conditions={"condition2": 2},
     )
     assert assay1 != assay2
 
@@ -99,6 +99,6 @@ def test_assay_contains_includes_condition_mismatch() -> None:
     subset = Assay(
         name="Test assay subset",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition3": 2},
+        conditions={"condition3": 3},
     )
     assert subset not in assay
