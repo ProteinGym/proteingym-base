@@ -65,3 +65,18 @@ def test_assay_equals_with_condition_mismatch() -> None:
         conditions={"condition2": 1},
     )
     assert assay1 != assay2
+
+
+def test_assay_contains_includes_conditions() -> None:
+    """Conditions should also be considered for equality."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        conditions={"condition1": 1, "condition2": 2},
+    )
+    subset = Assay(
+        name="Test assay subset",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        conditions={"condition2": 2},
+    )
+    assert subset in assay
