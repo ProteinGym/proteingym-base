@@ -38,3 +38,20 @@ def test_sequence_with_data_equals_itself():
         alphabet=SequenceAlphabet.AA,
     )
     assert sequence == sequence
+
+
+def test_sequence_with_different_name_equals():
+    """A sequence with a different name but same value should equal."""
+    sequence1 = Sequence(
+        name="Test Sequence 1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    sequence2 = Sequence(
+        name="Test Sequence 2",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assert sequence1 == sequence2
