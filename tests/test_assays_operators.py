@@ -42,6 +42,13 @@ def test_assay_contains_subset() -> None:
     assert subset in assay
 
 
+def test_assay_contains_subset_mismatch() -> None:
+    """This subset is not part of the assay."""
+    assay = Assay(name="Test Assay", records=[("SEQ1", 1.0), ("SEQ2", 2.0)])
+    subset = Assay(name="Subset of test Assay", records=[("SEQ3", 3.0)])
+    assert subset not in assay
+
+
 def test_assay_equals_with_condition() -> None:
     """An assay with a record and condition should equal itself"""
     assay = Assay(
