@@ -14,8 +14,8 @@ def test_dataset_dump_extension(tmp_path: Path) -> None:
 
     path = dataset.dump(path=tmp_path)
 
-    assert path.suffix == ".pgdata", f"Expected .pgdata file, but got: {path.suffix}"
-    assert path.as_posix().endswith(".pgdata"), f"Expected .pgdata file, but got: {path}"
+    assert path.suffix == ".pgdata", f"Expected .pgdata file: {path.suffix}"
+    assert path.as_posix().endswith(".pgdata"), f"Expected .pgdata file: {path}"
 
 
 def test_dataset_dump_test_zip_minimal(tmp_path: Path) -> None:
