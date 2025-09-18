@@ -40,3 +40,13 @@ def test_assay_contains_subset() -> None:
     assay = Assay(name="Test Assay", records=[("SEQ1", 1.0), ("SEQ2", 2.0)])
     subset = Assay(name="Subset of test Assay", records=[("SEQ2", 2.0)])
     assert subset in assay
+
+
+def test_assay_equals_with_condition() -> None:
+    """An assay with a record and condition should equal itself"""
+    assay = Assay(
+        name="Test Assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        conditions={"condition1": 1},
+    )
+    assert assay == assay
