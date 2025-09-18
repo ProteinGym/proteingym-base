@@ -7,7 +7,7 @@ from Bio.Seq import Seq
 from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
-def test_sequence_not_equals_integer():
+def test_sequence_not_equals_integer() -> None:
     """A sequence should not equal an integer."""
     sequence = Sequence(
         name="Test Sequence",
@@ -18,7 +18,7 @@ def test_sequence_not_equals_integer():
     assert sequence != 1
 
 
-def test_sequence_equals_itself():
+def test_sequence_equals_itself() -> None:
     """A sequence should equal itself."""
     sequence = Sequence(
         name="Test Sequence",
@@ -29,7 +29,7 @@ def test_sequence_equals_itself():
     assert sequence == sequence
 
 
-def test_sequence_with_data_equals_itself():
+def test_sequence_with_data_equals_itself() -> None:
     """A sequence with data should equal itself."""
     sequence = Sequence(
         name="Test Sequence",
@@ -40,7 +40,7 @@ def test_sequence_with_data_equals_itself():
     assert sequence == sequence
 
 
-def test_sequence_with_diffent_data_not_equals():
+def test_sequence_with_diffent_data_not_equals() -> None:
     """A sequence with different data should not equal."""
     sequence1 = Sequence(
         name="Test Sequence",
@@ -57,7 +57,7 @@ def test_sequence_with_diffent_data_not_equals():
     assert sequence1 != sequence2
 
 
-def test_sequence_with_different_name_equals():
+def test_sequence_with_different_name_equals() -> None:
     """A sequence with a different name but same value should equal."""
     sequence1 = Sequence(
         name="Test Sequence 1",
