@@ -50,3 +50,18 @@ def test_assay_equals_with_condition() -> None:
         conditions={"condition1": 1},
     )
     assert assay == assay
+
+
+def test_assay_equals_with_condition_mismatch() -> None:
+    """Two assays with the same records but different conditions should not be equal."""
+    assay1 = Assay(
+        name="Test assay 1",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        conditions={"condition1": 1},
+    )
+    assay2 = Assay(
+        name="Test assay 2",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        conditions={"condition2": 1},
+    )
+    assert assay1 != assay2
