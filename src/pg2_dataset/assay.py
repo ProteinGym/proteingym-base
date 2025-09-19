@@ -3,6 +3,7 @@ from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
+from Bio.Seq import Seq
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -14,6 +15,8 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 class AssayFormat(StrEnum):
@@ -71,6 +74,9 @@ class AssayManifestSection(BaseModel):
     sequence: str = "sequence"
     """The sequence feature name given in the file."""
 
+    sequence_alphabet: SequenceAlphabet
+    """The alphabet of the sequences of the assay."""
+
     target: str = "target"
     """The target feature name given in the file."""
 
@@ -105,6 +111,11 @@ class AssayManifestSection(BaseModel):
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
 
+    @field_serializer("sequence_alphabet")
+    def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
+        """Serialize the sequence alphabet as a string."""
+        return sequence_alphabet.value
+
 
 @dataclasses.dataclass
 class Assay:
@@ -113,8 +124,10 @@ class Assay:
     name: str
     """The name of the assay."""
 
-    records: list[tuple[str, int | float | bool | str]]
+    records: list[tuple[Sequence, int | float | bool | str]]
     """The records of the assay, pairs of Sequence and target values."""
+
+    sequence_alphabet: str
 
     conditions: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
@@ -135,9 +148,27 @@ class Assay:
         """Create an Assay instance from a manifest section."""
 
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
+        df = df.with_columns(
+            # Sequences are created from sequence strings present in the file
+            # The sequence name is taken from the string itself as the name is not
+            # provided in the assay file.
+            pl.col(section.sequence).map_elements(
+                lambda seq: Sequence(
+                    # The type of the sequence is set to "standard". This would be
+                    # removed in future and support lookup into dataset.sequences.
+                    name=seq,
+                    value=Seq(seq),
+                    type=SequenceType.STANDARD,
+                    alphabet=section.sequence_alphabet,
+                ),
+                return_dtype=pl.Object,
+            )
+        )
+
         return cls(
             name=section.name or section.path.stem,
             records=list(df.iter_rows()),
+            sequence_alphabet=section.sequence_alphabet,
             description=section.description,
             conditions=section.conditions,
         )
@@ -156,6 +187,7 @@ class Assay:
             name=self.name,
             description=self.description,
             sequence=self.sequence_feature_name,
+            sequence_alphabet=self.sequence_alphabet,
             target=self.target_feature_name,
             conditions=self.conditions,
             path=path,
@@ -185,6 +217,13 @@ class Assay:
             self.records,
             schema=[self.sequence_feature_name, self.target_feature_name],
             orient="row",
+        )
+        df = df.with_columns(
+            # The sequence column is converted to string for saving
+            # it to tabular text format.
+            pl.col(self.sequence_feature_name).map_elements(
+                lambda seq: str(seq.value), return_dtype=pl.String
+            )
         )
         match format:
             case AssayFormat.CSV:

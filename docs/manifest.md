@@ -66,6 +66,7 @@ unit = "pH"
 name = "assay"
 path = "assay.csv"
 sequence = "sequence"
+sequence_alphabet = "AA"
 target = "target"
 
 [ assays.conditions ]
@@ -122,6 +123,7 @@ The assays section contains a list of assays included in the dataset.
 | `path`       | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
 | `target`     | `string`         | No           | `"target"`   | The target feature name in the assay.                          |
 | `sequence`   | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                        |
+| `sequence_alphabet` | `string`         | No           | `"AA"`        | The alphabet of the sequence ("DNA", "RNA", or "AA").       |
 | `conditions` | `dict[str, str]` | No           | Empty dict   | The conditions of the assay.                                   |
 
 Example of an assay file:
