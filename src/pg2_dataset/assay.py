@@ -16,7 +16,7 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.sequence import Sequence, SequenceAlphabet
+from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 class AssayFormat(StrEnum):
@@ -127,7 +127,7 @@ class Assay:
     records: list[tuple[Sequence, int | float | bool | str]]
     """The records of the assay, pairs of Sequence and target values."""
 
-    sequence_alphabet: SequenceAlphabet
+    sequence_alphabet: str
 
     conditions: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
@@ -154,7 +154,12 @@ class Assay:
             # provided in the assay file.
             pl.col(section.sequence).map_elements(
                 lambda seq: Sequence(
-                    name=seq, value=Seq(seq), alphabet=section.sequence_alphabet
+                    # The type of the sequence is set to "standard". This would be
+                    # removed in future and support lookup into dataset.sequences.
+                    name=seq,
+                    value=Seq(seq),
+                    type=SequenceType.STANDARD,
+                    alphabet=section.sequence_alphabet,
                 ),
                 return_dtype=pl.Object,
             )

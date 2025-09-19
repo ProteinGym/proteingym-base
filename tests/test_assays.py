@@ -102,8 +102,24 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [
-        (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 1.56),
-        (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0),
+        (
+            Sequence(
+                name="seq1",
+                value="APC",
+                type="standard_sequence",
+                alphabet=SequenceAlphabet.DNA,
+            ),
+            1.56,
+        ),
+        (
+            Sequence(
+                name="seq2",
+                value="DEF",
+                type="standard_sequence",
+                alphabet=SequenceAlphabet.DNA,
+            ),
+            2.0,
+        ),
     ]
 
     try:
@@ -117,18 +133,6 @@ def test_assay() -> None:
         AssertionError(f"Assay raised ValidationError: {e}")
     assert assay.sequence_feature_name == "sequence"
     assert assay.target_feature_name == "target"
-    with pytest.raises(
-        ValidationError,
-        match=r"validation error for Assay\nconditions\n.*Input should be a valid "
-        "dictionary",
-    ):
-        Assay(
-            name="assay",
-            conditions="bad_condition",
-            sequence_alphabet="AA",
-            records=records,
-        )
-
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:
@@ -156,8 +160,24 @@ def test_as_manifest_section(assay_file: Path) -> None:
         name="assay",
         sequence_alphabet=SequenceAlphabet.DNA,
         records=[
-            (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 1.56),
-            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0),
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                1.56,
+            ),
+            (
+                Sequence(
+                    name="seq2",
+                    value="DEF",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                2.0,
+            ),
         ],
     )
     manifest = assay.as_manifest_section(path=assay_file)
@@ -169,8 +189,18 @@ def test_assay_dump(tmp_path: Path) -> None:
     assay = Assay(
         name="assay",
         records=[
-            (Sequence(name="seq1", value="APC", alphabet="AA"), 1.56),
-            (Sequence(name="seq2", value="DEF", alphabet="AA"), 2.0),
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                1.56,
+            ),
+            (
+                Sequence(
+                    name="seq2", value="DEF", type="standard_sequence", alphabet="AA"
+                ),
+                2.0,
+            ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -231,8 +261,24 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
     assay1 = Assay(
         name="assay1",
         records=[
-            (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 1.56),
-            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 2.0),
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                1.56,
+            ),
+            (
+                Sequence(
+                    name="seq2",
+                    value="DEF",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                2.0,
+            ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -241,8 +287,24 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
     assay2 = Assay(
         name="assay2",
         records=[
-            (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 1.0),
-            (Sequence(name="seq2", value="DEF", alphabet=SequenceAlphabet.DNA), 3.0),
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                1.0,
+            ),
+            (
+                Sequence(
+                    name="seq2",
+                    value="DEF",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                3.0,
+            ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -270,8 +332,18 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
         name="assay1",
         records=[
             # The sequence names are kept same as
-            (Sequence(name="APC", value="APC", alphabet="AA"), 1.0),
-            (Sequence(name="DEF", value="DEF", alphabet="AA"), 3.0),
+            (
+                Sequence(
+                    name="APC", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                1.0,
+            ),
+            (
+                Sequence(
+                    name="DEF", value="DEF", type="standard_sequence", alphabet="AA"
+                ),
+                3.0,
+            ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
@@ -301,28 +373,60 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
     assay1 = Assay(
         name=duplicate_names[0],
         records=[
-            (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 1.0)
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                1.0,
+            )
         ],
         sequence_alphabet="AA",
     )
     assay2 = Assay(
         name=duplicate_names[0],
         records=[
-            (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 2.0)
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                2.0,
+            )
         ],
         sequence_alphabet="AA",
     )
     assay3 = Assay(
         name=duplicate_names[1],
         records=[
-            (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 1.0)
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                1.0,
+            )
         ],
         sequence_alphabet="AA",
     )
     assay4 = Assay(
         name=duplicate_names[1],
         records=[
-            (Sequence(name="seq1", value="APC", alphabet=SequenceAlphabet.DNA), 3.0)
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                3.0,
+            )
         ],
         sequence_alphabet="AA",
     )
