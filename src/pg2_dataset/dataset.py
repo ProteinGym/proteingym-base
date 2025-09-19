@@ -256,7 +256,7 @@ class Dataset(BaseModel):
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
-        archive_path = path / f"{self.name}.zip"
+        archive_path = path / f"{self.name}.pgdata"
         # The manifest Pydantic base model checks if the data path exists,
         # hence, we dump the data before creating and dumping the Manifest
         data_paths = self._dump_data(temporary_directory)
