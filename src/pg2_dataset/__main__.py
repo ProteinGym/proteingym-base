@@ -1,8 +1,10 @@
+import json
 import logging
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Dict, List
 
 import typer
+import yaml
 
 from pg2_dataset import Dataset, Manifest
 from pg2_dataset.__about__ import __version__
@@ -96,6 +98,70 @@ def build(
     typer.echo("Building dataset archive...")
     archive_path = dataset.dump(path=output_path)
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
+
+
+@app.command("list")
+def list_datasets(
+    path: Annotated[
+        Path,
+        typer.Argument(
+            help="Directory path containing .pgdata dataset archives",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+        ),
+    ],
+    query: Annotated[
+        str,
+        typer.Option(
+            "--query",
+            "-q",
+            help="Query to filter datasets (e.g., 'name=NEIME_2019')",
+        ),
+    ] = "",
+    format: Annotated[
+        str,
+        typer.Option(
+            "--format",
+            "-f",
+            help="Output format: json or yaml",
+        ),
+    ] = "json",
+):
+    """List available datasets with optional query filtering."""
+    logger = logging.getLogger("pg2_dataset")
+
+    def find_datasets(path: Path, query: str) -> List[Dict]:
+        """Find all .pgdata datasets in the given directory."""
+        datasets = []
+
+        for file_path in path.rglob("*.pgdata"):
+            dataset = Dataset.from_path(file_path)
+
+            if dataset.filter(query):
+                datasets.append(
+                    {
+                        "name": dataset.name,
+                        "description": dataset.description,
+                        "path": str(file_path.resolve()),
+                    }
+                )
+
+        return datasets
+
+    def format_output(datasets: List[Dict], output_format: str) -> str:
+        """Format the datasets for output."""
+        if output_format.lower() == "json":
+            return json.dumps(datasets, indent=2)
+        elif output_format.lower() == "yaml":
+            return yaml.dump(datasets, default_flow_style=False)
+        else:
+            logger.warning(f"Unsupported dataset output format: {output_format}")
+
+    datasets = find_datasets(path, query)
+
+    output = format_output(datasets, format)
+    typer.echo(output)
 
 
 if __name__ == "__main__":

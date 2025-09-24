@@ -2,6 +2,7 @@ import collections
 import itertools
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from urllib.parse import parse_qs
 from zipfile import ZipFile
 
 from pydantic import (
@@ -310,3 +311,121 @@ class Dataset(BaseModel):
                 path, temporary_directory=Path(temp_dir)
             )
         return archive_path
+
+    def filter(self, query: str) -> bool:
+        """Filter the dataset based on a URL query string.
+
+        Evaluates whether this dataset matches the specified filter criteria.
+        The query uses URL query string format with dot notation for nested fields.
+        Multiple conditions are combined with AND logic (all must match).
+
+        Args:
+            query: URL query string specifying filter conditions. Supports:
+                - Simple fields: 'name=NEIME_2019'
+                - Nested fields: 'assay_conditions.name=PH'
+                - Multiple conditions: 'name=NEIME_2019&assay_conditions.name=PH'
+                - Comma-separated values: 'assay_conditions.name=PH,T'
+                - Repeated params: 'assay_conditions.name=PH&assay_conditions.name=T'
+
+        Returns:
+            True if the dataset matches all specified filter conditions,
+            False otherwise. Empty query string returns True.
+
+        Examples:
+            >>> dataset.filter('name=NEIME_2019')
+            True
+            >>> dataset.filter('assays.target=fitness&assay_conditions.name=PH')
+            False
+            >>> dataset.filter('')  # Empty query
+            True
+        """
+        parsed_query = parse_qs(query, keep_blank_values=True)
+
+        data = self.model_dump()
+
+        for key, values in parsed_query.items():
+            # If query="assay_conditions.name=PH,T" ->
+            # values=['PH,T']
+            # If query="assay_conditions.name=PH&assay_conditions.name=T" ->
+            # values=['PH', 'T']
+            # The join method is to uniform above two input options into "PH,T"
+            expected_value = ",".join(values) if values else ""
+
+            if not self._matches_condition(data, key, expected_value):
+                return False
+
+        return True
+
+    def _matches_condition(self, data: dict, key: str, expected_value: str) -> bool:
+        """Check if a specific condition matches the data.
+
+        Args:
+            data: The dataset data as a dictionary
+            key: The field path (e.g., 'name', 'assay_conditions.name')
+            expected_value: The expected value to match
+
+        Returns:
+            bool: Whether the condition matches
+        """
+        expected_values = [v.strip() for v in expected_value.split(",")]
+
+        parts = key.split(".")
+
+        if len(parts) == 1:
+            # Simple field like 'name' - can only match if single expected value
+            field = parts[0]
+            if field in data and len(expected_values) == 1:
+                actual_value = str(data[field]) if data[field] is not None else ""
+                return actual_value == expected_values[0]
+            return False
+
+        elif len(parts) == 2:
+            # Nested field like 'assay_conditions.name'
+            array_field, filter_field = parts
+
+            if array_field in data:
+                items = data[array_field]
+
+                if isinstance(items, list):
+                    # Check if all expected values exist in the list
+                    actual_values = set()
+                    for item in items:
+                        if isinstance(item, dict) and filter_field in item:
+                            actual_value = (
+                                str(item[filter_field])
+                                if item[filter_field] is not None
+                                else ""
+                            )
+                            actual_values.add(actual_value)
+
+                    return set(expected_values).issubset(actual_values)
+
+            return False
+
+        elif len(parts) == 3:
+            # Nested field like 'assays.conditions.T'
+            array_field, filter_field, filter_sub_field = parts
+
+            if array_field in data:
+                items = data[array_field]
+
+                if isinstance(items, list):
+                    for item in items:
+                        if (
+                            isinstance(item, dict)
+                            and filter_field in item
+                            and filter_sub_field in item[filter_field]
+                        ):
+                            # Direct nested object - can only match for a single value
+                            if len(expected_values) == 1:
+                                actual_value = (
+                                    str(item[filter_field][filter_sub_field])
+                                    if item[filter_field][filter_sub_field] is not None
+                                    else ""
+                                )
+                                return actual_value == expected_values[0]
+            return False
+
+        else:
+            # Deeper nesting not supported for now
+            return False

@@ -1,6 +1,7 @@
 from pathlib import Path
 from zipfile import ZipFile
 
+from pg2_dataset.assay import AssayCondition
 from pg2_dataset.dataset import Dataset
 
 
@@ -48,3 +49,63 @@ def test_dataset_from_path_simple(tmp_path: Path) -> None:
     dataset = Dataset.from_path(dataset_path)
 
     assert dataset.name == "test", "Dataset name does not match the expected name."
+
+
+def test_dataset_filter_empty_query() -> None:
+    """Test filter with empty query string returns True."""
+    dataset = Dataset(name="test_dataset")
+    assert dataset.filter("") is True
+
+
+def test_dataset_filter_simple_field() -> None:
+    """Test filter with simple field - exists and matches vs doesn't exist."""
+    dataset = Dataset(name="NEIME_2019")
+    assert dataset.filter("name=NEIME_2019") is True
+    assert dataset.filter("name=OTHER") is False
+    assert dataset.filter("nonexistent=value") is False
+
+
+def test_dataset_filter_nested_field_list() -> None:
+    """Test filter with nested field in list - all values exist vs partial match."""
+    conditions = [
+        AssayCondition(name="PH", unit="pH", value=7.0),
+        AssayCondition(name="T", unit="C", value=25.0),
+    ]
+    dataset = Dataset(name="test", assay_conditions=conditions)
+    assert dataset.filter("assay_conditions.name=PH,T") is True
+    assert dataset.filter("assay_conditions.name=PH,MISSING") is False
+    assert dataset.filter("nonexistent.name=value") is False
+
+
+def test_dataset_filter_multiple_conditions() -> None:
+    """Test filter with multiple conditions using AND logic."""
+    conditions = [AssayCondition(name="PH", unit="pH", value=7.0)]
+    dataset = Dataset(name="NEIME_2019", assay_conditions=conditions)
+    assert dataset.filter("name=NEIME_2019&assay_conditions.name=PH") is True
+    assert dataset.filter("name=NEIME_2019&assay_conditions.name=MISSING") is False
+
+
+def test_dataset_filter_three_level_nesting() -> None:
+    """Test filter with 3-level nesting like 'assays.conditions.T'."""
+    # Create a dataset with 3-level nested structure matching TOML format
+    dataset = Dataset(name="test")
+    dataset._data = {
+        "name": "test",
+        "assays": [
+            {
+                "sequence": "mutated_sequence",
+                "target": "DMS_score",
+                "conditions": {"T": 37, "PH": 7},
+            }
+        ],
+    }
+    assert dataset.filter("assays.conditions.T=37") is True
+    assert dataset.filter("assays.conditions.PH=7") is True
+    assert dataset.filter("assays.conditions.T=25") is False
+    assert dataset.filter("assays.conditions.nonexistent=value") is False
+
+
+def test_dataset_filter_deeper_nesting() -> None:
+    """Test filter with deeper nesting (> 3 levels) returns False."""
+    dataset = Dataset(name="test")
+    assert dataset.filter("level1.level2.level3.level4=value") is False
