@@ -1,7 +1,7 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from pg2_dataset.assay import AssayCondition
+from pg2_dataset.assay import Assay, AssayCondition
 from pg2_dataset.dataset import Dataset
 
 
@@ -88,17 +88,14 @@ def test_dataset_filter_multiple_conditions() -> None:
 def test_dataset_filter_three_level_nesting() -> None:
     """Test filter with 3-level nesting like 'assays.conditions.T'."""
     # Create a dataset with 3-level nested structure matching TOML format
-    dataset = Dataset(name="test")
-    dataset._data = {
-        "name": "test",
-        "assays": [
-            {
-                "sequence": "mutated_sequence",
-                "target": "DMS_score",
-                "conditions": {"T": 37, "PH": 7},
-            }
-        ],
-    }
+    assay = Assay(
+        name="assay",
+        records=[],
+        sequence_alphabet="AA",
+        conditions={"T": 37, "PH": 7},
+    )
+    dataset = Dataset(name="test", assays=[assay])
+
     assert dataset.filter("assays.conditions.T=37") is True
     assert dataset.filter("assays.conditions.PH=7") is True
     assert dataset.filter("assays.conditions.T=25") is False
