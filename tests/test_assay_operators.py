@@ -73,80 +73,80 @@ def test_assay_contains_subset_mismatch() -> None:
     assert subset not in assay
 
 
-def test_assay_equals_with_condition() -> None:
-    """An assay with a record and condition should equal itself"""
+def test_assay_equals_with_variable() -> None:
+    """An assay with a record and variable should equal itself"""
     assay = Assay(
         name="Test Assay",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition1": 1},
+        variables={"variable1": 1},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert assay == assay
 
 
-def test_assay_equals_with_condition_mismatch() -> None:
-    """Two assays with the same records but different conditions should not be equal."""
+def test_assay_equals_with_variable_mismatch() -> None:
+    """Two assays with the same records but different variables should not be equal."""
     assay1 = Assay(
         name="Test assay 1",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition1": 1},
+        variables={"variable1": 1},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assay2 = Assay(
         name="Test assay 2",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition2": 2},
+        variables={"variable2": 2},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert assay1 != assay2
 
 
-def test_assay_contains_includes_conditions() -> None:
-    """Conditions should also be considered for equality."""
+def test_assay_contains_includes_variables() -> None:
+    """Variables should also be considered for equality."""
     assay = Assay(
         name="Test assay",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition1": 1, "condition2": 2},
+        variables={"variable1": 1, "variable2": 2},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     subset = Assay(
         name="Test assay subset",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition2": 2},
+        variables={"variable2": 2},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert subset in assay
 
 
-def test_assay_contains_includes_condition_mismatch() -> None:
-    """Conditions should also be considered for equality."""
+def test_assay_contains_includes_variable_mismatch() -> None:
+    """Variables should also be considered for equality."""
     assay = Assay(
         name="Test assay",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition1": 1, "condition2": 2},
+        variables={"variable1": 1, "variable2": 2},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     subset = Assay(
         name="Test assay subset",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition3": 3},
+        variables={"variable3": 3},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert subset not in assay
 
 
-def test_assay_contains_includes_condition_value_mismatch() -> None:
-    """Condition values should be considered for equality."""
+def test_assay_contains_includes_variable_value_mismatch() -> None:
+    """Variable values should be considered for equality."""
     assay = Assay(
         name="Test assay",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition1": 1, "condition2": 2},
+        variables={"variable1": 1, "variable2": 2},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     subset = Assay(
         name="Test assay subset",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        conditions={"condition2": 3},
+        variables={"variable2": 3},
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert subset not in assay

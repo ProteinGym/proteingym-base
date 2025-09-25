@@ -7,9 +7,9 @@ from semver import Version
 
 from pg2_dataset.assay import (
     Assay,
-    AssayCondition,
     AssayFormat,
     AssayManifestSection,
+    AssayVariable,
 )
 from pg2_dataset.dataset import Dataset, DatasetArchiveLayout
 from pg2_dataset.manifest import Manifest
@@ -29,23 +29,23 @@ F1L,0.6""".lstrip()
     return path
 
 
-def test_assay_condition_minimal() -> None:
-    """Test creating a minimal AssayCondition."""
+def test_assay_variable_minimal() -> None:
+    """Test creating a minimal AssayVariable."""
     # This should not raise an error
     try:
-        condition = AssayCondition(name="test")
+        variable = AssayVariable(name="test")
     except ValidationError as e:
-        AssertionError(f"AssayCondition raised ValidationError: {e}")
-    assert condition.name == "test"
+        AssertionError(f"AssayVariable raised ValidationError: {e}")
+    assert variable.name == "test"
 
 
-def test_assay_condition_invalid_inputs() -> None:
-    """Test invalid AssayCondition inputs raise ValidationError."""
+def test_assay_variable_invalid_inputs() -> None:
+    """Test invalid AssayVariable inputs raise ValidationError."""
     with pytest.raises(
         ValidationError,
-        match=r"validation error for AssayCondition\nname\n.*Field required",
+        match=r"validation error for AssayVariable\nname\n.*Field required",
     ):
-        AssayCondition()
+        AssayVariable()
 
 
 def test_assay_manifest_section(assay_file: Path) -> None:
@@ -57,7 +57,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
             sequence="sequence",
             sequence_alphabet="AA",
             target="target",
-            conditions={"test_cond1": "true", "test_cond2": 42},
+            variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
     except ValidationError as e:
@@ -94,7 +94,7 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
             sequence="invalid_feature",
             sequence_alphabet="AA",
             target="target",
-            conditions={"test_cond1": "true", "test_cond2": 42},
+            variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
 
@@ -125,7 +125,7 @@ def test_assay() -> None:
     try:
         assay = Assay(
             name="assay",
-            conditions={"test_cond1": "true", "test_cond2": 42},
+            variables={"test_cond1": "true", "test_cond2": 42},
             records=records,
             sequence_alphabet="AA",
         )
@@ -145,7 +145,7 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
                 sequence_alphabet=SequenceAlphabet.DNA,
                 target="target",
                 path=assay_file,
-                conditions={"test_cond1": "true", "test_cond2": 42},
+                variables={"test_cond1": "true", "test_cond2": 42},
             ),
         )
     except ValidationError as e:
@@ -214,43 +214,43 @@ def test_assay_dump(tmp_path: Path) -> None:
     assert "DEF,2.0" in content
 
 
-def test_manifest_with_valid_assay_conditions(assay_file: Path) -> None:
-    """Test creating a Manifest with valid assay conditions."""
+def test_manifest_with_valid_assay_variables(assay_file: Path) -> None:
+    """Test creating a Manifest with valid assay variables."""
     try:
         manifest = Manifest(
             version=Version(1, 0),
             name="test_manifest",
-            assay_conditions=[{"name": "pH"}, {"name": "temperature"}],
+            assay_variables=[{"name": "pH"}, {"name": "temperature"}],
             assays=[
                 {
                     "path": assay_file,
                     "sequence_type": SequenceAlphabet.DNA,
-                    "conditions": {"pH": 7.0, "temperature": 37.0},
+                    "variables": {"pH": 7.0, "temperature": 37.0},
                 }
             ],
         )
     except ValidationError as e:
         AssertionError(f"Manifest raised ValidationError: {e}")
     else:
-        assert manifest.assay_conditions, "Valid assay conditions should be present"
+        assert manifest.assay_variables, "Valid assay variables should be present"
 
 
-def test_manifest_with_undefined_assay_condition(assay_file: Path) -> None:
-    """Test creating a Manifest with undefined assay conditions."""
+def test_manifest_with_undefined_assay_variable(assay_file: Path) -> None:
+    """Test creating a Manifest with undefined assay variables."""
     with pytest.raises(
         ValidationError,
         match=r"validation error for Manifest\n"
-        r".*Value error, Assay .* contains undefined conditions",
+        r".*Value error, Assay .* contains undefined variables",
     ):
         Manifest(
             version=Version(1, 0),
             name="test_manifest",
-            assay_conditions=[{"name": "pH"}],
+            assay_variables=[{"name": "pH"}],
             assays=[
                 {
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
-                    "conditions": {"temperature": 37.0},
+                    "variables": {"temperature": 37.0},
                 }
             ],
         )

@@ -9,7 +9,7 @@
         "machine name" : "hplc1",
         "machine type" : "hplc",
     },
-    "conditions" : {
+    "variables" : {
         "temperature" : 25,
         "pressure" : 1,
         "humidity" : 0.5,
