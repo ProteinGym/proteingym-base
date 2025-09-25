@@ -1,5 +1,5 @@
 [project]
-name = "pg2-dataset"
+name = "proteingym-base"
 description = "Add your description here"
 readme = "README.md"
 authors = [
