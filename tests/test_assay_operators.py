@@ -188,7 +188,7 @@ def test_assay_slice_first() -> None:
         sequence_alphabet=SequenceAlphabet.AA,
     )
     first = Assay(
-        name="Test assay",
+        name="Test assay with first record",
         records=[("SEQ1", 1.0)],
         sequence_alphabet=SequenceAlphabet.AA,
     )
@@ -203,7 +203,7 @@ def test_assay_slice_last() -> None:
         sequence_alphabet=SequenceAlphabet.AA,
     )
     last = Assay(
-        name="Test assay",
+        name="Test assay with last record",
         records=[("SEQ2", 2.0)],
         sequence_alphabet=SequenceAlphabet.AA,
     )
