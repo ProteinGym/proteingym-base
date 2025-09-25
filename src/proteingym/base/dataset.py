@@ -11,11 +11,11 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.assay import Assay, AssayVariable
-from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
-from pg2_dataset.msa import MSA
-from pg2_dataset.sequence import Sequence
-from pg2_dataset.structure import Structure
+from .assay import Assay, AssayVariable
+from .manifest import MANIFEST_LATEST_VERSION, Manifest
+from .msa import MSA
+from .sequence import Sequence
+from .structure import Structure
 
 
 class DatasetArchiveLayout:

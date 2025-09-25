@@ -28,7 +28,8 @@ A standardisation for using protein data within protein gym.
 ├── notebooks/                 <-- Jupyter notebooks
 │   └── *.ipynb                <-- Demonstration notebooks
 ├── src/                       <-- Source code folder
-│   └── pg2_dataset/           <-- Main package
+│   └── proteingym/            <-- Namespace package
+│       └── base/              <-- Package
 ├── tests/                     <-- Test folder
 │   └── test_*.py              <-- Test files
 ├── .adr-dir                   <-- Architecture decision records folder
@@ -73,7 +74,7 @@ example code below we load the [NEIME 2019](#example-data) dataset
 [manifest](./example_data/neime_2019.toml):
 
 ``` python
->>> from pg2_dataset import Dataset, Manifest
+>>> from proteingym.base import Dataset, Manifest
 >>> manifest = Manifest.from_path("example_data/neime_2019.toml")
 >>> manifest.name
 'NEIME_2019'

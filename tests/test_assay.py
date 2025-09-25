@@ -5,15 +5,16 @@ import pytest
 from pydantic import ValidationError
 from semver import Version
 
-from pg2_dataset.assay import (
+from proteingym.base import Dataset
+from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
     AssayVariable,
 )
-from pg2_dataset.dataset import Dataset, DatasetArchiveLayout
-from pg2_dataset.manifest import Manifest
-from pg2_dataset.sequence import Sequence, SequenceAlphabet
+from proteingym.base.dataset import DatasetArchiveLayout
+from proteingym.base.manifest import Manifest
+from proteingym.base.sequence import Sequence, SequenceAlphabet
 
 
 @pytest.fixture
