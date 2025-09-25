@@ -104,8 +104,8 @@ def test_assay_contains_includes_condition_mismatch() -> None:
     assert subset not in assay
 
 
-def test_assay_contains_includes_condition_key_mismatch() -> None:
-    """Condition keys should be considered for equality."""
+def test_assay_contains_includes_condition_value_mismatch() -> None:
+    """Condition values should be considered for equality."""
     assay = Assay(
         name="Test assay",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
