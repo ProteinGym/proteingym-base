@@ -9,13 +9,13 @@ project with your environment using [`uv`](https://docs.astral.sh/uv/):
 
 ```shell
 $ source .venv/bin/activate  # Load your virtual environment
-$ uc sync
+$ uv sync
 ```
 
 To install all optional dependencies, run:
 
 ```shell
-$ uc sync --all-extras
+$ uv sync --all-extras
 ```
 
 ### Pre-commit hooks
