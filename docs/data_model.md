@@ -27,7 +27,7 @@ classDiagram
         +Structure[] structures
         +MSA[] msas
         +Assay[] assays
-        +AssayCondition[] assay_conditions
+        +AssayVariable[] assay_variables
         +string creator   
         +string xref
         +dict metadata
@@ -153,7 +153,7 @@ classDiagram
         +string name
         +AssayRecord[] records
         +string description
-        +dict AssayCondition.AssayDataType: condition_values
+        +dict AssayVariable.AssayDataType: variable_values
         +AssayTarget target
         +func biopython_loader()
     }
@@ -161,12 +161,12 @@ classDiagram
         +Sequence sequence
         +AssayTarget.DataType value
     }
-    class AssayCondition {
+    class AssayVariable {
         +string name
         +string unit
         +AssayDataType data_type
         +string description
-        +func validate_condition()
+        +func validate_assay_variable()
     }
     class AssayDataType {
         <<enumeration>>
@@ -196,7 +196,7 @@ classDiagram
     Dataset "1" o-- "0..*" Structure
     Dataset "1" o-- "0..*" MSA
     Dataset "1" o-- "0..*" Assay
-    Dataset "1" o-- "0..*" AssayCondition
+    Dataset "1" o-- "0..*" AssayVariable
     Sequence o-- SequenceFactory
     Sequence o-- SequenceAlphabet
     Sequence o-- SequenceType
@@ -212,8 +212,8 @@ classDiagram
     AssayFactory "1" o-- "*" DataGetter
     Assay o-- AssayTarget
     Assay o-- AssayRecord
-    Assay o-- AssayCondition
-    AssayCondition o-- AssayDataType
+    Assay o-- AssayVariable
+    AssayVariable o-- AssayDataType
     AssayTarget o-- AssayDataType
 
     DataGetter o-- DataType
@@ -233,7 +233,7 @@ classDiagram
 
 | **Module** | **Sub-Module** | **Description** | **Notes** |
 | - | - | - | - |
-| Dataset | | It is a collection of biological data that are used for benchmarking pg2-models with pg2-benchmark framework. This class contains the metadata of the dataset, and the references to the sequences, structures, MSAs, and assays data types. Dataset class also contains the assay conditions defined in section 6. | |
+| Dataset | | It is a collection of biological data that are used for benchmarking pg2-models with pg2-benchmark framework. This class contains the metadata of the dataset, and the references to the sequences, structures, MSAs, and assays data types. Dataset class also contains the assay variables defined in section 6. | |
 | DataGetter | | Handles the retrieval of data from either a local directory or a cross-reference (xref) to an external database. The data received is then used by data factories. DataGetter must have either a valid directory path or a cross-reference to fetch the data. | |
 | DataGetter | DataDir | Represents a directory where the data files are stored. It can be either the working directory or a cloud storage like SFTP servers, s3 buckets, etc. | |
 | DataGetter | CrossRef | Represents a cross-reference to an external database. The CrossRef class contains information about the external database and provides methods to retrieve data from it. | |
@@ -249,9 +249,9 @@ classDiagram
 | MSA | | It is the multi sequence alignment data. | |
 | MSA | MSAFactory | Uses the DataGetter object to generate MSA objects. | |
 | MSA | MSAFileType | The ProteinGym2 dataset module supports three MSA file types: A3M, A2M, and PSI. | A3M, A2M, PSI |
-| Assay | | Assays are experimental data that contains modified or mutated sequences and corresponding values for targets. It is a supervised dataset where X is the modified sequences and Y is the target value. In addition to the sequences, assays also contain assay conditions. These conditions are biological factors that impact the assay results. For an assay, the assay conditions are kept constant and the target value is measured for the modified sequences. | |
+| Assay | | Assays are experimental data that contains modified or mutated sequences and corresponding values for targets. It is a supervised dataset where X is the modified sequences and Y is the target value. In addition to the sequences, assays also contain assay variables. These variables are biological factors that impact the assay results. For an assay, the assay variables are kept constant and the target value is measured for the modified sequences. | |
 | Assay | AssayFactory | Uses the DataGetter object to generate Assay objects. | |
-| Assay | AssayCondition | Represents the conditions under which the assay was performed. These conditions can include factors like temperature, pH, and other experimental variables. These conditions are constant for an assay. | |
+| Assay | AssayVariable | Represents the variables under which the assay was performed. These variables can include factors like temperature, pH, and other experimental variables. These variables are constant for an assay. | |
 | Assay | AssayRecord | Contains the sequence and the corresponding target value for the assay. Each record represents a single data point in the assay. Assay is created from a list of AssayRecord class instances. | |
 | Assay | AssayTarget | Contains the metadata of the target value for the assay. | |
 | Assay | AssayDataType | Represents the type of data in the assay: Categorical, Numerical, and Boolean. | Categorical, Numerical, Boolean |

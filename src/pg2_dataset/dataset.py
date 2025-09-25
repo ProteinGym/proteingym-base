@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.assay import Assay, AssayCondition
+from pg2_dataset.assay import Assay, AssayVariable
 from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
 from pg2_dataset.msa import MSA
 from pg2_dataset.sequence import Sequence
@@ -63,8 +63,8 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_conditions: list[AssayCondition] = Field(default_factory=list)
-    """The list of assay conditions relevant to the dataset."""
+    assay_variables: list[AssayVariable] = Field(default_factory=list)
+    """The list of assay variables relevant to the dataset."""
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
@@ -140,7 +140,7 @@ class Dataset(BaseModel):
         return cls(
             name=manifest.name,
             description=manifest.description,
-            assay_conditions=manifest.assay_conditions,
+            assay_variables=manifest.assay_variables,
             assays=assays,
             sequences=sequences,
             structures=structures,
@@ -215,7 +215,7 @@ class Dataset(BaseModel):
             version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
-            assay_conditions=self.assay_conditions,
+            assay_variables=self.assay_variables,
             assays=[
                 a.as_manifest_section(path=path)
                 for a, path in zip(self.assays, data_paths.get(Assay, []), strict=True)
