@@ -73,6 +73,23 @@ def test_assay_contains_subset_mismatch() -> None:
     assert subset not in assay
 
 
+def test_assay_equals_with_name_mismatch() -> None:
+    """An assay name should not be considered for equality."""
+    assay = Assay(
+        name="Test Assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        variables={"variable1": 1},
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    other_assay = Assay(
+        name="Other Test Assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        variables={"variable1": 1},
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert assay == other_assay
+
+
 def test_assay_equals_with_variable() -> None:
     """An assay with a record and variable should equal itself"""
     assay = Assay(
