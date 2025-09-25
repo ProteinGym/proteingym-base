@@ -151,7 +151,8 @@ class Assay:
     records: list[tuple[Sequence, list[AssayTarget]]]
     """The records of the assay, pairs of Sequence and multiple targets."""
 
-    sequence_alphabet: str
+    sequence_alphabet: SequenceAlphabet
+    """The alphabet of the sequences in the assay."""
 
     variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
