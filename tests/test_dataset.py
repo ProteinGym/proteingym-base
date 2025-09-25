@@ -56,9 +56,9 @@ def test_dataset_repr() -> None:
 
     repr_str = repr(dataset)
     assert "Dataset(\n\tname='test dataset'," in repr_str
-    assert "Contents:" in repr_str
-    assert "0 assay(s)" in repr_str
-    assert "0 sequence(s)" in repr_str
-    assert "0 structure(s)" in repr_str
-    assert "0 MSA(s)" in repr_str
-    assert "0 assay variable(s)" in repr_str
+    assert "contents:" in repr_str
+    assert "assays: 0," in repr_str
+    assert "sequences: 0," in repr_str
+    assert "structures: 0," in repr_str
+    assert "msas: 0," in repr_str
+    assert "assay_variables: 0," in repr_str

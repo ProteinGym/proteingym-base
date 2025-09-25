@@ -356,7 +356,7 @@ def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
     repr_str = repr(structure)
     assert "Structure(\n\tname='test structure'," in repr_str
     assert "description: A test structure," in repr_str
-    assert "value: <class 'Bio.PDB.Structure.Structure'>," in repr_str
+    assert "value: Type[Structure]," in repr_str
     assert "\tmetadata:" in repr_str
     assert "\t\tkey1: value1," in repr_str
     assert "\t\tkey2: value2," in repr_str

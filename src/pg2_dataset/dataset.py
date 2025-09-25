@@ -80,7 +80,6 @@ class Dataset(BaseModel):
 
     def __repr__(self) -> str:
         """Return a concise string representation of the dataset."""
-
         lines = [f"Dataset(\n\tname='{self.name}',"]
         if self.description:
             desc = (
@@ -91,12 +90,12 @@ class Dataset(BaseModel):
             lines.append(f"\tdescription: {desc},")
         else:
             lines.append("\tdescription: None,")
-        lines.append("\tContents:")
-        lines.append(f"\t\t{len(self.assays)} assay(s),")
-        lines.append(f"\t\t{len(self.sequences)} sequence(s),")
-        lines.append(f"\t\t{len(self.structures)} structure(s),")
-        lines.append(f"\t\t{len(self.msas)} MSA(s),")
-        lines.append(f"\t\t{len(self.assay_variables)} assay variable(s),")
+        lines.append("\tcontents:")
+        lines.append(f"\t\tassays: {len(self.assays)},")
+        lines.append(f"\t\tsequences: {len(self.sequences)},")
+        lines.append(f"\t\tstructures: {len(self.structures)},")
+        lines.append(f"\t\tmsas: {len(self.msas)},")
+        lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
         lines.append(")")
         return "\n".join(lines)
 

@@ -130,7 +130,6 @@ class Sequence:
 
     def __repr__(self) -> str:
         """Return a string representation of the Sequence object."""
-
         lines = [f"Sequence(\n\tname='{self.name}',"]
         if self.description:
             desc = (
@@ -144,7 +143,6 @@ class Sequence:
 
         lines.append(f"\ttype: {self.type},")
         lines.append(f"\talphabet: {self.alphabet},")
-
         value_str = str(self.value)
         if len(value_str) > 60:
             value_str = value_str[:60] + "..."

@@ -101,7 +101,7 @@ class Structure:
             lines.append(f"\tdescription: {desc},")
         else:
             lines.append("\tdescription: None,")
-        lines.append(f"\tvalue: {type(self.value)},")
+        lines.append(f"\tvalue: Type[{type(self.value).__name__}],")
         if self.metadata:
             lines.append("\tmetadata:")
             for key, value in self.metadata.items():
@@ -109,7 +109,7 @@ class Structure:
                     value = value[:60] + "..."
                 lines.append(f"\t\t{key}: {value},")
         else:
-            lines.append(f"\tmetadata: {self.metadata},")
+            lines.append("\tmetadata: 0,")
         lines.append(")")
         return "\n".join(lines)
 

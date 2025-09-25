@@ -457,7 +457,7 @@ def test_assay_repr() -> None:
     repr_str = repr(assay)
     assert "Assay(\n\tname='test assay'," in repr_str
     assert "description: None," in repr_str
-    assert "sequence alphabet: AA" in repr_str
+    assert "sequence_alphabet: AA" in repr_str
     assert (
         f"{len(assay.variables)} variable(s)" not in repr_str
     )  # No variables provided

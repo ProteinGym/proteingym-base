@@ -99,8 +99,11 @@ class MSA:
             lines.append("\tdescription: None,")
 
         lines.append("\tvalue:")
-        alignment_str = "\n\t\t".join(str(self.value).splitlines()[:3])
-        lines.append(f"\t\t{alignment_str},")
+        alignment_lines = str(self.value).splitlines()
+        preview = alignment_lines[:3]
+        lines.extend([f"\t\t{line}" for line in preview])
+        if len(alignment_lines) > 3:
+            lines.append("\t\t...")
         lines.append(")")
         return "\n".join(lines)
 
