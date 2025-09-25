@@ -22,7 +22,7 @@ def setup_logger(*, level: int = logging.CRITICAL) -> None:
         log_level (int): The logging level to set. Defaults to
            `logging.CRITICAL`.
     """
-    logger = logging.getLogger("pg2_dataset")
+    logger = logging.getLogger("proteingym.base")
     logger.setLevel(level)
 
     stream_handler = logging.StreamHandler()
