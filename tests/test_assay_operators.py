@@ -2,6 +2,8 @@
 Module for testing assay operators.
 """
 
+import pytest
+
 from proteingym.base.assay import Assay, SequenceAlphabet
 
 
@@ -193,6 +195,19 @@ def test_assay_slice_first() -> None:
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert first == assay[:1]
+
+
+def test_assay_get_first() -> None:
+    """Getting an assay with [0] should return the first record."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    with pytest.raises(
+        NotImplementedError, match="Getting a single record is not supported."
+    ):
+        assay[0]
 
 
 def test_assay_slice_last() -> None:
