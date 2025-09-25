@@ -184,6 +184,10 @@ class Assay:
             for k, v in item.variables.items()
         )
 
+    def __getitem__(self, slc: slice) -> "Assay":
+        """Get the record at the given index."""
+        return dataclasses.replace(self, records=self.records[slc])
+
     def __repr__(self) -> str:
         """Return a string representation of the Assay object."""
         lines = [f"Assay(\n\tname='{self.name}',"]
