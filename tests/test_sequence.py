@@ -335,3 +335,21 @@ def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
     assert all(isinstance(seq, Sequence) for seq in dataset.sequences)
     assert dataset.sequences[0].name == "seq1"
     assert dataset.sequences[1].name == "seq2"
+
+
+def test_sequence_repr() -> None:
+    """Test the string representation of the Sequence class."""
+    sequence = Sequence(
+        name="Test_Sequence",
+        value=Seq("ATCGATCGATCG"),
+        description="This is a test sequence",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+    repr_str = repr(sequence)
+    assert "Sequence(\n\tname='Test_Sequence'," in repr_str
+    assert "description: This is a test sequence" in repr_str
+    assert "type: wild_type" in repr_str
+    assert "alphabet: DNA" in repr_str
+    assert "value: ATCGATCGATCG" in repr_str

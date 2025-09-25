@@ -128,6 +128,30 @@ class Sequence:
     description: str | None = None
     """The description of the sequence."""
 
+    def __repr__(self) -> str:
+        """Return a string representation of the Sequence object."""
+
+        lines = [f"Sequence(\n\tname='{self.name}',"]
+        if self.description:
+            desc = (
+                self.description[:60] + "..."
+                if len(self.description) > 60
+                else self.description
+            )
+            lines.append(f"\tdescription: {desc},")
+        else:
+            lines.append("\tdescription: None,")
+
+        lines.append(f"\ttype: {self.type},")
+        lines.append(f"\talphabet: {self.alphabet},")
+
+        value_str = str(self.value)
+        if len(value_str) > 60:
+            value_str = value_str[:60] + "..."
+        lines.append(f"\tvalue: {value_str},")
+        lines.append(")")
+        return "\n".join(lines)
+
     @classmethod
     def from_manifest_section(
         cls, section: SequenceManifestSection

@@ -279,3 +279,23 @@ def test_dataset_fails_with_duplicate_msa_names(
         match=rf"Duplicate names found in:.*MSAs:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", msas=[msa1, msa2, msa3, msa4])
+
+
+def test_msa_repr(
+    multiple_sequence_alignment: MultipleSeqAlignment,
+) -> None:
+    """The MSA __repr__ method should return a concise representation."""
+    description = "This is a test MSA used to verify the __repr__ method."
+    msa = MSA(
+        name="test_msa", value=multiple_sequence_alignment, description=description
+    )
+
+    repr_str = repr(msa)
+
+    assert repr_str.startswith("MSA(")
+    assert "name='test_msa'" in repr_str
+    assert (
+        "description: This is a test MSA used to verify the __repr__ method."
+        in repr_str
+    )
+    assert "value:" in repr_str

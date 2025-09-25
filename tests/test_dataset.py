@@ -49,12 +49,13 @@ def test_dataset_from_path_simple(tmp_path: Path) -> None:
 
     assert dataset.name == "test", "Dataset name does not match the expected name."
 
+
 def test_dataset_repr() -> None:
     """Test the string representation of the Dataset class."""
-    dataset = Dataset(name="Protein_r1")
+    dataset = Dataset(name="test dataset")
 
     repr_str = repr(dataset)
-    assert "Dataset(name='Protein_r1', ...)" in repr_str
+    assert "Dataset(\n\tname='test dataset'," in repr_str
     assert "Contents:" in repr_str
     assert "0 assay(s)" in repr_str
     assert "0 sequence(s)" in repr_str

@@ -342,3 +342,21 @@ def test_dataset_failes_with_duplicate_structure_names() -> None:
         Dataset(
             name="test", structures=[structure1, structure2, structure3, structure4]
         )
+
+
+def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
+    """Test the string representation of the Structure class."""
+    structure = Structure(
+        name="test structure",
+        value=bio_structure,
+        description="A test structure",
+        metadata={"key1": "value1", "key2": "value2"},
+    )
+
+    repr_str = repr(structure)
+    assert "Structure(\n\tname='test structure'," in repr_str
+    assert "description: A test structure," in repr_str
+    assert "value: <class 'Bio.PDB.Structure.Structure'>," in repr_str
+    assert "\tmetadata:" in repr_str
+    assert "\t\tkey1: value1," in repr_str
+    assert "\t\tkey2: value2," in repr_str

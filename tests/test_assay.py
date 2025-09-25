@@ -436,3 +436,28 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
+
+
+def test_assay_repr() -> None:
+    """Test the string representation of the Assay class."""
+    assay = Assay(
+        name="test assay",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                1.56,
+            ),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+        target_feature_name="target",
+    )
+    repr_str = repr(assay)
+    assert "Assay(\n\tname='test assay'," in repr_str
+    assert "description: None," in repr_str
+    assert "sequence alphabet: AA" in repr_str
+    assert (
+        f"{len(assay.variables)} variable(s)" not in repr_str
+    )  # No variables provided
