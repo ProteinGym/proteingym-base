@@ -184,6 +184,16 @@ class Assay:
             for k, v in item.variables.items()
         )
 
+    def __eq__(self, item: "Assay") -> bool:
+        """Implements the '==' operator for Assay."""
+        if not isinstance(item, Assay):
+            return False
+        return (
+            self.records == item.records
+            and self.variables == item.variables
+            and self.sequence_alphabet == item.sequence_alphabet
+        )
+
     def __getitem__(self, slc: slice) -> "Assay":
         """Get the record at the given index."""
         return dataclasses.replace(self, records=self.records[slc])
