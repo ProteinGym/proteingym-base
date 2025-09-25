@@ -40,8 +40,8 @@ def test_sequence_with_data_equals_itself() -> None:
     assert sequence == sequence
 
 
-def test_sequence_with_diffent_data_not_equals() -> None:
-    """A sequence with different data should not equal."""
+def test_sequence_with_diffent_value_not_equals() -> None:
+    """A sequence with different value should not equal."""
     sequence1 = Sequence(
         name="Test Sequence",
         value=Seq("ACDEFG"),
@@ -53,6 +53,23 @@ def test_sequence_with_diffent_data_not_equals() -> None:
         value=Seq("HIKLMN"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
+    )
+    assert sequence1 != sequence2
+
+
+def test_sequence_with_diffent_alphabet_not_equals() -> None:
+    """A sequence with different alphabet should not equal."""
+    sequence1 = Sequence(
+        name="Test Sequence",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    sequence2 = Sequence(
+        name="Test Sequence",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
     )
     assert sequence1 != sequence2
 

@@ -135,7 +135,7 @@ class Sequence:
         """
         if not isinstance(item, Sequence):
             return False
-        return self.value == item.value
+        return self.value == item.value and self.alphabet == item.alphabet
 
     def __repr__(self) -> str:
         """Return a string representation of the Sequence object."""
