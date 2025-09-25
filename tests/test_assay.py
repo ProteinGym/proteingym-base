@@ -9,6 +9,7 @@ from pg2_dataset.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
+    AssayTarget,
     AssayVariable,
 )
 from pg2_dataset.dataset import Dataset, DatasetArchiveLayout
@@ -56,7 +57,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
             description="Test assay",
             sequence="sequence",
             sequence_alphabet="AA",
-            target="target",
+            targets={"DMS Score": "target"},
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
@@ -67,7 +68,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
     with assay_file.open() as f:
         content = f.read()
     assert section.sequence in content
-    assert section.target in content
+    assert all(target in content for target in section.targets.values())
 
 
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
@@ -93,7 +94,7 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
             description="Test assay",
             sequence="invalid_feature",
             sequence_alphabet="AA",
-            target="target",
+            targets={"DMS Score": "target"},
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
@@ -109,7 +110,7 @@ def test_assay() -> None:
                 type="standard_sequence",
                 alphabet=SequenceAlphabet.DNA,
             ),
-            1.56,
+            [AssayTarget(name="DMS Score", value=1.56)],
         ),
         (
             Sequence(
@@ -118,7 +119,7 @@ def test_assay() -> None:
                 type="standard_sequence",
                 alphabet=SequenceAlphabet.DNA,
             ),
-            2.0,
+            [AssayTarget(name="DMS Score", value=2.0)],
         ),
     ]
 
@@ -132,7 +133,9 @@ def test_assay() -> None:
     except ValidationError as e:
         AssertionError(f"Assay raised ValidationError: {e}")
     assert assay.sequence_feature_name == "sequence"
-    assert assay.target_feature_name == "target"
+    assert all(
+        target_name in ["DMS Score"] for target_name in assay.target_feature_names
+    )
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:
@@ -143,7 +146,7 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
                 name="assay",
                 sequence="sequence",
                 sequence_alphabet=SequenceAlphabet.DNA,
-                target="target",
+                targets={"DMS Score": "target"},
                 path=assay_file,
                 variables={"test_cond1": "true", "test_cond2": 42},
             ),
@@ -154,7 +157,7 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
     assert len(assay.records) == 2
 
 
-def test_as_manifest_section(assay_file: Path) -> None:
+def test_as_manifest_section(tmp_path: Path) -> None:
     """Test converting an Assay to a manifest section."""
     assay = Assay(
         name="assay",
@@ -167,7 +170,7 @@ def test_as_manifest_section(assay_file: Path) -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                1.56,
+                [AssayTarget(name="DMS Score", value=1.56)],
             ),
             (
                 Sequence(
@@ -176,12 +179,16 @@ def test_as_manifest_section(assay_file: Path) -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                2.0,
+                [AssayTarget(name="DMS Score", value=2.0)],
             ),
         ],
     )
-    manifest = assay.as_manifest_section(path=assay_file)
-    assert manifest.path == assay_file
+    path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    manifest = assay.as_manifest_section(path=path)
+    assert "DMS Score" in manifest.path.read_text()
+    assert "sequence" in manifest.path.read_text()
+    assert "1.56" in manifest.path.read_text()
+    assert "2.0" in manifest.path.read_text()
 
 
 def test_assay_dump(tmp_path: Path) -> None:
@@ -193,18 +200,17 @@ def test_assay_dump(tmp_path: Path) -> None:
                 Sequence(
                     name="seq1", value="APC", type="standard_sequence", alphabet="AA"
                 ),
-                1.56,
+                [AssayTarget(name="DMS Score", value=1.56)],
             ),
             (
                 Sequence(
                     name="seq2", value="DEF", type="standard_sequence", alphabet="AA"
                 ),
-                2.0,
+                [AssayTarget(name="DMS Score", value=2.0)],
             ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
-        target_feature_name="target",
     )
     dumped_path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
     assert dumped_path == tmp_path / "assay.csv"
@@ -268,7 +274,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                1.56,
+                [AssayTarget(name="DMS Score", value=1.56)],
             ),
             (
                 Sequence(
@@ -277,12 +283,11 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                2.0,
+                [AssayTarget(name="DMS Score", value=2.0)],
             ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
-        target_feature_name="target",
     )
     assay2 = Assay(
         name="assay2",
@@ -294,7 +299,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                1.0,
+                [AssayTarget(name="DMS Score", value=1.0)],
             ),
             (
                 Sequence(
@@ -303,12 +308,11 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                3.0,
+                [AssayTarget(name="DMS Score", value=3.0)],
             ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
-        target_feature_name="target",
     )
     dataset = Dataset(
         name="test_dataset",
@@ -336,18 +340,17 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
                 Sequence(
                     name="APC", value="APC", type="standard_sequence", alphabet="AA"
                 ),
-                1.0,
+                [AssayTarget(name="DMS Score", value=1.56)],
             ),
             (
                 Sequence(
                     name="DEF", value="DEF", type="standard_sequence", alphabet="AA"
                 ),
-                3.0,
+                [AssayTarget(name="DMS Score", value=2.0)],
             ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
-        target_feature_name="target",
     )
     dataset = Dataset(
         name="test_dataset",
@@ -380,7 +383,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                1.0,
+                [AssayTarget(name="DMS Score", value=1.0)],
             )
         ],
         sequence_alphabet="AA",
@@ -395,7 +398,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                2.0,
+                [AssayTarget(name="DMS Score", value=2.0)],
             )
         ],
         sequence_alphabet="AA",
@@ -410,7 +413,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                1.0,
+                [AssayTarget(name="DMS Score", value=3.0)],
             )
         ],
         sequence_alphabet="AA",
@@ -425,7 +428,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                     type="standard_sequence",
                     alphabet=SequenceAlphabet.DNA,
                 ),
-                3.0,
+                [AssayTarget(name="DMS Score", value=4.0)],
             )
         ],
         sequence_alphabet="AA",

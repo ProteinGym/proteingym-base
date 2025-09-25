@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.assay import Assay, AssayVariable
+from pg2_dataset.assay import Assay, AssayTarget, AssayVariable
 from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
 from pg2_dataset.msa import MSA
 from pg2_dataset.sequence import Sequence
@@ -65,6 +65,9 @@ class Dataset(BaseModel):
 
     assay_variables: list[AssayVariable] = Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
+
+    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    """The list of assay targets relevant to the dataset."""
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
