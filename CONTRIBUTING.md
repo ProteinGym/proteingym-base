@@ -74,7 +74,7 @@ Then, you run the following
 $ hatch version release|major|minor|patch|rc
 $ VERSION=$(hatch version)
 $ git checkout -b release/v$VERSION
-$ git add src/pg2_dataset/__about__.py
+$ git add src/proteingym/base/__about__.py
 $ git commit -m "Release v$VERSION"
 $ git tag v$VERSION
 $ git push --set-upstream origin release/v$VERSION
