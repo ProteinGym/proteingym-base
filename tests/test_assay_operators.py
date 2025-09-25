@@ -25,27 +25,51 @@ def test_assay_empty_contains_itself() -> None:
 
 def test_assay_with_record_equals_itself() -> None:
     """An assay with a record should equal itself."""
-    assay = Assay(name="Test Assay", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA)
+    assay = Assay(
+        name="Test Assay",
+        records=[("SEQ1", 1.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
     assert assay == assay
 
 
 def test_assay_with_record_contains_itself() -> None:
     """An assay with a record should contain itself."""
-    assay = Assay(name="Test Assay", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA)
+    assay = Assay(
+        name="Test Assay",
+        records=[("SEQ1", 1.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
     assert assay in assay
 
 
 def test_assay_contains_subset() -> None:
     """An subset should be part of the assay."""
-    assay = Assay(name="Test Assay", records=[("SEQ1", 1.0), ("SEQ2", 2.0)], sequence_alphabet=SequenceAlphabet.AA)
-    subset = Assay(name="Subset of test Assay", records=[("SEQ2", 2.0)], sequence_alphabet=SequenceAlphabet.AA)
+    assay = Assay(
+        name="Test Assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    subset = Assay(
+        name="Subset of test Assay",
+        records=[("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
     assert subset in assay
 
 
 def test_assay_contains_subset_mismatch() -> None:
     """This subset is not part of the assay."""
-    assay = Assay(name="Test Assay", records=[("SEQ1", 1.0), ("SEQ2", 2.0)], sequence_alphabet=SequenceAlphabet.AA)
-    subset = Assay(name="Subset of test Assay", records=[("SEQ3", 3.0)], sequence_alphabet=SequenceAlphabet.AA)
+    assay = Assay(
+        name="Test Assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    subset = Assay(
+        name="Subset of test Assay",
+        records=[("SEQ3", 3.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
     assert subset not in assay
 
 
