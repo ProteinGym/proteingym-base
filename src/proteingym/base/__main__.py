@@ -8,7 +8,6 @@ from .__about__ import __version__
 from .dataset import Dataset
 from .manifest import Manifest
 
-
 app = typer.Typer(
     name="proteingym-base",
     help="CLI for handling ProteinGym resources",
