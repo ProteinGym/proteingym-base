@@ -194,7 +194,8 @@ class Assay:
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
             # provided in the assay file.
-            pl.col(section.sequence).map_elements(
+            pl.col(section.sequence)
+            .map_elements(
                 lambda seq: Sequence(
                     # The type of the sequence is set to "standard". This would be
                     # removed in future and support lookup into dataset.sequences.
@@ -205,10 +206,12 @@ class Assay:
                 ),
                 return_dtype=pl.Object,
             )
+            .alias("sequence_object")
         )
         df = df.with_columns(
             # Targets are created from the target feature columns present in the file
-            pl.struct(list(section.targets.values())).map_elements(
+            pl.struct(list(section.targets.values()))
+            .map_elements(
                 lambda tgt: [
                     AssayTarget(
                         name=target_name,
@@ -217,12 +220,13 @@ class Assay:
                     for target_name, target_feature_name in section.targets.items()
                 ],
                 return_dtype=pl.Object,
-            ),
+            )
+            .alias("target_objects")
         )
 
         return cls(
             name=section.name or section.path.stem,
-            records=list(df.iter_rows()),
+            records=list(df.select("sequence_object", "target_objects").iter_rows()),
             sequence_alphabet=section.sequence_alphabet,
             description=section.description,
             variables=section.variables,

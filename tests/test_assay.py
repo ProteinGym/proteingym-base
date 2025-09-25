@@ -49,6 +49,25 @@ def test_assay_variable_invalid_inputs() -> None:
         AssayVariable()
 
 
+def test_assay_target_minimal() -> None:
+    """Test creating a minimal AssayTarget."""
+    # This should not raise an error
+    try:
+        target = AssayTarget(name="DMS Score")
+    except ValidationError as e:
+        AssertionError(f"AssayTarget raised ValidationError: {e}")
+    assert target.name == "DMS Score"
+
+
+def test_assay_target_invalid_inputs() -> None:
+    """Test invalid AssayTarget inputs raise ValidationError."""
+    with pytest.raises(
+        ValidationError,
+        match=r"validation error for AssayTarget\nname\n.*Field required",
+    ):
+        AssayTarget()
+
+
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
@@ -155,6 +174,9 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
         AssertionError(f"Assay raised ValidationError: {e}")
     assert assay.name == "assay"
     assert len(assay.records) == 2
+    for rec in assay.records:
+        assert isinstance(rec[0], Sequence)
+        assert all(isinstance(t, AssayTarget) for t in rec[1])
 
 
 def test_as_manifest_section(tmp_path: Path) -> None:
