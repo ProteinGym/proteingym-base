@@ -172,9 +172,7 @@ def test_assay_slice_first() -> None:
     )
     first = Assay(
         name="Test assay",
-        records=[
-            ("SEQ1", 1.0),
-        ],
+        records=[("SEQ1", 1.0)],
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert first == assay[:1]
