@@ -299,3 +299,21 @@ def test_msa_repr(
         in repr_str
     )
     assert "value:" in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    msa = MSA(
+        name="long_desc_msa", value=multiple_sequence_alignment, description=long_desc
+    )
+    repr_str = repr(msa)
+    assert f"description: {long_desc[:60]}..." in repr_str
+
+    msa = MSA(name="no_desc_msa", value=multiple_sequence_alignment, description=None)
+    repr_str = repr(msa)
+    assert "description: None," in repr_str
+
+    alignment_lines = str(multiple_sequence_alignment).splitlines()
+    for line in alignment_lines[:3]:
+        assert line in repr_str
+
+    if len(alignment_lines) > 3:
+        assert "\t\t..." in repr_str

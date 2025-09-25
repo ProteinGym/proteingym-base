@@ -360,3 +360,41 @@ def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
     assert "\tmetadata:" in repr_str
     assert "\t\tkey1: value1," in repr_str
     assert "\t\tkey2: value2," in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    structure = Structure(
+        name="longdesc",
+        value=bio_structure,
+        description=long_desc,
+        metadata={},
+    )
+    repr_str = repr(structure)
+    assert f"description: {long_desc[:60]}..." in repr_str
+
+    structure = Structure(
+        name="nodesc",
+        value=bio_structure,
+        description=None,
+        metadata={},
+    )
+    repr_str = repr(structure)
+    assert "description: None," in repr_str
+
+    structure = Structure(
+        name="nometa",
+        value=bio_structure,
+        description="desc",
+        metadata={},
+    )
+    repr_str = repr(structure)
+    assert "\tmetadata: 0," in repr_str
+
+    long_value = "X" * 65
+    structure = Structure(
+        name="longmeta",
+        value=bio_structure,
+        description="desc",
+        metadata={"longkey": long_value},
+    )
+    repr_str = repr(structure)
+    assert f"\t\tlongkey: {long_value[:60]}..." in repr_str

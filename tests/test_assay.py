@@ -458,6 +458,73 @@ def test_assay_repr() -> None:
     assert "Assay(\n\tname='test assay'," in repr_str
     assert "description: None," in repr_str
     assert "sequence_alphabet: AA" in repr_str
-    assert (
-        f"{len(assay.variables)} variable(s)" not in repr_str
-    )  # No variables provided
+    assert "variables: 0," in repr_str
+    assert "records:" in repr_str
+
+    assay = Assay(
+        name="short desc",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                2.0,
+            ),
+        ],
+        sequence_alphabet="AA",
+        description="Short description.",
+    )
+    repr_str = repr(assay)
+    assert "\tdescription: Short description." in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    assay = Assay(
+        name="long desc",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                3.0,
+            ),
+        ],
+        sequence_alphabet="AA",
+        description=long_desc,
+    )
+    repr_str = repr(assay)
+    assert f"\tdescription: {long_desc[:60]}..." in repr_str
+
+    assay = Assay(
+        name="with vars",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                4.0,
+            ),
+        ],
+        sequence_alphabet="AA",
+        variables={"var1": 42, "var2": "x"},
+    )
+    repr_str = repr(assay)
+    assert "variables: 2," in repr_str
+    assert "\t\tvar1: 42," in repr_str
+    assert "\t\tvar2: x," in repr_str
+
+    records = [
+        (
+            Sequence(
+                name=f"seq{i}", value=f"SEQ{i}", type="standard_sequence", alphabet="AA"
+            ),
+            i,
+        )
+        for i in range(5)
+    ]
+    assay = Assay(
+        name="trunc records",
+        records=records,
+        sequence_alphabet="AA",
+    )
+    repr_str = repr(assay)
+    assert "\t\t..." in repr_str
