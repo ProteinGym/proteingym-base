@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pg2-dataset = "pg2_dataset.__main__:app"
+proteingym-base = "proteingym.base.__main__:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -39,10 +39,10 @@ dev = [
 ]
 
 [tool.hatch.version]
-path = "src/pg2_dataset/__about__.py"
+path = "src/proteingym/base/__about__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pg2_dataset"]
+packages = ["src/proteingym/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "README.md"]
