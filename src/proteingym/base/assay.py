@@ -196,6 +196,8 @@ class Assay:
 
     def __getitem__(self, slc: slice) -> "Assay":
         """Get the record at the given index."""
+        if isinstance(slc, int):
+            raise NotImplementedError("Getting a single record is not supported.")
         return dataclasses.replace(self, records=self.records[slc])
 
     def __repr__(self) -> str:
