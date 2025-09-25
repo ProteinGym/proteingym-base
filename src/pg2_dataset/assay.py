@@ -143,6 +143,19 @@ class Assay:
     target_feature_name: str = "target"
     """The target feature name in the assay records."""
 
+    def __contains__(self, item: "Assay") -> bool:
+        """Implements the 'in' operator for Assay.
+
+        If the given item is an Assay, checks if all its records and conditions
+        are contained in this assay.
+        """
+        if not isinstance(item, Assay):
+            return False
+        return set(item.records).issubset(self.records) and all(
+            k in self.conditions and self.conditions[k] == v
+            for k, v in item.conditions.items()
+        )
+
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
