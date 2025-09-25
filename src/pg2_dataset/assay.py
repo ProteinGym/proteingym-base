@@ -146,14 +146,14 @@ class Assay:
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
 
-        If the given item is an Assay, checks if all its records and conditions
+        If the given item is an Assay, checks if all its records and variables
         are contained in this assay.
         """
         if not isinstance(item, Assay):
             return False
         return set(item.records).issubset(self.records) and all(
-            k in self.conditions and self.conditions[k] == v
-            for k, v in item.conditions.items()
+            k in self.variables and self.variables[k] == v
+            for k, v in item.variables.items()
         )
 
     @classmethod
