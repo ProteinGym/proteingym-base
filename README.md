@@ -1,6 +1,6 @@
 # Protein Gym Dataset
 
-[![codecov](https://codecov.io/gh/ProteinGym2/pg2-dataset/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym2/pg2-dataset)
+[![codecov](https://codecov.io/gh/ProteinGym/proteingym-base/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym/proteingym-base)
 
 A standardisation for using protein data within protein gym.
 
@@ -59,7 +59,7 @@ dataset](#example-data).
 To install the package, you can use pip:
 
 ```shell
-$ pip install git+https://github.com/ProteinGym2/pg2-dataset.git
+$ pip install git+https://github.com/ProteinGym/proteingym-base.git
 ```
 
 ## Quickstart example
