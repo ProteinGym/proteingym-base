@@ -150,3 +150,46 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert subset not in assay
+
+
+def test_assay_slice_all() -> None:
+    """Slicing an assay with [:] should return the same assay."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        variables={"variable1": 1, "variable2": 2},
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert assay == assay[:]
+
+
+def test_assay_slice_first() -> None:
+    """Slicing an assay with [:1] should return the first record."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    first = Assay(
+        name="Test assay",
+        records=[
+            ("SEQ1", 1.0),
+        ],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert first == assay[:1]
+
+
+def test_assay_slice_last() -> None:
+    """Slicing an assay with [1:] should return the last record."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    last = Assay(
+        name="Test assay",
+        records=[("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert last == assay[1:]
