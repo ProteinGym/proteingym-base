@@ -77,12 +77,12 @@ The chosen archive file extension is `.pgdata`.
 
 ### Decision matrix for archive file extension
 
-| Option      | Branding | Avoid internals | Context                                                  | User-friendly |
-| ----------- | -------- | --------------- | -------------------------------------------------------- | ------------- |
-| .zip        | Low      | High            | Low                                                      | High          |
-| .proteingym | High     | High            | Medium* The bigger context not just `pg2-dataset` repo   | Medium        |
-| .pgdata     | High     | High            | High* The context is clearly defined as protein datasets | High          |
-| .protein    | Medium   | High            | Medium* Too big, we focus on protein gym                 | Medium        |
-| .mango      | Low      | High            | Low                                                      | High          |
+| Option      | Branding | Avoid internals | Context                                                    | User-friendly |
+| ----------- | -------- | --------------- | ---------------------------------------------------------- | ------------- |
+| .zip        | Low      | High            | Low                                                        | High          |
+| .proteingym | High     | High            | Medium* The bigger context not just `proteingym-base` repo | Medium        |
+| .pgdata     | High     | High            | High* The context is clearly defined as protein datasets   | High          |
+| .protein    | Medium   | High            | Medium* Too big, we focus on protein gym                   | Medium        |
+| .mango      | Low      | High            | Low                                                        | High          |
 
 The `.pgdata` extension is short, reflects the Protein Gym branding, and covers the right amount of context.

@@ -1,5 +1,5 @@
 [project]
-name = "pg2-dataset"
+name = "proteingym-base"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -23,7 +23,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pg2-dataset = "pg2_dataset.__main__:app"
+proteingym-base = "proteingym.base.__main__:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -39,14 +39,14 @@ dev = [
 ]
 
 [tool.hatch.version]
-path = "src/pg2_dataset/__about__.py"
+path = "src/proteingym/base/__about__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pg2_dataset"]
+packages = ["src/proteingym/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "README.md"]
-addopts = "--doctest-modules --doctest-glob='*.md' --cov=pg2_dataset --cov-branch --cov-report xml --cov-fail-under=80"
+addopts = "--doctest-modules --doctest-glob='*.md' --cov=proteingym.base --cov-branch --cov-report xml --cov-fail-under=80"
 
 [tool.ruff]
 line-length = 88
