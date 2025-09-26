@@ -144,6 +144,7 @@ class Dataset(BaseModel):
             name=manifest.name,
             description=manifest.description,
             assay_variables=manifest.assay_variables,
+            assay_targets=manifest.assay_targets,
             assays=assays,
             sequences=sequences,
             structures=structures,

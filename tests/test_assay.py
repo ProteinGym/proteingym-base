@@ -55,8 +55,9 @@ def test_assay_target_minimal() -> None:
     try:
         target = AssayTarget(name="DMS Score")
     except ValidationError as e:
-        AssertionError(f"AssayTarget raised ValidationError: {e}")
-    assert target.name == "DMS Score"
+        raise AssertionError(f"AssayTarget raised ValidationError: {e}") from e
+    else:
+        assert target.name == "DMS Score"
 
 
 def test_assay_target_invalid_inputs() -> None:
