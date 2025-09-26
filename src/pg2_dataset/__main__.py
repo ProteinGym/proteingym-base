@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 from typing import Annotated, Dict, List
 
+import click
 import typer
 import yaml
 
@@ -116,41 +117,33 @@ def list_datasets(
         typer.Option(
             "--format",
             "-f",
-            help="Output format: json or yaml",
+            help="Output format",
+            click_type=click.Choice(["json", "yaml"], case_sensitive=False),
         ),
     ] = "json",
 ):
     """List available datasets with optional query filtering."""
-    logger = logging.getLogger("pg2_dataset")
+    logger = logging.getLogger("proteingym.base")
 
-    def find_datasets(path: Path) -> List[Dict]:
+    def find_datasets_with_paths(path: Path) -> List[Dict]:
         """Find all .pgdata datasets in the given directory."""
-        datasets = []
+        datasets_with_paths = []
 
         if path.is_file():
-            if path.suffix != "pgdata":
-                typer.echo(
-                    f"Only files with '.pgdata' suffix are supported. "
-                    f"The input file is: '{path.suffix}'."
-                )
-                raise typer.Exit(1)
-
-            dataset = Dataset.from_path(path)
-            dataset_with_path = {**dataset.model_dump(), "path": str(path.resolve())}
-
-            datasets.append(dataset_with_path)
-
+            paths = [path]
         else:
-            for file_path in path.rglob("*.pgdata"):
-                dataset = Dataset.from_path(file_path)
-                dataset_with_path = {
-                    **dataset.model_dump(),
-                    "path": str(file_path.resolve()),
-                }
+            paths = path.rglob("*.pgdata")
 
-                datasets.append(dataset_with_path)
+        for path in paths:
+            dataset = Dataset.from_path(path)
+            dataset_with_path = {
+                **dataset.model_dump(),
+                "path": path.resolve().as_posix(),
+            }
 
-        return datasets
+            datasets_with_paths.append(dataset_with_path)
+
+        return datasets_with_paths
 
     def format_output(datasets: List[Dict], output_format: str) -> str:
         """Format the datasets for output."""
@@ -161,9 +154,9 @@ def list_datasets(
         else:
             logger.warning(f"Unsupported dataset output format: {output_format}")
 
-    datasets = find_datasets(path)
+    datasets_with_paths = find_datasets_with_paths(path)
 
-    output = format_output(datasets, format)
+    output = format_output(datasets_with_paths, format)
     typer.echo(output)
 
 
