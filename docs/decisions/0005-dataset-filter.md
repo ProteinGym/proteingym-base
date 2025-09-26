@@ -1,7 +1,7 @@
-# NUMBER. TITLE
+# 4. Dataset list
 
 Date: 2025-09-26
-Status: WIP
+Status: Accepted
 
 ## Context and Problem Statement
 
@@ -31,11 +31,20 @@ There are two phases of filtering here:
   * Simple fields: `name`, `description`, etc...
   * Nested fields: `assays`, `sequences`, `structures`, `msas`, etc... of which they are also a list to loop over, which will lead to extra CPU computations.
 
-There are several tools to parse the query params and the `Dataset` object, we take into account the following tools:
+## Decision
 
-* [JMESPath](https://jmespath.org/)
-* [jq](https://jqlang.org/)
-* [urllib](https://docs.python.org/3/library/urllib.html)
+Based on the above considerations, we decide to use `jq`, because of the following practicalities:
+
+* Use JSON as the serialized format, as it is supported by the existing tools: `jq` and `JMESPath`, to parse and query.
+* Add custom `field_serializer` in `Dataset` to only serialize the critical conditions, such as Structure's namd and metadata, to walk around the impossibility of serializing the whole Structure.
+* Use `jq` instead of `JMESPath`, as it is more popular and is more performant for larger data with `--stream` option.
+* The user needs to learn `jq`'s query grammar, which is more complex than URL's query params, but much simpler than `JMESPath`.
+
+## Decision Drivers
+
+- Robustness: Use existing tools instead of building some parsing tool ourselves, which is more battle-tested.
+- Simplicity: The user-facing query is simple, and moreover the code is simple to read and maintain.
+- Performance: It is fast and memory efficient to parse and query larger data.
 
 To choose which tool to use, our decisions are based on the following considerations:
 
@@ -56,22 +65,9 @@ To choose which tool to use, our decisions are based on the following considerat
 
   * Based on [this jq benchmark](https://github.com/jqlang/jq/wiki/X---Experimental-Benchmarks), we see that `jq` handles moderate-sized datasets (54-181MB) quite well, compared to `gojq` (Go implementation), `rq` (Rust implementation). So we infer that given 1000 datasets (likely much smaller total size), processing should be very fast under seconds. Especially with `--stream`, it can reduce memory usage from 223MB to 1.3MB for the same operation.
 
-## Decision
-
-Based on the above considerations, we decide to use `jq`, because of the following practicalities:
-
-* Use JSON as the serialized format, as it is supported by the existing tools: `jq` and `JMESPath`, to parse and query.
-* Add custom `field_serializer` in `Dataset` to only serialize the critical conditions, such as Structure's namd and metadata, to walk around the impossibility of serializing the whole Structure.
-* Use `jq` instead of `JMESPath`, as it is more popular and is more performant for larger data with `--stream` option.
-* The user needs to learn `jq`'s query grammar, which is more complex than URL's query params, but much simpler than `JMESPath`.
-
-## Decision Drivers
-
-- Robustness: Use existing tools instead of building some parsing tool ourselves, which is more battle-tested.
-- Simplicity: The user-facing query is simple, and moreover the code is simple to read and maintain.
-- Performance: It is fast and memory efficient to parse and query larger data.
-
 ## Considered Options
+
+There are several tools to parse the query params and the `Dataset` object, we take into account the following tools:
 
 * [JMESPath](https://jmespath.org/): Less simple in its own query grammar and less performant with larger data.
 * [jq](https://jqlang.org/): Simple query grammar and performant with larger data.
@@ -84,6 +80,7 @@ Based on the above considerations, we decide to use `jq`, because of the followi
 | JMESPath | High       | Medium     | Medium      |
 | jq       | High       | Medium     | High        |
 | urllib   | Low        | High       | Unknown     |
+
 
 ## Consequences
 
