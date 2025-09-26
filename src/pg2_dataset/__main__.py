@@ -107,18 +107,10 @@ def list_datasets(
         typer.Argument(
             help="Directory path containing .pgdata dataset archives",
             exists=True,
-            file_okay=False,
+            file_okay=True,
             dir_okay=True,
         ),
     ],
-    query: Annotated[
-        str,
-        typer.Option(
-            "--query",
-            "-q",
-            help="Query to filter datasets (e.g., 'name=NEIME_2019')",
-        ),
-    ] = "",
     format: Annotated[
         str,
         typer.Option(
@@ -131,21 +123,32 @@ def list_datasets(
     """List available datasets with optional query filtering."""
     logger = logging.getLogger("pg2_dataset")
 
-    def find_datasets(path: Path, query: str) -> List[Dict]:
+    def find_datasets(path: Path) -> List[Dict]:
         """Find all .pgdata datasets in the given directory."""
         datasets = []
 
-        for file_path in path.rglob("*.pgdata"):
-            dataset = Dataset.from_path(file_path)
-
-            if dataset.filter(query):
-                datasets.append(
-                    {
-                        "name": dataset.name,
-                        "description": dataset.description,
-                        "path": str(file_path.resolve()),
-                    }
+        if path.is_file():
+            if path.suffix != "pgdata":
+                typer.echo(
+                    f"Only files with '.pgdata' suffix are supported. "
+                    f"The input file is: '{path.suffix}'."
                 )
+                raise typer.Exit(1)
+
+            dataset = Dataset.from_path(path)
+            dataset_with_path = {**dataset.model_dump(), "path": str(path.resolve())}
+
+            datasets.append(dataset_with_path)
+
+        else:
+            for file_path in path.rglob("*.pgdata"):
+                dataset = Dataset.from_path(file_path)
+                dataset_with_path = {
+                    **dataset.model_dump(),
+                    "path": str(file_path.resolve()),
+                }
+
+                datasets.append(dataset_with_path)
 
         return datasets
 
@@ -158,7 +161,7 @@ def list_datasets(
         else:
             logger.warning(f"Unsupported dataset output format: {output_format}")
 
-    datasets = find_datasets(path, query)
+    datasets = find_datasets(path)
 
     output = format_output(datasets, format)
     typer.echo(output)

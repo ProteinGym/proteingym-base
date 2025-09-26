@@ -1,8 +1,16 @@
 from pathlib import Path
+from unittest.mock import Mock
 from zipfile import ZipFile
 
-from pg2_dataset.assay import Assay, AssayCondition
+from Bio.Align import MultipleSeqAlignment
+from Bio.PDB.Structure import Structure as BioStructure
+from Bio.Seq import Seq
+
+from pg2_dataset.assay import Assay
 from pg2_dataset.dataset import Dataset
+from pg2_dataset.msa import MSA
+from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
+from pg2_dataset.structure import Structure
 
 
 def test_dataset_dump_extension(tmp_path: Path) -> None:
@@ -51,58 +59,138 @@ def test_dataset_from_path_simple(tmp_path: Path) -> None:
     assert dataset.name == "test", "Dataset name does not match the expected name."
 
 
-def test_dataset_filter_empty_query() -> None:
-    """Test filter with empty query string returns True."""
-    dataset = Dataset(name="test_dataset")
-    assert dataset.filter("") is True
+def test_serialize_sequences() -> None:
+    """Test the serialize_sequences field_serializer."""
+    sequence1 = Sequence(
+        name="seq1",
+        value=Seq("ATCG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+        description="Test sequence 1",
+    )
+    sequence2 = Sequence(
+        name="seq2",
+        value=Seq("MKLL"),
+        type=SequenceType.ENGINEERED_SEQUENCE,
+        alphabet=SequenceAlphabet.AA,
+        description=None,
+    )
 
+    dataset = Dataset(name="test", sequences=[sequence1, sequence2])
 
-def test_dataset_filter_simple_field() -> None:
-    """Test filter with simple field - exists and matches vs doesn't exist."""
-    dataset = Dataset(name="NEIME_2019")
-    assert dataset.filter("name=NEIME_2019") is True
-    assert dataset.filter("name=OTHER") is False
-    assert dataset.filter("nonexistent=value") is False
+    serialized = dataset.serialize_sequences([sequence1, sequence2])
 
-
-def test_dataset_filter_nested_field_list() -> None:
-    """Test filter with nested field in list - all values exist vs partial match."""
-    conditions = [
-        AssayCondition(name="PH", unit="pH", value=7.0),
-        AssayCondition(name="T", unit="C", value=25.0),
+    expected = [
+        {
+            "name": "seq1",
+            "type": "wild_type",
+            "alphabet": "DNA",
+            "description": "Test sequence 1",
+        },
+        {
+            "name": "seq2",
+            "type": "engineered_sequence",
+            "alphabet": "AA",
+            "description": None,
+        },
     ]
-    dataset = Dataset(name="test", assay_conditions=conditions)
-    assert dataset.filter("assay_conditions.name=PH,T") is True
-    assert dataset.filter("assay_conditions.name=PH,MISSING") is False
-    assert dataset.filter("nonexistent.name=value") is False
+
+    assert serialized == expected
 
 
-def test_dataset_filter_multiple_conditions() -> None:
-    """Test filter with multiple conditions using AND logic."""
-    conditions = [AssayCondition(name="PH", unit="pH", value=7.0)]
-    dataset = Dataset(name="NEIME_2019", assay_conditions=conditions)
-    assert dataset.filter("name=NEIME_2019&assay_conditions.name=PH") is True
-    assert dataset.filter("name=NEIME_2019&assay_conditions.name=MISSING") is False
-
-
-def test_dataset_filter_three_level_nesting() -> None:
-    """Test filter with 3-level nesting like 'assays.conditions.T'."""
-    # Create a dataset with 3-level nested structure matching TOML format
-    assay = Assay(
-        name="assay",
+def test_serialize_assays() -> None:
+    """Test the serialize_assays field_serializer."""
+    assay1 = Assay(
+        name="assay1",
         records=[],
         sequence_alphabet="AA",
-        conditions={"T": 37, "PH": 7},
+        conditions={"temp": 25, "pH": 7.4},
+        description="Test assay 1",
+        sequence_feature_name="sequence",
+        target_feature_name="activity",
     )
-    dataset = Dataset(name="test", assays=[assay])
+    assay2 = Assay(
+        name="assay2",
+        records=[],
+        sequence_alphabet="DNA",
+        conditions={},
+        description=None,
+        sequence_feature_name="seq",
+        target_feature_name="target",
+    )
 
-    assert dataset.filter("assays.conditions.T=37") is True
-    assert dataset.filter("assays.conditions.PH=7") is True
-    assert dataset.filter("assays.conditions.T=25") is False
-    assert dataset.filter("assays.conditions.nonexistent=value") is False
+    dataset = Dataset(name="test", assays=[assay1, assay2])
+
+    serialized = dataset.serialize_assays([assay1, assay2])
+
+    expected = [
+        {
+            "name": "assay1",
+            "sequence_alphabet": "AA",
+            "conditions": {"temp": 25, "pH": 7.4},
+            "description": "Test assay 1",
+            "sequence_feature_name": "sequence",
+            "target_feature_name": "activity",
+        },
+        {
+            "name": "assay2",
+            "sequence_alphabet": "DNA",
+            "conditions": {},
+            "description": None,
+            "sequence_feature_name": "seq",
+            "target_feature_name": "target",
+        },
+    ]
+
+    assert serialized == expected
 
 
-def test_dataset_filter_deeper_nesting() -> None:
-    """Test filter with deeper nesting (> 3 levels) returns False."""
-    dataset = Dataset(name="test")
-    assert dataset.filter("level1.level2.level3.level4=value") is False
+def test_serialize_structures() -> None:
+    """Test the serialize_structures field_serializer."""
+    mock_bio_structure1 = Mock(spec=BioStructure)
+    mock_bio_structure2 = Mock(spec=BioStructure)
+
+    structure1 = Structure(
+        name="struct1",
+        value=mock_bio_structure1,
+        description="Test structure 1",
+        metadata={"resolution": "2.1", "method": "X-ray"},
+    )
+    structure2 = Structure(
+        name="struct2", value=mock_bio_structure2, description=None, metadata={}
+    )
+
+    dataset = Dataset(name="test", structures=[structure1, structure2])
+
+    serialized = dataset.serialize_structures([structure1, structure2])
+
+    expected = [
+        {
+            "name": "struct1",
+            "description": "Test structure 1",
+            "metadata": {"resolution": "2.1", "method": "X-ray"},
+        },
+        {"name": "struct2", "description": None, "metadata": {}},
+    ]
+
+    assert serialized == expected
+
+
+def test_serialize_msas() -> None:
+    """Test the serialize_msas field_serializer."""
+    mock_msa1 = Mock(spec=MultipleSeqAlignment)
+    mock_msa2 = Mock(spec=MultipleSeqAlignment)
+
+    msa1 = MSA(name="msa1", value=mock_msa1, description="Test MSA 1")
+    msa2 = MSA(name="msa2", value=mock_msa2, description=None)
+
+    dataset = Dataset(name="test", msas=[msa1, msa2])
+
+    serialized = dataset.serialize_msas([msa1, msa2])
+
+    expected = [
+        {"name": "msa1", "description": "Test MSA 1"},
+        {"name": "msa2", "description": None},
+    ]
+
+    assert serialized == expected
