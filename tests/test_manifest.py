@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.manifest import Manifest
+from proteingym.base.manifest import Manifest
 
 
 @pytest.fixture

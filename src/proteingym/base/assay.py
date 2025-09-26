@@ -16,7 +16,7 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
+from .sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 class AssayFormat(StrEnum):

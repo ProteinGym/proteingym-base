@@ -14,10 +14,10 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from pg2_dataset.assay import AssayManifestSection, AssayTarget, AssayVariable
-from pg2_dataset.msa import MSAManifestSection
-from pg2_dataset.sequence import SequenceManifestSection
-from pg2_dataset.structure import StructureManifestSection
+from .assay import AssayManifestSection, AssayVariable
+from .msa import MSAManifestSection
+from .sequence import SequenceManifestSection
+from .structure import StructureManifestSection
 
 
 class _VersionPydanticAnnotation:
