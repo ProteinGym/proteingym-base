@@ -63,7 +63,7 @@ Based on the above considerations, we decide to use `jq`, because of the followi
 * Use JSON as the serialized format, as it is supported by the existing tools: `jq` and `JMESPath`, to parse and query.
 * Add custom `field_serializer` in `Dataset` to only serialize the critical conditions, such as Structure's namd and metadata, to walk around the impossibility of serializing the whole Structure.
 * Use `jq` instead of `JMESPath`, as it is more popular and is more performant for larger data with `--stream` option.
-* The user needs to learn jq's query grammar, which is more complex than URL's query params, but much simpler than `JMESPath`.
+* The user needs to learn `jq`'s query grammar, which is more complex than URL's query params, but much simpler than `JMESPath`.
 
 ## Decision Drivers
 
@@ -75,7 +75,7 @@ Based on the above considerations, we decide to use `jq`, because of the followi
 
 * [JMESPath](https://jmespath.org/): Less simple in its own query grammar and less performant with larger data.
 * [jq](https://jqlang.org/): Simple query grammar and performant with larger data.
-* [urllib](https://docs.python.org/3/library/urllib.html): Only work for query params, which is simple, but we need to build tools to parse the `Dataset` object.
+* [urllib](https://docs.python.org/3/library/urllib.html): Only works for query params, which is simple, but we need to build tools to parse the `Dataset` object.
 
 ## Decision matrix
 
