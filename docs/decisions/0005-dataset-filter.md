@@ -25,7 +25,7 @@ There are two phases of filtering here:
   * Simple fields: `name=NEIME_2019`
   * Nested fields: `assay_conditions.name=PH`
   * Multiple conditions: `name=NEIME_2019&assay_conditions.name=PH`
-  * Multiple choises: `assay_conditions.name=PH,T` or `assay_conditions.name=PH&assay_conditions.name=T``
+  * Multiple choises: `assay_conditions.name=PH,T` or `assay_conditions.name=PH&assay_conditions.name=T`
 
 * The second is the [Dataset](../../src/pg2_dataset/dataset.py) object itself, namely `class Dataset(BaseModel)`:
   * Simple fields: `name`, `description`, etc...
@@ -58,7 +58,7 @@ To choose which tool to use, our decisions are based on the following considerat
 
 ## Decision
 
-Based on the above considerations, we decide:
+Based on the above considerations, we decide to use `jq`, because of the following practicalities:
 
 * Use JSON as the serialized format, as it is supported by the existing tools: `jq` and `JMESPath`, to parse and query.
 * Add custom `field_serializer` in `Dataset` to only serialize the critical conditions, such as Structure's namd and metadata, to walk around the impossibility of serializing the whole Structure.
