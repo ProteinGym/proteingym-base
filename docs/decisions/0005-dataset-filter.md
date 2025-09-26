@@ -31,7 +31,7 @@ There are two phases of filtering here:
   * Simple fields: `name`, `description`, etc...
   * Nested fields: `assays`, `sequences`, `structures`, `msas`, etc... of which they are also a list to loop over, which will lead to extra CPU computations.
 
-There are several Python tools to parse the query params and the `Dataset` object, we take into account the following tools:
+There are several tools to parse the query params and the `Dataset` object, we take into account the following tools:
 
 * [JMESPath](https://jmespath.org/)
 * [jq](https://jqlang.org/)
