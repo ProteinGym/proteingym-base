@@ -287,3 +287,14 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
 
     assert result.exit_code == 2
     assert "Invalid value for '--format'" in result.stderr
+
+def test_main_module_execution() -> None:
+    import subprocess
+    import sys
+
+    result = subprocess.run([
+        sys.executable, "-c",
+        "import proteingym.base.__main__; proteingym.base.__main__.app()"
+    ], capture_output=True, text=True)
+
+    assert result.returncode == 0
