@@ -153,12 +153,12 @@ def list_models(
 
         return models_with_paths
 
-    def format_output(datasets: List[Dict], output_format: str) -> str:
+    def format_output(models: List[Dict], output_format: str) -> str:
         """Format the models for output."""
         if output_format.lower() == "json":
-            return json.dumps(datasets, indent=2)
+            return json.dumps(models, indent=2)
         elif output_format.lower() == "yaml":
-            return yaml.dump(datasets, default_flow_style=False)
+            return yaml.dump(models, default_flow_style=False)
         else:
             logger.warning(f"Unsupported dataset output format: {output_format}")
 
