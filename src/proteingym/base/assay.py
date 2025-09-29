@@ -16,7 +16,7 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
+from .sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 class AssayFormat(StrEnum):
@@ -26,8 +26,8 @@ class AssayFormat(StrEnum):
     """A comma separated text file"""
 
 
-class AssayCondition(BaseModel):
-    """Definition of an assay condition."""
+class AssayVariable(BaseModel):
+    """Definition of an assay variable."""
 
     model_config = ConfigDict(
         extra="forbid",
@@ -38,16 +38,16 @@ class AssayCondition(BaseModel):
     """Configuration for the Pydantic model."""
 
     name: str
-    """The name of the condition."""
+    """The name of the variable."""
 
     unit: str | None = None
-    """The unit of the condition."""
+    """The unit of the variable."""
 
     value: bool | int | float | str | None = None
-    """The value of the condition, can be a bool, int, float, or str."""
+    """The value of the variable, can be a bool, int, float, or str."""
 
     description: str | None = None
-    """Description of the condition."""
+    """Description of the variable."""
 
 
 class AssayManifestSection(BaseModel):
@@ -80,9 +80,9 @@ class AssayManifestSection(BaseModel):
     target: str = "target"
     """The target feature name given in the file."""
 
-    conditions: dict[str, bool | int | float | str] = Field(default_factory=dict)
-    """The condition key:value pairs, key is the name of the assay condition (defined in
-    dataset manifest and value of the condition."""
+    variables: dict[str, bool | int | float | str] = Field(default_factory=dict)
+    """The variable key:value pairs, key is the name of the assay variable (defined in
+    dataset manifest and value of the variable."""
 
     path: FilePath
     """The path to the assay file, csv only."""
@@ -129,10 +129,10 @@ class Assay:
 
     sequence_alphabet: str
 
-    conditions: dict[str, int | float | bool | str] = dataclasses.field(
+    variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
     )
-    """The conditions of the assay, defined in the manifest."""
+    """The variables of the assay, defined in the manifest."""
 
     description: str | None = None
     """The description of the assay."""
@@ -142,6 +142,19 @@ class Assay:
 
     target_feature_name: str = "target"
     """The target feature name in the assay records."""
+
+    def __contains__(self, item: "Assay") -> bool:
+        """Implements the 'in' operator for Assay.
+
+        If the given item is an Assay, checks if all its records and variables
+        are contained in this assay.
+        """
+        if not isinstance(item, Assay):
+            return False
+        return set(item.records).issubset(self.records) and all(
+            k in self.variables and self.variables[k] == v
+            for k, v in item.variables.items()
+        )
 
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
@@ -170,7 +183,7 @@ class Assay:
             records=list(df.iter_rows()),
             sequence_alphabet=section.sequence_alphabet,
             description=section.description,
-            conditions=section.conditions,
+            variables=section.variables,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -189,7 +202,7 @@ class Assay:
             sequence=self.sequence_feature_name,
             sequence_alphabet=self.sequence_alphabet,
             target=self.target_feature_name,
-            conditions=self.conditions,
+            variables=self.variables,
             path=path,
         )
 

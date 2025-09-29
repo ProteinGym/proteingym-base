@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 from proteingym.base.__main__ import app
 import json
 
+
 from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.manifest import Manifest
+from proteingym.base.manifest import Manifest
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[ assay_conditions ]]
+[[ assay_variables ]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
@@ -26,7 +26,7 @@ sequence = "sequence"
 sequence_alphabet = "AA"
 target = "target"
 
-[ assays.conditions ]
+[ assays.variables ]
 PH = "7"
 
 [[ sequences ]]
