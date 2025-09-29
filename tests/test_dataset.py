@@ -1,16 +1,15 @@
+import json
 from pathlib import Path
 from unittest.mock import Mock
 from zipfile import ZipFile
+
 import pytest
-from typer.testing import CliRunner
-from proteingym.base.__main__ import app
-import json
-
-
 from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
+from typer.testing import CliRunner
 
+from proteingym.base.__main__ import app
 from proteingym.base.assay import Assay
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
@@ -200,7 +199,7 @@ def test_serialize_msas() -> None:
 
     assert serialized == expected
 
-    
+
 @pytest.fixture
 def runner() -> CliRunner:
     """Test runner for CLI commands."""
@@ -230,15 +229,21 @@ def test_list_datasets_command(runner: CliRunner, dataset_file: Path) -> None:
     assert "path" in dataset_data
 
 
-def test_list_datasets_command_yaml_format(runner: CliRunner, dataset_file: Path) -> None:
+def test_list_datasets_command_yaml_format(
+    runner: CliRunner, dataset_file: Path
+) -> None:
     """Test the list-datasets CLI command with YAML format."""
-    result = runner.invoke(app, ["list-datasets", str(dataset_file), "--format", "yaml"])
+    result = runner.invoke(
+        app, ["list-datasets", str(dataset_file), "--format", "yaml"]
+    )
 
     assert result.exit_code == 0
     assert "name: test_dataset" in result.stdout
 
 
-def test_list_datasets_directory_with_multiple_files(runner: CliRunner, tmp_path: Path) -> None:
+def test_list_datasets_directory_with_multiple_files(
+    runner: CliRunner, tmp_path: Path
+) -> None:
     """Test list-datasets with a directory containing multiple dataset files."""
     dataset1 = Dataset(name="dataset_one")
     dataset1.dump(path=tmp_path)
@@ -288,13 +293,19 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
     assert result.exit_code == 2
     assert "Invalid value for '--format'" in result.stderr
 
+
 def test_main_module_execution() -> None:
     import subprocess
     import sys
 
-    result = subprocess.run([
-        sys.executable, "-c",
-        "import proteingym.base.__main__; proteingym.base.__main__.app()"
-    ], capture_output=True, text=True)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import proteingym.base.__main__; proteingym.base.__main__.app()",
+        ],
+        capture_output=True,
+        text=True,
+    )
 
     assert result.returncode == 0
