@@ -6,11 +6,11 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 
-from pg2_dataset.assay import Assay
-from pg2_dataset.dataset import Dataset
-from pg2_dataset.msa import MSA
-from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
-from pg2_dataset.structure import Structure
+from proteingym.base.assay import Assay
+from proteingym.base.dataset import Dataset
+from proteingym.base.msa import MSA
+from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
+from proteingym.base.structure import Structure
 
 
 def test_dataset_dump_extension(tmp_path: Path) -> None:
@@ -104,7 +104,7 @@ def test_serialize_assays() -> None:
         name="assay1",
         records=[],
         sequence_alphabet="AA",
-        conditions={"temp": 25, "pH": 7.4},
+        variables={"temp": 25, "pH": 7.4},
         description="Test assay 1",
         sequence_feature_name="sequence",
         target_feature_name="activity",
@@ -113,7 +113,7 @@ def test_serialize_assays() -> None:
         name="assay2",
         records=[],
         sequence_alphabet="DNA",
-        conditions={},
+        variables={},
         description=None,
         sequence_feature_name="seq",
         target_feature_name="target",
@@ -127,7 +127,7 @@ def test_serialize_assays() -> None:
         {
             "name": "assay1",
             "sequence_alphabet": "AA",
-            "conditions": {"temp": 25, "pH": 7.4},
+            "variables": {"temp": 25, "pH": 7.4},
             "description": "Test assay 1",
             "sequence_feature_name": "sequence",
             "target_feature_name": "activity",
@@ -135,7 +135,7 @@ def test_serialize_assays() -> None:
         {
             "name": "assay2",
             "sequence_alphabet": "DNA",
-            "conditions": {},
+            "variables": {},
             "description": None,
             "sequence_feature_name": "seq",
             "target_feature_name": "target",
