@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -1147,6 +1147,7 @@ dependencies = [
     { name = "msgpack" },
     { name = "polars", extra = ["pyarrow"] },
     { name = "pydantic" },
+    { name = "python-frontmatter" },
     { name = "semver" },
     { name = "toml" },
     { name = "typer" },
@@ -1167,6 +1168,7 @@ requires-dist = [
     { name = "msgpack", specifier = ">=1.1.0,<2.0.0" },
     { name = "polars", extras = ["pyarrow"], specifier = ">=1.30.0,<2.0.0" },
     { name = "pydantic", specifier = ">=2.11.4,<3.0.0" },
+    { name = "python-frontmatter", specifier = ">=1.1.0" },
     { name = "semver", specifier = ">=3.0.4,<4.0.0" },
     { name = "toml", specifier = ">=0.10.2,<1.0.0" },
     { name = "typer", specifier = ">=0.16.0,<1.0.0" },
@@ -1363,6 +1365,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432, upload-time = "2024-03-01T18:36:20.211Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
+]
+
+[[package]]
+name = "python-frontmatter"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/de/910fa208120314a12f9a88ea63e03707261692af782c99283f1a2c8a5e6f/python-frontmatter-1.1.0.tar.gz", hash = "sha256:7118d2bd56af9149625745c58c9b51fb67e8d1294a0c76796dafdc72c36e5f6d", size = 16256, upload-time = "2024-01-16T18:50:04.052Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/87/3c8da047b3ec5f99511d1b4d7a5bc72d4b98751c7e78492d14dc736319c5/python_frontmatter-1.1.0-py3-none-any.whl", hash = "sha256:335465556358d9d0e6c98bbeb69b1c969f2a4a21360587b9873bfc3b213407c1", size = 9834, upload-time = "2024-01-16T18:50:00.911Z" },
 ]
 
 [[package]]
