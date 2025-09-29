@@ -33,12 +33,13 @@ There are two phases of filtering here:
 
 ## Decision
 
-Based on the above considerations, we decide to use `jq`, because of the following practicalities:
+We decide to use `jq`, because of the following practicalities:
 
 * Use JSON as the serialized format, as it is supported by the existing tools: `jq` and `JMESPath`, to parse and query.
 * Add custom `field_serializer` in `Dataset` to only serialize the critical conditions, such as Structure's name and metadata, to walk around the impossibility of serializing the whole Structure.
 * Use `jq` instead of `JMESPath`, as it is more popular and is more performant for larger data with `--stream` option.
 * The user needs to learn `jq`'s query grammar, which is more complex than URL's query params, but much simpler than `JMESPath`.
+* Use `jq` in CLI to chain the commands, e.g., `proteingym-base list ... | jq ...`, instead of using `jq`'s Python implementation to boost performance.
 
 ## Decision Drivers
 
@@ -56,7 +57,7 @@ To choose which tool to use, our decisions are based on the following considerat
   * Unluckily, `Bio.PDB.Structure` can't be easily serialized except for its name and metadata, whereas for `Bio.Seq.Seq` and `Bio.Align.MultipleSeqAlignment`, we need to implement its custom `field_serializer` in `Dataset`.
 
 * Whether to parse and query `Dataset` inside our `proteingym-base` Python package or outside it in CLI. 
-  * If we query it in CLI, then the command can be chained like `pg2-dataset list <path-to-your-dataset(s)> --format json | jq 'map(select(.name == "NEIME_2019"))'` using `jq`, instead of `pg2-dataset list <path-to-your-dataset(s)> --query "name=NEIME_2019" --format json`, which is much simpler.
+  * If we query it in CLI, then the command can be chained like proteingym-base list <path-to-your-dataset(s)> --format json | jq 'map(select(.name == "NEIME_2019"))'` using `jq`, instead of `proteingym-base list <path-to-your-dataset(s)> --query "name=NEIME_2019" --format json`, which is much simpler.
   * For the memory and performance characteristics of using `jq` or `JMESPath` in CLI to parse serialized `Dataset`, the comparison is shown in the following table:
   
   | Tool     | Memory Usage                  | Processing                         | Sweet Spot         |
@@ -76,11 +77,11 @@ There are several tools to parse the query params and the `Dataset` object, we t
 
 ## Decision matrix
 
-| Option   | Robustness | Simplicity | Performance |
-| -------- | ---------- | ---------- | ----------- |
-| JMESPath | High       | Medium     | Medium      |
-| jq       | High       | Medium     | High        |
-| urllib   | Low        | High       | Unknown     |
+| Option   | Robustness                                               | Simplicity                  | Performance |
+| -------- | -------------------------------------------------------- | --------------------------- | ----------- |
+| JMESPath | High                                                     | Medium                      | Medium      |
+| jq       | High                                                     | Medium                      | High        |
+| urllib   | Low (We need to implement `Dataset` selection in Python) | High (Only in query params) | Unknown     |
 
 
 ## Consequences
