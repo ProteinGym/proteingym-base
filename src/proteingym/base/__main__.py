@@ -7,6 +7,7 @@ import typer
 from .__about__ import __version__
 from .dataset import Dataset
 from .manifest import Manifest
+from .model import ModelCard, ModelProject
 
 app = typer.Typer(
     name="proteingym-base",
@@ -97,6 +98,40 @@ def build(
     typer.echo("Building dataset archive...")
     archive_path = dataset.dump(path=output_path)
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
+
+
+@app.command("validate")
+def validate_model(
+    project_path: Annotated[
+        Path,
+        typer.Argument(
+            help="Root path to the model project",
+            exists=True,
+            resolve_path=True,
+        ),
+    ],
+):
+    logger = logging.getLogger("proteingym.base")
+    logger.setLevel(logging.INFO)
+
+    try:
+        model_project = ModelProject.from_path(project_path)
+        logger.info(
+            f"✅ Model {model_project.project_name} loaded successfully "
+            "with entry points: {model_project.entry_points}"
+        )
+
+        model_card = ModelCard.from_path(model_project.model_card_path)
+        logger.info(
+            f"✅ Loaded {model_card.name} with hyper parameters: "
+            f"{model_card.hyper_params}."
+        )
+    except ValueError as e:
+        logger.error(f"❌ Validation failed: {str(e)}")
+        raise typer.Exit(1) from e
+    except Exception as e:
+        logger.error("❌ Error running validation", exc_info=e)
+        raise typer.Exit(1) from e
 
 
 if __name__ == "__main__":
