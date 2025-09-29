@@ -1,9 +1,12 @@
 from pathlib import Path
+from typer.testing import CliRunner
+import json
 
 import pytest
 from pydantic import ValidationError
 
 from proteingym.base.model import ModelCard
+from proteingym.base.__main__ import app
 
 
 @pytest.fixture
@@ -55,3 +58,34 @@ def test_manifest_hyper_params(model_card_path: Path) -> None:
         raise ValidationError("ValidationError raised") from e
     else:
         assert not model_card.hyper_params["nogpu"]
+
+
+@pytest.fixture
+def runner() -> CliRunner:
+    """Test runner for CLI commands."""
+    return CliRunner()
+
+
+def test_list_models_command(runner: CliRunner, model_card_path: Path) -> None:
+    """Test the list-models CLI command."""
+    result = runner.invoke(app, ["list-models", str(model_card_path)])
+
+    assert result.exit_code == 0
+
+    output_data = json.loads(result.stdout)
+    assert isinstance(output_data, list)
+    assert len(output_data) == 1
+
+    model_data = output_data[0]
+    assert model_data["name"] == "dummy"
+    assert "path" in model_data
+    assert model_data["hyper_params"]["nogpu"] is False
+
+
+def test_list_models_command_yaml_format(runner: CliRunner, model_card_path: Path) -> None:
+    """Test the list-models CLI command with YAML format."""
+    result = runner.invoke(app, ["list-models", str(model_card_path), "--format", "yaml"])
+
+    assert result.exit_code == 0
+    assert "name: dummy" in result.stdout
+    assert "nogpu: false" in result.stdout

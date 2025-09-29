@@ -1,12 +1,18 @@
 import logging
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Dict, List
 
+import click
 import typer
+import json
+import yaml
+from pydantic import ValidationError
 
 from .__about__ import __version__
 from .dataset import Dataset
 from .manifest import Manifest
+from .model import ModelCard
+
 
 app = typer.Typer(
     name="proteingym-base",
@@ -97,6 +103,69 @@ def build(
     typer.echo("Building dataset archive...")
     archive_path = dataset.dump(path=output_path)
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
+
+
+@app.command("list-models")
+def list_models(
+    path: Annotated[
+        Path,
+        typer.Argument(
+            help="Directory path containing model cards",
+            exists=True,
+            file_okay=True,
+            dir_okay=True,
+        ),
+    ],
+    format: Annotated[
+        str,
+        typer.Option(
+            "--format",
+            "-f",
+            help="Output format",
+            click_type=click.Choice(["json", "yaml"], case_sensitive=False),
+        ),
+    ] = "json",
+):
+    """List available models with optional query filtering."""
+    logger = logging.getLogger("proteingym.base")
+    logger.setLevel(logging.INFO)
+
+    def find_models_with_paths(path: Path) -> List[Dict]:
+        """Find all model cards in the given directory."""
+        models_with_paths = []
+
+        if path.is_file():
+            paths = [path]
+        else:
+            paths = path.rglob("*.md")
+
+        for path in paths:
+            try:
+                model = ModelCard.from_path(path)
+                model_with_path = {
+                    **model.model_dump(),
+                    "path": path.resolve().as_posix(),
+                }
+
+                models_with_paths.append(model_with_path)
+            except ValidationError as e:
+                logger.debug(f"Skipping {path}", exc_info=e)
+
+        return models_with_paths
+
+    def format_output(datasets: List[Dict], output_format: str) -> str:
+        """Format the models for output."""
+        if output_format.lower() == "json":
+            return json.dumps(datasets, indent=2)
+        elif output_format.lower() == "yaml":
+            return yaml.dump(datasets, default_flow_style=False)
+        else:
+            logger.warning(f"Unsupported dataset output format: {output_format}")
+
+    models_with_paths = find_models_with_paths(path)
+
+    output = format_output(models_with_paths, format)
+    typer.echo(output)
 
 
 if __name__ == "__main__":
