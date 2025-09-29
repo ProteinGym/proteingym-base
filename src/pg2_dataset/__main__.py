@@ -101,7 +101,7 @@ def build(
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
 
 
-@app.command("list_datasets")
+@app.command("list")
 def list_datasets(
     path: Annotated[
         Path,
