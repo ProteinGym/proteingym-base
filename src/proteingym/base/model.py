@@ -6,7 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ModelCard(BaseModel):
-    """A model card representing configuration for a machine learning model in the proteingym space.
+    """A model card representing configuration for a machine learning model
+    in the proteingym space.
 
     This class loads and validates model configuration from markdown files, containing
     model metadata and hyperparameters in the front matter for benchmarking tasks.
