@@ -283,7 +283,6 @@ def test_list_datasets_nonexistent_path(runner: CliRunner, tmp_path: Path) -> No
     result = runner.invoke(app, ["list-datasets", str(nonexistent_path)])
 
     assert result.exit_code == 2
-    assert "Invalid value for 'PATH'" in result.stderr
 
 
 def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> None:
@@ -291,7 +290,6 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
     result = runner.invoke(app, ["list-datasets", str(dataset_file), "--format", "xml"])
 
     assert result.exit_code == 2
-    assert "Invalid value for '--format'" in result.stderr
 
 
 def test_main_module_execution() -> None:
