@@ -286,6 +286,4 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
     result = runner.invoke(app, ["list-datasets", str(dataset_file), "--format", "xml"])
 
     assert result.exit_code == 2
-    # Error message might be in stderr or stdout
-    error_output = result.stdout + result.stderr
-    assert "Invalid value for '--format'" in error_output or "xml" in error_output
+    assert "Invalid value for '--format'" in result.stderr
