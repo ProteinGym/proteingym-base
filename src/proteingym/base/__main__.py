@@ -159,8 +159,6 @@ def list_models(
             return json.dumps(models, indent=2)
         elif output_format.lower() == "yaml":
             return yaml.dump(models, default_flow_style=False)
-        else:
-            logger.warning(f"Unsupported model output format: {output_format}")
 
     models_with_paths = find_models_with_paths(path)
 
