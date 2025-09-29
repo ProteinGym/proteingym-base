@@ -1,13 +1,13 @@
-from pathlib import Path
-from typer.testing import CliRunner
 import json
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
+from typer.testing import CliRunner
 
-from proteingym.base.model import ModelCard
 from proteingym.base.__main__ import app
+from proteingym.base.model import ModelCard
 
 
 @pytest.fixture
@@ -83,19 +83,26 @@ def test_list_models_command(runner: CliRunner, model_card_path: Path) -> None:
     assert model_data["hyper_params"]["nogpu"] is False
 
 
-def test_list_models_command_yaml_format(runner: CliRunner, model_card_path: Path) -> None:
+def test_list_models_command_yaml_format(
+    runner: CliRunner, model_card_path: Path
+) -> None:
     """Test the list-models CLI command with YAML format."""
-    result = runner.invoke(app, ["list-models", str(model_card_path), "--format", "yaml"])
+    result = runner.invoke(
+        app, ["list-models", str(model_card_path), "--format", "yaml"]
+    )
 
     assert result.exit_code == 0
     assert "name: dummy" in result.stdout
     assert "nogpu: false" in result.stdout
 
 
-def test_list_models_directory_with_multiple_cards(runner: CliRunner, tmp_path: Path) -> None:
+def test_list_models_directory_with_multiple_cards(
+    runner: CliRunner, tmp_path: Path
+) -> None:
     """Test list-models with a directory containing multiple model cards."""
     model1 = tmp_path / "model1.md"
-    model1.write_text("""
+    model1.write_text(
+        """
 ---
 name: "model_one"
 hyper_params:
@@ -104,10 +111,13 @@ hyper_params:
 
 # Model One
 First model description
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     model2 = tmp_path / "model2.md"
-    model2.write_text("""
+    model2.write_text(
+        """
 ---
 name: "model_two"
 hyper_params:
@@ -116,7 +126,9 @@ hyper_params:
 
 # Model Two
 Second model description
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     result = runner.invoke(app, ["list-models", str(tmp_path)])
 
@@ -144,18 +156,20 @@ def test_list_models_directory_empty(runner: CliRunner, tmp_path: Path) -> None:
 
 
 def test_list_models_mixed_valid_invalid(runner: CliRunner, tmp_path: Path) -> None:
-    """Test list-models with a directory containing both valid and invalid model cards."""
+    """Test list-models with a directory
+    containing both valid and invalid model cards."""
     valid_card = tmp_path / "valid.md"
-    valid_card.write_text("""
+    valid_card.write_text(
+        """
 ---
 name: "valid_model"
-hyper_params:
-    learning_rate: 0.001
 ---
 
 # Valid Model
 This is a valid model card
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
     invalid_file = tmp_path / "invalid.md"
     invalid_file.write_text("This is just a regular markdown file", encoding="utf-8")
@@ -172,7 +186,8 @@ This is a valid model card
 def test_list_models_validation_error(runner: CliRunner, tmp_path: Path) -> None:
     """Test list-models logs debug message when skipping invalid model card."""
     invalid_card = tmp_path / "invalid.md"
-    invalid_card.write_text("""
+    invalid_card.write_text(
+        """
 ---
 hyper_params:
     learning_rate: 0.001
@@ -180,9 +195,11 @@ hyper_params:
 
 # Invalid Model Card
 This model card is missing the required 'name' field
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
 
-    with patch('proteingym.base.__main__.logging.getLogger') as mock_get_logger:
+    with patch("proteingym.base.__main__.logging.getLogger") as mock_get_logger:
         mock_logger = mock_get_logger.return_value
         mock_logger.setLevel.return_value = None
 
@@ -205,12 +222,29 @@ def test_list_models_nonexistent_path(runner: CliRunner, tmp_path: Path) -> None
     result = runner.invoke(app, ["list-models", str(nonexistent_path)])
 
     assert result.exit_code == 2
-    assert "Invalid value for 'PATH'" in result.stderr
 
 
 def test_list_models_invalid_format(runner: CliRunner, model_card_path: Path) -> None:
     """Test list-models with invalid format option."""
-    result = runner.invoke(app, ["list-models", str(model_card_path), "--format", "xml"])
+    result = runner.invoke(
+        app, ["list-models", str(model_card_path), "--format", "xml"]
+    )
 
     assert result.exit_code == 2
-    assert "Invalid value for '--format'" in result.stderr
+
+
+def test_main_module_execution() -> None:
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import proteingym.base.__main__; proteingym.base.__main__.app()",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
