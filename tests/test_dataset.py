@@ -194,3 +194,5 @@ def test_serialize_msas() -> None:
     ]
 
     assert serialized == expected
+
+    

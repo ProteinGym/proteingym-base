@@ -124,7 +124,6 @@ def list_datasets(
     ] = "json",
 ):
     """List available datasets with optional query filtering."""
-    logger = logging.getLogger("proteingym.base")
 
     def find_datasets_with_paths(path: Path) -> List[Dict]:
         """Find all .pgdata datasets in the given directory."""
@@ -152,8 +151,6 @@ def list_datasets(
             return json.dumps(datasets, indent=2)
         elif output_format.lower() == "yaml":
             return yaml.dump(datasets, default_flow_style=False)
-        else:
-            logger.warning(f"Unsupported dataset output format: {output_format}")
 
     datasets_with_paths = find_datasets_with_paths(path)
 
