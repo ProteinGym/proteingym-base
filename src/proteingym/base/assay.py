@@ -148,7 +148,7 @@ class Assay:
     name: str
     """The name of the assay."""
 
-    records: list[tuple[Sequence, list[AssayTarget]]]
+    records: list[tuple[Sequence, *tuple[AssayTarget, ...]]]
     """The records of the assay, pairs of Sequence and multiple targets."""
 
     sequence_alphabet: SequenceAlphabet
