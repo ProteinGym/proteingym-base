@@ -162,11 +162,9 @@ def adjust_target_with_two_dummy_features(
             (pl.lit(np.random.choice(["a", "b"], len(df)))).alias(feature_names[1]),
         ]
     ).with_columns(
-        [
-            (
-                pl.col(target)
-                * pl.when(pl.col(feature_names[1]) == "a").then(2).otherwise(-1)
-                - pl.col(feature_names[0]) / 50
-            ).alias(target)
-        ]
+        (
+            pl.col(target)
+            * pl.when(pl.col(feature_names[1]) == "a").then(2).otherwise(-1)
+            - pl.col(feature_names[0]) / 50
+        ).alias(target)
     )
