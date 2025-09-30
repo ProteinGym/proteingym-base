@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 from typing import Annotated, Dict, List
 
-import click
 import typer
 from pydantic import ValidationError
 
@@ -114,15 +113,6 @@ def list_models(
             dir_okay=True,
         ),
     ],
-    format: Annotated[
-        str,
-        typer.Option(
-            "--format",
-            "-f",
-            help="Output format",
-            click_type=click.Choice(["json", "yaml"], case_sensitive=False),
-        ),
-    ] = "json",
 ):
     """List available models with optional query filtering."""
     logger = logging.getLogger("proteingym.base")
