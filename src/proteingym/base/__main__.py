@@ -5,6 +5,10 @@ from typing import Annotated
 import typer
 
 from .__about__ import __version__
+from .data_generators import (
+    adjust_target_with_two_dummy_features,
+    charge_ladder_dataset,
+)
 from .dataset import Dataset
 from .manifest import Manifest
 
@@ -97,6 +101,40 @@ def build(
     typer.echo("Building dataset archive...")
     archive_path = dataset.dump(path=output_path)
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
+
+
+@app.command("generate-data")
+def generate_data(
+    data_file: Annotated[
+        Path,
+        typer.Argument(
+            exists=False,
+            help="Dummy dataset file",
+        ),
+    ],
+    feature1: Annotated[
+        str,
+        typer.Argument(help="Name of the first dummy feature"),
+    ],
+    feature2: Annotated[
+        str,
+        typer.Argument(help="Name of the second dummy feature"),
+    ],
+    *,
+    n_rows: Annotated[
+        int, typer.Option(help="Number of rows to generate in a data frame")
+    ] = 500,
+    sequence_length: Annotated[
+        int, typer.Option(help="Length of sequence for the sequence column")
+    ] = 100,
+) -> None:
+    ladder = charge_ladder_dataset(n_rows, sequence_length)
+
+    ladder.pipe(
+        adjust_target_with_two_dummy_features,
+        target="charge",
+        feature_names=[feature1, feature2],
+    ).write_csv(data_file)
 
 
 if __name__ == "__main__":
