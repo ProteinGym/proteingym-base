@@ -83,19 +83,6 @@ def test_list_models_command(runner: CliRunner, model_card_path: Path) -> None:
     assert model_data["hyper_params"]["nogpu"] is False
 
 
-def test_list_models_command_yaml_format(
-    runner: CliRunner, model_card_path: Path
-) -> None:
-    """Test the list-models CLI command with YAML format."""
-    result = runner.invoke(
-        app, ["list-models", str(model_card_path), "--format", "yaml"]
-    )
-
-    assert result.exit_code == 0
-    assert "name: dummy" in result.stdout
-    assert "nogpu: false" in result.stdout
-
-
 def test_list_models_directory_with_multiple_cards(
     runner: CliRunner, tmp_path: Path
 ) -> None:

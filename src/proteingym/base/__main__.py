@@ -1,18 +1,16 @@
+import json
 import logging
 from pathlib import Path
 from typing import Annotated, Dict, List
 
 import click
 import typer
-import json
-import yaml
 from pydantic import ValidationError
 
 from .__about__ import __version__
 from .dataset import Dataset
 from .manifest import Manifest
 from .model import ModelCard
-
 
 app = typer.Typer(
     name="proteingym-base",
@@ -153,16 +151,9 @@ def list_models(
 
         return models_with_paths
 
-    def format_output(models: List[Dict], output_format: str) -> str:
-        """Format the models for output."""
-        if output_format.lower() == "json":
-            return json.dumps(models, indent=2)
-        elif output_format.lower() == "yaml":
-            return yaml.dump(models, default_flow_style=False)
-
     models_with_paths = find_models_with_paths(path)
 
-    output = format_output(models_with_paths, format)
+    output = json.dumps(models_with_paths, indent=2)
     typer.echo(output)
 
 
