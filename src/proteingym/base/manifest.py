@@ -14,7 +14,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from .assay import AssayManifestSection, AssayVariable
+from .assay import AssayManifestSection, AssayTarget, AssayVariable
 from .msa import MSAManifestSection
 from .sequence import SequenceManifestSection
 from .structure import StructureManifestSection
