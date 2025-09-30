@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Annotated, Dict, List
+from typing import Annotated
 
 import typer
 from pydantic import ValidationError
@@ -118,30 +118,30 @@ def list_models(
     logger = logging.getLogger("proteingym.base")
     logger.setLevel(logging.INFO)
 
-    def find_models_with_paths(path: Path) -> List[Dict]:
+    def find_models_with_paths(root_path: Path) -> list[dict]:
         """Find all model cards in the given directory."""
         models_with_paths = []
 
-        if path.is_file():
-            paths = [path]
+        if root_path.is_file():
+            paths = [root_path]
         else:
-            paths = path.rglob("*.md")
+            paths = root_path.rglob("*.md")
 
-        for path in paths:
+        for model_path in paths:
             try:
-                model = ModelCard.from_path(path)
-                model_with_path = {
+                model = ModelCard.from_path(model_path)
+                model_entry = {
                     **model.model_dump(),
-                    "path": path.resolve().as_posix(),
+                    "path": model_path.resolve().as_posix(),
                 }
 
-                models_with_paths.append(model_with_path)
+                models_with_paths.append(model_entry)
             except ValidationError as e:
-                logger.debug(f"Skipping {path}", exc_info=e)
+                logger.debug(f"Skipping {model_path}", exc_info=e)
 
         return models_with_paths
 
-    models_with_paths = find_models_with_paths(path)
+    models_with_paths = find_models_with_paths(root_path=path)
 
     output = json.dumps(models_with_paths, indent=2)
     typer.echo(output)
