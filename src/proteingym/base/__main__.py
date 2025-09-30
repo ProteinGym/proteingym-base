@@ -3,9 +3,7 @@ import logging
 from pathlib import Path
 from typing import Annotated, Dict, List
 
-import click
 import typer
-import yaml
 
 from .__about__ import __version__
 from .dataset import Dataset
@@ -113,15 +111,6 @@ def list_datasets(
             dir_okay=True,
         ),
     ],
-    format: Annotated[
-        str,
-        typer.Option(
-            "--format",
-            "-f",
-            help="Output format",
-            click_type=click.Choice(["json", "yaml"], case_sensitive=False),
-        ),
-    ] = "json",
 ):
     """List available datasets with optional query filtering."""
 
@@ -145,16 +134,9 @@ def list_datasets(
 
         return datasets_with_paths
 
-    def format_output(datasets: List[Dict], output_format: str) -> str:
-        """Format the datasets for output."""
-        if output_format.lower() == "json":
-            return json.dumps(datasets, indent=2)
-        elif output_format.lower() == "yaml":
-            return yaml.dump(datasets, default_flow_style=False)
-
     datasets_with_paths = find_datasets_with_paths(path)
 
-    output = format_output(datasets_with_paths, format)
+    output = json.dumps(datasets_with_paths, indent=2)
     typer.echo(output)
 
 

@@ -229,18 +229,6 @@ def test_list_datasets_command(runner: CliRunner, dataset_file: Path) -> None:
     assert "path" in dataset_data
 
 
-def test_list_datasets_command_yaml_format(
-    runner: CliRunner, dataset_file: Path
-) -> None:
-    """Test the list-datasets CLI command with YAML format."""
-    result = runner.invoke(
-        app, ["list-datasets", str(dataset_file), "--format", "yaml"]
-    )
-
-    assert result.exit_code == 0
-    assert "name: test_dataset" in result.stdout
-
-
 def test_list_datasets_directory_with_multiple_files(
     runner: CliRunner, tmp_path: Path
 ) -> None:
