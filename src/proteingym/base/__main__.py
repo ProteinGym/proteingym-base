@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Annotated, Dict, List
+from typing import Annotated
 
 import typer
 
@@ -114,27 +114,27 @@ def list_datasets(
 ):
     """List available datasets with optional query filtering."""
 
-    def find_datasets_with_paths(path: Path) -> List[Dict]:
+    def find_datasets_with_paths(root_path: Path) -> list[dict]:
         """Find all .pgdata datasets in the given directory."""
         datasets_with_paths = []
 
-        if path.is_file():
+        if root_path.is_file():
             paths = [path]
         else:
-            paths = path.rglob("*.pgdata")
+            paths = root_path.rglob("*.pgdata")
 
-        for path in paths:
-            dataset = Dataset.from_path(path)
-            dataset_with_path = {
+        for model_path in paths:
+            dataset = Dataset.from_path(model_path)
+            dataset_entry = {
                 **dataset.model_dump(),
-                "path": path.resolve().as_posix(),
+                "path": model_path.resolve().as_posix(),
             }
 
-            datasets_with_paths.append(dataset_with_path)
+            datasets_with_paths.append(dataset_entry)
 
         return datasets_with_paths
 
-    datasets_with_paths = find_datasets_with_paths(path)
+    datasets_with_paths = find_datasets_with_paths(root_path=path)
 
     output = json.dumps(datasets_with_paths, indent=2)
     typer.echo(output)
