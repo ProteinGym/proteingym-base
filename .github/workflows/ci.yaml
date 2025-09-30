@@ -87,8 +87,8 @@ jobs:
       - name: Test release can be installed and imported
         run: |
           uv venv
-          uv pip install dist/pg2_dataset-*.whl
-          uv run --with pg2_dataset --no-project --no-cache -- python -c "import pg2_dataset"
+          uv pip install dist/proteingym_base-*.whl
+          uv run --with proteingym_base --no-project --no-cache -- python -c "import proteingym.base"
 
   github-release:
     runs-on: ubuntu-latest

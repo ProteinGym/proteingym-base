@@ -4,12 +4,13 @@ from typing import Annotated
 
 import typer
 
-from pg2_dataset import Dataset, Manifest
-from pg2_dataset.__about__ import __version__
+from .__about__ import __version__
+from .dataset import Dataset
+from .manifest import Manifest
 
 app = typer.Typer(
-    name="pg2-dataset",
-    help="CLI for managing ProteinGym2 (PG2) Dataset(s).",
+    name="proteingym-base",
+    help="CLI for handling ProteinGym resources",
 )
 
 
@@ -20,7 +21,7 @@ def setup_logger(*, level: int = logging.CRITICAL) -> None:
         log_level (int): The logging level to set. Defaults to
            `logging.CRITICAL`.
     """
-    logger = logging.getLogger("pg2_dataset")
+    logger = logging.getLogger("proteingym.base")
     logger.setLevel(level)
 
     stream_handler = logging.StreamHandler()

@@ -1,6 +1,6 @@
 # Protein Gym Dataset
 
-[![codecov](https://codecov.io/gh/ProteinGym2/pg2-dataset/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym2/pg2-dataset)
+[![codecov](https://codecov.io/gh/ProteinGym/proteingym-base/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym/proteingym-base)
 
 A standardisation for using protein data within protein gym.
 
@@ -28,7 +28,8 @@ A standardisation for using protein data within protein gym.
 ├── notebooks/                 <-- Jupyter notebooks
 │   └── *.ipynb                <-- Demonstration notebooks
 ├── src/                       <-- Source code folder
-│   └── pg2_dataset/           <-- Main package
+│   └── proteingym/            <-- Namespace package
+│       └── base/              <-- Package
 ├── tests/                     <-- Test folder
 │   └── test_*.py              <-- Test files
 ├── .adr-dir                   <-- Architecture decision records folder
@@ -59,7 +60,7 @@ dataset](#example-data).
 To install the package, you can use pip:
 
 ```shell
-$ pip install git+https://github.com/ProteinGym2/pg2-dataset.git
+$ pip install git+https://github.com/ProteinGym/proteingym-base.git
 ```
 
 ## Quickstart example
@@ -73,7 +74,7 @@ example code below we load the [NEIME 2019](#example-data) dataset
 [manifest](./example_data/neime_2019.toml):
 
 ``` python
->>> from pg2_dataset import Dataset, Manifest
+>>> from proteingym.base import Dataset, Manifest
 >>> manifest = Manifest.from_path("example_data/neime_2019.toml")
 >>> manifest.name
 'NEIME_2019'
