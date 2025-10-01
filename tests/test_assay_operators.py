@@ -2,7 +2,7 @@
 Module for testing assay operators.
 """
 
-from proteingym.base.assay import Assay, SequenceAlphabet
+from proteingym.base.assay import Assay, AssayVariable, SequenceAlphabet
 
 
 def test_assay_not_equal_to_integer() -> None:
@@ -140,13 +140,18 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
     assay = Assay(
         name="Test assay",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        variables={"variable1": 1, "variable2": 2},
+        variables=[
+            AssayVariable(name="variable1", value=1),
+            AssayVariable(name="variable2", value=2),
+        ],
         sequence_alphabet=SequenceAlphabet.AA,
     )
     subset = Assay(
         name="Test assay subset",
         records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        variables={"variable2": 3},
+        variables=[
+            AssayVariable(name="variable2", value=3),
+        ],
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert subset not in assay

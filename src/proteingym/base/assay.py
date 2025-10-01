@@ -49,6 +49,18 @@ class AssayVariable(BaseModel):
     description: str | None = None
     """Description of the variable."""
 
+    def __eq__(self, other: "AssayVariable"):
+        """Equality operator for AssayVariable."""
+
+        if not isinstance(other, AssayVariable):
+            return NotImplemented
+        return (
+            self.name == other.name
+            and self.unit == other.unit
+            and self.description == other.description
+            and self.value == other.value
+        )
+
 
 class AssayManifestSection(BaseModel):
     """This is the manifest section for Assays.
@@ -130,9 +142,7 @@ class Assay:
     sequence_alphabet: SequenceAlphabet
     """The alphabet of the sequences in the assay."""
 
-    variables: dict[str, int | float | bool | str] = dataclasses.field(
-        default_factory=dict
-    )
+    variables: list[AssayVariable] = dataclasses.field(default_factory=list)
     """The variables of the assay, defined in the manifest."""
 
     description: str | None = None
@@ -153,12 +163,13 @@ class Assay:
         if not isinstance(item, Assay):
             return False
         return set(item.records).issubset(self.records) and all(
-            k in self.variables and self.variables[k] == v
-            for k, v in item.variables.items()
+            variable in self.variables for variable in item.variables
         )
 
     @classmethod
-    def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
+    def from_manifest_section(
+        cls, section: AssayManifestSection, assay_variables: list[AssayVariable]
+    ) -> "Assay":
         """Create an Assay instance from a manifest section."""
 
         df = pl.read_csv(section.path, columns=[section.sequence, section.target])
@@ -179,12 +190,32 @@ class Assay:
             )
         )
 
+        # Create AssayCondition objects from section variables and assay_variables
+        variables = []
+        for var_name, var_value in section.variables.items():
+            # Find the corresponding AssayVariable definition
+            assay_var = next(
+                (av for av in assay_variables if av.name == var_name), None
+            )
+            if assay_var:
+                variables.append(
+                    AssayVariable(
+                        name=assay_var.name,
+                        unit=assay_var.unit,
+                        description=assay_var.description,
+                        value=var_value,
+                    )
+                )
+            else:
+                raise ValueError(
+                    f"Variable '{var_name}' not defined in dataset manifest."
+                )
         return cls(
             name=section.name or section.path.stem,
             records=list(df.iter_rows()),
             sequence_alphabet=section.sequence_alphabet,
             description=section.description,
-            variables=section.variables,
+            variables=variables,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -203,7 +234,7 @@ class Assay:
             sequence=self.sequence_feature_name,
             sequence_alphabet=self.sequence_alphabet,
             target=self.target_feature_name,
-            variables=self.variables,
+            variables={v.name: v.value for v in self.variables},
             path=path,
         )
 

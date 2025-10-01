@@ -131,7 +131,10 @@ class Dataset(BaseModel):
         Returns:
             Dataset: The dataset created from the manifest.
         """
-        assays = [Assay.from_manifest_section(a) for a in manifest.assays]
+        assays = [
+            Assay.from_manifest_section(a, manifest.assay_variables)
+            for a in manifest.assays
+        ]
         sequences = itertools.chain(
             *[Sequence.from_manifest_section(s) for s in manifest.sequences]
         )

@@ -140,7 +140,7 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
     """Test creating an Assay from a manifest section."""
     try:
         assay = Assay.from_manifest_section(
-            AssayManifestSection(
+            section=AssayManifestSection(
                 name="assay",
                 sequence="sequence",
                 sequence_alphabet=SequenceAlphabet.DNA,
@@ -148,11 +148,17 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
                 path=assay_file,
                 variables={"test_cond1": "true", "test_cond2": 42},
             ),
+            assay_variables=[
+                AssayVariable(name="test_cond1"),
+                AssayVariable(name="test_cond2"),
+            ],
         )
     except ValidationError as e:
-        AssertionError(f"Assay raised ValidationError: {e}")
-    assert assay.name == "assay"
-    assert len(assay.records) == 2
+        raise AssertionError(f"Assay raised ValidationError: {e}") from e
+    else:
+        assert assay.name == "assay"
+        assert len(assay.records) == 2
+        assert len(assay.variables) == 2
 
 
 def test_as_manifest_section(assay_file: Path) -> None:
