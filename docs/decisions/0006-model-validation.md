@@ -103,6 +103,8 @@ print(dist.entry_points)
 
 The benefit is that for model builders, it is quick to sanity check their code during development. Besides, they can install `proteingym-base` anyway they want, which might be independent from `uv`. It is useful with the least assumptions and dependencies.
 
+#### Example
+
 ```shell
 $ proteingym-base validate .
 ```
