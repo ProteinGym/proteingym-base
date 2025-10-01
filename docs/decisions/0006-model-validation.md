@@ -68,7 +68,7 @@ result = subprocess.run(
 
 ### Option 2: Only verify its exposed Docker entrypoints
 
-The benefit is that we verify it from end to end using the prepared sample data and check if the returned data conforms to our data contract. Besides, it has the least assumptions, as it is more high-level, and it works across all platforms. The downside is that it has more dependencies, such as Docker and the sample data.
+The benefit is that we verify it from end to end using the prepared sample data and check if the returned data conforms to our data contract. Besides, it works across all platforms. The downside is that it has more dependencies, such as Docker and the sample data, and it assumes some entrypoint.
 
 #### Example
 
