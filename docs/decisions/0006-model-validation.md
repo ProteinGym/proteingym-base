@@ -17,7 +17,7 @@ Given the above considerations, we will first set out to build a tool for model 
 
 ## Decision
 
-Currently, we use the [Option 4: Install `proteingym-base` as a dev dependency and run sanity check by CLI](#option-4-install-proteingym-base-as-a-dev-dependency-and-run-sanity-check-by-cli), as it gives the model providers the tool at their hand to sanity check the code during development.
+Currently, we use the [Option 4: Install `proteingym-base` as a dev dependency and run sanity check by CLI](#option-4-install-proteingym-base-as-a-dev-dependency-and-run-sanity-check-by-cli), as it gives model providers a tool at their hand to sanity check the code during development.
 
 ## Decision Drivers
 
