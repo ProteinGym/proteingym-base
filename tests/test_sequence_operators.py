@@ -4,7 +4,7 @@ Module for testing sequence operators.
 
 from Bio.Seq import Seq
 
-from pg2_dataset.sequence import (
+from proteingym.base.sequence import (
     Sequence,
     SequenceAlphabet,
     SequenceType,
