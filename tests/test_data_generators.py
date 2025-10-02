@@ -195,13 +195,10 @@ def runner() -> CliRunner:
 
 def test_generate_data_cli_command(runner: CliRunner, tmp_path: Path) -> None:
     """Test the generate-data CLI command from __main__.py."""
-    output_file = tmp_path / "test_data.csv"
-
     result = runner.invoke(
         app,
         [
             "generate-data",
-            str(output_file),
             "feature1",
             "feature2",
             "--n-rows",
@@ -212,9 +209,8 @@ def test_generate_data_cli_command(runner: CliRunner, tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0
-    assert output_file.exists()
 
-    df = pl.read_csv(output_file)
+    df = pl.read_csv(result.output.encode())
     assert len(df) == 10
     assert "sequence" in df.columns
     assert "charge" in df.columns

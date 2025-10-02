@@ -154,7 +154,7 @@ def generate_data(
     )
 
     if format.lower() == "csv":
-        typer.echo(output.write_csv())
+        typer.echo(output.write_csv(), nl=False)
 
 
 if __name__ == "__main__":
