@@ -44,6 +44,10 @@ class DatasetSlice:
 
     A slice gets ("slices") a subset of dataset. Currently, a slice only covers
     a subset of assays.
+
+    This class functions as a (small) protocol to be extended if we include more
+    attributes in a dataset slice. Currently, it is a wrapper around a list of
+    assay slices.
     """
 
     assays: list[list[int], slice] = Field(default_factory=list)
