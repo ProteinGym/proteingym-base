@@ -50,6 +50,30 @@ class AssayVariable(BaseModel):
     """Description of the variable."""
 
 
+class AssayTarget(BaseModel):
+    """Definition of an assay target."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=False,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
+    name: str
+    """The name of the target."""
+
+    unit: str | None = None
+    """The unit of the target."""
+
+    value: bool | int | float | str | None = None
+    """The value of the target, can be a bool, int, float, or str."""
+
+    description: str | None = None
+    """Description of the target."""
+
+
 class AssayManifestSection(BaseModel):
     """This is the manifest section for Assays.
 
@@ -77,8 +101,8 @@ class AssayManifestSection(BaseModel):
     sequence_alphabet: SequenceAlphabet
     """The alphabet of the sequences of the assay."""
 
-    target: str = "target"
-    """The target feature name given in the file."""
+    targets: dict[str, str] = Field(default_factory=dict)
+    """The target name given in dataset map to target feature name given in the file."""
 
     variables: dict[str, bool | int | float | str] = Field(default_factory=dict)
     """The variable key:value pairs, key is the name of the assay variable (defined in
@@ -106,7 +130,7 @@ class AssayManifestSection(BaseModel):
         """Validate whether feature names are present in the `path` file."""
         with self.path.open("r") as f:
             header = f.readline()
-        for v in (self.sequence, self.target):
+        for v in (self.sequence, *self.targets.values()):
             if v not in header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
@@ -124,8 +148,8 @@ class Assay:
     name: str
     """The name of the assay."""
 
-    records: list[tuple[Sequence, int | float | bool | str]]
-    """The records of the assay, pairs of Sequence and target values."""
+    records: list[tuple[Sequence, dict[str, int | float | bool | str]]]
+    """The records of the assay, pairs of Sequence and multiple targets."""
 
     sequence_alphabet: SequenceAlphabet
     """The alphabet of the sequences in the assay."""
@@ -141,8 +165,11 @@ class Assay:
     sequence_feature_name: str = "sequence"
     """The sequence feature name in the assay records."""
 
-    target_feature_name: str = "target"
-    """The target feature name in the assay records."""
+    @property
+    def target_feature_names(self) -> list[str]:
+        """Returns the target feature names in the assay records."""
+        # get the target names from first record as all records have same targets
+        return list(self.records[0][1].keys())
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -161,12 +188,15 @@ class Assay:
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
 
-        df = pl.read_csv(section.path, columns=[section.sequence, section.target])
+        df = pl.read_csv(
+            section.path, columns=[section.sequence, *section.targets.values()]
+        )
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
             # provided in the assay file.
-            pl.col(section.sequence).map_elements(
+            pl.col(section.sequence)
+            .map_elements(
                 lambda seq: Sequence(
                     # The type of the sequence is set to "standard". This would be
                     # removed in future and support lookup into dataset.sequences.
@@ -177,11 +207,24 @@ class Assay:
                 ),
                 return_dtype=pl.Object,
             )
+            .alias("sequence_object")
+        )
+        df = df.with_columns(
+            # Create a dict of target_name: target_value for each record
+            pl.struct(list(section.targets.values()))
+            .map_elements(
+                lambda tgt: {
+                    target_name: tgt[target_feature_name]
+                    for target_name, target_feature_name in section.targets.items()
+                },
+                return_dtype=pl.Object,
+            )
+            .alias("target_objects")
         )
 
         return cls(
             name=section.name or section.path.stem,
-            records=list(df.iter_rows()),
+            records=list(df.select("sequence_object", "target_objects").iter_rows()),
             sequence_alphabet=section.sequence_alphabet,
             description=section.description,
             variables=section.variables,
@@ -202,7 +245,9 @@ class Assay:
             description=self.description,
             sequence=self.sequence_feature_name,
             sequence_alphabet=self.sequence_alphabet,
-            target=self.target_feature_name,
+            targets=dict(
+                zip(self.target_feature_names, self.target_feature_names, strict=False)
+            ),
             variables=self.variables,
             path=path,
         )
@@ -227,18 +272,18 @@ class Assay:
         path = path or Path.cwd()
         if path.is_dir():
             path = path / f"{self.name}{format.value}"
-        df = pl.DataFrame(
-            self.records,
-            schema=[self.sequence_feature_name, self.target_feature_name],
-            orient="row",
-        )
-        df = df.with_columns(
-            # The sequence column is converted to string for saving
-            # it to tabular text format.
-            pl.col(self.sequence_feature_name).map_elements(
-                lambda seq: str(seq.value), return_dtype=pl.String
-            )
-        )
+
+        rows = []
+        for record in self.records:
+            seq = record[0]
+            row = {self.sequence_feature_name: str(seq.value)}
+            tgts = record[1]
+            for target_name, target_value in tgts.items():
+                row[target_name] = target_value
+            rows.append(row)
+
+        df = pl.DataFrame(rows)
+
         match format:
             case AssayFormat.CSV:
                 df.write_csv(path)

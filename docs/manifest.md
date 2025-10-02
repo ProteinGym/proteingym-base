@@ -62,15 +62,22 @@ name = "PH"
 description = "pH level of the samples"
 unit = "pH"
 
+[[ assay_targets ]]
+name = "DMS Score"
+description = "DMS score of the samples"
+unit = "log fold change"
+
 [[ assays ]]
 name = "assay"
 path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
-target = "target"
 
 [ assays.variables ]
 PH = "7"
+
+[ assays.targets ]
+"DMS Score" = "DMS_score"
 
 [[ sequences ]]
 type = "wild_type"
@@ -112,6 +119,16 @@ The assay variables section contains a list of assay variables defined in the da
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
 | `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the variable. |
 
+### Assay Targets
+
+The assay targets section contains a list of assay targets defined in the dataset. E.g., the target measured in a certain assay, like binding affinity or stability.
+
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
+|---------------|---------------------------------------|--------------|-------------|----------------------------|
+| `name`        | `string`                              | Yes          | N/A         | The assay target name      |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.       |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the target.   |
 
 ### Assays
 
@@ -121,7 +138,7 @@ The assays section contains a list of assays included in the dataset.
 |---------------------|------------------|--------------|--------------|----------------------------------------------------------------|
 | `name`              | `string`         | No           | `None`       | The name of the assay.                                         |
 | `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
-| `target`            | `string`         | No           | `"target"`   | The target feature name in the assay.                          |
+| `targets`           | `dict[str, str]` | No           | `"target"`   | The target feature name in the assay.                          |
 | `sequence`          | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                        |
 | `sequence_alphabet` | `string`         | No           | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").          |
 | `variables`         | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                    |

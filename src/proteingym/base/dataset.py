@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-from .assay import Assay, AssayVariable
+from .assay import Assay, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .sequence import Sequence
@@ -65,6 +65,9 @@ class Dataset(BaseModel):
 
     assay_variables: list[AssayVariable] = Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
+
+    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    """The list of assay targets relevant to the dataset."""
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
@@ -141,6 +144,7 @@ class Dataset(BaseModel):
             name=manifest.name,
             description=manifest.description,
             assay_variables=manifest.assay_variables,
+            assay_targets=manifest.assay_targets,
             assays=assays,
             sequences=sequences,
             structures=structures,
@@ -215,6 +219,7 @@ class Dataset(BaseModel):
             version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
+            assay_targets=self.assay_targets,
             assay_variables=self.assay_variables,
             assays=[
                 a.as_manifest_section(path=path)
