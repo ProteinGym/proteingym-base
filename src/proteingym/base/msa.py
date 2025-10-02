@@ -85,6 +85,28 @@ class MSA:
     description: str | None = None
     """A brief description of the MSA."""
 
+    def __repr__(self) -> str:
+        """A concise representation of the MSA object."""
+        lines = [f"MSA(\n\tname='{self.name}',"]
+        if self.description:
+            desc = (
+                self.description[:60] + "..."
+                if len(self.description) > 60
+                else self.description
+            )
+            lines.append(f"\tdescription: {desc},")
+        else:
+            lines.append("\tdescription: None,")
+
+        lines.append("\tvalue:")
+        alignment_lines = str(self.value).splitlines()
+        preview = alignment_lines[:3]
+        lines.extend([f"\t\t{line}" for line in preview])
+        if len(alignment_lines) > 3:
+            lines.append("\t\t...")
+        lines.append(")")
+        return "\n".join(lines)
+
     @classmethod
     def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
         """Create a MSA instance from a manifest section.

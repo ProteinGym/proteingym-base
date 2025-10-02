@@ -48,3 +48,27 @@ def test_dataset_from_path_simple(tmp_path: Path) -> None:
     dataset = Dataset.from_path(dataset_path)
 
     assert dataset.name == "test", "Dataset name does not match the expected name."
+
+
+def test_dataset_repr() -> None:
+    """Test the string representation of the Dataset class."""
+    dataset = Dataset(name="test dataset")
+    repr_str = repr(dataset)
+    assert "Dataset(\n\tname='test dataset'," in repr_str
+    assert "\tdescription: None," in repr_str
+    assert "contents:" in repr_str
+    assert "assays: 0," in repr_str
+    assert "sequences: 0," in repr_str
+    assert "structures: 0," in repr_str
+    assert "msas: 0," in repr_str
+    assert "assay_variables: 0," in repr_str
+
+    dataset = Dataset(name="short desc", description="Short description.")
+    repr_str = repr(dataset)
+    assert "\tdescription: Short description." in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    dataset = Dataset(name="long desc", description=long_desc)
+    repr_str = repr(dataset)
+    # Should be truncated to 60 chars + '...'
+    assert f"\tdescription: {long_desc[:60]}..." in repr_str
