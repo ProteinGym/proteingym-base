@@ -14,10 +14,10 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from pg2_dataset.assay import AssayCondition, AssayManifestSection
-from pg2_dataset.msa import MSAManifestSection
-from pg2_dataset.sequence import SequenceManifestSection
-from pg2_dataset.structure import StructureManifestSection
+from .assay import AssayManifestSection, AssayTarget, AssayVariable
+from .msa import MSAManifestSection
+from .sequence import SequenceManifestSection
+from .structure import StructureManifestSection
 
 
 class _VersionPydanticAnnotation:
@@ -103,8 +103,11 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_conditions: list[AssayCondition] = Field(default_factory=list)
-    """The conditions for the assays defined in the dataset."""
+    assay_variables: list[AssayVariable] = Field(default_factory=list)
+    """The variables for the assays defined in the dataset."""
+
+    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    """The targets for the assays defined in the dataset."""
 
     assays: list[AssayManifestSection] = Field(default_factory=list)
     """The assays included in the dataset."""
@@ -119,19 +122,30 @@ class Manifest(BaseModel):
     """The multiple sequence alignments included in the dataset."""
 
     @model_validator(mode="after")
-    def _validate_assay_conditions(self) -> "Manifest":
-        """Validate that all assay conditions are defined in the manifest."""
-        defined_condition_names = {
-            condition.name for condition in self.assay_conditions
-        }
+    def _validate_assay_variables(self) -> "Manifest":
+        """Validate that all assay variables are defined in the manifest."""
+        defined_variable_names = {variable.name for variable in self.assay_variables}
         for assay in self.assays:
-            undefined_condition_names = (
-                set(assay.conditions.keys()) - defined_condition_names
+            undefined_variable_names = (
+                set(assay.variables.keys()) - defined_variable_names
             )
-            if undefined_condition_names:
+            if undefined_variable_names:
                 raise ValueError(
-                    f"Assay {assay.name} contains undefined conditions:"
-                    f"{undefined_condition_names}"
+                    f"Assay {assay.name} contains undefined variables:"
+                    f"{undefined_variable_names}"
+                )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_assay_targets(self) -> "Manifest":
+        """Validate that all assay targets are defined in the manifest."""
+        defined_target_names = {target.name for target in self.assay_targets}
+        for assay in self.assays:
+            undefined_target_names = set(assay.targets.keys()) - defined_target_names
+            if undefined_target_names:
+                raise ValueError(
+                    f"Assay {assay.name} contains undefined targets:"
+                    f"{undefined_target_names}"
                 )
         return self
 

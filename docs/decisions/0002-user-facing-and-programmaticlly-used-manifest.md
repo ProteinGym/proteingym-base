@@ -14,7 +14,7 @@ manifest.
 Herewith, the descriptions:
 - External manifest : The manifest users utilize to create a dataset, like
   downloading assay, structure, msa and sequence data from certain locations
-  combined with metadata like name, description and conditions. This user-facing
+  combined with metadata like name, description and variables. This user-facing
   manifest describes how a dataset is created and can be stored in a data catalog
   (catalog could be a git repo) 
 - Internal manifest : The manifest that describes the

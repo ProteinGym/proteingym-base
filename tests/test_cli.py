@@ -2,8 +2,8 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from pg2_dataset.__about__ import __version__
-from pg2_dataset.__main__ import app
+from proteingym.base.__about__ import __version__
+from proteingym.base.__main__ import app
 
 
 def test_cli_callback() -> None:
@@ -80,4 +80,4 @@ def test_build_command_with_output_path(tmp_path: Path) -> None:
     result = runner.invoke(
         app, ["build", manifest.as_posix(), "--output-path", output_dir.as_posix()]
     )
-    assert (output_dir / f"{dataset_name}.zip").as_posix() in result.stdout
+    assert (output_dir / f"{dataset_name}.pgdata").as_posix() in result.stdout

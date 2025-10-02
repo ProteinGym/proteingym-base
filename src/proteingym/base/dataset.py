@@ -11,11 +11,11 @@ from pydantic import (
     model_validator,
 )
 
-from pg2_dataset.assay import Assay, AssayCondition
-from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
-from pg2_dataset.msa import MSA
-from pg2_dataset.sequence import Sequence
-from pg2_dataset.structure import Structure
+from .assay import Assay, AssayTarget, AssayVariable
+from .manifest import MANIFEST_LATEST_VERSION, Manifest
+from .msa import MSA
+from .sequence import Sequence
+from .structure import Structure
 
 
 class DatasetArchiveLayout:
@@ -63,8 +63,11 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_conditions: list[AssayCondition] = Field(default_factory=list)
-    """The list of assay conditions relevant to the dataset."""
+    assay_variables: list[AssayVariable] = Field(default_factory=list)
+    """The list of assay variables relevant to the dataset."""
+
+    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    """The list of assay targets relevant to the dataset."""
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
@@ -140,7 +143,8 @@ class Dataset(BaseModel):
         return cls(
             name=manifest.name,
             description=manifest.description,
-            assay_conditions=manifest.assay_conditions,
+            assay_variables=manifest.assay_variables,
+            assay_targets=manifest.assay_targets,
             assays=assays,
             sequences=sequences,
             structures=structures,
@@ -215,7 +219,8 @@ class Dataset(BaseModel):
             version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
-            assay_conditions=self.assay_conditions,
+            assay_targets=self.assay_targets,
+            assay_variables=self.assay_variables,
             assays=[
                 a.as_manifest_section(path=path)
                 for a, path in zip(self.assays, data_paths.get(Assay, []), strict=True)
@@ -256,7 +261,7 @@ class Dataset(BaseModel):
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
-        archive_path = path / f"{self.name}.zip"
+        archive_path = path / f"{self.name}.pgdata"
         # The manifest Pydantic base model checks if the data path exists,
         # hence, we dump the data before creating and dumping the Manifest
         data_paths = self._dump_data(temporary_directory)

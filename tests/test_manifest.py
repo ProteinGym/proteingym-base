@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from pg2_dataset.manifest import Manifest
+from proteingym.base.manifest import Manifest
 
 
 @pytest.fixture
@@ -14,19 +14,27 @@ version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
 
-[[ assay_conditions ]]
+[[ assay_variables ]]
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
+
+[[ assay_targets ]]
+name = "DMS Score"
+description = "DMS score of the samples"
+unit = "log fold change"
 
 [[ assays ]]
 name = "assay"
 path = "assay.csv"
 sequence = "sequence"
-target = "target"
+sequence_alphabet = "AA"
 
-[ assays.conditions ]
+[ assays.variables ]
 PH = "7"
+
+[ assays.targets ]
+"DMS Score" = "DMS_score"
 
 [[ sequences ]]
 type = "wild_type"
@@ -53,7 +61,7 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     for path in sequence_file, structure_file, msa_file, assay_file:
         path.touch()
     # Write header in the assay file
-    assay_file.write_text("sequence,target\n")
+    assay_file.write_text("sequence,DMS_score\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
