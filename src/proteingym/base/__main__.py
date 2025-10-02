@@ -117,7 +117,15 @@ def list_models(
         ),
     ],
 ):
-    """List available models with optional query filtering."""
+    """List available models with optional query filtering.
+
+    Note: This custom CLI is used instead of yq because:
+    - Parses Markdown files with model card frontmatter, not just YAML/JSON
+    - Provides sophisticated error handling with ValidationError logging
+    - Creates custom JSON output with both model data and file metadata
+    - Includes recursive file discovery for .md files
+    - Leverages Pydantic validation for type safety and schema compliance
+    """
 
     def find_models_with_paths(root_path: Path) -> list[dict]:
         """Find all model cards in the given directory."""
@@ -146,7 +154,7 @@ def list_models(
     models_with_paths = find_models_with_paths(root_path=path)
 
     output = json.dumps(models_with_paths, indent=2)
-    typer.echo(output)
+    typer.echo(output, nl=False)
 
 
 if __name__ == "__main__":
