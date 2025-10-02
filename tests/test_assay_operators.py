@@ -171,7 +171,8 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
     assert subset not in assay
 
 
-def test_assay_slice_all() -> None:
+@pytest.mark.parametrize("slc", [slice(None), [True, True]])
+def test_assay_slice_all(slc: slice | list[bool]) -> None:
     """Slicing an assay with [:] should return the same assay."""
     assay = Assay(
         name="Test assay",
@@ -179,10 +180,11 @@ def test_assay_slice_all() -> None:
         variables={"variable1": 1, "variable2": 2},
         sequence_alphabet=SequenceAlphabet.AA,
     )
-    assert assay == assay[:]
+    assert assay == assay[slc]
 
 
-def test_assay_slice_first() -> None:
+@pytest.mark.parametrize("slc", [slice(0, 1), [True, False]])
+def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
     """Slicing an assay with [:1] should return the first record."""
     assay = Assay(
         name="Test assay",
@@ -194,23 +196,11 @@ def test_assay_slice_first() -> None:
         records=[("SEQ1", 1.0)],
         sequence_alphabet=SequenceAlphabet.AA,
     )
-    assert first == assay[:1]
+    assert first == assay[slc]
 
 
-def test_assay_get_first() -> None:
-    """Getting an assay with [0] should return the first record."""
-    assay = Assay(
-        name="Test assay",
-        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
-        sequence_alphabet=SequenceAlphabet.AA,
-    )
-    with pytest.raises(
-        NotImplementedError, match="Getting a single record is not supported."
-    ):
-        assay[0]
-
-
-def test_assay_slice_last() -> None:
+@pytest.mark.parametrize("slc", [slice(1, 2), [False, True]])
+def test_assay_slice_last(slc: slice | list[bool]) -> None:
     """Slicing an assay with [1:] should return the last record."""
     assay = Assay(
         name="Test assay",
@@ -222,4 +212,17 @@ def test_assay_slice_last() -> None:
         records=[("SEQ2", 2.0)],
         sequence_alphabet=SequenceAlphabet.AA,
     )
-    assert last == assay[1:]
+    assert last == assay[slc]
+
+
+def test_assay_get_first_raises_not_implemented_error() -> None:
+    """Getting an assay with [0] should return the first record."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    with pytest.raises(
+        NotImplementedError, match="Getting a single record is not supported."
+    ):
+        assay[0]
