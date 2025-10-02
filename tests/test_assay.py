@@ -216,6 +216,80 @@ def test_as_manifest_section(tmp_path: Path) -> None:
     assert "2.0" in manifest.path.read_text()
 
 
+def test_assay_to_df() -> None:
+    """Test converting an Assay to a Polars DataFrame."""
+    assay = Assay(
+        name="assay",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 1.56, "DMS Score2": 0.5},
+            ),
+            (
+                Sequence(
+                    name="seq2", value="DEF", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 2.0, "DMS Score2": 0.6},
+            ),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    try:
+        df = assay.to_df()
+    except ValidationError as e:
+        raise AssertionError(f"Assay raised ValidationError: {e}") from e
+    else:
+        assert "sequence" in df.columns
+        assert "DMS Score" in df.columns
+        assert df.shape == (2, 3)
+        assert df["sequence"].to_list() == ["APC", "DEF"]
+        assert df["DMS Score"].to_list() == [1.56, 2.0]
+        assert df["DMS Score2"].to_list() == [0.5, 0.6]
+
+
+def test_assay_to_df_invalid_target_name() -> None:
+    """Test that Assay.to_df raises error for invalid target names."""
+    assay = Assay(
+        name="assay",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 1.56},
+            ),
+            (
+                Sequence(
+                    name="seq2", value="DEF", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 2.0},
+            ),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    with pytest.raises(
+        ValueError,
+        match=r"None of the given `target_names` are present in the assay `assay`.",
+    ):
+        assay.to_df(target_names=["Invalid Target"])
+
+
+def test_assay_to_df_no_records() -> None:
+    """Test that Assay.to_df returns empty DataFrame for assay with no records."""
+    assay = Assay(
+        name="empty_assay",
+        records=[],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    with pytest.raises(ValueError, match="The assay `empty_assay` has no records."):
+        assay.to_df()
+
+
 def test_assay_dump(tmp_path: Path) -> None:
     """Test dumping an Assay to a file."""
     assay = Assay(
@@ -332,6 +406,83 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
                 }
             ],
         )
+
+
+def test_dataset_to_df_no_assays() -> None:
+    """Test converting a dataset with no assays to a DataFrame."""
+    dataset = Dataset(name="test")
+    with pytest.raises(ValueError, match="No assays found in the dataset."):
+        dataset.to_df()
+
+
+def test_dataset_to_df() -> None:
+    """Test converting a dataset with assays to a DataFrame."""
+    assay1 = Assay(
+        name="assay1",
+        records=[
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                {"DMS Score": 1.0, "DMS Score2": 0.5},
+            ),
+            (
+                Sequence(
+                    name="seq2",
+                    value="DEF",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                {"DMS Score": 2.0, "DMS Score2": 0.6},
+            ),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    assay2 = Assay(
+        name="assay2",
+        records=[
+            (
+                Sequence(
+                    name="seq1",
+                    value="APC",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                {"DMS Score": 1.0, "DMS Score3": 0.7},
+            ),
+            (
+                Sequence(
+                    name="seq3",
+                    value="GHI",
+                    type="standard_sequence",
+                    alphabet=SequenceAlphabet.DNA,
+                ),
+                {"DMS Score": 3.0, "DMS Score3": 0.8},
+            ),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence2",
+    )
+    dataset = Dataset(
+        name="test_dataset",
+        assay_targets=[AssayTarget(name="DMS Score")],
+        assays=[assay1, assay2],
+    )
+
+    try:
+        df = dataset.to_df(target_names=["DMS Score"])
+    except ValueError as e:
+        pytest.fail(f"Failed to convert dataset to DataFrame: {e}")
+    else:
+        assert "sequence" in df.columns
+        assert "DMS Score" in df.columns
+        assert df.shape == (4, 2)
+        assert df["sequence"].to_list() == ["APC", "DEF", "APC", "GHI"]
+        assert df["DMS Score"].to_list() == [1.0, 2.0, 1.0, 3.0]
 
 
 def test_dataset_with_dump_assays(tmp_path: Path) -> None:

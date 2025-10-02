@@ -252,6 +252,39 @@ class Assay:
             path=path,
         )
 
+    def to_df(self, target_names: list[str] = None) -> pl.DataFrame:
+        """Returns the assay records as a Polars DataFrame.
+
+        Args:
+            target_names (list[str]): The list of target names to include.
+                If None, all target names are included. Defaults to None.
+
+        Returns:
+            pl.DataFrame: The DataFrame containing all records from the assay.
+        """
+        rows = []
+        if not self.records:
+            raise ValueError(f"The assay `{self.name}` has no records.")
+        if target_names:
+            target_names = set(target_names).intersection(self.target_feature_names)
+            if not target_names:
+                raise ValueError(
+                    f"None of the given `target_names` \
+                        are present in the assay `{self.name}`."
+                )
+        else:
+            target_names = self.target_feature_names
+
+        for record in self.records:
+            seq = record[0]
+            row = {"sequence": str(seq.value)}
+            tgts = record[1]
+            for target_name, target_value in tgts.items():
+                if target_name in target_names:
+                    row[target_name] = target_value
+            rows.append(row)
+        return pl.DataFrame(rows)
+
     def dump(
         self, *, path: Path | None = None, format: AssayFormat = AssayFormat.CSV
     ) -> Path:
@@ -273,16 +306,7 @@ class Assay:
         if path.is_dir():
             path = path / f"{self.name}{format.value}"
 
-        rows = []
-        for record in self.records:
-            seq = record[0]
-            row = {self.sequence_feature_name: str(seq.value)}
-            tgts = record[1]
-            for target_name, target_value in tgts.items():
-                row[target_name] = target_value
-            rows.append(row)
-
-        df = pl.DataFrame(rows)
+        df = self.to_df()
 
         match format:
             case AssayFormat.CSV:

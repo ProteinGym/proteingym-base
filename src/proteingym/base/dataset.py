@@ -4,6 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
+import polars as pl
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -315,3 +316,40 @@ class Dataset(BaseModel):
                 path, temporary_directory=Path(temp_dir)
             )
         return archive_path
+
+    def to_df(
+        self, target_names: list[str] = None, drop_all_missing: bool = False
+    ) -> pl.DataFrame:
+        """Returns the dataset assay records as a Polars DataFrame.
+
+        Args:
+            target_names (list[str]): The list of target names to include.
+                If None, all target names are included. Defaults to None.
+            drop_all_missing (bool): If True, drop all rows with missing values.
+                Defaults to False.
+        Returns:
+            pl.DataFrame: The DataFrame containing all records from all assays.
+        """
+
+        if target_names:
+            assert all(
+                target_name in [t.name for t in self.assay_targets]
+                for target_name in target_names
+            ), "Target names must be valid assay target names."
+        else:
+            target_names = [t.name for t in self.assay_targets]
+
+        if not self.assays:
+            raise ValueError("No assays found in the dataset.")
+
+        try:
+            assays_dfs = [
+                assay.to_df(target_names=target_names) for assay in self.assays
+            ]
+        except ValueError as e:
+            raise ValueError(f"Error in converting assays to DataFrame: {e}") from e
+
+        df = pl.concat(assays_dfs, how="diagonal")
+        if drop_all_missing:
+            df = df.drop_nulls(how="all")
+        return df
