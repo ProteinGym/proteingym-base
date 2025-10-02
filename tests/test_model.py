@@ -191,9 +191,6 @@ This model card is missing the required 'name' field
     output_data = json.loads(result.stdout)
     assert isinstance(output_data, list)
     assert len(output_data) == 0
-
-    print(result.stderr)
-
     assert f"Skipping {invalid_card}" in result.stderr
 
 
