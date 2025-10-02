@@ -8,11 +8,11 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from pg2_dataset.assay import Assay
-from pg2_dataset.dataset import Dataset, DatasetSlice
-from pg2_dataset.msa import MSA
-from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
-from pg2_dataset.structure import Structure
+from proteingym.base.assay import Assay
+from proteingym.base.dataset import Dataset, DatasetSlice
+from proteingym.base.msa import MSA
+from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
+from proteingym.base.structure import Structure
 
 
 @pytest.fixture
