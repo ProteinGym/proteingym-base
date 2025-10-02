@@ -290,18 +290,20 @@ def test_dataset_slice_all_empty_dataset(empty_dataset: Dataset) -> None:
     assert empty_dataset == empty_dataset[DatasetSlice(assays=[])]
 
 
+@pytest.mark.parametrize("slc", [slice(None), [True]])
 def test_dataset_slice_all_dataset_with_single_assay(
+    slc: slice | list[bool],
     dataset_with_assay: Dataset,
 ) -> None:
     """Slicing a dataset with [:] should return the same dataset."""
-    assert dataset_with_assay == dataset_with_assay[DatasetSlice(assays=[slice(None)])]
+    assert dataset_with_assay == dataset_with_assay[DatasetSlice(assays=[slc])]
 
 
+@pytest.mark.parametrize("slc", [slice(None), [True]])
 def test_dataset_slice_all_dataset_with_multiple_assays(
+    slc: slice | list[bool],
     dataset_with_assays: Dataset,
 ) -> None:
     """Slicing a dataset with [:] should return the same dataset."""
-    assert (
-        dataset_with_assays
-        == dataset_with_assays[DatasetSlice(assays=[slice(None), slice(None)])]
-    )
+    dataset_slice = DatasetSlice(assays=[slc] * len(dataset_with_assays.assays))
+    assert dataset_with_assays == dataset_with_assays[dataset_slice]

@@ -46,7 +46,7 @@ class DatasetSlice:
     a subset of assays.
     """
 
-    assays: list[slice] = Field(default_factory=list)
+    assays: list[list[int], slice] = Field(default_factory=list)
     """The list of assay slices."""
 
 
