@@ -155,20 +155,20 @@ def bio_structure() -> BioStructure:
 @pytest.fixture
 def pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     """PDB structure file for testing."""
-    io = PDBIO()
-    io.set_structure(bio_structure)
+    io_ = PDBIO()
+    io_.set_structure(bio_structure)
     path = tmp_path / "structure.pdb"
-    io.save(path.as_posix())
+    io_.save(path.as_posix())
     return path
 
 
 @pytest.fixture
 def cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     """CIF structure file for testing."""
-    io = MMCIFIO()
-    io.set_structure(bio_structure)
+    io_ = MMCIFIO()
+    io_.set_structure(bio_structure)
     path = tmp_path / "structure.cif"
-    io.save(path.as_posix())
+    io_.save(path.as_posix())
     return path
 
 
@@ -277,13 +277,13 @@ def test_dataset_dump_with_structure(
 
     path = dataset.dump(path=tmp_path)
 
-    zip = ZipFile(path)
-    assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "structures/test.pdb" in zip.namelist(), (
+    zip_ = ZipFile(path)
+    assert not zip_.testzip(), "Dataset dump contains a bad file."
+    assert "structures/test.pdb" in zip_.namelist(), (
         "Structure file not found in dataset dump."
     )
 
-    with zip.open("structures/test.pdb", "r") as structure_file:
+    with zip_.open("structures/test.pdb", "r") as structure_file:
         string_io = io.StringIO(structure_file.read().decode("utf-8"))
         loaded_structure = PDBParser().get_structure("test", string_io)
         assert bio_structure == loaded_structure
