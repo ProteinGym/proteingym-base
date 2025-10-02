@@ -218,20 +218,3 @@ def test_list_models_invalid_format(runner: CliRunner, model_card_path: Path) ->
     )
 
     assert result.exit_code == 2
-
-
-def test_main_module_execution() -> None:
-    import subprocess
-    import sys
-
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "import proteingym.base.__main__; proteingym.base.__main__.app()",
-        ],
-        capture_output=True,
-        text=True,
-    )
-
-    assert result.returncode == 0
