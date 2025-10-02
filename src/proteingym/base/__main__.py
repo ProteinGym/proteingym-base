@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import Annotated
 
+import click
 import typer
 
 from .__about__ import __version__
@@ -105,21 +106,14 @@ def build(
 
 @app.command("generate-data")
 def generate_data(
-    data_file: Annotated[
-        Path,
-        typer.Argument(
-            exists=False,
-            help="Dummy dataset file",
-        ),
-    ],
     feature1: Annotated[
         str,
         typer.Argument(help="Name of the first dummy feature"),
-    ],
+    ] = "foo",
     feature2: Annotated[
         str,
         typer.Argument(help="Name of the second dummy feature"),
-    ],
+    ] = "bar",
     *,
     n_rows: Annotated[
         int, typer.Option(help="Number of rows to generate in a data frame")
@@ -127,14 +121,40 @@ def generate_data(
     sequence_length: Annotated[
         int, typer.Option(help="Length of sequence for the sequence column")
     ] = 100,
+    format: Annotated[
+        str,
+        typer.Option(
+            help="Output format",
+            click_type=click.Choice(choices=["csv"], case_sensitive=False),
+        ),
+    ] = "csv",
 ) -> None:
+    """Generate dummy data with charge ladder and two dummy features.
+
+    Creates a charge ladder dataset with protein sequences and adds two dummy
+    features to the target charge column. The output is formatted as CSV.
+    Users can update feature names, but it is currently limited to only two features.
+
+    Args:
+        feature1: Name of the first dummy feature. Defaults to "foo".
+        feature2: Name of the second dummy feature. Defaults to "bar".
+        n_rows: Number of rows to generate in the data frame. Defaults to 500.
+        sequence_length: Length of sequence for the sequence column. Defaults to 100.
+        format: Output format. Currently only supports "csv". Defaults to "csv".
+
+    Outputs:
+        Prints the generated CSV data to stdout.
+    """
     ladder = charge_ladder_dataset(n_rows, sequence_length)
 
-    ladder.pipe(
+    output = ladder.pipe(
         adjust_target_with_two_dummy_features,
         target="charge",
         feature_names=[feature1, feature2],
-    ).write_csv(data_file)
+    )
+
+    if format.lower() == "csv":
+        typer.echo(output.write_csv())
 
 
 if __name__ == "__main__":
