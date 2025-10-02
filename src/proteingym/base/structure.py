@@ -89,6 +89,30 @@ class Structure:
     metadata: dict[str, str] = dataclasses.field(default_factory=dict)
     """Additional metadata for the protein structure."""
 
+    def __repr__(self) -> str:
+        """Return a string representation of the Structure object."""
+        lines = [f"Structure(\n\tname='{self.name}',"]
+        if self.description:
+            desc = (
+                self.description[:60] + "..."
+                if len(self.description) > 60
+                else self.description
+            )
+            lines.append(f"\tdescription: {desc},")
+        else:
+            lines.append("\tdescription: None,")
+        lines.append(f"\tvalue: Type[{type(self.value).__name__}],")
+        if self.metadata:
+            lines.append("\tmetadata:")
+            for key, value in self.metadata.items():
+                if len(value) > 60:
+                    value = value[:60] + "..."
+                lines.append(f"\t\t{key}: {value},")
+        else:
+            lines.append("\tmetadata: 0,")
+        lines.append(")")
+        return "\n".join(lines)
+
     @classmethod
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
         """Create a Structure instance from a manifest section.

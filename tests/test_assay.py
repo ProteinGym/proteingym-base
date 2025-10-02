@@ -511,3 +511,95 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
+
+
+def test_assay_repr() -> None:
+    """Test the string representation of the Assay class."""
+    assay = Assay(
+        name="test assay",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                1.56,
+            ),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+        target_feature_name="target",
+    )
+    repr_str = repr(assay)
+    assert "Assay(\n\tname='test assay'," in repr_str
+    assert "description: None," in repr_str
+    assert "sequence_alphabet: AA" in repr_str
+    assert "variables: 0," in repr_str
+    assert "records:" in repr_str
+
+    assay = Assay(
+        name="short desc",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                2.0,
+            ),
+        ],
+        sequence_alphabet="AA",
+        description="Short description.",
+    )
+    repr_str = repr(assay)
+    assert "\tdescription: Short description." in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    assay = Assay(
+        name="long desc",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                3.0,
+            ),
+        ],
+        sequence_alphabet="AA",
+        description=long_desc,
+    )
+    repr_str = repr(assay)
+    assert f"\tdescription: {long_desc[:60]}..." in repr_str
+
+    assay = Assay(
+        name="with vars",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                4.0,
+            ),
+        ],
+        sequence_alphabet="AA",
+        variables={"var1": 42, "var2": "x"},
+    )
+    repr_str = repr(assay)
+    assert "variables: 2," in repr_str
+    assert "\t\tvar1: 42," in repr_str
+    assert "\t\tvar2: x," in repr_str
+
+    records = [
+        (
+            Sequence(
+                name=f"seq{i}", value=f"SEQ{i}", type="standard_sequence", alphabet="AA"
+            ),
+            i,
+        )
+        for i in range(5)
+    ]
+    assay = Assay(
+        name="trunc records",
+        records=records,
+        sequence_alphabet="AA",
+    )
+    repr_str = repr(assay)
+    assert "\t\t..." in repr_str
