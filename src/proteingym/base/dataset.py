@@ -219,6 +219,7 @@ class Dataset(BaseModel):
             version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
+            assay_targets=self.assay_targets,
             assay_variables=self.assay_variables,
             assays=[
                 a.as_manifest_section(path=path)

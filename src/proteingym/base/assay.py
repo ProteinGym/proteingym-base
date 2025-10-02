@@ -148,7 +148,7 @@ class Assay:
     name: str
     """The name of the assay."""
 
-    records: list[tuple[Sequence, *tuple[AssayTarget, ...]]]
+    records: list[tuple[Sequence, dict[str, int | float | bool | str]]]
     """The records of the assay, pairs of Sequence and multiple targets."""
 
     sequence_alphabet: SequenceAlphabet
@@ -169,7 +169,7 @@ class Assay:
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
         # get the target names from first record as all records have same targets
-        return [target.name for target in self.records[0][1]]
+        return list(self.records[0][1].keys())
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -210,16 +210,13 @@ class Assay:
             .alias("sequence_object")
         )
         df = df.with_columns(
-            # Targets are created from the target feature columns present in the file
+            # Create a dict of target_name: target_value for each record
             pl.struct(list(section.targets.values()))
             .map_elements(
-                lambda tgt: [
-                    AssayTarget(
-                        name=target_name,
-                        value=tgt[target_feature_name],
-                    )
+                lambda tgt: {
+                    target_name: tgt[target_feature_name]
                     for target_name, target_feature_name in section.targets.items()
-                ],
+                },
                 return_dtype=pl.Object,
             )
             .alias("target_objects")
@@ -281,8 +278,8 @@ class Assay:
             seq = record[0]
             row = {self.sequence_feature_name: str(seq.value)}
             tgts = record[1]
-            for target in tgts:
-                row[target.name] = target.value
+            for target_name, target_value in tgts.items():
+                row[target_name] = target_value
             rows.append(row)
 
         df = pl.DataFrame(rows)
