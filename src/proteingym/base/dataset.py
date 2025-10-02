@@ -1,5 +1,6 @@
 import collections
 import itertools
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
@@ -8,7 +9,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    field_serializer,
     model_validator,
 )
 
@@ -119,58 +119,14 @@ class Dataset(BaseModel):
             raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
         return self
 
-    @field_serializer("sequences")
-    def serialize_sequences(self, sequences: list[Sequence]) -> list[dict]:
-        """Serialize sequences with Bio.Seq.Seq objects to JSON-compatible format."""
-        return [
-            {
-                "name": seq.name,
-                "type": seq.type.value if seq.type else None,
-                "alphabet": seq.alphabet.value,
-                "description": seq.description,
-            }
-            for seq in sequences
-        ]
-
-    @field_serializer("assays")
-    def serialize_assays(self, assays: list[Assay]) -> list[dict]:
-        """Serialize assays with Bio.Seq.Seq objects to JSON-compatible format."""
-        return [
-            {
-                "name": assay.name,
-                "sequence_alphabet": assay.sequence_alphabet,
-                "variables": assay.variables,
-                "description": assay.description,
-                "sequence_feature_name": assay.sequence_feature_name,
-                "target_feature_name": assay.target_feature_name,
-            }
-            for assay in assays
-        ]
-
-    @field_serializer("structures")
-    def serialize_structures(self, structures: list[Structure]) -> list[dict]:
-        """Serialize structures with Bio.PDB.Structure objects
-        to JSON-compatible format."""
-        return [
-            {
-                "name": structure.name,
-                "description": structure.description,
-                "metadata": structure.metadata,
-            }
-            for structure in structures
-        ]
-
-    @field_serializer("msas")
-    def serialize_msas(self, msas: list[MSA]) -> list[dict]:
-        """Serialize MSAs with Bio.Align.MultipleSeqAlignment objects
-        to JSON-compatible format."""
-        return [
-            {
-                "name": msa.name,
-                "description": msa.description,
-            }
-            for msa in msas
-        ]
+    def model_dump_json(self, **kwargs) -> str:
+        """Override to ensure JSON serialization works with Bio objects."""
+        data = self.model_dump(**kwargs)
+        # `default=str`
+        # converts any non-serializable objects to their string representation.
+        # `ensure_ascii=False`
+        # ensures strings can contain non-ASCII characters, otherwise escaped.
+        return json.dumps(data, default=str, ensure_ascii=False)
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":

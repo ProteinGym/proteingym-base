@@ -125,9 +125,11 @@ def list_datasets(
 
         for model_path in paths:
             dataset = Dataset.from_path(model_path)
+            dataset_data = json.loads(dataset.model_dump_json())
+
             dataset_entry = {
-                **dataset.model_dump(),
-                "path": model_path.resolve().as_posix(),
+                **dataset_data,
+                "input_filename": model_path.resolve().as_posix(),
             }
 
             datasets_with_paths.append(dataset_entry)
