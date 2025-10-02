@@ -82,6 +82,27 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
+    def __repr__(self) -> str:
+        """Return a concise string representation of the dataset."""
+        lines = [f"Dataset(\n\tname='{self.name}',"]
+        if self.description:
+            desc = (
+                self.description[:60] + "..."
+                if len(self.description) > 60
+                else self.description
+            )
+            lines.append(f"\tdescription: {desc},")
+        else:
+            lines.append("\tdescription: None,")
+        lines.append("\tcontents:")
+        lines.append(f"\t\tassays: {len(self.assays)},")
+        lines.append(f"\t\tsequences: {len(self.sequences)},")
+        lines.append(f"\t\tstructures: {len(self.structures)},")
+        lines.append(f"\t\tmsas: {len(self.msas)},")
+        lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
+        lines.append(")")
+        return "\n".join(lines)
+
     @model_validator(mode="after")
     def _validate_unique_names(self) -> "Dataset":
         """Ensure that the names are unique within each data type.

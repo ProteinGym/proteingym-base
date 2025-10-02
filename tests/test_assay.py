@@ -38,7 +38,8 @@ def test_assay_variable_minimal() -> None:
         variable = AssayVariable(name="test")
     except ValidationError as e:
         AssertionError(f"AssayVariable raised ValidationError: {e}")
-    assert variable.name == "test"
+    else:
+        assert variable.name == "test"
 
 
 def test_assay_variable_invalid_inputs() -> None:
@@ -154,10 +155,11 @@ def test_assay() -> None:
         )
     except ValidationError as e:
         AssertionError(f"Assay raised ValidationError: {e}")
-    assert assay.sequence_feature_name == "sequence"
-    assert all(
-        target_name in ["DMS Score"] for target_name in assay.target_feature_names
-    )
+    else:
+        assert assay.sequence_feature_name == "sequence"
+        assert all(
+            target_name in ["DMS Score"] for target_name in assay.target_feature_names
+        )
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:
@@ -175,11 +177,12 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
         )
     except ValidationError as e:
         AssertionError(f"Assay raised ValidationError: {e}")
-    assert assay.name == "assay"
-    assert len(assay.records) == 2
-    for rec in assay.records:
-        assert isinstance(rec[0], Sequence)
-        assert all(t in ["DMS Score", "DMS Score2"] for t in list(rec[1].keys()))
+    else:
+        assert assay.name == "assay"
+        assert len(assay.records) == 2
+        for rec in assay.records:
+            assert isinstance(rec[0], Sequence)
+            assert all(t in ["DMS Score", "DMS Score2"] for t in list(rec[1].keys()))
 
 
 def test_as_manifest_section(tmp_path: Path) -> None:
@@ -329,13 +332,13 @@ def test_manifest_with_valid_assay_variables(assay_file: Path) -> None:
             assays=[
                 {
                     "path": assay_file,
-                    "sequence_type": SequenceAlphabet.DNA,
+                    "sequence_alphabet": "DNA",
                     "variables": {"pH": 7.0, "temperature": 37.0},
                 }
             ],
         )
     except ValidationError as e:
-        AssertionError(f"Manifest raised ValidationError: {e}")
+        raise AssertionError(f"Manifest raised ValidationError: {e}") from e
     else:
         assert manifest.assay_variables, "Valid assay variables should be present"
 
@@ -662,3 +665,94 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
+
+
+def test_assay_repr() -> None:
+    """Test the string representation of the Assay class."""
+    assay = Assay(
+        name="test assay",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 1.0},
+            ),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    repr_str = repr(assay)
+    assert "Assay(\n\tname='test assay'," in repr_str
+    assert "description: None," in repr_str
+    assert "sequence_alphabet: AA" in repr_str
+    assert "variables: 0," in repr_str
+    assert "records:" in repr_str
+
+    assay = Assay(
+        name="short desc",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 2.0},
+            ),
+        ],
+        sequence_alphabet="AA",
+        description="Short description.",
+    )
+    repr_str = repr(assay)
+    assert "\tdescription: Short description." in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    assay = Assay(
+        name="long desc",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 3.0},
+            ),
+        ],
+        sequence_alphabet="AA",
+        description=long_desc,
+    )
+    repr_str = repr(assay)
+    assert f"\tdescription: {long_desc[:60]}..." in repr_str
+
+    assay = Assay(
+        name="with vars",
+        records=[
+            (
+                Sequence(
+                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                ),
+                {"DMS Score": 4.0},
+            ),
+        ],
+        sequence_alphabet="AA",
+        variables={"var1": 42, "var2": "x"},
+    )
+    repr_str = repr(assay)
+    assert "variables: 2," in repr_str
+    assert "\t\tvar1: 42," in repr_str
+    assert "\t\tvar2: x," in repr_str
+
+    records = [
+        (
+            Sequence(
+                name=f"seq{i}", value=f"SEQ{i}", type="standard_sequence", alphabet="AA"
+            ),
+            {"DMS Score": i},
+        )
+        for i in range(5)
+    ]
+    assay = Assay(
+        name="trunc records",
+        records=records,
+        sequence_alphabet="AA",
+    )
+    repr_str = repr(assay)
+    assert "\t\t..." in repr_str

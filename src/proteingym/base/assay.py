@@ -184,6 +184,40 @@ class Assay:
             for k, v in item.variables.items()
         )
 
+    def __repr__(self) -> str:
+        """Return a string representation of the Assay object."""
+        lines = [f"Assay(\n\tname='{self.name}',"]
+        if self.description:
+            desc = (
+                self.description[:60] + "..."
+                if len(self.description) > 60
+                else self.description
+            )
+            lines.append(f"\tdescription: {desc},")
+        else:
+            lines.append("\tdescription: None,")
+
+        lines.append(f"\tsequence_alphabet: {self.sequence_alphabet},")
+
+        if self.variables:
+            lines.append(f"\tvariables: {len(self.variables)},")
+            for k, v in self.variables.items():
+                lines.append(f"\t\t{k}: {v},")
+        else:
+            lines.append("\tvariables: 0,")
+
+        lines.append("\trecords:")
+        for i, (seq, target) in enumerate(self.records[:3]):
+            seq_str = str(seq.value)
+            if len(seq_str) > 30:
+                seq_str = seq_str[:30] + "..."
+            lines.append(f"\t\t{seq_str}, {target},")
+            if i == 2 and len(self.records) > 3:
+                lines.append("\t\t...")
+                break
+        lines.append(")")
+        return "\n".join(lines)
+
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""

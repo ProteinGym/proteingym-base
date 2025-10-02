@@ -335,3 +335,53 @@ def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
     assert all(isinstance(seq, Sequence) for seq in dataset.sequences)
     assert dataset.sequences[0].name == "seq1"
     assert dataset.sequences[1].name == "seq2"
+
+
+def test_sequence_repr() -> None:
+    """Test the string representation of the Sequence class."""
+    sequence = Sequence(
+        name="Test_Sequence",
+        value=Seq("ATCGATCGATCG"),
+        description="This is a test sequence",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+    repr_str = repr(sequence)
+    assert "Sequence(\n\tname='Test_Sequence'," in repr_str
+    assert "description: This is a test sequence" in repr_str
+    assert "type: wild_type" in repr_str
+    assert "alphabet: DNA" in repr_str
+    assert "value: ATCGATCGATCG" in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    sequence = Sequence(
+        name="long_seq",
+        value=Seq("ATCG"),
+        description=long_desc,
+        type=SequenceType.ENGINEERED_SEQUENCE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    repr_str = repr(sequence)
+    assert f"description: {long_desc[:60]}..." in repr_str
+
+    sequence = Sequence(
+        name="no_seq",
+        value=Seq("ATCG"),
+        description=None,
+        type=SequenceType.CONTROL,
+        alphabet=SequenceAlphabet.RNA,
+    )
+    repr_str = repr(sequence)
+    assert "description: None," in repr_str
+
+    long_value = "A" * 65
+    sequence = Sequence(
+        name="trunc_seq",
+        value=Seq(long_value),
+        description="desc",
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    repr_str = repr(sequence)
+    assert f"value: {long_value[:60]}..." in repr_str
