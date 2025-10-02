@@ -4,7 +4,11 @@ Module for testing sequence operators.
 
 from Bio.Seq import Seq
 
-from pg2_dataset.sequence import Sequence, SequenceAlphabet, SequenceType
+from pg2_dataset.sequence import (
+    Sequence,
+    SequenceAlphabet,
+    SequenceType,
+)
 
 
 def test_sequence_not_equals_integer() -> None:
