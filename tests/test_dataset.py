@@ -1,7 +1,7 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from pg2_dataset.dataset import Dataset
+from proteingym.base.dataset import Dataset
 
 
 def test_dataset_dump_extension(tmp_path: Path) -> None:

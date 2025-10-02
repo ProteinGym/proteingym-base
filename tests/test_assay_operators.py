@@ -2,7 +2,7 @@
 Module for testing assay operators.
 """
 
-from pg2_dataset.assay import Assay, SequenceAlphabet
+from proteingym.base.assay import Assay, SequenceAlphabet
 
 
 def test_assay_not_equal_to_integer() -> None:

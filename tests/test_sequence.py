@@ -9,9 +9,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
-from pg2_dataset.dataset import Dataset
-from pg2_dataset.manifest import MANIFEST_LATEST_VERSION, Manifest
-from pg2_dataset.sequence import (
+from proteingym.base import Dataset
+from proteingym.base.manifest import MANIFEST_LATEST_VERSION, Manifest
+from proteingym.base.sequence import (
     Sequence,
     SequenceAlphabet,
     SequenceFormat,
