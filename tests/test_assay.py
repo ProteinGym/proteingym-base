@@ -525,12 +525,11 @@ def test_assay_repr() -> None:
                 Sequence(
                     name="seq1", value="APC", type="standard_sequence", alphabet="AA"
                 ),
-                1.56,
+                {"DMS Score": 1.0},
             ),
         ],
         sequence_alphabet="AA",
         sequence_feature_name="sequence",
-        target_feature_name="target",
     )
     repr_str = repr(assay)
     assert "Assay(\n\tname='test assay'," in repr_str
@@ -546,7 +545,7 @@ def test_assay_repr() -> None:
                 Sequence(
                     name="seq1", value="APC", type="standard_sequence", alphabet="AA"
                 ),
-                2.0,
+                {"DMS Score": 2.0},
             ),
         ],
         sequence_alphabet="AA",
@@ -563,7 +562,7 @@ def test_assay_repr() -> None:
                 Sequence(
                     name="seq1", value="APC", type="standard_sequence", alphabet="AA"
                 ),
-                3.0,
+                {"DMS Score": 3.0},
             ),
         ],
         sequence_alphabet="AA",
@@ -579,7 +578,7 @@ def test_assay_repr() -> None:
                 Sequence(
                     name="seq1", value="APC", type="standard_sequence", alphabet="AA"
                 ),
-                4.0,
+                {"DMS Score": 4.0},
             ),
         ],
         sequence_alphabet="AA",
@@ -595,7 +594,7 @@ def test_assay_repr() -> None:
             Sequence(
                 name=f"seq{i}", value=f"SEQ{i}", type="standard_sequence", alphabet="AA"
             ),
-            i,
+            {"DMS Score": i},
         )
         for i in range(5)
     ]
