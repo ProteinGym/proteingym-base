@@ -11,6 +11,9 @@ from .dataset import Dataset
 from .manifest import Manifest
 from .model import ModelCard
 
+logger = logging.getLogger("proteingym.base")
+
+
 app = typer.Typer(
     name="proteingym-base",
     help="CLI for handling ProteinGym resources",
@@ -115,8 +118,6 @@ def list_models(
     ],
 ):
     """List available models with optional query filtering."""
-    logger = logging.getLogger("proteingym.base")
-    logger.setLevel(logging.INFO)
 
     def find_models_with_paths(root_path: Path) -> list[dict]:
         """Find all model cards in the given directory."""
@@ -130,14 +131,15 @@ def list_models(
         for model_path in paths:
             try:
                 model = ModelCard.from_path(model_path)
+            except ValidationError as e:
+                logger.error(f"Skipping {model_path}", exc_info=e)
+            else:
                 model_entry = {
                     **model.model_dump(),
-                    "path": model_path.resolve().as_posix(),
+                    "input_filename": model_path.resolve().as_posix(),
                 }
 
                 models_with_paths.append(model_entry)
-            except ValidationError as e:
-                logger.debug(f"Skipping {model_path}", exc_info=e)
 
         return models_with_paths
 

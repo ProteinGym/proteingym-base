@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -79,7 +78,7 @@ def test_list_models_command(runner: CliRunner, model_card_path: Path) -> None:
 
     model_data = output_data[0]
     assert model_data["name"] == "dummy"
-    assert "path" in model_data
+    assert "input_filename" in model_data
     assert model_data["hyper_params"]["nogpu"] is False
 
 
@@ -171,7 +170,7 @@ This is a valid model card
 
 
 def test_list_models_validation_error(runner: CliRunner, tmp_path: Path) -> None:
-    """Test list-models logs debug message when skipping invalid model card."""
+    """Test list-models logs error message when skipping invalid model card."""
     invalid_card = tmp_path / "invalid.md"
     invalid_card.write_text(
         """
@@ -186,20 +185,16 @@ This model card is missing the required 'name' field
         encoding="utf-8",
     )
 
-    with patch("proteingym.base.__main__.logging.getLogger") as mock_get_logger:
-        mock_logger = mock_get_logger.return_value
-        mock_logger.setLevel.return_value = None
+    result = runner.invoke(app, ["-vv", "list-models", str(invalid_card)])
 
-        result = runner.invoke(app, ["list-models", str(invalid_card)])
+    assert result.exit_code == 0
+    output_data = json.loads(result.stdout)
+    assert isinstance(output_data, list)
+    assert len(output_data) == 0
 
-        assert result.exit_code == 0
-        output_data = json.loads(result.stdout)
-        assert isinstance(output_data, list)
-        assert len(output_data) == 0
+    print(result.stderr)
 
-        mock_logger.debug.assert_called_once()
-        debug_call_args = mock_logger.debug.call_args
-        assert f"Skipping {invalid_card}" in str(debug_call_args[0][0])
+    assert f"Skipping {invalid_card}" in result.stderr
 
 
 def test_list_models_nonexistent_path(runner: CliRunner, tmp_path: Path) -> None:
