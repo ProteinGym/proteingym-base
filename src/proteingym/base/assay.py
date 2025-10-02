@@ -269,8 +269,8 @@ class Assay:
             target_names = set(target_names).intersection(self.target_feature_names)
             if not target_names:
                 raise ValueError(
-                    f"None of the given `target_names` \
-                        are present in the assay `{self.name}`."
+                    f"None of the given `target_names` "
+                    f"are present in the assay `{self.name}`."
                 )
         else:
             target_names = self.target_feature_names
