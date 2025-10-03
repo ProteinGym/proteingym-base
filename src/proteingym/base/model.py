@@ -6,7 +6,13 @@ from typing import Any, Generator, Self
 
 import frontmatter
 import toml
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    model_validator,
+)
 
 
 class ModelCard(BaseModel):

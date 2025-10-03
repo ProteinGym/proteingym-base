@@ -249,19 +249,17 @@ def test_model_project_from_path_nonexistent():
         ModelProject.from_path(Path("nonexistent_project"))
 
 
-def test_model_project_empty_entry_points(tmp_path: Path, mock_empty_entry_points):
-    """Test with empty entry points."""
-    project_dir = tmp_path / "test_project"
-    project_dir.mkdir()
-
-    pyproject_content = """[project]
-name = "test_model"
-version = "1.0.0"
-"""
-    (project_dir / "pyproject.toml").write_text(pyproject_content)
-
+@pytest.mark.parametrize(
+    "model_project",
+    [
+        ("valid_model_card_content", "valid_pyproject_content", "test_model"),
+    ],
+    indirect=True,
+)
+def test_model_project_empty_entry_points(
+    model_project: Path,
+    mock_empty_entry_points,
+):
     with mock_empty_entry_points:
-        with pytest.raises(
-            ValidationError, match=r".*No entry points found for test_model.*"
-        ):
-            _ = ModelProject.from_path(project_dir)
+        with pytest.raises(ValueError, match=r".*No entry points found.*"):
+            _ = ModelProject.from_path(model_project)
