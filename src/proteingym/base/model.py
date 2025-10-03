@@ -6,7 +6,7 @@ from typing import Any, Generator, Self
 
 import frontmatter
 import toml
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
 class ModelCard(BaseModel):
@@ -46,6 +46,13 @@ class EntryPoint:
     """List of parameter names that the entry point accepts."""
 
 
+class ProjectSection(BaseModel):
+    """Represents the project section of a pyproject.toml file."""
+
+    name: str = Field(min_length=1)
+    """The name of the project as defined in pyproject.toml."""
+
+
 class ModelProject(BaseModel):
     """A model project containing configuration and entry points.
 
@@ -55,68 +62,38 @@ class ModelProject(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
+        extra="ignore",
         frozen=True,
     )
 
-    project_path: Path
-    """The root path to the model project directory
-    containing pyproject.toml and model configuration.
-    """
+    project: ProjectSection
+    """The project configuration section containing metadata from pyproject.toml."""
 
     @computed_field
     @property
-    def pyproject_path(self) -> Path:
-        """Default path to the pyproject.toml file relative to the project path."""
-        return self.project_path / "pyproject.toml"
+    def entry_points(self) -> list[EntryPoint]:
+        """Discover entry points for the project based on project_name."""
 
-    @computed_field
-    @property
-    def model_card_path(self) -> Path:
-        """Default path to the model card file relative to the project path."""
-        return self.project_path / "README.md"
+        console_scripts = [
+            ep
+            for ep in metadata.entry_points()
+            if ep.dist.name == self.project.name and ep.group == "console_scripts"
+        ]
 
-    @computed_field
-    @property
-    def project_name(self) -> str:
-        """Project name extracted from pyproject.toml with validation."""
-        project_data = toml.load(self.pyproject_path)
+        entry_points = []
+        entry_points.extend(self._filter_entry_points(*console_scripts))
 
-        # Check if file contains a project header
-        if "project" not in project_data:
-            raise ValueError(
-                f"File does not contain a project header: {self.pyproject_path}"
-            )
+        return entry_points
 
-        # Check if the project header contains a name
-        project_section = project_data["project"]
-        if not isinstance(project_section, dict):
-            raise ValueError(
-                f"Project header is not a valid dictionary: {self.pyproject_path}"
-            )
-
-        if "name" not in project_section:
-            raise ValueError(
-                f"The project header does not contain a name: {self.pyproject_path}"
-            )
-
-        project_name = project_section["name"]
-        if not isinstance(project_name, str) or not project_name.strip():
-            raise ValueError(
-                f"Project name is not a valid non-empty string: {self.pyproject_path}"
-            )
-
-        return project_name
-
-    def _filter_typer_entry_points(
+    def _filter_entry_points(
         self, *entry_points: metadata.EntryPoint
     ) -> Generator[EntryPoint, None, None]:
-        """Filter and extract typer entry points from metadata entry points."""
+        """Filter and extract entry points from metadata entry points."""
         for ep in entry_points:
             app = ep.load()
-            is_typer_entry_point = hasattr(app, "registered_commands")
+            is_entry_point = hasattr(app, "registered_commands")
 
-            if not is_typer_entry_point:
+            if not is_entry_point:
                 continue
 
             for command in app.registered_commands:
@@ -127,45 +104,33 @@ class ModelProject(BaseModel):
                 )
                 yield entry_point
 
-    @computed_field
-    @property
-    def entry_points(self) -> list[EntryPoint]:
-        """Discover entry points for the project based on project_name."""
-
-        # Filter by package name and group
-        console_scripts = [
-            ep
-            for ep in metadata.entry_points()
-            if ep.dist.name == self.project_name and ep.group == "console_scripts"
-        ]
-
-        entry_points = []
-        entry_points.extend(self._filter_typer_entry_points(*console_scripts))
-
-        return entry_points
+    @model_validator(mode="after")
+    def _validate_entry_points_exist(self) -> "ModelProject":
+        if len(self.entry_points) == 0:
+            raise ValueError(f"No entry points found for {self.project.name}")
+        return self
 
     @classmethod
-    def from_path(cls, project_path: Path) -> "ModelProject":
+    def from_path(cls, path: Path) -> "ModelProject":
         """Create a ModelProject from a project directory path.
 
-        Validates the pyproject.toml file in the project directory and
-        discovers available entry points via computed fields.
+        Loads and validates the pyproject.toml file from the specified directory,
+        then automatically discovers console script entry points for the project.
 
         Args:
-            project_path: The root path to the model project directory
+            path: The root path to the model project directory
 
         Returns:
-            ModelProject: The model project with validated configuration
-                and entry points
+            ModelProject: The validated model project with discovered entry points
 
         Raises:
-            ValueError: If the project path or pyproject.toml validation fails
+            ValueError: If pyproject.toml is missing, invalid, or no entry points found
         """
-        if not project_path.exists():
-            raise ValueError(f"Project path does not exist: {project_path}")
+        pyproject_path = path / "pyproject.toml"
 
-        if not project_path.is_dir():
-            raise ValueError(f"Project path is not a directory: {project_path}")
+        if not pyproject_path.exists():
+            raise ValueError(f"pyproject.toml not found at: {pyproject_path}")
 
-        # Create the instance - all validation and discovery happens via computed fields
-        return cls(project_path=project_path)
+        project_data = toml.load(pyproject_path)
+
+        return cls(**project_data)

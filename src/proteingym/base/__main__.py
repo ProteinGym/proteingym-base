@@ -111,23 +111,24 @@ def validate_model(
         ),
     ],
 ):
+    """Validate a model from path."""
+
     logger = logging.getLogger("proteingym.base")
-    logger.setLevel(logging.INFO)
 
     try:
         model_project = ModelProject.from_path(project_path)
-        logger.info(
-            f"✅ Model {model_project.project_name} loaded successfully "
-            "with entry points: {model_project.entry_points}"
+        typer.echo(
+            f"✅ Model {model_project.project.name} loaded successfully "
+            f"with entry points: {model_project.entry_points}"
         )
 
-        model_card = ModelCard.from_path(model_project.model_card_path)
-        logger.info(
+        model_card = ModelCard.from_path(project_path / "README.md")
+        typer.echo(
             f"✅ Loaded {model_card.name} with hyper parameters: "
             f"{model_card.hyper_params}."
         )
     except ValueError as e:
-        logger.error(f"❌ Validation failed: {str(e)}")
+        typer.echo(f"❌ Validation failed: {str(e)}", err=True)
         raise typer.Exit(1) from e
     except Exception as e:
         logger.error("❌ Error running validation", exc_info=e)
