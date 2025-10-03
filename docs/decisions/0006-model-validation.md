@@ -17,7 +17,7 @@ Given the above considerations, we will first set out to build a tool for model 
 
 ## Decision
 
-Currently, we use the [Option 4: Install `proteingym-base` as a dev dependency and run sanity check by CLI](#option-4-install-proteingym-base-as-a-dev-dependency-and-run-sanity-check-by-cli), as it gives model providers a tool at their hand to sanity check the code during development.
+Currently, we use the [Option 2: Install `proteingym-base` as a dev dependency and run sanity check by CLI](#option-2-install-proteingym-base-as-a-dev-dependency-and-run-sanity-check-by-cli), as it gives model providers a tool at their hand to sanity check the code during development.
 
 ## Decision Drivers
 
@@ -38,37 +38,13 @@ Thus, we come to the following drivers:
 - No hardcoded paths and entrypoint names and parameters, such as `train`.
 - Least assumptions, e.g., model providers are expected to write tests, create CLI entrypoints or make Dockerfile.
 - Robustness, meaning it is easy to perform this option with robust support, such as Docker or `uv` is actively maintained.
-- Usefulness, meaning it can capture the failures as early as possible, and be a strong indicator that the model will work or not for the benchmarking system.
+- Insightfulness, meaning it can capture the failures as early as possible and provide debug messages as detailed as possible, so it can help model builders to build their models for the benchmarking system.
 
 ## Considered Options
 
-### Option 1: Install the model's package with runtime dependencies in a virtual env
+### Option 1: Only verify its exposed Docker entrypoints
 
-The benefit is that in addition to checking the source code, it also checks whether the package can be installed properly and it will be more robust for future usage of the model. The drawback is that it has more dependencies, such as using `uv` to create the virtual env and install the package. Additionally, it expects a CLI application, such as Typer or Click.
-
-#### Example
-
-```python
-import subprocess
-
-result = subprocess.run(
-    [
-        "uv",
-        "run",
-        "--active",
-        "python",
-        str(validator_script),
-        package_name,
-    ],
-    cwd=package_path,
-    capture_output=True,
-    text=True,
-)
-```
-
-### Option 2: Only verify its exposed Docker entrypoints
-
-The benefit is that we verify it from end to end using the prepared sample data and check if the returned data conforms to our data contract. Besides, it works across all platforms. The downside is that it has more dependencies, such as Docker and the sample data, and it assumes some entrypoint.
+The benefit is that we verify it from end to end using the prepared sample data and check if the returned data conforms to our data contract. Besides, it works across all platforms. The downside is that it has more dependencies, such as Docker and the sample data.
 
 #### Example
 
@@ -76,32 +52,9 @@ The benefit is that we verify it from end to end using the prepared sample data 
 docker run --rm ... model-image entrypoint --params ...
 ```
 
-### Option 3: Only verify the distribution package and its entrypoints
+### Option 2: Install `proteingym-base` as a dev dependency and run sanity check by CLI
 
-There are two major [package formats](https://packaging.python.org/en/latest/discussions/package-formats/): `wheel` and `sdist`. Both of them have the entrypoints and metadata defined in files inside the package:
-* For `wheel`, it is in `entry_points.txt` and `METADATA`.
-* For `sdist`, it is in `PKG-INFO`.
-
-The benefit of only checking these files is that we don't need to load the package and its dependencies in the execution envinronment. We only roughly check the definition. The downside is that it only checks the entrypoints literally, not on the execution level. Besides, the entrypoints listed in the file are not detailed enough, such as:
-
-```toml
-[console_scripts]
-pg2-model = pg2_model_esm.__main__:app
-```
-
-#### Example
-
-```python
-from importlib.metadata import Distribution
-from pathlib import Path
-
-dist = Distribution(Path("dist/my_package-0.1.0-py3-none-any.whl"))
-print(dist.entry_points)
-```
-
-### Option 4: Install `proteingym-base` as a dev dependency and run sanity check by CLI
-
-The benefit is that for model builders, it is quick to sanity check their code during development. Besides, they can install `proteingym-base` anyway they want, which might be independent from `uv`. It is useful with the least assumptions and dependencies.
+The benefit is that for model builders, it is quick to sanity check their code during development. Besides, they can install `proteingym-base` anyway they want, which might be independent from `uv`. It is with the least assumptions and dependencies and insightful, as it can provide debug messages along their development process.
 
 #### Example
 
@@ -112,7 +65,7 @@ $ proteingym-base validate .
 
 ## Decision matrix
 
-| Option | Least dependencies | Work across platforms | No hardcoded paths and names | Least assumptions | Robustness | Usefulness |
+| Option | Least dependencies | Work across platforms | No hardcoded paths and names | Least assumptions | Robustness | Insightfulness |
 |:-------|:------------------:|:---------------------:|:----------------------------:|:-----------------:|:----------:|:----------:|
 | `uv`   |                    | :white_check_mark:    | :white_check_mark:           |                   | :white_check_mark: | :white_check_mark: |
 | Docker |                    | :white_check_mark:    | :white_check_mark:           |                   | :white_check_mark: | :white_check_mark: |
