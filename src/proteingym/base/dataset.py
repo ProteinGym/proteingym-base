@@ -376,7 +376,7 @@ class Dataset(BaseModel):
                 continue
 
         if not assays_dfs:
-            raise ValueError("No assays could be converted to DataFrame.")
+            raise ValueError("No assays found in the dataset.")
 
         df = pl.concat(assays_dfs, how="align")
 
@@ -398,6 +398,6 @@ class Dataset(BaseModel):
         )
 
         if drop_all_missing:
-            df = df.drop_nulls(how="all")
+            df = df.drop_nulls()
 
         return df
