@@ -1,13 +1,22 @@
+import json
 import logging
 from pathlib import Path
 from typing import Annotated
 
+import click
 import typer
+from pydantic import ValidationError
 
 from .__about__ import __version__
+from .data_generators import (
+    adjust_target_with_two_dummy_features,
+    charge_ladder_dataset,
+)
 from .dataset import Dataset
 from .manifest import Manifest
 from .model import ModelCard, ModelProject
+
+logger = logging.getLogger("proteingym.base")
 
 app = typer.Typer(
     name="proteingym-base",
@@ -133,6 +142,111 @@ def validate_model(
     except Exception as e:
         logger.error("❌ Error running validation", exc_info=e)
         raise typer.Exit(1) from e
+
+
+@app.command("list-models")
+def list_models(
+    path: Annotated[
+        Path,
+        typer.Argument(
+            help="Directory path containing model cards",
+            exists=True,
+            file_okay=True,
+            dir_okay=True,
+        ),
+    ],
+):
+    """List available models with optional query filtering.
+
+    Note: This custom CLI is used instead of yq because:
+    - Parses Markdown files with model card frontmatter, not just YAML/JSON
+    - Provides sophisticated error handling with ValidationError logging
+    - Creates custom JSON output with both model data and file metadata
+    - Includes recursive file discovery for .md files
+    - Leverages Pydantic validation for type safety and schema compliance
+    """
+
+    def find_models_with_paths(root_path: Path) -> list[dict]:
+        """Find all model cards in the given directory."""
+        models_with_paths = []
+
+        if root_path.is_file():
+            paths = [root_path]
+        else:
+            paths = root_path.rglob("*.md")
+
+        for model_path in paths:
+            try:
+                model = ModelCard.from_path(model_path)
+            except ValidationError as e:
+                logger.error(f"Skipping {model_path}", exc_info=e)
+            else:
+                model_entry = {
+                    **model.model_dump(),
+                    "input_filename": model_path.resolve().as_posix(),
+                }
+
+                models_with_paths.append(model_entry)
+
+        return models_with_paths
+
+    models_with_paths = find_models_with_paths(root_path=path)
+
+    output = json.dumps(models_with_paths, indent=2)
+    typer.echo(output, nl=False)
+
+
+@app.command("generate-data")
+def generate_data(
+    feature1: Annotated[
+        str,
+        typer.Argument(help="Name of the first dummy feature"),
+    ] = "foo",
+    feature2: Annotated[
+        str,
+        typer.Argument(help="Name of the second dummy feature"),
+    ] = "bar",
+    *,
+    n_rows: Annotated[
+        int, typer.Option(help="Number of rows to generate in a data frame")
+    ] = 500,
+    sequence_length: Annotated[
+        int, typer.Option(help="Length of sequence for the sequence column")
+    ] = 100,
+    format: Annotated[
+        str,
+        typer.Option(
+            help="Output format",
+            click_type=click.Choice(choices=["csv"], case_sensitive=False),
+        ),
+    ] = "csv",
+) -> None:
+    """Generate dummy data with charge ladder and two dummy features.
+
+    Creates a charge ladder dataset with protein sequences and adds two dummy
+    features to the target charge column. The output is formatted as CSV.
+    Users can update feature names, but it is currently limited to only two features.
+
+    Args:
+        feature1: Name of the first dummy feature. Defaults to "foo".
+        feature2: Name of the second dummy feature. Defaults to "bar".
+        n_rows: Number of rows to generate in the data frame. Defaults to 500.
+        sequence_length: Length of sequence for the sequence column. Defaults to 100.
+        format: Output format. Currently only supports "csv". Defaults to "csv".
+
+    Outputs:
+        Prints the generated CSV data to stdout.
+    """
+    ladder = charge_ladder_dataset(n_rows, sequence_length)
+
+    output = ladder.pipe(
+        adjust_target_with_two_dummy_features,
+        target="charge",
+        feature_names=[feature1, feature2],
+    )
+
+    if format.lower() == "csv":
+        typer.echo(output.write_csv(), nl=False)
 
 
 if __name__ == "__main__":

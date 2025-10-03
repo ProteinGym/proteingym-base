@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -294,3 +295,149 @@ def test_validation_pyproject_empty_name(
     with mock_valid_entry_points:
         with pytest.raises(ValueError, match=r".*project name is empty.*"):
             _ = ModelProject.from_path(model_project)
+
+
+def test_list_models_command(runner: CliRunner, model_card_path: Path) -> None:
+    """Test the list-models CLI command."""
+    result = runner.invoke(app, ["list-models", str(model_card_path)])
+
+    assert result.exit_code == 0
+
+    output_data = json.loads(result.stdout)
+    assert isinstance(output_data, list)
+    assert len(output_data) == 1
+
+    model_data = output_data[0]
+    assert model_data["name"] == "dummy"
+    assert "input_filename" in model_data
+    assert model_data["hyper_params"]["nogpu"] is False
+
+
+def test_list_models_directory_with_multiple_cards(
+    runner: CliRunner, tmp_path: Path
+) -> None:
+    """Test list-models with a directory containing multiple model cards."""
+    model1 = tmp_path / "model1.md"
+    model1.write_text(
+        """
+---
+name: "model_one"
+hyper_params:
+    learning_rate: 0.001
+---
+
+# Model One
+First model description
+""",
+        encoding="utf-8",
+    )
+
+    model2 = tmp_path / "model2.md"
+    model2.write_text(
+        """
+---
+name: "model_two"
+hyper_params:
+    learning_rate: 0.001
+---
+
+# Model Two
+Second model description
+""",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["list-models", str(tmp_path)])
+
+    assert result.exit_code == 0
+    output_data = json.loads(result.stdout)
+    assert isinstance(output_data, list)
+    assert len(output_data) == 2
+
+    model_names = [model["name"] for model in output_data]
+    assert "model_one" in model_names
+    assert "model_two" in model_names
+
+
+def test_list_models_directory_empty(runner: CliRunner, tmp_path: Path) -> None:
+    """Test list-models with a directory containing no model cards."""
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+
+    result = runner.invoke(app, ["list-models", str(empty_dir)])
+
+    assert result.exit_code == 0
+    output_data = json.loads(result.stdout)
+    assert isinstance(output_data, list)
+    assert len(output_data) == 0
+
+
+def test_list_models_mixed_valid_invalid(runner: CliRunner, tmp_path: Path) -> None:
+    """Test list-models with a directory
+    containing both valid and invalid model cards."""
+    valid_card = tmp_path / "valid.md"
+    valid_card.write_text(
+        """
+---
+name: "valid_model"
+---
+
+# Valid Model
+This is a valid model card
+""",
+        encoding="utf-8",
+    )
+
+    invalid_file = tmp_path / "invalid.md"
+    invalid_file.write_text("This is just a regular markdown file", encoding="utf-8")
+
+    result = runner.invoke(app, ["list-models", str(tmp_path)])
+
+    assert result.exit_code == 0
+    output_data = json.loads(result.stdout)
+    assert isinstance(output_data, list)
+    assert len(output_data) == 1
+    assert output_data[0]["name"] == "valid_model"
+
+
+def test_list_models_validation_error(runner: CliRunner, tmp_path: Path) -> None:
+    """Test list-models logs error message when skipping invalid model card."""
+    invalid_card = tmp_path / "invalid.md"
+    invalid_card.write_text(
+        """
+---
+hyper_params:
+    learning_rate: 0.001
+---
+
+# Invalid Model Card
+This model card is missing the required 'name' field
+""",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["-vv", "list-models", str(invalid_card)])
+
+    assert result.exit_code == 0
+    output_data = json.loads(result.stdout)
+    assert isinstance(output_data, list)
+    assert len(output_data) == 0
+    assert f"Skipping {invalid_card}" in result.stderr
+
+
+def test_list_models_nonexistent_path(runner: CliRunner, tmp_path: Path) -> None:
+    """Test list-models with a non-existent path."""
+    nonexistent_path = tmp_path / "does_not_exist"
+
+    result = runner.invoke(app, ["list-models", str(nonexistent_path)])
+
+    assert result.exit_code == 2
+
+
+def test_list_models_invalid_format(runner: CliRunner, model_card_path: Path) -> None:
+    """Test list-models with invalid format option."""
+    result = runner.invoke(
+        app, ["list-models", str(model_card_path), "--format", "xml"]
+    )
+
+    assert result.exit_code == 2

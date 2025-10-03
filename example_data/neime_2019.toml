@@ -12,14 +12,26 @@ name = "T"
 description = "Temperature level of the samples"
 unit = "C"
 
+[[ assay_targets ]]
+name = "DMS Score"
+description = "DMS score of the samples"
+unit = "log fold change"
+
+[[ assay_targets ]]
+name = "DMS Score Bin"
+description = "DMS score bin of the samples"
+
 [[ assays ]]
 sequence = "mutated_sequence"
-target = "DMS_score"
 path = "./NEIME_2019/Assays/Assay1.csv"
 sequence_alphabet = "AA"
 [ assays.variables ]
 T = 37
 PH = 7
+[ assays.targets ]
+"DMS Score" = "DMS_score"
+"DMS Score Bin" = "DMS_score_bin"
+
 
 [[ sequences ]]
 path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"

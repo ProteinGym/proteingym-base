@@ -155,20 +155,20 @@ def bio_structure() -> BioStructure:
 @pytest.fixture
 def pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     """PDB structure file for testing."""
-    io = PDBIO()
-    io.set_structure(bio_structure)
+    io_ = PDBIO()
+    io_.set_structure(bio_structure)
     path = tmp_path / "structure.pdb"
-    io.save(path.as_posix())
+    io_.save(path.as_posix())
     return path
 
 
 @pytest.fixture
 def cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
     """CIF structure file for testing."""
-    io = MMCIFIO()
-    io.set_structure(bio_structure)
+    io_ = MMCIFIO()
+    io_.set_structure(bio_structure)
     path = tmp_path / "structure.cif"
-    io.save(path.as_posix())
+    io_.save(path.as_posix())
     return path
 
 
@@ -277,13 +277,13 @@ def test_dataset_dump_with_structure(
 
     path = dataset.dump(path=tmp_path)
 
-    zip = ZipFile(path)
-    assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "structures/test.pdb" in zip.namelist(), (
+    zip_ = ZipFile(path)
+    assert not zip_.testzip(), "Dataset dump contains a bad file."
+    assert "structures/test.pdb" in zip_.namelist(), (
         "Structure file not found in dataset dump."
     )
 
-    with zip.open("structures/test.pdb", "r") as structure_file:
+    with zip_.open("structures/test.pdb", "r") as structure_file:
         string_io = io.StringIO(structure_file.read().decode("utf-8"))
         loaded_structure = PDBParser().get_structure("test", string_io)
         assert bio_structure == loaded_structure
@@ -342,3 +342,59 @@ def test_dataset_failes_with_duplicate_structure_names() -> None:
         Dataset(
             name="test", structures=[structure1, structure2, structure3, structure4]
         )
+
+
+def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
+    """Test the string representation of the Structure class."""
+    structure = Structure(
+        name="test structure",
+        value=bio_structure,
+        description="A test structure",
+        metadata={"key1": "value1", "key2": "value2"},
+    )
+
+    repr_str = repr(structure)
+    assert "Structure(\n\tname='test structure'," in repr_str
+    assert "description: A test structure," in repr_str
+    assert "value: Type[Structure]," in repr_str
+    assert "\tmetadata:" in repr_str
+    assert "\t\tkey1: value1," in repr_str
+    assert "\t\tkey2: value2," in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    structure = Structure(
+        name="longdesc",
+        value=bio_structure,
+        description=long_desc,
+        metadata={},
+    )
+    repr_str = repr(structure)
+    assert f"description: {long_desc[:60]}..." in repr_str
+
+    structure = Structure(
+        name="nodesc",
+        value=bio_structure,
+        description=None,
+        metadata={},
+    )
+    repr_str = repr(structure)
+    assert "description: None," in repr_str
+
+    structure = Structure(
+        name="nometa",
+        value=bio_structure,
+        description="desc",
+        metadata={},
+    )
+    repr_str = repr(structure)
+    assert "\tmetadata: 0," in repr_str
+
+    long_value = "X" * 65
+    structure = Structure(
+        name="longmeta",
+        value=bio_structure,
+        description="desc",
+        metadata={"longkey": long_value},
+    )
+    repr_str = repr(structure)
+    assert f"\t\tlongkey: {long_value[:60]}..." in repr_str
