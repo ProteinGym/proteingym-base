@@ -133,3 +133,27 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
     result = runner.invoke(app, ["list-datasets", str(dataset_file), "--format", "xml"])
 
     assert result.exit_code == 2
+
+
+def test_dataset_repr() -> None:
+    """Test the string representation of the Dataset class."""
+    dataset = Dataset(name="test dataset")
+    repr_str = repr(dataset)
+    assert "Dataset(\n\tname='test dataset'," in repr_str
+    assert "\tdescription: None," in repr_str
+    assert "contents:" in repr_str
+    assert "assays: 0," in repr_str
+    assert "sequences: 0," in repr_str
+    assert "structures: 0," in repr_str
+    assert "msas: 0," in repr_str
+    assert "assay_variables: 0," in repr_str
+
+    dataset = Dataset(name="short desc", description="Short description.")
+    repr_str = repr(dataset)
+    assert "\tdescription: Short description." in repr_str
+
+    long_desc = "A" * 61 + "BCD"
+    dataset = Dataset(name="long desc", description=long_desc)
+    repr_str = repr(dataset)
+    # Should be truncated to 60 chars + '...'
+    assert f"\tdescription: {long_desc[:60]}..." in repr_str
