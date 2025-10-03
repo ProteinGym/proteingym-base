@@ -52,11 +52,16 @@ class EntryPoint:
     """List of parameter names that the entry point accepts."""
 
 
-class ProjectSection(BaseModel):
+@dataclass
+class ProjectSection:
     """Represents the project section of a pyproject.toml file."""
 
-    name: str = Field(min_length=1)
+    name: str
     """The name of the project as defined in pyproject.toml."""
+
+    def __post_init__(self):
+        if not self.name or not self.name.strip():
+            raise ValueError(f"project name is empty: {self.name}.")
 
 
 class ModelProject(BaseModel):

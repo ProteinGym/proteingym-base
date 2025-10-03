@@ -111,6 +111,17 @@ description = "Test model package"
 
 
 @pytest.fixture
+def empty_pyproject_content_empty_name() -> str:
+    """Invalid pyproject.toml content for testing."""
+    return """[project]
+name = ""
+version = "1.0.0"
+description = "Test model package"
+# Missing name
+"""
+
+
+@pytest.fixture
 def model_project(request, tmp_path: Path) -> Path:
     """Indirect fixture that creates model projects with specified content."""
     model_card_fixture_name, pyproject_fixture_name, project_name = request.param
@@ -256,10 +267,30 @@ def test_model_project_from_path_nonexistent():
     ],
     indirect=True,
 )
-def test_model_project_empty_entry_points(
+def test_validation_empty_entry_points(
     model_project: Path,
     mock_empty_entry_points,
 ):
     with mock_empty_entry_points:
         with pytest.raises(ValueError, match=r".*No entry points found.*"):
+            _ = ModelProject.from_path(model_project)
+
+
+@pytest.mark.parametrize(
+    "model_project",
+    [
+        (
+            "valid_model_card_content",
+            "empty_pyproject_content_empty_name",
+            "test_model",
+        ),
+    ],
+    indirect=True,
+)
+def test_validation_pyproject_empty_name(
+    model_project: Path,
+    mock_valid_entry_points,
+):
+    with mock_valid_entry_points:
+        with pytest.raises(ValueError, match=r".*project name is empty.*"):
             _ = ModelProject.from_path(model_project)
