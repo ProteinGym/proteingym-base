@@ -1,5 +1,6 @@
 import collections
 import itertools
+from collections.abc import Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
@@ -339,7 +340,9 @@ class Dataset(BaseModel):
         return archive_path
 
     def to_df(
-        self, target_names: list[str] = None, drop_all_missing: bool = False
+        self,
+        target_names: Collection[str] | str | None = None,
+        drop_all_missing: bool = False,
     ) -> pl.DataFrame:
         """Returns the dataset assay records as a Polars DataFrame.
 
@@ -353,24 +356,48 @@ class Dataset(BaseModel):
         """
 
         if target_names:
-            assert all(
+            if not all(
                 target_name in [t.name for t in self.assay_targets]
                 for target_name in target_names
-            ), "Target names must be valid assay target names."
+            ):
+                raise ValueError("Target names must be valid assay target names.")
         else:
             target_names = [t.name for t in self.assay_targets]
 
         if not self.assays:
             raise ValueError("No assays found in the dataset.")
 
-        try:
-            assays_dfs = [
-                assay.to_df(target_names=target_names) for assay in self.assays
-            ]
-        except ValueError as e:
-            raise ValueError(f"Error in converting assays to DataFrame: {e}") from e
+        assays_dfs = []
+        for assay in self.assays:
+            try:
+                df = assay.to_df(target_names=target_names)
+                assays_dfs.append(df)
+            except ValueError:
+                continue
 
-        df = pl.concat(assays_dfs, how="diagonal")
+        if not assays_dfs:
+            raise ValueError("No assays could be converted to DataFrame.")
+
+        df = pl.concat(assays_dfs, how="align")
+
+        available_variable_names = [
+            var.name for var in self.assay_variables if var.name in df.columns
+        ]
+        available_target_names = [t for t in target_names if t in df.columns]
+
+        df = df.group_by(
+            ["sequence"] + available_variable_names, maintain_order=True
+        ).agg(
+            [
+                # If for a given sequence and variable combination, there are multiple
+                # target values, we take the first non-null value. This can be modified
+                # as needed.
+                pl.col(target_name).drop_nulls().first().alias(target_name)
+                for target_name in available_target_names
+            ]
+        )
+
         if drop_all_missing:
             df = df.drop_nulls(how="all")
+
         return df

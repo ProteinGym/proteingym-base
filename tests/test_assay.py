@@ -483,9 +483,82 @@ def test_dataset_to_df() -> None:
     else:
         assert "sequence" in df.columns
         assert "DMS Score" in df.columns
-        assert df.shape == (4, 2)
-        assert df["sequence"].to_list() == ["APC", "DEF", "APC", "GHI"]
-        assert df["DMS Score"].to_list() == [1.0, 2.0, 1.0, 3.0]
+        assert df.shape == (3, 2)
+        assert df["sequence"].to_list() == ["APC", "DEF", "GHI"]
+        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0]
+
+
+def test_dataset_to_df_assay_with_different_targets() -> None:
+    """Test converting a dataset with assays having different targets to a DataFrame."""
+
+    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
+    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    seq3 = Sequence(name="seq3", value="GHI", type="standard_sequence", alphabet="DNA")
+
+    assay1 = Assay(
+        name="assay1",
+        records=[
+            (seq1, {"DMS Score": 1.0}),
+            (seq2, {"DMS Score": 2.0}),
+        ],
+        variables={"pH": 7.0, "T": 30},
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    assay2 = Assay(
+        name="assay2",
+        records=[
+            (
+                seq1,
+                {
+                    "DMS Score": 3.0,
+                },
+            ),
+        ],
+        variables={"pH": 7.0, "T": 30},
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence2",
+    )
+    assay3 = Assay(
+        name="assay3",
+        records=[
+            (seq1, {"Binding Affinity": 0.8, "DMS Score": 5.0}),
+            (seq3, {"Binding Affinity": 0.9, "DMS Score": 2.0}),
+        ],
+        variables={"pH": 7.0},
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence2",
+    )
+    assay4 = Assay(
+        name="assay4",
+        records=[],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+
+    # Case 1:
+    dataset = Dataset(
+        name="test_dataset",
+        assay_targets=[
+            AssayTarget(name="DMS Score"),
+            AssayTarget(name="Binding Affinity"),
+        ],
+        assay_variables=[AssayVariable(name="pH"), AssayVariable(name="T")],
+        assays=[assay1, assay2, assay3, assay4],
+    )
+
+    try:
+        df = dataset.to_df(target_names=["DMS Score", "Binding Affinity"])
+    except ValueError as e:
+        raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
+    else:
+        assert "sequence" in df.columns
+        assert "DMS Score" in df.columns
+        assert df.shape == (4, 5)
+        assert df["sequence"].to_list() == ["APC", "APC", "DEF", "GHI"]
+        assert df["DMS Score"].to_list() == [1.0, 3.0, 2.0, 2.0]
+        assert df["Binding Affinity"].to_list() == [None, 0.8, None, 0.9]
+        assert df["pH"].to_list() == [7.0, 7.0, 7.0, 7.0]
 
 
 def test_dataset_with_dump_assays(tmp_path: Path) -> None:

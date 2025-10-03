@@ -1,4 +1,5 @@
 import dataclasses
+from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
 
@@ -286,11 +287,11 @@ class Assay:
             path=path,
         )
 
-    def to_df(self, target_names: list[str] = None) -> pl.DataFrame:
-        """Returns the assay records as a Polars DataFrame.
+    def to_df(self, target_names: Collection[str] | str | None = None) -> pl.DataFrame:
+        """Returns the assay records with assay variables as a Polars DataFrame.
 
         Args:
-            target_names (list[str]): The list of target names to include.
+            target_names (Collection[str]): The list of target names to include.
                 If None, all target names are included. Defaults to None.
 
         Returns:
@@ -300,7 +301,10 @@ class Assay:
         if not self.records:
             raise ValueError(f"The assay `{self.name}` has no records.")
         if target_names:
-            target_names = set(target_names).intersection(self.target_feature_names)
+            if isinstance(target_names, str):
+                target_names = {target_names}
+            else:
+                target_names = set(target_names).intersection(self.target_feature_names)
             if not target_names:
                 raise ValueError(
                     f"None of the given `target_names` "
@@ -317,6 +321,11 @@ class Assay:
                 if target_name in target_names:
                     row[target_name] = target_value
             rows.append(row)
+
+        for variable_name, variable_value in self.variables.items():
+            for row in rows:
+                row[variable_name] = variable_value
+
         return pl.DataFrame(rows)
 
     def dump(
