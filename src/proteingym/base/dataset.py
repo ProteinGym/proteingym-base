@@ -376,7 +376,7 @@ class Dataset(BaseModel):
                 continue
 
         if not assays_dfs:
-            raise ValueError("No assays found in the dataset.")
+            raise ValueError("None of the assays could be converted to DataFrame.")
 
         df = pl.concat(assays_dfs, how="align")
 

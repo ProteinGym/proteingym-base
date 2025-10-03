@@ -249,6 +249,25 @@ def test_assay_to_df() -> None:
         assert df["DMS Score2"].to_list() == [0.5, 0.6]
 
 
+def test_assay_to_df_single_string_target():
+    """Test Assay.to_df with target_names as a single string."""
+    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
+    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    assay = Assay(
+        name="assay",
+        records=[
+            (seq1, {"DMS Score": 1.56}),
+            (seq2, {"DMS Score": 2.0}),
+        ],
+        sequence_alphabet="DNA",
+        sequence_feature_name="sequence",
+    )
+    df = assay.to_df(target_names="DMS Score")
+    assert "DMS Score" in df.columns
+    assert df.shape == (2, 2)
+    assert df["DMS Score"].to_list() == [1.56, 2.0]
+
+
 def test_assay_to_df_invalid_target_name() -> None:
     """Test that Assay.to_df raises error for invalid target names."""
     assay = Assay(
@@ -545,6 +564,39 @@ def test_dataset_to_df_assay_with_different_targets() -> None:
         assert df["DMS Score"].to_list() == [1.0, 3.0, 2.0, 2.0]
         assert df["Binding Affinity"].to_list() == [None, 0.8, None, 0.9]
         assert df["pH"].to_list() == [7.0, 7.0, 7.0, 7.0]
+
+
+def test_dataset_to_df_failed_assay_to_df() -> None:
+    """Test that Dataset.to_df raises error if all Assay.to_df fail."""
+    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
+    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    assay1 = Assay(
+        name="assay1",
+        records=[
+            (seq1, {"DMS Score": 1.0}),
+            (seq2, {"DMS Score": 2.0}),
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    assay2 = Assay(
+        name="assay2",
+        records=[
+            (seq1, {"DMS Score": 1.0})
+        ],
+        sequence_alphabet="AA",
+        sequence_feature_name="sequence",
+    )
+    dataset = Dataset(
+        name="test_dataset",
+        assay_targets=[AssayTarget(name="DMS Score2")],
+        assays=[assay1, assay2],
+    )
+    with pytest.raises(
+        ValueError,
+        match=r"None of the assays could be converted to DataFrame.",
+    ):
+        dataset.to_df(target_names=["DMS Score2"])
 
 
 def test_dataset_with_dump_assays(tmp_path: Path) -> None:
