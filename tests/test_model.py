@@ -297,6 +297,27 @@ def test_validation_pyproject_empty_name(
             _ = ModelProject.from_path(model_project)
 
 
+@pytest.mark.parametrize(
+    "model_project",
+    [
+        ("valid_model_card_content", "valid_pyproject_content", "test_model"),
+    ],
+    indirect=True,
+)
+def test_validation_general_exception_handling(
+    model_project: Path,
+    runner: CliRunner,
+):
+    """Test validation handles general exceptions with proper logging."""
+    with patch("proteingym.base.model.ModelProject.from_path") as mock_from_path:
+        mock_from_path.side_effect = RuntimeError("Unexpected error occurred")
+
+        result = runner.invoke(app, ["-vv", "validate", str(model_project)])
+
+        assert result.exit_code == 1
+        assert "❌ Error running validation" in result.stderr
+
+
 def test_list_models_command(runner: CliRunner, model_card_path: Path) -> None:
     """Test the list-models CLI command."""
     result = runner.invoke(app, ["list-models", str(model_card_path)])
