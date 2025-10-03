@@ -120,13 +120,19 @@ class Dataset(BaseModel):
         return self
 
     def model_dump_json(self, **kwargs) -> str:
-        """Override to ensure JSON serialization works with Bio objects."""
+        """Override to ensure JSON serialization works with Bio objects.
+
+        Biopython objects: Seq, Structure, MultipleSeqAlignment,
+        don't have custom JSONEncoder, thus we rely on their __str__ method
+        to return a string representation in order for
+        Bio objects to be sereializable.
+
+        See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
+        """
+
         data = self.model_dump(**kwargs)
-        # `default=str`
-        # converts any non-serializable objects to their string representation.
-        # `ensure_ascii=False`
-        # ensures strings can contain non-ASCII characters, otherwise escaped.
-        return json.dumps(data, default=str, ensure_ascii=False)
+        # Converts any non-serializable objects to their string representation.
+        return json.dumps(data, default=str)
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
