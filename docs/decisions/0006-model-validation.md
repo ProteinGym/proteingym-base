@@ -54,7 +54,7 @@ docker run --rm ... model-image entrypoint --params ...
 
 ### Option 2: Install `proteingym-base` as a dev dependency and run sanity check by CLI
 
-The benefit is that for model builders, it is quick to sanity check their code during development. Besides, they can install `proteingym-base` anyway they want, which might be independent from `uv`. It is with the least assumptions and dependencies and insightful, as it can provide debug messages along their development process.
+The benefit is that for model builders, it is quick to sanity check their code during development. Besides, they can install `proteingym-base` anyway they want, which might be independent from `uv`. It is with the least assumptions and dependencies that provides the most insight, as it can provide debug messages along their development process.
 
 #### Example
 
