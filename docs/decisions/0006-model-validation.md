@@ -67,9 +67,7 @@ $ proteingym-base validate .
 
 | Option | Least dependencies | Work across platforms | No hardcoded paths and names | Least assumptions | Robustness | Insightfulness |
 |:-------|:------------------:|:---------------------:|:----------------------------:|:-----------------:|:----------:|:----------:|
-| `uv`   |                    | :white_check_mark:    | :white_check_mark:           |                   | :white_check_mark: | :white_check_mark: |
 | Docker |                    | :white_check_mark:    | :white_check_mark:           |                   | :white_check_mark: | :white_check_mark: |
-| distribution package | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |  |
 | proteingym-base CLI | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 ## Consequences
