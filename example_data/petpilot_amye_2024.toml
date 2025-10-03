@@ -1,0 +1,96 @@
+name = "PETPILOT_AMYE_2024"
+description = "The AMYE data used in the pilot protein engineering tournament run in 2024"
+version = "1.0.0"
+
+[[ assay_variables ]]
+name = "engineering_round"
+description = "Round of engineering where round n was done by training on data from all rounds < n."
+unit = "count"
+
+[[ assay_targets ]]
+name = "expression"
+description = "expression level"
+
+[[ assay_targets ]]
+name = "stability"
+description = "resistance to temperature"
+
+[[ assay_targets ]]
+name = "activity"
+description = "specific activity / units per expression unit"
+
+
+[[ assays ]]
+sequence = "mutated_sequence"
+path = "./PETPILOT_AMYE_2024/amye-1.csv"
+sequence_alphabet = "AA"
+name = "expression-r1"
+[ assays.variables ]
+engineering_round = 1
+[assays.targets]
+expression = "expression"
+
+[[ assays ]]
+sequence = "sequence"
+path = "./PETPILOT_AMYE_2024/invitro-hplc.csv"
+sequence_alphabet = "AA"
+name = "expression-r2"
+[ assays.variables ]
+engineering_round = 2
+[assays.targets]
+expression = "output"
+
+[[ assays ]]
+sequence = "mutated_sequence"
+name = "stability-r1"
+path = "./PETPILOT_AMYE_2024/amye-1.csv"
+sequence_alphabet = "AA"
+[ assays.variables ]
+engineering_round = 1
+[assays.targets]
+stability = "thermostability"
+
+[[ assays ]]
+sequence = "sequence"
+name = "stability-r2"
+path = "./PETPILOT_AMYE_2024/invitro-stability.csv"
+sequence_alphabet = "AA"
+[ assays.variables ]
+engineering_round = 2
+[assays.targets]
+stability = "output"
+
+[[ assays ]]
+sequence = "mutated_sequence"
+name = "activity-r1"
+path = "./PETPILOT_AMYE_2024/amye-1.csv"
+sequence_alphabet = "AA"
+[ assays.variables ]
+engineering_round = 1
+[ assays.targets ]
+activity = "specific activity"
+
+[[ assays ]]
+sequence = "sequence"
+name = "activity-r2"
+path = "./PETPILOT_AMYE_2024/invitro-activity.csv"
+sequence_alphabet = "AA"
+[ assays.variables ]
+engineering_round = 2
+[assays.targets]
+stability = "output"
+
+[[ sequences ]]
+path = "./PETPILOT_AMYE_2024/rcsb_pdb_1UA7.fasta"
+type = "wild_type"
+alphabet = "AA"
+
+[[ structures ]]
+# also just by pdb id would be nice
+path = "./PETPILOT_AMYE_2024/1UA7.cif"
+name = "1UA7"
+description = "Crystal Structure Analysis of Alpha-Amylase from Bacillus Subtilis complexed with Acarbose"
+
+[structures.metadata]
+source = "pdb"
+link = "https://doi.org/10.2210/pdb1UA7/pdb"
