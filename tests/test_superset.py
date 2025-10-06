@@ -30,3 +30,16 @@ def test_iterate_over_single_full_slice(dataset: Dataset) -> None:
     slc = DatasetSlice(assays=[slice(None)] * len(dataset.assays))
     superset = Superset(dataset=dataset, slices=[slc])
     assert list(superset) == [dataset]
+
+
+def test_iterate_over_dataset_cut_in_half(dataset_with_assay: Dataset) -> None:
+    """Iterating over a superset which cuts the dataset in half yields two datasets."""
+    slc1 = DatasetSlice(assays=[[True, False]])
+    slc2 = DatasetSlice(assays=[[False, True]])
+    superset = Superset(dataset=dataset_with_assay, slices=[slc1, slc2])
+
+    datasets = list(superset)
+    assert len(datasets) == 2
+    assert datasets[0] != datasets[1]
+    assert datasets[0].assays[0].records[0] == ("SEQ1", 1.0)
+    assert datasets[1].assays[0].records[0] == ("SEQ2", 2.0)
