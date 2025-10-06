@@ -30,7 +30,12 @@ def empty_dataset() -> Dataset:
 def dataset_with_assay() -> Dataset:
     """A dataset containing a single assay."""
     assay = Assay(
-        name="assay1", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA
+        name="assay1",
+        records=[
+            ("SEQ1", 1.0),
+            ("SEQ2", 2.0),
+        ],
+        sequence_alphabet=SequenceAlphabet.AA,
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
