@@ -4,7 +4,11 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
+<<<<<<< HEAD
 from proteingym.base.assay import Assay, AssayTarget, AssayVariable
+=======
+from proteingym.base.assay import Assay
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -12,10 +16,17 @@ from proteingym.base.structure import Structure
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def dataset_empty() -> Dataset:
     """An empty dataset."""
     dataset = Dataset(
         name="dataset_empty",
+=======
+def empty_dataset() -> Dataset:
+    """An empty dataset."""
+    dataset = Dataset(
+        name="empty_dataset",
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
         description="An empty dataset for testing purposes.",
         assay_variables=[],
         assays=[],
@@ -27,6 +38,7 @@ def dataset_empty() -> Dataset:
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def dataset_with_assay_empty() -> Dataset:
     """A dataset containing an empty assay."""
     assay = Assay(
@@ -69,12 +81,22 @@ def dataset_with_assay() -> Dataset:
             (sequence2, 2.0),
         ],
         columns=["sequence", "DMS Score"],
+=======
+def dataset_with_assay() -> Dataset:
+    """A dataset containing a single assay."""
+    assay = Assay(
+        name="assay1", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
+<<<<<<< HEAD
         assay_variables=[AssayVariable(name="var1", description="A test variable")],
         assay_targets=[AssayTarget(name="DMS Score", description="The DMS score")],
+=======
+        assay_variables=[],
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
         assays=[assay],
         sequences=[],
         structures=[],
@@ -86,6 +108,7 @@ def dataset_with_assay() -> Dataset:
 @pytest.fixture
 def dataset_with_assays() -> Dataset:
     """A dataset containing multiple assays."""
+<<<<<<< HEAD
     sequence1 = Sequence(
         name="seq1",
         value=Seq("ACDEFG"),
@@ -111,12 +134,23 @@ def dataset_with_assays() -> Dataset:
             (sequence2, 2.0),
         ],
         columns=["sequence", "DMS Score"],
+=======
+    assay1 = Assay(
+        name="assay1", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA
+    )
+    assay2 = Assay(
+        name="assay2", records=[("SEQ2", 2.0)], sequence_alphabet=SequenceAlphabet.AA
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
     )
     dataset = Dataset(
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
+<<<<<<< HEAD
         assay_variables=[AssayVariable(name="var1", description="A test variable")],
         assay_targets=[AssayTarget(name="DMS Score", description="The DMS score")],
+=======
+        assay_variables=[],
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
         assays=[assay1, assay2],
         sequences=[],
         structures=[],
@@ -277,6 +311,7 @@ def dataset_with_msas() -> Dataset:
 
 
 @pytest.fixture
+<<<<<<< HEAD
 def dataset_with_everything(
     dataset_with_assays: Dataset,
     dataset_with_sequences: Dataset,
@@ -298,6 +333,10 @@ def dataset_with_everything(
 def datasets(
     dataset_empty: Dataset,
     dataset_with_assay_empty: Dataset,
+=======
+def datasets(
+    empty_dataset: Dataset,
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
     dataset_with_assay: Dataset,
     dataset_with_assays: Dataset,
     dataset_with_sequence: Dataset,
@@ -306,12 +345,19 @@ def datasets(
     dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
     dataset_with_msas: Dataset,
+<<<<<<< HEAD
     dataset_with_everything: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
     return [
         dataset_empty,
         dataset_with_assay_empty,
+=======
+) -> list[Dataset]:
+    """All test datasets."""
+    return [
+        empty_dataset,
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
         dataset_with_assay,
         dataset_with_assays,
         dataset_with_sequence,
@@ -320,7 +366,10 @@ def datasets(
         dataset_with_structures,
         dataset_with_msa,
         dataset_with_msas,
+<<<<<<< HEAD
         dataset_with_everything,
+=======
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
     ]
 
 
@@ -340,6 +389,9 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
     if dataset is None:
         raise ValueError(f"Unknown dataset: {param}")
     return dataset
+<<<<<<< HEAD
 
 
 dataset2 = dataset  # To have a second fixture for union tests
+=======
+>>>>>>> ebd2166 (Move dataset fixtures to conftest.py)
