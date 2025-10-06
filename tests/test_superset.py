@@ -43,3 +43,13 @@ def test_iterate_over_dataset_cut_in_half(dataset_with_assay: Dataset) -> None:
     assert datasets[0] != datasets[1]
     assert datasets[0].assays[0].records[0] == ("SEQ1", 1.0)
     assert datasets[1].assays[0].records[0] == ("SEQ2", 2.0)
+
+
+def test_superset_dump_from_path_is_unit_function(empty_dataset: Dataset) -> None:
+    """Dumping and loading a superset is a unit function."""
+    superset = Superset(dataset=empty_dataset, slices=[])
+
+    archive_path = superset.dump()
+    superset_recovered = Superset.from_path(archive_path)
+
+    assert superset == superset_recovered
