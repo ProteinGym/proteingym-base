@@ -1,3 +1,6 @@
+import pytest
+
+from proteingym.base.dataset import Dataset, DatasetSlice
 from proteingym.base.superset import Superset
 
 
@@ -6,3 +9,24 @@ def test_iterate_over_empty_superset() -> None:
     superset = Superset(dataset=None, slices=[])
     for _ in superset:
         raise AssertionError("Should not iterate over empty superset")
+
+
+ALL_DATASET_NAMES = [
+    "empty_dataset",
+    "dataset_with_single_assay",
+    "dataset_with_multiple_assays",
+    "dataset_with_single_sequence",
+    "dataset_with_multiple_sequences",
+    "dataset_with_single_structure",
+    "dataset_with_multiple_structures",
+    "dataset_with_single_msa",
+    "dataset_with_multiple_msas",
+]
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_iterate_over_single_full_slice(dataset: Dataset) -> None:
+    """Iterating over a superset with a single full slice yields the entire dataset."""
+    slc = DatasetSlice(assays=[slice(None)] * len(dataset.assays))
+    superset = Superset(dataset=dataset, slices=[slc])
+    assert list(superset) == [dataset]
