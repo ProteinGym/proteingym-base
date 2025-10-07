@@ -45,15 +45,32 @@ class Superset:
 
     @classmethod
     def from_path(cls, path: Path) -> "Superset":
-        """Create a `Superset` from a superset archive.
+        """Create a `Superset` from an archive.
+
+        Extract the contents to a temporary directory and load the dataset
+        from the manifest file.
 
         Args:
             path: The path to the superset archive.
 
         Returns:
-            The superset in the archive.
+            The superset from the archive
+
+        Raises:
+            ValueError: If multiple manifest files are found in the ZIP archive.
+            FileNotFoundError: If no manifest file is found in the ZIP archive.
         """
-        return cls(dataset=Dataset(name="TODO"), slices=[])
+        # While a SE practice is to avoid IO to disk where possible,
+        # we use a temporary directory here as long as dataset dump requires
+        # it.
+        with ZipFile(path, "r") as zip, TemporaryDirectory() as temp_dir:
+            dataset_archive = zip.extract(
+                SupersetArchiveLayout.DATASET_ARCHIVE, path=temp_dir
+            )
+            dataset = Dataset.from_path(dataset_archive)
+            slices_str = json.loads(zip.read(SupersetArchiveLayout.SLICES_FILE))
+            slices = [DatasetSlice(**slc) for slc in slices_str]
+        return cls(dataset=dataset, slices=slices)
 
     def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the superset.
