@@ -49,10 +49,10 @@ def test_superset_iterate_over_dataset_cut_in_half(dataset_with_assay: Dataset) 
 
 
 def test_superset_dump_from_path_is_unit_function(
-    tmp_path: Path, empty_dataset: Dataset
+    tmp_path: Path, dataset_with_assays: Dataset
 ) -> None:
     """Dumping and loading a superset is a unit function."""
-    superset = Superset(dataset=empty_dataset, slices=[])
+    superset = Superset(dataset=dataset_with_assays, slices=[])
 
     archive_path = superset.dump(path=tmp_path)
     superset_recovered = Superset.from_path(archive_path)
@@ -61,10 +61,10 @@ def test_superset_dump_from_path_is_unit_function(
 
 
 def test_superset_dump_creates_non_empty_file(
-    tmp_path: Path, empty_dataset: Dataset
+    tmp_path: Path, dataset_with_assays: Dataset
 ) -> None:
     """Dumping a superset creates a non-empty file."""
-    superset = Superset(dataset=empty_dataset, slices=[])
+    superset = Superset(dataset=dataset_with_assays, slices=[])
 
     archive_path = superset.dump(path=tmp_path)
 
@@ -73,10 +73,10 @@ def test_superset_dump_creates_non_empty_file(
 
 
 def test_superset_dump_creates_valid_archive(
-    tmp_path: Path, empty_dataset: Dataset
+    tmp_path: Path, dataset_with_assays: Dataset
 ) -> None:
     """Dumping a superset creates a valid archive."""
-    superset = Superset(dataset=empty_dataset, slices=[])
+    superset = Superset(dataset=dataset_with_assays, slices=[])
 
     archive_path = superset.dump(path=tmp_path)
 
