@@ -1,4 +1,5 @@
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 
@@ -69,3 +70,15 @@ def test_superset_dump_creates_non_empty_file(
 
     assert archive_path.is_file()
     assert archive_path.stat().st_size > 0
+
+
+def test_superset_dump_creates_valid_archive(
+    tmp_path: Path, empty_dataset: Dataset
+) -> None:
+    """Dumping a superset creates a valid archive."""
+    superset = Superset(dataset=empty_dataset, slices=[])
+
+    archive_path = superset.dump(path=tmp_path)
+
+    with ZipFile(archive_path, "r") as zip:
+        assert zip.testzip() is None  # No corrupt files
