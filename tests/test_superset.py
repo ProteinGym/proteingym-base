@@ -39,7 +39,7 @@ def test_superset_iterate_over_single_full_slice(dataset: Dataset) -> None:
 def superset_fifty_fifty(dataset_with_assay: Dataset) -> Superset:
     """A superset which cuts a dataset with two assays in half."""
     slc1 = DatasetSlice(assays=[[True, False]])
-    slc2 = DatasetSlice(assays=[[False, True]])
+    slc2 = DatasetSlice(assays=[[slice(1, None)]])  # Test using slice, not just mask
     superset = Superset(dataset=dataset_with_assay, slices=[slc1, slc2])
     return superset
 
