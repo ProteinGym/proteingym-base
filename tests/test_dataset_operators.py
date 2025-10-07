@@ -10,7 +10,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay, AssayTarget
+from proteingym.base.assay import Assay, AssayTarget, AssayVariable, AssayTarget
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -41,8 +41,8 @@ def dataset_with_assay() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[],
-        assay_targets=[AssayTarget(name="DMS_score")],
+        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_targets=[AssayTarget(name="target1", description="A test target")],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -63,7 +63,8 @@ def dataset_with_assays() -> Dataset:
     dataset = Dataset(
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
-        assay_variables=[],
+        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_targets=[AssayTarget(name="target1", description="A test target")],
         assays=[assay1, assay2],
         sequences=[],
         structures=[],
