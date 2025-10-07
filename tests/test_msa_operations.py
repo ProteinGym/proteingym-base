@@ -6,7 +6,7 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from pg2_dataset.msa import MSA
+from proteingym.base.msa import MSA
 
 
 def test_msa_equals_itself():
