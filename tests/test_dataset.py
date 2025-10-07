@@ -3,10 +3,15 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+from Bio.Align import MultipleSeqAlignment
+from Bio.PDB.Structure import Structure as BioStructure
 from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
 from proteingym.base.dataset import Dataset
+from proteingym.base.msa import MSA
+from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
+from proteingym.base.structure import Structure
 
 
 def test_dataset_dump_extension(tmp_path: Path) -> None:
@@ -133,6 +138,34 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
     result = runner.invoke(app, ["list-datasets", str(dataset_file), "--format", "xml"])
 
     assert result.exit_code == 2
+
+
+def test_list_datasets_json_serialization() -> None:
+    sequence = Sequence(
+        name="test",
+        value="test",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+
+    structure = Structure(
+        name="test",
+        value=BioStructure("test"),
+    )
+
+    msa = MSA(name="test", value=MultipleSeqAlignment([]))
+
+    dataset = Dataset(
+        name="dataset", sequences=[sequence], structures=[structure], msas=[msa]
+    )
+
+    dataset_str = dataset.model_dump_json()
+    dataset_obj = json.loads(dataset_str)
+
+    assert isinstance(dataset_obj, dict)
+    assert dataset_obj["sequences"][0]["value"] == "test"
+    assert dataset_obj["structures"][0]["value"] == "<Structure id=test>"
+    assert dataset_obj["msas"][0]["value"] == "Alignment with 0 rows and 0 columns"
 
 
 def test_dataset_repr() -> None:
