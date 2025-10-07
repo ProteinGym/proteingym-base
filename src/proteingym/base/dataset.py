@@ -104,7 +104,7 @@ class Dataset(BaseModel):
         """Implements the union operator (|) for Dataset.
 
         Returns a new Dataset containing the union of:
-        - assays
+        - assays, including assay variables and targets
         - sequences
         - structures
         - msas
@@ -121,11 +121,19 @@ class Dataset(BaseModel):
             if structure not in self.structures
         ]
         msas = self.msas + [msa for msa in other.msas if msa not in self.msas]
+        assay_variable_names = {v.name for v in self.assay_variables if v.name}
+        assay_variables = self.assay_variables + [
+            v for v in other.assay_variables if v.name not in assay_variable_names
+        ]
+        assay_target_names = {t.name for t in self.assay_targets if t.name}
+        assay_targets = self.assay_targets + [
+            t for t in other.assay_targets if t.name not in assay_target_names
+        ]
         return Dataset(
             name=f"{self.name}_union_{other.name}",
             description=f"Union of {self.name} and {other.name}",
-            assay_variables=self.assay_variables + other.assay_variables,
-            assay_targets=self.assay_targets + other.assay_targets,
+            assay_variables=assay_variables,
+            assay_targets=assay_targets,
             assays=assays,
             sequences=sequences,
             structures=structures,
