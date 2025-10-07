@@ -1,8 +1,9 @@
 [project]
 name = "proteingym-base"
-description = "Add your description here"
+description = "Infrastructure for protein variant effect prediction. Dataset class and tools to facilitate benchmarking."
 readme = "README.md"
 authors = [
+    { name = "Pascal Notin", email = "pascal.notin@gmail.com"},
     { name = "Henning Redestig", email = "henning.redestig@iff.com"},
     { name = "Karel van der Weg", email = "karel.weg@iff.com"},
     { name = "Shu Zhao", email = "shu.zhao@xebia.com"},
