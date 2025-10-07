@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from proteingym.base.dataset import Dataset, DatasetSlice
@@ -45,11 +47,25 @@ def test_superset_iterate_over_dataset_cut_in_half(dataset_with_assay: Dataset) 
     assert datasets[1].assays[0].records[0] == ("SEQ2", 2.0)
 
 
-def test_superset_dump_from_path_is_unit_function(empty_dataset: Dataset) -> None:
+def test_superset_dump_from_path_is_unit_function(
+    tmp_path: Path, empty_dataset: Dataset
+) -> None:
     """Dumping and loading a superset is a unit function."""
     superset = Superset(dataset=empty_dataset, slices=[])
 
-    archive_path = superset.dump()
+    archive_path = superset.dump(path=tmp_path)
     superset_recovered = Superset.from_path(archive_path)
 
     assert superset == superset_recovered
+
+
+def test_superset_dump_creates_non_empty_file(
+    tmp_path: Path, empty_dataset: Dataset
+) -> None:
+    """Dumping a superset creates a non-empty file."""
+    superset = Superset(dataset=empty_dataset, slices=[])
+
+    archive_path = superset.dump(path=tmp_path)
+
+    assert archive_path.is_file()
+    assert archive_path.stat().st_size > 0
