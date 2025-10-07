@@ -80,6 +80,18 @@ class DatasetSlice:
         """
         return json.dumps(dataclasses.asdict(self))
 
+    @classmethod
+    def from_json(cls, contents: str) -> "DatasetSlice":
+        """Create a dataset slice from a JSON string.
+
+        Args:
+            contents: The JSON string to create the dataset slice from.
+
+        Returns:
+            The dataset slice created from the JSON string.
+        """
+        return cls(**json.loads(contents))
+
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
 
