@@ -224,6 +224,24 @@ def dataset_with_msas() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_everything(
+    dataset_with_assays: Dataset,
+    dataset_with_sequences: Dataset,
+    dataset_with_structures: Dataset,
+    dataset_with_msas: Dataset,
+) -> Dataset:
+    """A dataset containing everything."""
+    # Tightly coupled with datasets fixture
+    dataset = (
+        dataset_with_assays
+        | dataset_with_sequences
+        | dataset_with_structures
+        | dataset_with_msas
+    ).model_copy(update={"name": "dataset_with_everything"})
+    return dataset
+
+
+@pytest.fixture
 def datasets(
     empty_dataset: Dataset,
     dataset_with_assay: Dataset,
@@ -234,6 +252,7 @@ def datasets(
     dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
     dataset_with_msas: Dataset,
+    dataset_with_everything: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
     return [
@@ -250,6 +269,7 @@ def datasets(
         dataset_with_msa,
         dataset_with_msas,
         dataset_with_msas,
+        dataset_with_everything,
     ]
 
 
@@ -285,6 +305,7 @@ ALL_DATASET_NAMES = [
     "dataset_with_single_msa",
     "dataset_with_multiple_msas",
     "dataset_with_multiple_msas",
+    "dataset_with_everything",
 ]
 
 
