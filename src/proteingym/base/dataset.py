@@ -73,7 +73,7 @@ class DatasetSlice:
         raw = json.loads(contents)
         assay_slices = []
         for slices in raw.get("assays", []):
-            is_slice_object = any(isinstance(slc, int) for slc in slices)
+            is_slice_object = any(isinstance(slc, int) or slc is None for slc in slices)
             if is_slice_object:
                 assay_slices.append(slice(*slices))
             else:
