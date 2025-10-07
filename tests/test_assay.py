@@ -530,6 +530,42 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
 
 
+def test_dataset_fails_with_duplicate_assay_variable_names() -> None:
+    """A dataset fails if there are duplicate assay names."""
+    duplicate_names = ["duplicate1", "duplicate2"]
+    assay_variables = [
+        AssayVariable(name=duplicate_names[0]),
+        AssayVariable(name=duplicate_names[0]),
+        AssayVariable(name=duplicate_names[0]),
+        AssayVariable(name=duplicate_names[1]),
+        AssayVariable(name="uniqe1"),
+        AssayVariable(name=duplicate_names[1]),
+    ]
+
+    match = (
+        rf"Duplicate names found in: AssayVariables:.*{', '.join(duplicate_names)}",
+    )
+    with pytest.raises(ValidationError, match=match):
+        Dataset(name="test", assay_variables=assay_variables)
+
+
+def test_dataset_fails_with_duplicate_assay_target_names() -> None:
+    """A dataset fails if there are duplicate assay target names."""
+    duplicate_names = ["duplicate1", "duplicate2"]
+    assay_targets = [
+        AssayTarget(name=duplicate_names[0]),
+        AssayTarget(name=duplicate_names[0]),
+        AssayTarget(name=duplicate_names[0]),
+        AssayTarget(name=duplicate_names[1]),
+        AssayTarget(name="uniqe1"),
+        AssayTarget(name=duplicate_names[1]),
+    ]
+
+    match = r"Duplicate names found in: AssayTargets:.*" + ", ".join(duplicate_names)
+    with pytest.raises(ValidationError, match=match):
+        Dataset(name="test", assay_targets=assay_targets)
+
+
 def test_assay_repr() -> None:
     """Test the string representation of the Assay class."""
     assay = Assay(
