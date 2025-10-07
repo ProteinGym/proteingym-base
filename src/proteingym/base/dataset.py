@@ -109,35 +109,23 @@ class Dataset(BaseModel):
         - structures
         - msas
         """
-        assays = self.assays + [
-            assay for assay in other.assays if assay not in self.assays
-        ]
-        sequences = self.sequences + [
-            sequence for sequence in other.sequences if sequence not in self.sequences
-        ]
-        structures = self.structures + [
-            structure
-            for structure in other.structures
-            if structure not in self.structures
-        ]
-        msas = self.msas + [msa for msa in other.msas if msa not in self.msas]
-        assay_variable_names = {v.name for v in self.assay_variables if v.name}
-        assay_variables = self.assay_variables + [
-            v for v in other.assay_variables if v.name not in assay_variable_names
-        ]
-        assay_target_names = {t.name for t in self.assay_targets if t.name}
-        assay_targets = self.assay_targets + [
-            t for t in other.assay_targets if t.name not in assay_target_names
-        ]
+
+        def list_union(left: list[Any], right: list[Any]) -> list[Any]:
+            """Return the union of two lists.
+
+            Preserving order and removing duplicates
+            """
+            return left + [item for item in right if item not in left]
+
         return Dataset(
             name=f"{self.name}_union_{other.name}",
             description=f"Union of {self.name} and {other.name}",
-            assay_variables=assay_variables,
-            assay_targets=assay_targets,
-            assays=assays,
-            sequences=sequences,
-            structures=structures,
-            msas=msas,
+            assay_variables=list_union(self.assay_variables, other.assay_variables),
+            assay_targets=list_union(self.assay_targets, other.assay_targets),
+            assays=list_union(self.assays, other.assays),
+            sequences=list_union(self.sequences, other.sequences),
+            structures=list_union(self.structures, other.structures),
+            msas=list_union(self.msas, other.msas),
         )
 
     def __eq__(self, item: Any) -> bool:
