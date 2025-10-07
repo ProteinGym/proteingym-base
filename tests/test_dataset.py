@@ -33,8 +33,10 @@ def test_dataset_slice_from_json_slices() -> None:
     """Test that a dataset slice can be created from a JSON string."""
     expected = DatasetSlice(
         assays=[
-            [slice(1, 5, 2), slice(None, 5, 2)],
-            [slice(1, None, 2), slice(1, 5, None)],
+            slice(1, 5, 2),
+            slice(None, 5, 2),
+            slice(1, None, 2),
+            slice(1, 5, None),
         ]
     )
     contents = '{"assays": [[1, 5, 2], [null, 5, 2], [1, null, 2], [1, 5, null]]}'
