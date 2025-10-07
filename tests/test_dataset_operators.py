@@ -228,15 +228,11 @@ def datasets(
     empty_dataset: Dataset,
     dataset_with_assay: Dataset,
     dataset_with_assays: Dataset,
-    dataset_with_assays: Dataset,
     dataset_with_sequence: Dataset,
-    dataset_with_sequences: Dataset,
     dataset_with_sequences: Dataset,
     dataset_with_structure: Dataset,
     dataset_with_structures: Dataset,
-    dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
-    dataset_with_msas: Dataset,
     dataset_with_msas: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
