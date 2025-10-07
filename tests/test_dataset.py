@@ -29,6 +29,19 @@ def test_dataset_slice_dumps_mask() -> None:
     assert slc.to_json() == contents
 
 
+def test_dataset_slice_dumps_slices() -> None:
+    """Test that a dataset slice with slices is correctly dumped to JSON."""
+    contents = '{"assays": [[1, 5, 2], [null, 5, 2], [1, null, 2], [1, 5, null]]}'
+    slices = [
+        slice(1, 5, 2),
+        slice(None, 5, 2),
+        slice(1, None, 2),
+        slice(1, 5, None),
+    ]
+    slc = DatasetSlice(assays=slices)
+    assert slc.to_json() == contents
+
+
 def test_dataset_dump_extension(tmp_path: Path) -> None:
     """The dataset dump should create a .pgdata file.
 
