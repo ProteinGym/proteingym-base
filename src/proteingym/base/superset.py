@@ -69,7 +69,7 @@ class Superset:
             )
             dataset = Dataset.from_path(dataset_archive)
             slices_str = json.loads(zip.read(SupersetArchiveLayout.SLICES_FILE))
-            slices = [DatasetSlice(**slc) for slc in slices_str]
+            slices = [DatasetSlice.from_json(slc) for slc in slices_str]
         return cls(dataset=dataset, slices=slices)
 
     def dump(self, *, path: Path | str | None = None) -> Path:
@@ -96,6 +96,6 @@ class Superset:
                 zip.write(
                     dataset_archive, arcname=SupersetArchiveLayout.DATASET_ARCHIVE
                 )
-            slices_str = json.dumps([dataclasses.asdict(slc) for slc in self.slices])
+            slices_str = json.dumps([slc.to_json() for slc in self.slices])
             zip.writestr(SupersetArchiveLayout.SLICES_FILE, slices_str)
         return path
