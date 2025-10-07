@@ -208,7 +208,10 @@ class Assay:
             lines.append("\tvariables: 0,")
 
         lines.append("\trecords:")
-        if len(self.records) > 3:
+        if not self.records:
+            lines.append("\t\t<no records>")
+            n_recs = 0
+        elif len(self.records) > 3:
             n_recs = 3
         else:
             n_recs = len(self.records)

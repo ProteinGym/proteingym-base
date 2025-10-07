@@ -23,6 +23,12 @@ def test_assay_empty_contains_itself() -> None:
     assert assay in assay
 
 
+def test_assay_contains_returns_false_for_non_assay() -> None:
+    """An assay should not contain a non-assay."""
+    assay = Assay(name="Test Assay", records=[])
+    assert 1 not in assay
+
+
 def test_assay_with_record_equals_itself() -> None:
     """An assay with a record should equal itself."""
     assay = Assay(

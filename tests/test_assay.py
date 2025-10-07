@@ -220,6 +220,18 @@ def test_as_manifest_section(tmp_path: Path) -> None:
     assert "2.0" in manifest.path.read_text()
 
 
+def test_as_manifest_section_with_no_records(tmp_path: Path) -> None:
+    """Test converting an Assay with no records to a manifest section."""
+    assay = Assay(
+        name="assay",
+        records=[],
+    )
+    path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    manifest = assay.as_manifest_section(path=path)
+    assert manifest.name == "assay"
+    assert manifest.sequence_alphabet == "AA"
+
+
 def test_assay_dump(tmp_path: Path) -> None:
     """Test dumping an Assay to a file."""
     assay = Assay(
@@ -603,3 +615,11 @@ def test_assay_repr() -> None:
     )
     repr_str = repr(assay)
     assert "\t\t..." in repr_str
+
+    assay = Assay(
+        name="no records",
+        records=[],
+        columns=["sequence", "DMS Score"],
+    )
+    repr_str = repr(assay)
+    assert "\t\t<no records>" in repr_str
