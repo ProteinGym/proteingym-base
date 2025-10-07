@@ -90,7 +90,15 @@ class DatasetSlice:
         Returns:
             The dataset slice created from the JSON string.
         """
-        return cls(**json.loads(contents))
+        raw = json.loads(contents)
+        assay_slices = []
+        for slices in raw.get("assays", []):
+            is_slice_object = any(isinstance(slc, int) for slc in slices)
+            if is_slice_object:
+                assay_slices.append(slice(*slices))
+            else:
+                assay_slices.append(slices)
+        return cls(assays=assay_slices)
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
