@@ -538,13 +538,11 @@ def test_dataset_fails_with_duplicate_assay_variable_names() -> None:
         AssayVariable(name=duplicate_names[0]),
         AssayVariable(name=duplicate_names[0]),
         AssayVariable(name=duplicate_names[1]),
-        AssayVariable(name="uniqe1"),
+        AssayVariable(name="unique1"),
         AssayVariable(name=duplicate_names[1]),
     ]
 
-    match = (
-        rf"Duplicate names found in: AssayVariables:.*{', '.join(duplicate_names)}",
-    )
+    match = rf"Duplicate names found in: AssayVariables:.*{', '.join(duplicate_names)}"
     with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assay_variables=assay_variables)
 
