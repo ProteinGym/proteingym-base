@@ -4,9 +4,9 @@ from proteingym.base.dataset import Dataset, DatasetSlice
 from proteingym.base.superset import Superset
 
 
-def test_iterate_over_empty_superset() -> None:
+def test_superset_iterate_over_empty(empty_dataset: Dataset) -> None:
     """Test that iterating over an empty superset does not yield any elements."""
-    superset = Superset(dataset=None, slices=[])
+    superset = Superset(dataset=empty_dataset, slices=[])
     for _ in superset:
         raise AssertionError("Should not iterate over empty superset")
 
@@ -25,14 +25,14 @@ ALL_DATASET_NAMES = [
 
 
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
-def test_iterate_over_single_full_slice(dataset: Dataset) -> None:
+def test_superset_iterate_over_single_full_slice(dataset: Dataset) -> None:
     """Iterating over a superset with a single full slice yields the entire dataset."""
     slc = DatasetSlice(assays=[slice(None)] * len(dataset.assays))
     superset = Superset(dataset=dataset, slices=[slc])
     assert list(superset) == [dataset]
 
 
-def test_iterate_over_dataset_cut_in_half(dataset_with_assay: Dataset) -> None:
+def test_superset_iterate_over_dataset_cut_in_half(dataset_with_assay: Dataset) -> None:
     """Iterating over a superset which cuts the dataset in half yields two datasets."""
     slc1 = DatasetSlice(assays=[[True, False]])
     slc2 = DatasetSlice(assays=[[False, True]])
