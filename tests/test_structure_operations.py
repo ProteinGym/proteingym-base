@@ -4,7 +4,7 @@ Module for testing structure operators.
 
 from Bio.PDB.Structure import Structure as BioStructure
 
-from pg2_dataset.structure import Structure
+from proteingym.base.structure import Structure
 
 
 def test_structure_equals_itself():
