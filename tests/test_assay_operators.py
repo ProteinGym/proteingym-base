@@ -2,6 +2,8 @@
 Module for testing assay operators.
 """
 
+import pytest
+
 from proteingym.base.assay import Assay, SequenceAlphabet
 
 
@@ -71,6 +73,23 @@ def test_assay_contains_subset_mismatch() -> None:
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert subset not in assay
+
+
+def test_assay_equals_with_name_mismatch() -> None:
+    """An assay name should not be considered for equality."""
+    assay = Assay(
+        name="Test Assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        variables={"variable1": 1},
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    other_assay = Assay(
+        name="Other Test Assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        variables={"variable1": 1},
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert assay == other_assay
 
 
 def test_assay_equals_with_variable() -> None:
@@ -150,3 +169,60 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
         sequence_alphabet=SequenceAlphabet.AA,
     )
     assert subset not in assay
+
+
+@pytest.mark.parametrize("slc", [slice(None), [True, True]])
+def test_assay_slice_all(slc: slice | list[bool]) -> None:
+    """Slicing an assay with [:] should return the same assay."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        variables={"variable1": 1, "variable2": 2},
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert assay == assay[slc]
+
+
+@pytest.mark.parametrize("slc", [slice(0, 1), [True, False]])
+def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
+    """Slicing an assay with [:1] should return the first record."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    first = Assay(
+        name="Test assay with first record",
+        records=[("SEQ1", 1.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert first == assay[slc]
+
+
+@pytest.mark.parametrize("slc", [slice(1, 2), [False, True]])
+def test_assay_slice_last(slc: slice | list[bool]) -> None:
+    """Slicing an assay with [1:] should return the last record."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    last = Assay(
+        name="Test assay with last record",
+        records=[("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    assert last == assay[slc]
+
+
+def test_assay_get_first_raises_not_implemented_error() -> None:
+    """Getting an assay with [0] should return the first record."""
+    assay = Assay(
+        name="Test assay",
+        records=[("SEQ1", 1.0), ("SEQ2", 2.0)],
+        sequence_alphabet=SequenceAlphabet.AA,
+    )
+    with pytest.raises(
+        NotImplementedError, match="Getting a single record is not supported."
+    ):
+        assay[0]

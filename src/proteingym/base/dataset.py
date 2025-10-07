@@ -1,5 +1,7 @@
 import collections
+import dataclasses
 import itertools
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
@@ -35,6 +37,22 @@ class DatasetArchiveLayout:
 
     MSAS_DIRECTORY = Path("msas/")
     """The directory for multiple sequence alignments (MSAs)."""
+
+
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class DatasetSlice:
+    """A slice of a dataset.
+
+    A slice gets ("slices") a subset of dataset. Currently, a slice only covers
+    a subset of assays.
+
+    This class functions as a (small) protocol to be extended if we include more
+    attributes in a dataset slice. Currently, it is a wrapper around a list of
+    assay slices.
+    """
+
+    assays: list[list[int], slice] = Field(default_factory=list)
+    """The list of assay slices."""
 
 
 class Dataset(BaseModel):
@@ -80,6 +98,25 @@ class Dataset(BaseModel):
 
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
+
+    def __getitem__(self, item: DatasetSlice) -> "Dataset":
+        """Get a slice of the dataset.
+
+        Args:
+            item (slice | DatasetSlice): The slice to get. Can be a standard
+                Python slice or a DatasetSlice.
+
+        Returns:
+            Dataset: A new Dataset instance containing only the sliced data.
+        """
+        if not isinstance(item, DatasetSlice):
+            raise TypeError(
+                f"Dataset can only be sliced with a DatasetSlice, not {type(item)}"
+            )
+        assays = [
+            assay[slc] for assay, slc in zip(self.assays, item.assays, strict=True)
+        ]
+        return self.model_copy(update={"assays": assays})
 
     def __repr__(self) -> str:
         """Return a concise string representation of the dataset."""
@@ -141,6 +178,21 @@ class Dataset(BaseModel):
             ]
             raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
         return self
+
+    def model_dump_json(self, **kwargs) -> str:
+        """Override to ensure JSON serialization works with Bio objects.
+
+        Biopython objects: Seq, Structure, MultipleSeqAlignment,
+        don't have custom JSONEncoder, thus we rely on their __str__ method
+        to return a string representation in order for
+        Bio objects to be sereializable.
+
+        See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
+        """
+
+        data = self.model_dump(**kwargs)
+        # Converts any non-serializable objects to their string representation.
+        return json.dumps(data, default=str)
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
