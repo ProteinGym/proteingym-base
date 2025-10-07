@@ -1,7 +1,12 @@
 import dataclasses
+import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 
-from .dataset import Dataset, DatasetSlice
+from .dataset import Dataset, DatasetArchiveLayout, DatasetSlice
+
+_SUPERSET_ARCHIVE_SUFFIX = ".splits.pgdata"
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -52,4 +57,17 @@ class Superset:
         if isinstance(path, str):  # User-friendly interface to support str
             path = Path(path)
         path = path or Path.cwd()
+        if path.is_dir():
+            path = path / f"{self.dataset.name}{_SUPERSET_ARCHIVE_SUFFIX}"
+        with ZipFile(path, "w") as zip:
+            # While a SE practice is to avoid IO to disk where possible,
+            # we use a temporary directory here as long as dataset dump requires
+            # it.
+            with TemporaryDirectory() as temp_dir:
+                dataset_archive = self.dataset.dump(path=Path(temp_dir))
+                zip.write(
+                    dataset_archive, arcname=f"dataset{DatasetArchiveLayout.SUFFIX}"
+                )
+            slices_str = json.dumps([dataclasses.asdict(slc) for slc in self.slices])
+            zip.writestr("slices.json", slices_str)
         return path
