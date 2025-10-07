@@ -122,7 +122,7 @@ class Dataset(BaseModel):
         ]
         msas = self.msas + [msa for msa in other.msas if msa not in self.msas]
         return Dataset(
-            name=f"{self.name}_or_{other.name}",  # TODO: What name should this get?
+            name=f"{self.name}_union_{other.name}",
             description=f"Union of {self.name} and {other.name}",
             # TODO: Test dataset with assay variables and targets
             assay_variables=self.assay_variables + other.assay_variables,
