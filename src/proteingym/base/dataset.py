@@ -57,7 +57,7 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[list[int], slice] = Field(default_factory=list)
+    assays: list[list[bool], slice] = Field(default_factory=list)
     """The list of assay slices."""
 
     def to_json(self) -> str:
