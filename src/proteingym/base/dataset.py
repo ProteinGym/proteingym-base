@@ -124,8 +124,9 @@ class Dataset(BaseModel):
         return Dataset(
             name=f"{self.name}_or_{other.name}",  # TODO: What name should this get?
             description=f"Union of {self.name} and {other.name}",
-            # TODO: Test dataset with assay conditions
-            assay_conditions=self.assay_conditions + other.assay_conditions,
+            # TODO: Test dataset with assay variables and targets
+            assay_variables=self.assay_variables + other.assay_variables,
+            assay_targets=self.assay_targets + other.assay_targets,
             assays=assays,
             sequences=sequences,
             structures=structures,
