@@ -16,7 +16,7 @@ def model_card_contents() -> str:
 ---
 name: "dummy"
 
-hyper_params:
+hyper_parameters:
     nogpu: false
 ---
 
@@ -52,13 +52,13 @@ def test_model_card_name(model_card_path: Path) -> None:
         assert model_card.name == "dummy"
 
 
-def test_manifest_hyper_params(model_card_path: Path) -> None:
+def test_manifest_hyper_parameters(model_card_path: Path) -> None:
     try:
         model_card = ModelCard.from_path(model_card_path)
     except ValidationError as e:
         raise ValidationError("ValidationError raised") from e
     else:
-        assert not model_card.hyper_params["nogpu"]
+        assert not model_card.hyper_parameters["nogpu"]
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def valid_model_card_content() -> str:
     """Valid model card content for testing."""
     return """---
 name: "test_model"
-hyper_params:
+hyper_parameters:
     learning_rate: 0.001
     batch_size: 32
 ---
@@ -98,16 +98,6 @@ def empty_pyproject_content_missing_project() -> str:
     return """[build-system]
 requires = ["setuptools"]
 # Missing [project] section
-"""
-
-
-@pytest.fixture
-def empty_pyproject_content_missing_name() -> str:
-    """Invalid pyproject.toml content for testing."""
-    return """[project]
-version = "1.0.0"
-description = "Test model package"
-# Missing name
 """
 
 
@@ -233,28 +223,6 @@ def test_validation_pyproject_missing_project_section(
     assert "❌ Validation failed: 1 validation error for ModelProject" in result.stderr
 
 
-@pytest.mark.parametrize(
-    "model_project",
-    [
-        (
-            "valid_model_card_content",
-            "empty_pyproject_content_missing_name",
-            "test_model",
-        ),
-    ],
-    indirect=True,
-)
-def test_validation_pyproject_missing_name(
-    model_project: Path,
-    runner: CliRunner,
-):
-    """Test validation when pyproject.toml is missing name under [project] section."""
-    result = runner.invoke(app, ["validate", str(model_project)])
-
-    assert result.exit_code == 1
-    assert "❌ Validation failed: 1 validation error for ModelProject" in result.stderr
-
-
 def test_model_project_from_path_nonexistent():
     """Test ModelProject.from_path with non-existent path."""
     with pytest.raises(ValueError, match=r".*pyproject.toml not found.*"):
@@ -274,26 +242,6 @@ def test_validation_empty_entry_points(
 ):
     with mock_empty_entry_points:
         with pytest.raises(ValueError, match=r".*No entry points found.*"):
-            _ = ModelProject.from_path(model_project)
-
-
-@pytest.mark.parametrize(
-    "model_project",
-    [
-        (
-            "valid_model_card_content",
-            "empty_pyproject_content_empty_name",
-            "test_model",
-        ),
-    ],
-    indirect=True,
-)
-def test_validation_pyproject_empty_name(
-    model_project: Path,
-    mock_valid_entry_points,
-):
-    with mock_valid_entry_points:
-        with pytest.raises(ValueError, match=r".*project name is empty.*"):
             _ = ModelProject.from_path(model_project)
 
 
@@ -331,7 +279,7 @@ def test_list_models_command(runner: CliRunner, model_card_path: Path) -> None:
     model_data = output_data[0]
     assert model_data["name"] == "dummy"
     assert "input_filename" in model_data
-    assert model_data["hyper_params"]["nogpu"] is False
+    assert model_data["hyper_parameters"]["nogpu"] is False
 
 
 def test_list_models_directory_with_multiple_cards(
@@ -343,7 +291,7 @@ def test_list_models_directory_with_multiple_cards(
         """
 ---
 name: "model_one"
-hyper_params:
+hyper_parameters:
     learning_rate: 0.001
 ---
 
@@ -358,7 +306,7 @@ First model description
         """
 ---
 name: "model_two"
-hyper_params:
+hyper_parameters:
     learning_rate: 0.001
 ---
 
@@ -427,7 +375,7 @@ def test_list_models_validation_error(runner: CliRunner, tmp_path: Path) -> None
     invalid_card.write_text(
         """
 ---
-hyper_params:
+hyper_parameters:
     learning_rate: 0.001
 ---
 

@@ -127,14 +127,14 @@ def validate_model(
     try:
         model_project = ModelProject.from_path(project_path)
         typer.echo(
-            f"✅ Model {model_project.project.name} loaded successfully "
+            f"✅ Model {model_project.project['name']} loaded successfully "
             f"with entry points: {model_project.entry_points}"
         )
 
         model_card = ModelCard.from_path(project_path / "README.md")
         typer.echo(
             f"✅ Loaded {model_card.name} with hyper parameters: "
-            f"{model_card.hyper_params}."
+            f"{model_card.hyper_parameters}."
         )
     except ValueError as e:
         typer.echo(f"❌ Validation failed: {str(e)}", err=True)

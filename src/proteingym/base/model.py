@@ -31,7 +31,7 @@ class ModelCard(BaseModel):
     name: str
     """The name of the model."""
 
-    hyper_params: dict[str, Any] = Field(default_factory=dict)
+    hyper_parameters: dict[str, Any] = Field(default_factory=dict)
     """Dictionary containing model hyperparameters and configuration."""
 
     @classmethod
@@ -49,20 +49,8 @@ class EntryPoint:
     name: str
     """The name of the entry point function or command."""
 
-    params: list[str] = field(default_factory=list)
+    parameters: list[str] = field(default_factory=list)
     """List of parameter names that the entry point accepts."""
-
-
-@dataclass
-class ProjectSection:
-    """Represents the project section of a pyproject.toml file."""
-
-    name: str
-    """The name of the project as defined in pyproject.toml."""
-
-    def __post_init__(self):
-        if not self.name or not self.name.strip():
-            raise ValueError(f"project name is empty: {self.name}.")
 
 
 class ModelProject(BaseModel):
@@ -78,8 +66,8 @@ class ModelProject(BaseModel):
         frozen=True,
     )
 
-    project: ProjectSection
-    """The project configuration section containing metadata from pyproject.toml."""
+    project: dict
+    """The project table containing metadata from pyproject.toml."""
 
     @computed_field
     @property
@@ -89,11 +77,10 @@ class ModelProject(BaseModel):
         console_scripts = [
             ep
             for ep in metadata.entry_points()
-            if ep.dist.name == self.project.name and ep.group == "console_scripts"
+            if ep.dist.name == self.project["name"] and ep.group == "console_scripts"
         ]
 
-        entry_points = []
-        entry_points.extend(self._filter_entry_points(*console_scripts))
+        entry_points = list(self._filter_entry_points(*console_scripts))
 
         return entry_points
 
@@ -102,24 +89,24 @@ class ModelProject(BaseModel):
     ) -> Generator[EntryPoint, None, None]:
         """Filter and extract entry points from metadata entry points."""
         for ep in entry_points:
-            app = ep.load()
-            is_entry_point = hasattr(app, "registered_commands")
+            loaded_entry_point = ep.load()
+            is_entry_point = hasattr(loaded_entry_point, "registered_commands")
 
             if not is_entry_point:
                 continue
 
-            for command in app.registered_commands:
+            for command in loaded_entry_point.registered_commands:
                 sig = inspect.signature(command.callback)
                 entry_point = EntryPoint(
                     name=command.callback.__name__,
-                    params=list(sig.parameters.keys()),
+                    parameters=list(sig.parameters.keys()),
                 )
                 yield entry_point
 
     @model_validator(mode="after")
     def _validate_entry_points_exist(self) -> "ModelProject":
         if len(self.entry_points) == 0:
-            raise ValueError(f"No entry points found for {self.project.name}")
+            raise ValueError(f"No entry points found for {self.project['name']}")
         return self
 
     @classmethod
