@@ -7,6 +7,18 @@ from Bio.PDB.Structure import Structure as BioStructure
 from proteingym.base.structure import Structure
 
 
+def test_structure_not_equals_integer():
+    """A structure should equal itself."""
+    bio_structure = BioStructure("test")
+    structure = Structure(
+        name="Test Structure",
+        value=bio_structure,
+        description=None,
+        metadata={},
+    )
+    assert structure != 1
+
+
 def test_structure_equals_itself():
     """A structure should equal itself."""
     bio_structure = BioStructure("test")
