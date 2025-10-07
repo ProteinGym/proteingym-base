@@ -60,6 +60,14 @@ class DatasetSlice:
     assays: list[list[int], slice] = Field(default_factory=list)
     """The list of assay slices."""
 
+    def to_json(self) -> str:
+        """Convert the dataset slice to a JSON string.
+
+        Returns:
+            A JSON string representation of the dataset slice.
+        """
+        return json.dumps(dataclasses.asdict(self))
+
 
 class Dataset(BaseModel):
     """A Protein Gym dataset.

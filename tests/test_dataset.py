@@ -8,7 +8,14 @@ from Bio.PDB.Structure import Structure as BioStructure
 from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
-from proteingym.base.dataset import Dataset
+from proteingym.base.dataset import Dataset, DatasetSlice
+
+
+def test_dataset_slice_dumps_mask() -> None:
+    """Test that a dataset slice with a boolean mask is correctly dumped to JSON."""
+    contents = '{"assays": [[true, false, true], [false, true, false]]}'
+    slc = DatasetSlice(assays=[[True, False, True], [False, True, False]])
+    assert slc.to_json() == contents
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
