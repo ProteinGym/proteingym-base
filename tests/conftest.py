@@ -4,7 +4,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay
+from proteingym.base.assay import Assay, AssayTarget
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -29,18 +29,31 @@ def empty_dataset() -> Dataset:
 @pytest.fixture
 def dataset_with_assay() -> Dataset:
     """A dataset containing a single assay."""
+    sequence1 = Sequence(
+        name="seq1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    sequence2 = Sequence(
+        name="seq2",
+        value=Seq("GFEDCA"),
+        type=sequence1.alphabet,
+        alphabet=SequenceAlphabet.AA,
+    )
     assay = Assay(
         name="assay1",
         records=[
-            ("SEQ1", 1.0),
-            ("SEQ2", 2.0),
+            (sequence1, {"DMS Score": 1.0}),
+            (sequence2, {"DMS Score": 2.0}),
         ],
-        sequence_alphabet=SequenceAlphabet.AA,
+        sequence_alphabet=sequence1.alphabet,
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
         assay_variables=[],
+        assay_targets=[AssayTarget(name="DMS Score")],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -52,16 +65,33 @@ def dataset_with_assay() -> Dataset:
 @pytest.fixture
 def dataset_with_assays() -> Dataset:
     """A dataset containing multiple assays."""
+    sequence1 = Sequence(
+        name="seq1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    sequence2 = Sequence(
+        name="seq2",
+        value=Seq("GFEDCA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
     assay1 = Assay(
-        name="assay1", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA
+        name="assay1",
+        records=[(sequence1, {"DMS Score": 1.0})],
+        sequence_alphabet=sequence1.alphabet,
     )
     assay2 = Assay(
-        name="assay2", records=[("SEQ2", 2.0)], sequence_alphabet=SequenceAlphabet.AA
+        name="assay2",
+        records=[(sequence2, {"DMS Score": 2.0})],
+        sequence_alphabet=sequence2.alphabet,
     )
     dataset = Dataset(
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
         assay_variables=[],
+        assay_targets=[AssayTarget(name="DMS Score")],
         assays=[assay1, assay2],
         sequences=[],
         structures=[],
