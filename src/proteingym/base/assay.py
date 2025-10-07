@@ -1,4 +1,5 @@
 import dataclasses
+import itertools
 from enum import StrEnum
 from pathlib import Path
 
@@ -186,6 +187,35 @@ class Assay:
             k in self.variables and self.variables[k] == v
             for k, v in item.variables.items()
         )
+
+    def __eq__(self, item: "Assay") -> bool:
+        """Implements the '==' operator for Assay."""
+        if not isinstance(item, Assay):
+            return False
+        return (
+            self.records == item.records
+            and self.variables == item.variables
+            and self.sequence_alphabet == item.sequence_alphabet
+        )
+
+    def __getitem__(self, slc: slice | list[int | bool]) -> "Assay":
+        """Slice the assay to get a subset of records.
+
+        Args:
+            slc (slice | list[int | bool]): The slice or list of indices to get
+                If a list of bool is given, it is treated as a mask.
+        """
+        if isinstance(slc, int):
+            # The Assay is a container with more than records, getting a single record
+            # would mean losing the other information or returning an Assay with
+            # a list of one record. The former is not desired and the latter is
+            # ambiguous with the slicing operation.
+            raise NotImplementedError("Getting a single record is not supported.")
+        if isinstance(slc, list):
+            records_slice = list(itertools.compress(self.records, slc))
+        else:
+            records_slice = self.records[slc]
+        return dataclasses.replace(self, records=records_slice)
 
     def __repr__(self) -> str:
         """Return a string representation of the Assay object."""
