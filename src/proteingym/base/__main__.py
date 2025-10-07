@@ -110,6 +110,48 @@ def build(
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
 
 
+@app.command("list-datasets")
+def list_datasets(
+    path: Annotated[
+        Path,
+        typer.Argument(
+            help="Directory path containing .pgdata dataset archives",
+            exists=True,
+            file_okay=True,
+            dir_okay=True,
+        ),
+    ],
+):
+    """List available datasets with optional query filtering."""
+
+    def find_datasets_with_paths(root_path: Path) -> list[dict]:
+        """Find all .pgdata datasets in the given directory."""
+        datasets_with_paths = []
+
+        if root_path.is_file():
+            paths = [path]
+        else:
+            paths = root_path.rglob("*.pgdata")
+
+        for model_path in paths:
+            dataset = Dataset.from_path(model_path)
+            dataset_data = json.loads(dataset.model_dump_json())
+
+            dataset_entry = {
+                **dataset_data,
+                "input_filename": model_path.resolve().as_posix(),
+            }
+
+            datasets_with_paths.append(dataset_entry)
+
+        return datasets_with_paths
+
+    datasets_with_paths = find_datasets_with_paths(root_path=path)
+
+    output = json.dumps(datasets_with_paths, indent=2)
+    typer.echo(output, nl=False)
+
+
 @app.command("list-models")
 def list_models(
     path: Annotated[

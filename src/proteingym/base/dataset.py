@@ -1,6 +1,7 @@
 import collections
 import dataclasses
 import itertools
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
@@ -177,6 +178,21 @@ class Dataset(BaseModel):
             ]
             raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
         return self
+
+    def model_dump_json(self, **kwargs) -> str:
+        """Override to ensure JSON serialization works with Bio objects.
+
+        Biopython objects: Seq, Structure, MultipleSeqAlignment,
+        don't have custom JSONEncoder, thus we rely on their __str__ method
+        to return a string representation in order for
+        Bio objects to be sereializable.
+
+        See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
+        """
+
+        data = self.model_dump(**kwargs)
+        # Converts any non-serializable objects to their string representation.
+        return json.dumps(data, default=str)
 
     @classmethod
     def from_manifest(cls, manifest: Manifest) -> "Dataset":
