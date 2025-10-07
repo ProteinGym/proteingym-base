@@ -26,6 +26,9 @@ from .structure import Structure
 class DatasetArchiveLayout:
     """The layout of the dataset archive."""
 
+    SUFFIX = ".pgdata"
+    """The suffix of the dataset archive."""
+
     MANIFEST_FILE = Path("manifest.lock")
     """The internal manifest file inside the dataset archive."""
 
@@ -418,7 +421,7 @@ class Dataset(BaseModel):
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
-        archive_path = path / f"{self.name}.pgdata"
+        archive_path = path / f"{self.name}{DatasetArchiveLayout.SUFFIX}"
         # The manifest Pydantic base model checks if the data path exists,
         # hence, we dump the data before creating and dumping the Manifest
         data_paths = self._dump_data(temporary_directory)
