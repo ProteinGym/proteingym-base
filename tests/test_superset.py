@@ -72,6 +72,18 @@ def test_superset_dump_creates_non_empty_file(
     assert archive_path.stat().st_size > 0
 
 
+def test_superset_dump_archive_extension(
+    tmp_path: Path, dataset_with_assays: Dataset
+) -> None:
+    """Validate the archive extension of a dumped superset."""
+    superset = Superset(dataset=dataset_with_assays, slices=[])
+
+    archive_path = superset.dump(path=tmp_path)
+
+    assert archive_path.suffix == ".splits.pgdata"
+    assert archive_path.as_posix().endswith(".splits.pgdata")
+
+
 def test_superset_dump_creates_valid_archive(
     tmp_path: Path, dataset_with_assays: Dataset
 ) -> None:
