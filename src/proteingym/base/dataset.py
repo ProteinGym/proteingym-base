@@ -241,6 +241,8 @@ class Dataset(BaseModel):
 
         data_types = {
             Assay: self.assays,
+            AssayVariable: self.assay_variables,
+            AssayTarget: self.assay_targets,
             Sequence: self.sequences,
             Structure: self.structures,
             MSA: self.msas,
