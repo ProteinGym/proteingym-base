@@ -90,15 +90,24 @@ class DatasetSlice:
         Returns:
             The dataset slice created from the JSON string.
         """
-        raw = json.loads(contents)
-        assay_slices = []
-        for slices in raw.get("assays", []):
-            is_slice_object = any(isinstance(slc, int) or slc is None for slc in slices)
-            if is_slice_object:
-                assay_slices.append(slice(*slices))
-            else:
-                assay_slices.append(slices)
-        return cls(assays=assay_slices)
+
+        def is_integer(value: Any) -> bool:
+            return isinstance(value, int) and not isinstance(value, bool)
+
+        def is_slice_iterable(iterable: Iterable) -> bool:
+            return any(is_integer(el) or el is None for el in iterable)
+
+        def as_dataset_slice(raw: dict) -> DatasetSlice:
+            assay_slices = []
+            for slices in raw.get("assays", []):
+                if is_slice_iterable(slices):
+                    assay_slices.append(slice(*slices))
+                else:
+                    assay_slices.append(slices)
+            return cls(assays=assay_slices)
+
+        instance = json.loads(contents, object_hook=as_dataset_slice)
+        return instance
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
