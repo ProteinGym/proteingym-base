@@ -86,7 +86,19 @@ class DatasetSlice:
         Returns:
             A JSON string representation of the dataset slice.
         """
-        return json.dumps(dataclasses.asdict(self))
+
+        def encode_slice(slc: slice) -> tuple[int | None, int | None, int | None]:
+            """Encode a slice object as a tuple."""
+            return (slc.start, slc.stop, slc.step)
+
+        def encode(dataset_slice: DatasetSlice) -> object:
+            slices = [
+                encode_slice(s) if isinstance(s, slice) else s
+                for s in dataset_slice.assays
+            ]
+            return {"assays": slices}
+
+        return json.dumps(self, default=encode)
 
 
 class Dataset(BaseModel):
