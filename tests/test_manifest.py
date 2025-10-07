@@ -20,7 +20,7 @@ description = "pH level of the samples"
 unit = "pH"
 
 [[ assay_targets ]]
-name = "DMS Score"
+name = "DMS_score"
 description = "DMS score of the samples"
 unit = "log fold change"
 
@@ -29,12 +29,10 @@ name = "assay"
 path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
+targets = ["DMS_score"]
 
 [ assays.variables ]
 PH = "7"
-
-[ assays.targets ]
-"DMS Score" = "DMS_score"
 
 [[ sequences ]]
 type = "wild_type"

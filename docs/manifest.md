@@ -63,7 +63,7 @@ description = "pH level of the samples"
 unit = "pH"
 
 [[ assay_targets ]]
-name = "DMS Score"
+name = "DMS_score"
 description = "DMS score of the samples"
 unit = "log fold change"
 
@@ -72,12 +72,10 @@ name = "assay"
 path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
+targets = ["DMS_score"]
 
 [ assays.variables ]
 PH = "7"
-
-[ assays.targets ]
-"DMS Score" = "DMS_score"
 
 [[ sequences ]]
 type = "wild_type"
@@ -103,6 +101,7 @@ the protein data types.
 | `name`            | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                                                                                                 |
 | `description`     | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                                                                                                      |
 | `assay_variables` | `dict[str, str]`      | No           | Empty dict  | The variables for the assays defined in the dataset. Can be an assay condition or other variables of interest.                                                                                                                                                                                                           |
+| `assay_targets`   | `dict[str, str]`      | No           | Empty dict  | The targets for the assays defined in the dataset. Can be binding affinity, stability, or other targets of interest.                                                                                                                                                                                                     |
 | `assays`          | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                                                                                                |
 | `sequences`       | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                                                                                                   |
 | `structures`      | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                                                                                                  |
@@ -138,9 +137,9 @@ The assays section contains a list of assays included in the dataset.
 |---------------------|------------------|--------------|--------------|----------------------------------------------------------------|
 | `name`              | `string`         | No           | `None`       | The name of the assay.                                         |
 | `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`. |
-| `targets`           | `dict[str, str]` | No           | `"target"`   | The target feature name in the assay.                          |
+| `targets`           | `list[str]`      | Yes          | N/A          | The list of target feature names in the assay.                 |
 | `sequence`          | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                        |
-| `sequence_alphabet` | `string`         | No           | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").          |
+| `sequence_alphabet` | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").          |
 | `variables`         | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                    |
 
 Example of an assay file:

@@ -141,7 +141,7 @@ class Manifest(BaseModel):
         """Validate that all assay targets are defined in the manifest."""
         defined_target_names = {target.name for target in self.assay_targets}
         for assay in self.assays:
-            undefined_target_names = set(assay.targets.keys()) - defined_target_names
+            undefined_target_names = set(assay.targets) - defined_target_names
             if undefined_target_names:
                 raise ValueError(
                     f"Assay {assay.name} contains undefined targets:"
