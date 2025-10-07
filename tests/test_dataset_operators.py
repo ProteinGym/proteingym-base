@@ -386,8 +386,12 @@ def test_dataset_union_contains_both(dataset: Dataset, dataset2: Dataset) -> Non
     union = dataset | dataset2
     assert dataset in union
     assert dataset2 in union
-    assert dataset != union
-    assert dataset2 != union
+
+    # If one dataset is not a subset of the other, then both should not be equal
+    # to the union
+    is_subset = dataset in dataset2 or dataset2 in dataset
+    assert is_subset or dataset != union
+    assert is_subset or dataset2 != union
 
 
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
