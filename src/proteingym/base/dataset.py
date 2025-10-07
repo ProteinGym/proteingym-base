@@ -133,6 +133,27 @@ class Dataset(BaseModel):
             msas=msas,
         )
 
+    def __eq__(self, item: Any) -> bool:
+        """Implements the equality operator (==) for Dataset."""
+        if not isinstance(item, Dataset):
+            return False
+
+        def sort_by_name(
+            values: list[Assay | Sequence | Structure | MSA],
+        ) -> list[BaseModel]:
+            """Sort a list of BaseModel by name, placing unnamed items at the end."""
+            return sorted(values, key=lambda value: value.name)
+
+        is_assay_match = sort_by_name(self.assays) == sort_by_name(item.assays)
+        is_sequence_match = sort_by_name(self.sequences) == sort_by_name(item.sequences)
+        is_structure_match = sort_by_name(self.structures) == sort_by_name(
+            item.structures
+        )
+        is_msa_match = sort_by_name(self.msas) == sort_by_name(item.msas)
+        return (
+            is_assay_match and is_sequence_match and is_structure_match and is_msa_match
+        )
+
     def __contains__(self, item: Any) -> bool:
         """Implements the 'in' operator for Dataset."""
         if not isinstance(item, Dataset):
