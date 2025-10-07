@@ -183,7 +183,7 @@ class Assay:
         """
         if not isinstance(item, Assay):
             return False
-        return set(item.records).issubset(self.records) and all(
+        return all(record in self.records for record in item.records) and all(
             k in self.variables and self.variables[k] == v
             for k, v in item.variables.items()
         )
@@ -195,7 +195,7 @@ class Assay:
         return (
             self.records == item.records
             and self.variables == item.variables
-            and self.sequence_alphabet == item.sequence_alphabet
+            and self.columns == item.columns
         )
 
     def __getitem__(self, slc: slice | list[int | bool]) -> "Assay":
