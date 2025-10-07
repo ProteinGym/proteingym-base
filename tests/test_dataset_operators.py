@@ -306,10 +306,20 @@ ALL_DATASET_NAMES = [
 ]
 
 
+def test_dataset_not_equals_integer(empty_dataset: Dataset) -> None:
+    """A dataset should not equal an integer."""
+    assert empty_dataset != 1
+
+
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
 def test_dataset_equals_itself(dataset: Dataset) -> None:
     """A dataset should equal itself."""
     assert dataset == dataset
+
+
+def test_dataset_does_not_contain_integer(empty_dataset: Dataset) -> None:
+    """A dataset should not contain an integer."""
+    assert 1 not in empty_dataset
 
 
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
