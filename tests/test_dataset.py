@@ -22,6 +22,27 @@ def test_dataset_slice_from_json_mask() -> None:
     assert slc == expected
 
 
+def test_dataset_slice_from_json_mask() -> None:
+    """Test that a dataset slice can be created from a JSON string."""
+    expected = DatasetSlice(assays=[[True, False, True], [False, True, False]])
+    contents = '{"assays": [[true, false, true], [false, true, false]]}'
+    slc = DatasetSlice(**json.loads(contents))
+    assert slc == expected
+
+
+def test_dataset_slice_from_json_slices() -> None:
+    """Test that a dataset slice can be created from a JSON string."""
+    expected = DatasetSlice(
+        assays=[
+            [slice(1, 5, 2), slice(None, 5, 2)],
+            [slice(1, None, 2), slice(1, 5, None)],
+        ]
+    )
+    contents = '{"assays": [[1, 5, 2], [null, 5, 2], [1, null, 2], [1, 5, null]]}'
+    slc = DatasetSlice(**json.loads(contents))
+    assert slc == expected
+
+
 def test_dataset_slice_dumps_mask() -> None:
     """Test that a dataset slice with a boolean mask is correctly dumped to JSON."""
     contents = '{"assays": [[true, false, true], [false, true, false]]}'
