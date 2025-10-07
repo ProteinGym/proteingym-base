@@ -100,7 +100,8 @@ class DatasetSlice:
             """Encode a slice object as a tuple."""
             return (slc.start, slc.stop, slc.step)
 
-        def encode(dataset_slice: DatasetSlice) -> object:
+        def encode(dataset_slice: DatasetSlice) -> dict:
+            """Encode a DatasetSlice as a dictionary."""
             slices = [
                 encode_slice(s) if isinstance(s, slice) else s
                 for s in dataset_slice.assays
