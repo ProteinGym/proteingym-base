@@ -279,12 +279,6 @@ class Assay:
             )
             .alias("sequence_object")
         )
-
-        # df = df.with_columns(
-        #     # Create a dict of target_name: target_value for each record
-        #     pl.struct(section.targets)
-        # )
-        # Get the records as a list of tuples of (Sequence, target, target, ...)
         records = list(
             df.select("sequence_object", *section.targets.values()).iter_rows()
         )
