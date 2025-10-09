@@ -37,7 +37,7 @@ def test_assay_variable_minimal() -> None:
     try:
         variable = AssayVariable(name="test")
     except ValidationError as e:
-        raise AssertionError(f"AssayVariable raised ValidationError: {e}") from e
+        raise AssertionError("Test failed") from e
     else:
         assert variable.name == "test"
 
@@ -79,7 +79,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
             description="Test assay",
             sequence="sequence",
             sequence_alphabet="AA",
-            targets=["target", "target2"],
+            targets={"DMS Score": "target", "DMS Score2": "target2"},
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
@@ -91,7 +91,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
         with assay_file.open() as f:
             content = f.read()
         assert section.sequence in content
-        assert all(target in content for target in section.targets)
+        assert all(target in content for target in section.targets.values())
 
 
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
@@ -117,7 +117,7 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
             description="Test assay",
             sequence="invalid_feature",
             sequence_alphabet="AA",
-            targets=["target", "target2"],
+            targets={"DMS Score": "invalid_feature"},
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
@@ -170,19 +170,21 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
                 name="assay",
                 sequence="sequence",
                 sequence_alphabet=SequenceAlphabet.DNA,
-                targets=["target", "target2"],
+                targets={"DMS Score": "target", "DMS Score2": "target2"},
                 path=assay_file,
                 variables={"test_cond1": "true", "test_cond2": 42},
             ),
         )
     except ValidationError as e:
-        raise AssertionError(f"Assay raised ValidationError: {e}") from e
+        raise AssertionError("Failed test assay from manifest section") from e
     else:
         assert assay.name == "assay"
         assert len(assay.records) == 2
         for rec in assay.records:
             assert isinstance(rec[0], Sequence)
-            assert all(t in ["target", "target2"] for t in assay.target_feature_names)
+            assert all(
+                t in ["DMS Score", "DMS Score2"] for t in assay.target_feature_names
+            )
         assert assay.sequence_feature_name == "sequence"
 
 
@@ -229,7 +231,7 @@ def test_as_manifest_section_with_no_records(tmp_path: Path) -> None:
     path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
     assert manifest.name == "assay"
-    assert manifest.sequence_alphabet == "AA"
+    assert manifest.sequence_alphabet == "UNKNOWN"
 
 
 def test_assay_dump(tmp_path: Path) -> None:
@@ -309,14 +311,14 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
             version=Version(1, 0),
             name="test_manifest",
             assay_targets=[
-                AssayTarget(name="target"),
-                AssayTarget(name="target2"),
+                AssayTarget(name="DMS Score"),
+                AssayTarget(name="DMS Score2"),
             ],
             assays=[
                 {
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
-                    "targets": ["target", "target2"],
+                    "targets": {"DMS Score": "target", "DMS Score2": "target2"},
                 }
             ],
         )
@@ -343,7 +345,7 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
                 {
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
-                    "targets": ["target", "target2"],
+                    "targets": {"DMS Score": "target", "DMS Score2": "target2"},
                 }
             ],
         )
