@@ -231,7 +231,7 @@ def test_as_manifest_section_with_no_records(tmp_path: Path) -> None:
     path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
     assert manifest.name == "assay"
-    assert manifest.sequence_alphabet == "UNKNOWN"
+    assert manifest.sequence_alphabet is None
 
 
 def test_assay_dump(tmp_path: Path) -> None:

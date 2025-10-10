@@ -99,7 +99,7 @@ class AssayManifestSection(BaseModel):
     sequence: str = "sequence"
     """The sequence feature name given in the file."""
 
-    sequence_alphabet: SequenceAlphabet
+    sequence_alphabet: SequenceAlphabet | None = None
     """The alphabet of the sequences of the assay."""
 
     targets: dict[str, str] = Field(default_factory=dict)
@@ -303,7 +303,7 @@ class Assay:
 
         # Get the sequence alphabet from the first record
         if not self.records:
-            sequence_alphabet = SequenceAlphabet.UNKNOWN
+            sequence_alphabet = None
         else:
             sequence_alphabet = self.records[0][0].alphabet
         return AssayManifestSection(
