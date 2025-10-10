@@ -1,8 +1,8 @@
-# Protein Gym Dataset
+# ProteinGym Base
 
 [![codecov](https://codecov.io/gh/ProteinGym/proteingym-base/graph/badge.svg?token=RQ9KX7UPL0)](https://codecov.io/gh/ProteinGym/proteingym-base)
 
-A standardisation for using protein data within protein gym.
+[ProteinGym](https://proteingym.org/) has become a widely used resource for comparing the ability of models to predict the effects of protein mutations. ProteinGym Base is an effort to bring more structure to the datasets so that they become easier to work with and to distribute; and to the models in the benchmark so that they become easier to install and run. Less undocumented csv's and more formal schemas. Fewer scripts with hardcoded paths and more Dockerfiles and precise requirements.
 
 - [Protein Gym Dataset](#protein-gym-dataset)
   - [Project Structure](#project-structure)
@@ -110,9 +110,9 @@ You can quickly load the archived data:
 
 ```
 
-### Access protein data
+### Access proteingym data
 
-The `Dataset` object provides access to the protein data:
+The `Dataset` object provides access to the proteingym data:
 - Assays
 - Sequences
 - Structures
@@ -120,13 +120,8 @@ The `Dataset` object provides access to the protein data:
 
 #### Multiple Sequence Alignment (MSA)
 
-When loading MSA, [biotite](https://www.biotite-python.org/latest/index.html) is
-required to be installed: `uv sync --extra biotite`.
 
-> [!CAUTION]
-> Biotite only supports loading from fasta. So any aligment outside the fasta format (ending with .fa or .fasta) will throw an error.
-
-When loading MSA data, configure the following section in the toml:
+When loading MSA data, add the following section in the toml:
 
 ```toml
 [[ msas ]]
@@ -134,11 +129,13 @@ path = "example_data/v2/A0A1I9GEU1_NEIME_Kennouche_2019/msa.fasta"
 format = "fasta"
 ```
 
-[biotite get the alignment](https://www.biotite-python.org/latest/apidoc/biotite.sequence.io.fasta.get_alignment.html)
-as an [`Alignment` object](https://biopython.org/docs/latest/api/Bio.AlignIO.html):
+To get the MSA as [`MultipleSeqAlignment` object](https://biopython.org/docs/latest/api/Bio.AlignIO.html):
 
 ```python
->>> from Bio.Align import Alignment, MultipleSeqAlignment
+>>> from proteingym.base import Manifest, Dataset
+>>> from Bio.Align import MultipleSeqAlignment
+>>> mf = Manifest.from_path("example_data/neime_2019.toml")
+>>> dataset = Dataset.from_manifest(mf)
 >>> isinstance(dataset.msas[0].value, MultipleSeqAlignment)  # The first MSA in the dataset
 True
 
@@ -149,12 +146,12 @@ True
 The NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) dataset is used as an example.
 This dataset is stored in `example_data/NEIME_2019` and contains the following:
 
->[!CAUTION]
+>[!NOTE]
 > AssayMeta and DatasetMeta are just examples of possible meta tags one might think of.
 > Current information in there is not associated to the dataset at all and not obtained
 > from official sources.
 
->[!CAUTION]
+>[!NOTE]
 > In Assay.csv we also contain the split and engineer round column. 
 > Engineering round is randomly allocated to 1, 2 or 3 for illustrative purposes.
 > Orginal assay belongs to a single engineering round.
