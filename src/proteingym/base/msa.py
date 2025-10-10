@@ -1,6 +1,7 @@
 import dataclasses
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
@@ -84,6 +85,15 @@ class MSA:
 
     description: str | None = None
     """A brief description of the MSA."""
+
+    def __eq__(self, item: Any) -> bool:
+        """Implements the equality (==) operator for MSA.
+
+        For equality, we only look at the msa value.
+        """
+        if isinstance(item, MSA):
+            return self.value == item.value
+        return False
 
     def __repr__(self) -> str:
         """A concise representation of the MSA object."""

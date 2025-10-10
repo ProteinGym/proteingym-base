@@ -14,10 +14,9 @@ from .data_generators import (
 )
 from .dataset import Dataset
 from .manifest import Manifest
-from .model import ModelCard
+from .model import ModelCard, ModelProject
 
 logger = logging.getLogger("proteingym.base")
-
 
 app = typer.Typer(
     name="proteingym-base",
@@ -108,6 +107,41 @@ def build(
     typer.echo("Building dataset archive...")
     archive_path = dataset.dump(path=output_path)
     typer.echo(f"Dataset {dataset.name} archived to: {archive_path}")
+
+
+@app.command("validate")
+def validate_model(
+    project_path: Annotated[
+        Path,
+        typer.Argument(
+            help="Root path to the model project",
+            exists=True,
+            resolve_path=True,
+        ),
+    ],
+):
+    """Validate a model from path."""
+
+    logger = logging.getLogger("proteingym.base")
+
+    try:
+        model_project = ModelProject.from_path(project_path)
+        typer.echo(
+            f"✅ Model {model_project.project['name']} loaded successfully "
+            f"with entry points: {model_project.entry_points}"
+        )
+
+        model_card = ModelCard.from_path(project_path / "README.md")
+        typer.echo(
+            f"✅ Loaded {model_card.name} with hyper parameters: "
+            f"{model_card.hyper_parameters}."
+        )
+    except ValueError as e:
+        typer.echo(f"❌ Validation failed: {str(e)}", err=True)
+        raise typer.Exit(1) from e
+    except Exception as e:
+        logger.error("❌ Error running validation", exc_info=e)
+        raise typer.Exit(1) from e
 
 
 @app.command("list-datasets")
