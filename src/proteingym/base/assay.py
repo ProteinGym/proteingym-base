@@ -1,6 +1,6 @@
 import dataclasses
-from collections.abc import Collection
 import itertools
+from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
 
@@ -329,36 +329,35 @@ class Assay:
         Returns:
             pl.DataFrame: The DataFrame containing all records from the assay.
         """
-        rows = []
         if not self.records:
-            raise ValueError(f"The assay `{self.name}` has no records.")
+            # If no records are present, return empty DataFrame
+            return pl.DataFrame(schema=["sequence"])
         if target_names:
             if isinstance(target_names, str):
                 target_names = {target_names}
             else:
                 target_names = set(target_names).intersection(self.target_feature_names)
             if not target_names:
-                raise ValueError(
-                    f"None of the given `target_names` "
-                    f"are present in the assay `{self.name}`."
-                )
+                # If not matching target names, return empty DataFrame
+                return pl.DataFrame(schema=["sequence"])
         else:
             target_names = self.target_feature_names
 
-        for record in self.records:
-            seq = record[0]
-            row = {"sequence": str(seq.value)}
-            tgts = record[1]
-            for target_name, target_value in tgts.items():
-                if target_name in target_names:
-                    row[target_name] = target_value
-            rows.append(row)
+        df = pl.DataFrame(self.records, schema=self.columns, orient="row").select(
+            [self.sequence_feature_name] + list(target_names)
+        )
+        df = df.with_columns(
+            pl.col(self.sequence_feature_name).map_elements(
+                lambda seq: str(seq.value), return_dtype=pl.Utf8
+            )
+        )
+        df = df.rename({self.sequence_feature_name: "sequence"})
 
-        for variable_name, variable_value in self.variables.items():
-            for row in rows:
-                row[variable_name] = variable_value
+        # Add the assay variables as columns to the DataFrame
+        for var_name, var_value in self.variables.items():
+            df = df.with_columns(pl.lit(var_value).alias(var_name))
 
-        return pl.DataFrame(rows)
+        return df
 
     def dump(
         self, *, path: Path | None = None, format: AssayFormat = AssayFormat.CSV
