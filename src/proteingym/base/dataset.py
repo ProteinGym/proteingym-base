@@ -393,6 +393,7 @@ class Dataset(BaseModel):
 
     def to_df(
         self,
+        *,
         target_names: Collection[str] | str | None = None,
     ) -> pl.DataFrame:
         """Returns the dataset assay records as a Polars DataFrame.

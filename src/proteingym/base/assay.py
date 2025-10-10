@@ -319,7 +319,9 @@ class Assay:
             path=path,
         )
 
-    def to_df(self, target_names: Collection[str] | str | None = None) -> pl.DataFrame:
+    def to_df(
+        self, *, target_names: Collection[str] | str | None = None
+    ) -> pl.DataFrame:
         """Returns the assay records with assay variables as a Polars DataFrame.
 
         Args:
