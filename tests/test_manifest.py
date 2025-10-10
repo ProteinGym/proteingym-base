@@ -24,17 +24,22 @@ name = "DMS Score"
 description = "DMS score of the samples"
 unit = "log fold change"
 
+[[ assay_targets ]]
+name = "DMS Score Bin"
+description = "DMS score bin of the samples"
+
 [[ assays ]]
 name = "assay"
 path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
 
-[ assays.variables ]
-PH = "7"
-
 [ assays.targets ]
 "DMS Score" = "DMS_score"
+"DMS Score Bin" = "DMS_score_bin"
+
+[ assays.variables ]
+PH = "7"
 
 [[ sequences ]]
 type = "wild_type"
@@ -61,7 +66,7 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     for path in sequence_file, structure_file, msa_file, assay_file:
         path.touch()
     # Write header in the assay file
-    assay_file.write_text("sequence,DMS_score\n")
+    assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
@@ -149,7 +154,7 @@ def test_manifest_from_path(manifest_path: Path) -> None:
     try:
         Manifest.from_path(manifest_path)
     except ValidationError as e:
-        raise ValidationError("ValidationError raised") from e
+        raise ValidationError(f"ValidationError raised {e}") from e
     else:
         assert True, "Manifest loaded successfully from path-like object."
 

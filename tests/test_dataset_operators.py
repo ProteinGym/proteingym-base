@@ -8,7 +8,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay
+from proteingym.base.assay import Assay, AssayTarget
 from proteingym.base.dataset import Dataset, DatasetSlice
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -34,12 +34,13 @@ def empty_dataset() -> Dataset:
 def dataset_with_assay() -> Dataset:
     """A dataset containing a single assay."""
     assay = Assay(
-        name="assay1", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA
+        name="assay1", records=[("SEQ1", 1.0)], columns=["sequence", "DMS_score"]
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
         assay_variables=[],
+        assay_targets=[AssayTarget(name="DMS_score")],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -52,10 +53,10 @@ def dataset_with_assay() -> Dataset:
 def dataset_with_assays() -> Dataset:
     """A dataset containing multiple assays."""
     assay1 = Assay(
-        name="assay1", records=[("SEQ1", 1.0)], sequence_alphabet=SequenceAlphabet.AA
+        name="assay1", records=[("SEQ1", 1.0)], columns=["sequence", "DMS_score"]
     )
     assay2 = Assay(
-        name="assay2", records=[("SEQ2", 2.0)], sequence_alphabet=SequenceAlphabet.AA
+        name="assay2", records=[("SEQ2", 2.0)], columns=["sequence", "DMS_score"]
     )
     dataset = Dataset(
         name="dataset_with_multiple_assays",
