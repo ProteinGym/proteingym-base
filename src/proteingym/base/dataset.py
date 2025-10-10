@@ -399,7 +399,7 @@ class Dataset(BaseModel):
         """Returns the dataset assay records as a Polars DataFrame.
 
         Args:
-            target_names (list[str]): The list of target names to include.
+            target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
             drop_all_missing (bool): If True, drop all rows with missing values.
                 Defaults to False.

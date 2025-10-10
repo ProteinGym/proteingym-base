@@ -325,7 +325,7 @@ class Assay:
         """Returns the assay records with assay variables as a Polars DataFrame.
 
         Args:
-            target_names (Collection[str]): The list of target names to include.
+            target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
 
         Returns:
