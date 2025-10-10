@@ -25,13 +25,13 @@ description = "DMS score bin of the samples"
 sequence = "mutated_sequence"
 path = "./NEIME_2019/Assays/Assay1.csv"
 sequence_alphabet = "AA"
+
+[ assays.targets ]
+"DMS Score" = "DMS_score"
+
 [ assays.variables ]
 T = 37
 PH = 7
-[ assays.targets ]
-"DMS Score" = "DMS_score"
-"DMS Score Bin" = "DMS_score_bin"
-
 
 [[ sequences ]]
 path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"

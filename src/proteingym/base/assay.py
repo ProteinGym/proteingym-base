@@ -1,5 +1,6 @@
 import dataclasses
 from collections.abc import Collection
+import itertools
 from enum import StrEnum
 from pathlib import Path
 
@@ -99,11 +100,11 @@ class AssayManifestSection(BaseModel):
     sequence: str = "sequence"
     """The sequence feature name given in the file."""
 
-    sequence_alphabet: SequenceAlphabet
+    sequence_alphabet: SequenceAlphabet | None = None
     """The alphabet of the sequences of the assay."""
 
     targets: dict[str, str] = Field(default_factory=dict)
-    """The target name given in dataset map to target feature name given in the file."""
+    """The map of target names in dataset to target feature names in assay."""
 
     variables: dict[str, bool | int | float | str] = Field(default_factory=dict)
     """The variable key:value pairs, key is the name of the assay variable (defined in
@@ -131,7 +132,7 @@ class AssayManifestSection(BaseModel):
         """Validate whether feature names are present in the `path` file."""
         with self.path.open("r") as f:
             header = f.readline()
-        for v in (self.sequence, *self.targets.values()):
+        for v in [self.sequence] + list(self.targets.values()):
             if v not in header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
@@ -149,11 +150,11 @@ class Assay:
     name: str
     """The name of the assay."""
 
-    records: list[tuple[Sequence, dict[str, int | float | bool | str]]]
-    """The records of the assay, pairs of Sequence and multiple targets."""
+    records: list[tuple[Sequence | str | int | float | bool | str]]
+    """The records of the assay, tuple with Sequence, target values."""
 
-    sequence_alphabet: SequenceAlphabet
-    """The alphabet of the sequences in the assay."""
+    columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
+    """The column names in the assay records."""
 
     variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
@@ -163,14 +164,17 @@ class Assay:
     description: str | None = None
     """The description of the assay."""
 
-    sequence_feature_name: str = "sequence"
-    """The sequence feature name in the assay records."""
+    @property
+    def sequence_feature_name(self) -> str:
+        """Returns the sequence feature name in the assay records."""
+        return self.columns[0]
 
     @property
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
-        # get the target names from first record as all records have same targets
-        return list(self.records[0][1].keys())
+        # Get the target feature names from the columns
+        # The first column is the sequence
+        return list(self.columns[1:])
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -180,10 +184,39 @@ class Assay:
         """
         if not isinstance(item, Assay):
             return False
-        return set(item.records).issubset(self.records) and all(
+        return all(record in self.records for record in item.records) and all(
             k in self.variables and self.variables[k] == v
             for k, v in item.variables.items()
         )
+
+    def __eq__(self, item: "Assay") -> bool:
+        """Implements the '==' operator for Assay."""
+        if not isinstance(item, Assay):
+            return False
+        return (
+            self.records == item.records
+            and self.variables == item.variables
+            and self.columns == item.columns
+        )
+
+    def __getitem__(self, slc: slice | list[int | bool]) -> "Assay":
+        """Slice the assay to get a subset of records.
+
+        Args:
+            slc (slice | list[int | bool]): The slice or list of indices to get
+                If a list of bool is given, it is treated as a mask.
+        """
+        if isinstance(slc, int):
+            # The Assay is a container with more than records, getting a single record
+            # would mean losing the other information or returning an Assay with
+            # a list of one record. The former is not desired and the latter is
+            # ambiguous with the slicing operation.
+            raise NotImplementedError("Getting a single record is not supported.")
+        if isinstance(slc, list):
+            records_slice = list(itertools.compress(self.records, slc))
+        else:
+            records_slice = self.records[slc]
+        return dataclasses.replace(self, records=records_slice)
 
     def __repr__(self) -> str:
         """Return a string representation of the Assay object."""
@@ -198,8 +231,6 @@ class Assay:
         else:
             lines.append("\tdescription: None,")
 
-        lines.append(f"\tsequence_alphabet: {self.sequence_alphabet},")
-
         if self.variables:
             lines.append(f"\tvariables: {len(self.variables)},")
             for k, v in self.variables.items():
@@ -208,11 +239,16 @@ class Assay:
             lines.append("\tvariables: 0,")
 
         lines.append("\trecords:")
-        for i, (seq, target) in enumerate(self.records[:3]):
+        n_recs = min(len(self.records), 3)
+        if n_recs == 0:
+            lines.append("\t\t<no records>")
+        for i, record in enumerate(self.records[:n_recs]):
+            seq = record[0]
+            targets = record[1:]
             seq_str = str(seq.value)
             if len(seq_str) > 30:
                 seq_str = seq_str[:30] + "..."
-            lines.append(f"\t\t{seq_str}, {target},")
+            lines.append(f"\t\t{seq_str}, {targets},")
             if i == 2 and len(self.records) > 3:
                 lines.append("\t\t...")
                 break
@@ -224,7 +260,7 @@ class Assay:
         """Create an Assay instance from a manifest section."""
 
         df = pl.read_csv(
-            section.path, columns=[section.sequence, *section.targets.values()]
+            section.path, columns=[section.sequence] + list(section.targets.values())
         )
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
@@ -244,23 +280,14 @@ class Assay:
             )
             .alias("sequence_object")
         )
-        df = df.with_columns(
-            # Create a dict of target_name: target_value for each record
-            pl.struct(list(section.targets.values()))
-            .map_elements(
-                lambda tgt: {
-                    target_name: tgt[target_feature_name]
-                    for target_name, target_feature_name in section.targets.items()
-                },
-                return_dtype=pl.Object,
-            )
-            .alias("target_objects")
+        records = list(
+            df.select("sequence_object", *section.targets.values()).iter_rows()
         )
 
         return cls(
             name=section.name or section.path.stem,
-            records=list(df.select("sequence_object", "target_objects").iter_rows()),
-            sequence_alphabet=section.sequence_alphabet,
+            records=records,
+            columns=[section.sequence] + list(section.targets.keys()),
             description=section.description,
             variables=section.variables,
         )
@@ -275,11 +302,16 @@ class Assay:
             AssayManifestSection: The manifest section for the assay.
         """
 
+        # Get the sequence alphabet from the first record
+        if not self.records:
+            sequence_alphabet = None
+        else:
+            sequence_alphabet = self.records[0][0].alphabet
         return AssayManifestSection(
             name=self.name,
             description=self.description,
             sequence=self.sequence_feature_name,
-            sequence_alphabet=self.sequence_alphabet,
+            sequence_alphabet=sequence_alphabet,
             targets=dict(
                 zip(self.target_feature_names, self.target_feature_names, strict=False)
             ),
@@ -349,8 +381,16 @@ class Assay:
         if path.is_dir():
             path = path / f"{self.name}{format.value}"
 
-        df = self.to_df()
-
+        df = pl.DataFrame(
+            self.records,
+            schema=self.columns,
+            orient="row",
+        )
+        df = df.with_columns(
+            pl.col(self.sequence_feature_name).map_elements(
+                lambda seq: str(seq.value), return_dtype=pl.Utf8
+            )
+        )
         match format:
             case AssayFormat.CSV:
                 df.write_csv(path)
