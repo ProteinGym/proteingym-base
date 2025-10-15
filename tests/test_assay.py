@@ -1,6 +1,6 @@
 from pathlib import Path
 from zipfile import ZipFile
-import os
+
 import pytest
 from pydantic import ValidationError
 from semver import Version
@@ -471,7 +471,11 @@ def test_dataset_to_df() -> None:
     )
     dataset = Dataset(
         name="test_dataset",
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[
+            AssayTarget(name="DMS Score"),
+            AssayTarget(name="DMS Score2"),
+            AssayTarget(name="DMS Score3"),
+        ],
         assays=[assay1, assay2],
     )
 
@@ -482,20 +486,23 @@ def test_dataset_to_df() -> None:
     else:
         assert "sequence" in df.columns
         assert "DMS Score" in df.columns
-        assert df.shape == (4, 2)
-        assert df["sequence"].to_list() == ["APC", "DEF", "APC", "GHI"]
-        assert df["DMS Score"].to_list() == [1.0, 2.0, 1.0, 3.0]
+        assert df.shape == (3, 2)
+        assert df["sequence"].to_list() == ["APC", "DEF", "GHI"]
+        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0]
 
     try:
         df = dataset.to_df()
     except ValueError as e:
         raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
     else:
+        print(assay1, assay2, df)
         assert "sequence" in df.columns
         assert "DMS Score" in df.columns
-        assert df.shape == (4, 2)
-        assert df["sequence"].to_list() == ["APC", "DEF", "APC", "GHI"]
-        assert df["DMS Score"].to_list() == [1.0, 2.0, 1.0, 3.0]
+        assert df.shape == (3, 4)
+        assert df["sequence"].to_list() == ["APC", "DEF", "GHI"]
+        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0]
+        assert df["DMS Score2"].to_list() == [0.5, 0.6, None]
+        assert df["DMS Score3"].to_list() == [0.7, None, 0.8]
 
     with pytest.raises(
         ValueError,
@@ -560,11 +567,12 @@ def test_dataset_to_df_assay_with_different_targets() -> None:
     else:
         assert "sequence" in df.columns
         assert "DMS Score" in df.columns
-        assert df.shape == (5, 5)
-        assert df["sequence"].to_list() == ["APC", "DEF", "APC", "APC", "GHI"]
-        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0, None, None]
-        assert df["Binding Affinity"].to_list() == [None, None, None, 0.8, 0.9]
-        assert df["pH"].to_list() == [7.0, 7.0, 7.0, 7.0, 7.0]
+        assert df.shape == (4, 5)
+        assert df["sequence"].to_list() == ["APC", "APC", "DEF", "GHI"]
+        assert df["DMS Score"].to_list() == [None, 2.0, 2.0, None]
+        assert df["Binding Affinity"].to_list() == [0.8, None, None, 0.9]
+        assert df["pH"].to_list() == [7.0, 7.0, 7.0, 7.0]
+        assert df["T"].to_list() == [None, 30, 30, None]
 
 
 def test_dataset_to_df_failed_assay_to_df() -> None:
@@ -595,6 +603,39 @@ def test_dataset_to_df_failed_assay_to_df() -> None:
         raise ValueError("Dataset to_df failed") from e
     else:
         assert df.shape == (0, 2), "DataFrame should be empty if all assays fail"
+
+
+def test_dataset_to_df_drops_empty_target_rows() -> None:
+    """Test that Dataset.to_df drops rows with all target values as None."""
+    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
+    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    assay1 = Assay(
+        name="assay1",
+        records=[
+            (seq1, 1.0),
+            (seq2, None),
+        ],
+        columns=["sequence", "DMS Score"],
+    )
+    assay2 = Assay(
+        name="assay2",
+        records=[
+            (seq1, None),
+            (seq2, None),
+        ],
+        columns=["sequence", "DMS Score"],
+    )
+    dataset = Dataset(
+        name="test_dataset",
+        assay_targets=[AssayTarget(name="DMS Score")],
+        assays=[assay1, assay2],
+    )
+    df = dataset.to_df(target_names=["DMS Score"])
+    assert df.shape == (1, 2), (
+        "DataFrame should drop rows with all target values as None"
+    )
+    assert df["sequence"].to_list() == ["APC"]
+    assert df["DMS Score"].to_list() == [1.0]
 
 
 def test_dataset_with_dump_assays(tmp_path: Path) -> None:

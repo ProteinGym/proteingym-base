@@ -418,7 +418,6 @@ class Dataset(BaseModel):
 
         if not self.assays:
             raise ValueError("No assays found in the dataset.")
-
         variable_names = [v.name for v in self.assay_variables]
         assays_dfs = []
         for assay in self.assays:
@@ -439,8 +438,13 @@ class Dataset(BaseModel):
 
         df = pl.concat(assays_dfs, how="vertical_relaxed")
         # Drop all rows that have all targets missing
-        df = df.filter(
-            ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
+        df = df.filter(~pl.all_horizontal([pl.col(t).is_null() for t in target_names]))
+
+        # Group by sequence and variables, and aggregate the target by mean
+        df = (
+            df.group_by(["sequence"] + variable_names)
+            .agg([pl.col(t).mean().alias(t) for t in target_names])
+            .sort(["sequence"] + variable_names)
         )
 
         return df
