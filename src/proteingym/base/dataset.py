@@ -438,6 +438,9 @@ class Dataset(BaseModel):
             raise ValueError("None of the assays could be converted to DataFrame.")
 
         df = pl.concat(assays_dfs, how="vertical_relaxed")
-        df = df.filter(~pl.all_horizontal(pl.all().is_null()))
+        # Drop all rows that have all targets missing
+        df = df.filter(
+            ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
+        )
 
         return df

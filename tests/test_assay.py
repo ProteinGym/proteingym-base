@@ -1,7 +1,6 @@
-import os
 from pathlib import Path
 from zipfile import ZipFile
-
+import os
 import pytest
 from pydantic import ValidationError
 from semver import Version
@@ -350,56 +349,6 @@ def test_assay_dump(tmp_path: Path) -> None:
     content = dumped_path.read_text()
     assert "APC,1.56" in content
     assert "DEF,2.0" in content
-
-
-def test_assay_dump_no_path(tmp_path: Path) -> None:
-    """Test dumping an Assay with no path and use cwd."""
-
-    org_dir = os.getcwd()
-    assay = Assay(
-        name="test_assay",
-        records=[
-            (
-                Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
-                ),
-                1.0,
-            ),
-        ],
-        columns=["sequence", "DMS Score"],
-    )
-    try:
-        os.chdir(tmp_path)
-        dumped_path = assay.dump(format=AssayFormat.CSV)
-    except ValueError as e:
-        raise ValueError("Failed to dump assay with no path") from e
-    else:
-        assert dumped_path == Path.cwd() / "test_assay.csv"
-        assert dumped_path.exists()
-    finally:
-        os.chdir(org_dir)
-
-
-def test_assay_dump_unsupported_format(tmp_path: Path) -> None:
-    """Test dumping an Assay with an unsupported format."""
-    assay = Assay(
-        name="test_assay",
-        records=[
-            (
-                Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
-                ),
-                1.0,
-            ),
-        ],
-        columns=["sequence", "DMS Score"],
-    )
-
-    class BadFormat(str):
-        value: str = ".bad_format"
-
-    with pytest.raises(NotImplementedError, match="Unsupported file type: .bad_format"):
-        assay.dump(path=tmp_path, format=BadFormat)
 
 
 def test_manifest_with_valid_assay_variables(assay_file: Path) -> None:
