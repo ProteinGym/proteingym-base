@@ -250,7 +250,6 @@ def test_assay_to_df() -> None:
         assert df["DMS Score"].to_list() == [1.56, 2.0]
         assert df["DMS Score2"].to_list() == [0.5, 0.6]
 
-
 def test_assay_to_df_single_string_target():
     """Test Assay.to_df with target_names as a single string."""
     seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
