@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -8,6 +9,9 @@ from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
 from proteingym.base.dataset import Dataset, DatasetSlice
+from proteingym.base.msa import MSA
+from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
+from proteingym.base.structure import Structure
 
 
 def test_dataset_slice_from_json_mask() -> None:
@@ -46,9 +50,6 @@ def test_dataset_slice_dumps_mask() -> None:
     contents = '{"assays": [[true, false, true], [false, true, false]]}'
     slc = DatasetSlice(assays=[[True, False, True], [False, True, False]])
     assert slc.to_json() == contents
-from proteingym.base.msa import MSA
-from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
-from proteingym.base.structure import Structure
 
 
 def test_dataset_slice_dumps_slices() -> None:
