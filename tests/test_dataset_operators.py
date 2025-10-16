@@ -136,7 +136,7 @@ def test_dataset_with_single_structure_not_in(
         "dataset_with_single_sequence",
         "dataset_with_single_structure",
     ],
-    indirect=True, True,
+    indirect=True,
 )
 def test_dataset_with_single_msa_not_in(
     dataset_with_msa: Dataset, dataset: Dataset
