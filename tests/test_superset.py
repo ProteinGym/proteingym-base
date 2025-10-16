@@ -14,6 +14,16 @@ def test_superset_iterate_over_empty(empty_dataset: Dataset) -> None:
         raise AssertionError("Should not iterate over empty superset")
 
 
+@pytest.mark.parametrize(
+    "slices, length",
+    [([], 0), ([slice(0, 1)], 1), ([True, False], 2)],
+)
+def test_superset_length(empty_dataset: Dataset, slices: list, length: int) -> None:
+    """Test that iterating over an empty superset does not yield any elements."""
+    superset = Superset(dataset=empty_dataset, slices=slices)
+    assert len(superset) == length
+
+
 ALL_DATASET_NAMES = [
     "empty_dataset",
     "dataset_with_single_assay",
