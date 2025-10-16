@@ -18,3 +18,4 @@ wheels/
 .coverage.*
 coverage
 coverage.*
+/.tox/
