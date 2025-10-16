@@ -119,7 +119,10 @@ class Dataset(BaseModel):
 
         return Dataset(
             name=f"{self.name}_union_{other.name}",
-            description=f"Union of {self.name} and {other.name}",
+            description=(
+                f"Union of {self.name} and {other.name} datasets."
+                f"\n{self.description}\n{other.description}"
+            ),
             assay_variables=list_union(self.assay_variables, other.assay_variables),
             assay_targets=list_union(self.assay_targets, other.assay_targets),
             assays=list_union(self.assays, other.assays),
