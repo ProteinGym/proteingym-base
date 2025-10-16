@@ -23,8 +23,8 @@ class RandomSplitter:
         sum_precision = 2  # Sum of fractions must be equal to 1.0 up to this precision.
         if not round(sum(fractions), sum_precision) == 1.0:
             raise ValueError("Fractions must sum to 1.")
-        if not all(0 < fraction < 1 for fraction in fractions):
-            raise ValueError("Fractions must be between 0 and 1.")
+        if not all(0 < fraction for fraction in fractions):
+            raise ValueError("Fractions must be positive numbers.")
 
         self.dataset = dataset
         self.fractions = fractions
