@@ -78,12 +78,10 @@ class DatasetSlice:
             return any(is_integer(el) or el is None for el in iterable)
 
         def as_dataset_slice(raw: dict) -> DatasetSlice:
-            assay_slices = []
-            for slices in raw.get("assays", []):
-                if is_slice_iterable(slices):
-                    assay_slices.append(slice(*slices))
-                else:
-                    assay_slices.append(slices)
+            assay_slices = [
+                slice(*slices) if is_slice_iterable(slices) else slices
+                for slices in raw.get("assays", [])
+            ]
             return cls(assays=assay_slices)
 
         instance = json.loads(contents, object_hook=as_dataset_slice)
