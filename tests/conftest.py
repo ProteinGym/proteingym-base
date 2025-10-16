@@ -4,7 +4,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay, AssayTarget
+from proteingym.base.assay import Assay, AssayTarget, AssayVariable
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -52,8 +52,8 @@ def dataset_with_assay() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[],
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_targets=[AssayTarget(name="DMS Score", description="The DMS score")],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -78,14 +78,14 @@ def dataset_with_assays() -> Dataset:
         alphabet=SequenceAlphabet.AA,
     )
     assay1 = Assay(
-        name="assay1",
+        name="assay2",
         records=[
             (sequence1, 1.0),
         ],
         columns=["sequence", "DMS Score"],
     )
     assay2 = Assay(
-        name="assay2",
+        name="assay3",
         records=[
             (sequence2, 2.0),
         ],
@@ -94,8 +94,8 @@ def dataset_with_assays() -> Dataset:
     dataset = Dataset(
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
-        assay_variables=[],
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_targets=[AssayTarget(name="DMS Score", description="The DMS score")],
         assays=[assay1, assay2],
         sequences=[],
         structures=[],
@@ -256,6 +256,24 @@ def dataset_with_msas() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_everything(
+    dataset_with_assays: Dataset,
+    dataset_with_sequences: Dataset,
+    dataset_with_structures: Dataset,
+    dataset_with_msas: Dataset,
+) -> Dataset:
+    """A dataset containing everything."""
+    # Tightly coupled with datasets fixture
+    dataset = (
+        dataset_with_assays
+        | dataset_with_sequences
+        | dataset_with_structures
+        | dataset_with_msas
+    ).model_copy(update={"name": "dataset_with_everything"})
+    return dataset
+
+
+@pytest.fixture
 def datasets(
     empty_dataset: Dataset,
     dataset_with_assay: Dataset,
@@ -266,6 +284,7 @@ def datasets(
     dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
     dataset_with_msas: Dataset,
+    dataset_with_everything: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
     return [
@@ -278,6 +297,7 @@ def datasets(
         dataset_with_structures,
         dataset_with_msa,
         dataset_with_msas,
+        dataset_with_everything,
     ]
 
 
@@ -297,3 +317,6 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
     if dataset is None:
         raise ValueError(f"Unknown dataset: {param}")
     return dataset
+
+
+dataset2 = dataset  # A second fixture for tests using two datasets
