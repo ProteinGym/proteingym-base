@@ -5,6 +5,8 @@ For example, split dataset for machine learning into training, validation, and
 test sets.
 """
 
+import random
+
 from .dataset import Dataset
 from .superset import Superset
 
@@ -30,9 +32,34 @@ class RandomSplitter:
         self.fractions = fractions
 
     def split(self) -> Superset:
-        """Splits the dataset into a Superset."""
-        slices = []
-        # TODO; Implement random splitting logic.
+        """Splits the dataset into a Superset.
+
+        The dataset is split into a Superset with randomized splits according to
+        fractions.
+
+        Returns:
+            Superset: The superset containing the splits.
+        """
+        if len(self.dataset.assays) > 1:
+            raise NotImplementedError(
+                "Random splitting is not implemented for multi-assay datasets."
+            )
+
+        indices = list(range(len(self.dataset.assays)))
+        random.shuffle(indices)
+
+        sizes = [int(round(f * len(self.dataset.assays))) for f in self.fractions[:-1]]
+        sizes.append(
+            len(self.dataset.assays) - sum(sizes[:-1])
+        )  # Ensure all items are used
+
+        slices, offset = [], 0
+        for size in sizes:
+            # TODO: Convert indices to a mask
+            split_indices = indices[offset : offset + size]
+            slices.append(split_indices)
+            offset += size
+
         superset = Superset(dataset=self.dataset, slices=slices)
         return superset
 """
