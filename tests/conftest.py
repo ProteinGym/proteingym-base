@@ -44,10 +44,10 @@ def dataset_with_assay() -> Dataset:
     assay = Assay(
         name="assay1",
         records=[
-            (sequence1, {"DMS Score": 1.0}),
-            (sequence2, {"DMS Score": 2.0}),
+            (sequence1, 1.0),
+            (sequence2, 2.0),
         ],
-        sequence_alphabet=sequence1.alphabet,
+        columns=["sequence", "DMS Score"],
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
@@ -79,13 +79,17 @@ def dataset_with_assays() -> Dataset:
     )
     assay1 = Assay(
         name="assay1",
-        records=[(sequence1, {"DMS Score": 1.0})],
-        sequence_alphabet=sequence1.alphabet,
+        records=[
+            (sequence1, 1.0),
+        ],
+        columns=["sequence", "DMS Score"],
     )
     assay2 = Assay(
         name="assay2",
-        records=[(sequence2, {"DMS Score": 2.0})],
-        sequence_alphabet=sequence2.alphabet,
+        records=[
+            (sequence2, 2.0),
+        ],
+        columns=["sequence", "DMS Score"],
     )
     dataset = Dataset(
         name="dataset_with_multiple_assays",
