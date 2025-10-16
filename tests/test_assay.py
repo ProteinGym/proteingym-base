@@ -555,7 +555,7 @@ def test_dataset_fails_with_duplicate_assay_target_names() -> None:
         AssayTarget(name=duplicate_names[0]),
         AssayTarget(name=duplicate_names[0]),
         AssayTarget(name=duplicate_names[1]),
-        AssayTarget(name="uniqe1"),
+        AssayTarget(name="unique1"),
         AssayTarget(name=duplicate_names[1]),
     ]
 
