@@ -7,7 +7,7 @@ test sets.
 
 import random
 
-from .dataset import Dataset
+from .dataset import Dataset, DatasetSlice
 from .superset import Superset
 
 
@@ -44,20 +44,20 @@ class RandomSplitter:
             raise NotImplementedError(
                 "Random splitting is not implemented for multi-assay datasets."
             )
+        assay = self.dataset.assays[0]
 
-        indices = list(range(len(self.dataset.assays)))
+        indices = list(range(len(assay)))
         random.shuffle(indices)
 
-        sizes = [int(round(f * len(self.dataset.assays))) for f in self.fractions[:-1]]
-        sizes.append(
-            len(self.dataset.assays) - sum(sizes[:-1])
-        )  # Ensure all items are used
+        sizes = [int(round(f * len(assay))) for f in self.fractions[:-1]]
+        sizes.append(len(assay) - sum(sizes[:-1]))  # Ensure all items are used
 
         slices, offset = [], 0
         for size in sizes:
             # TODO: Convert indices to a mask
-            split_indices = indices[offset : offset + size]
-            slices.append(split_indices)
+            slc = indices[offset : offset + size]
+            dataset_slice = DatasetSlice(assays=[slc])  # Assuming one assay here
+            slices.append(dataset_slice)
             offset += size
 
         superset = Superset(dataset=self.dataset, slices=slices)
