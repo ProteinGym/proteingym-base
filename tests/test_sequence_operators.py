@@ -61,7 +61,7 @@ def test_sequence_with_diffent_value_not_equals() -> None:
     assert sequence1 != sequence2
 
 
-def test_sequence_with_diffent_alphabet_not_equals() -> None:
+def test_sequence_with_different_alphabet_not_equals() -> None:
     """A sequence with different alphabet should not equal."""
     sequence1 = Sequence(
         name="Test Sequence",
