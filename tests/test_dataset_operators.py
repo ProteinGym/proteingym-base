@@ -10,7 +10,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay, AssayTarget, AssayVariable, AssayTarget
+from proteingym.base.assay import Assay, AssayTarget, AssayVariable
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -292,15 +292,11 @@ ALL_DATASET_NAMES = [
     "empty_dataset",
     "dataset_with_single_assay",
     "dataset_with_multiple_assays",
-    "dataset_with_multiple_assays",
     "dataset_with_single_sequence",
-    "dataset_with_multiple_sequences",
     "dataset_with_multiple_sequences",
     "dataset_with_single_structure",
     "dataset_with_multiple_structures",
-    "dataset_with_multiple_structures",
     "dataset_with_single_msa",
-    "dataset_with_multiple_msas",
     "dataset_with_multiple_msas",
     "dataset_with_everything",
 ]
