@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -11,14 +12,6 @@ from proteingym.base.dataset import Dataset, DatasetSlice
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
-
-
-def test_dataset_slice_from_json_mask() -> None:
-    """Test that a dataset slice can be created from a JSON string."""
-    expected = DatasetSlice(assays=[[True, False, True], [False, True, False]])
-    contents = '{"assays": [[true, false, true], [false, true, false]]}'
-    slc = DatasetSlice.from_json(contents)
-    assert slc == expected
 
 
 def test_dataset_slice_from_json_mask() -> None:
