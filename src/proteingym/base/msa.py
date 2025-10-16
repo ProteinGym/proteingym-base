@@ -92,7 +92,7 @@ class MSA:
         For equality, we only look at the msa value.
         """
         if isinstance(item, MSA):
-            return self.value == item.value
+            return self.value.alignment == item.value.alignment
         return False
 
     def __repr__(self) -> str:
