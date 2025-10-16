@@ -38,6 +38,10 @@ class Superset:
     to slices.
     """
 
+    def __len__(self) -> int:
+        """The length of the superset."""
+        return len(self.slices)
+
     def __iter__(self):
         """Iterate over the slices in this superset."""
         for slc in self.slices:
