@@ -84,6 +84,9 @@ class DatasetSlice:
     def from_json(cls, contents: str) -> "DatasetSlice":
         """Create a dataset slice from a JSON string.
 
+        The slice is encoded as a tuple of (start, stop, step) where each value
+        is an optional integer as the slice object is non-hashable.
+
         Args:
             contents: The JSON string to create the dataset slice from.
 
@@ -114,6 +117,9 @@ class DatasetSlice:
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
+
+        The slice is encoded as a tuple of (start, stop, step) where each value
+        is an optional integer as the slice object is non-hashable.
 
         Returns:
             A JSON string representation of the dataset slice.
