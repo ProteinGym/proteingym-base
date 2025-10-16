@@ -138,7 +138,7 @@ class Dataset(BaseModel):
 
         def sort_by_name(
             values: list[Assay | Sequence | Structure | MSA],
-        ) -> list[BaseModel]:
+        ) -> list[Assay | Sequence | Structure | MSA]:
             """Sort a list of BaseModel by name, placing unnamed items at the end."""
             return sorted(values, key=lambda value: value.name)
 
