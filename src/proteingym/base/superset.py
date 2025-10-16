@@ -25,7 +25,7 @@ class Superset:
     """A set of datasets.
 
     References:
-    ../../docs/decisions/0004-dataset-splits.md
+    ../../docs/decisions/0007-dataset-splits.md
     """
 
     dataset: Dataset
