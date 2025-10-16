@@ -120,3 +120,12 @@ def test_random_splitter_splits_length(empty_dataset: Dataset):
     splitter = RandomSplitter(dataset=empty_dataset, fractions=fractions)
     superset = splitter.split()
     assert len(superset) == len(fractions)
+
+
+def test_random_splitter_splits_in_dataset(dataset_with_assay: Dataset):
+    """Test that RandomSplitter splits the dataset into the correct number of slices."""
+    fractions = [0.8, 0.2]
+    splitter = RandomSplitter(dataset=dataset_with_assay, fractions=fractions)
+    superset = splitter.split()
+    for split in superset:
+        assert split in dataset_with_assay
