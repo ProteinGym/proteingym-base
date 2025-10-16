@@ -429,3 +429,12 @@ def test_dataset_with_everything_all_contains_other(
     """A dataset with everything should always contain any other dataset."""
     dataset_with_all = reduce(lambda d1, d2: d1 | d2, datasets)
     assert dataset in dataset_with_all
+
+
+def test_dataset_union_keeps_descriptions(
+    empty_dataset: Dataset, dataset_with_assay: Dataset
+) -> None:
+    """The union of two datasets should keep the description of both dataset."""
+    union = empty_dataset | dataset_with_assay
+    assert empty_dataset.description in union.description
+    assert dataset_with_assay.description in union.description
