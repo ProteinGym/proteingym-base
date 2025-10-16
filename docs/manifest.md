@@ -124,6 +124,7 @@ The assay variables section contains a list of assay variables defined in the da
 | `description` | `string \| None`                      | No           | `None`      | A brief description.       |
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
 | `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the variable. |
+| `type`        | `string \| None`                      | No           | `None`      | The type of the variable.  |
 
 ### Assay Targets
 
@@ -135,6 +136,7 @@ The assay targets section contains a list of assay targets defined in the datase
 | `description` | `string \| None`                      | No           | `None`      | A brief description.       |
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
 | `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the target.   |
+| `type`        | `string \| None`                      | No           | `None`      | The type of the target.    |
 
 ### Assays
 

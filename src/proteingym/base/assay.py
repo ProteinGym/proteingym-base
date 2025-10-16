@@ -1,6 +1,6 @@
 import dataclasses
 import itertools
-from enum import StrEnum
+from enum import StrEnum, Enum
 from pathlib import Path
 
 import polars as pl
@@ -27,6 +27,18 @@ class AssayFormat(StrEnum):
     """A comma separated text file"""
 
 
+class AssayDataType(Enum):
+    """Supported assay data types."""
+
+    BOOLEAN = "bool"
+    """Boolean data type."""
+
+    NUMERICAL = "float"
+    """Numerical data type."""
+
+    CATEGORICAL = "str"
+    """Categorical data type."""
+
 class AssayVariable(BaseModel):
     """Definition of an assay variable."""
 
@@ -46,6 +58,9 @@ class AssayVariable(BaseModel):
 
     value: bool | int | float | str | None = None
     """The value of the variable, can be a bool, int, float, or str."""
+
+    type: AssayDataType | None = None
+    """The data type of the variable."""
 
     description: str | None = None
     """Description of the variable."""
@@ -70,6 +85,9 @@ class AssayTarget(BaseModel):
 
     value: bool | int | float | str | None = None
     """The value of the target, can be a bool, int, float, or str."""
+
+    type: AssayDataType | None = None
+    """The data type of the target."""
 
     description: str | None = None
     """Description of the target."""
