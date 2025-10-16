@@ -495,7 +495,6 @@ def test_dataset_to_df() -> None:
     except ValueError as e:
         raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
     else:
-        print(assay1, assay2, df)
         assert "sequence" in df.columns
         assert "DMS Score" in df.columns
         assert df.shape == (3, 4)
@@ -509,6 +508,17 @@ def test_dataset_to_df() -> None:
         match=r"Target names must be valid assay target names.",
     ):
         dataset.to_df(target_names=["Invalid Target"])
+
+    try:
+        df = dataset.to_df(target_names="DMS Score")
+    except ValueError as e:
+        raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
+    else:
+        assert "sequence" in df.columns
+        assert "DMS Score" in df.columns
+        assert df.shape == (3, 2)
+        assert df["sequence"].to_list() == ["APC", "DEF", "GHI"]
+        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0]
 
 
 def test_dataset_to_df_assay_with_different_targets() -> None:

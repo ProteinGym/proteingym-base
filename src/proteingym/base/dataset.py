@@ -401,12 +401,12 @@ class Dataset(BaseModel):
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
-            drop_all_missing (bool): If True, drop all rows with missing values.
-                Defaults to False.
         Returns:
             pl.DataFrame: The DataFrame containing all records from all assays.
         """
 
+        if isinstance(target_names, str):
+            target_names = {target_names}
         if target_names:
             if not all(
                 target_name in [t.name for t in self.assay_targets]
