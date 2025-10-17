@@ -211,7 +211,7 @@ def test_generate_data_cli_command(runner: CliRunner, tmp_path: Path) -> None:
     assert result.exit_code == 0
 
     df = pl.read_csv(result.output.encode())
-    assert len(df) <= 10  # Remove the duplicates from randomly generated sequences.
+    assert len(df) == 10
     assert "sequence" in df.columns
     assert "charge" in df.columns
     assert "feature1" in df.columns
