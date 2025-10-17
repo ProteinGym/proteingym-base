@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from proteingym.base import Dataset
 from proteingym.base.msa import MSA, MSAFormat, MSAManifestSection
+from proteingym.base.sequence import Sequence
 
 
 def test_msa_manifest_section_minimal(tmp_path: Path) -> None:
@@ -296,6 +297,45 @@ def test_msa_dump_to_directory(
 
     loaded_msa = AlignIO.read(path, path.suffix[1:].lower())
     assert msa.value.alignment == loaded_msa.alignment
+
+
+def test_msa_reference_sequence_present_in_dataset(
+    multiple_sequence_alignment: MultipleSeqAlignment,
+) -> None:
+    """A ValueError is raised if the reference sequence is not in the MSA."""
+    seq = Sequence(
+        name="ref_seq", value=Seq("TTTTTTT"), type="wild_type", alphabet="DNA"
+    )
+    msa = MSA(
+        name="test", value=multiple_sequence_alignment, reference_sequence="ref_seq"
+    )
+
+    try:
+        dataset = Dataset(name="test", msas=[msa], sequences=[seq])
+    except ValueError as e:
+        raise ValueError(
+            "Could not create Dataset with MSA and reference sequence"
+        ) from e
+    else:
+        assert msa.reference_sequence in [seq.name for seq in dataset.sequences], (
+            "Reference sequence not found in dataset sequences."
+        )
+
+
+def test_msa_reference_sequence_not_present_in_dataset(
+    multiple_sequence_alignment: MultipleSeqAlignment,
+) -> None:
+    """A ValueError is raised if the reference sequence is not in the MSA."""
+    msa = MSA(
+        name="test", value=multiple_sequence_alignment, reference_sequence="ref_seq"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="MSA 'test' reference sequence 'ref_seq' is not present in the"
+        " dataset's sequences.",
+    ):
+        Dataset(name="test", msas=[msa], sequences=[])
 
 
 def test_dataset_dump_with_msa(
