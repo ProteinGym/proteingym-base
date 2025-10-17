@@ -222,6 +222,42 @@ def test_msa_from_manifest_section_with_weights_path(
     assert msa.weights == [0.1, 0.5, 0.4]
 
 
+def test_msa_from_manifest_section_fails_with_both_weights_and_weights_path(
+    fasta_file: Path, weights_file: Path
+) -> None:
+    """A ValueError is raised if both weights and weights_path are provided."""
+    section = MSAManifestSection(
+        path=fasta_file,
+        weights=[0.1, 0.5, 0.4],
+        weights_path=weights_file,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Only one of weights and weights_path are allowed in the "
+        "manifest section.",
+    ):
+        MSA.from_manifest_section(section)
+
+
+def test_msa_from_manifest_section_with_weights(
+    fasta_file: Path,
+) -> None:
+    """A MSA can be created from a manifest section with weights."""
+    arr = [0.1, 0.5, 0.4]
+
+    section = MSAManifestSection(
+        path=fasta_file,
+        weights=arr,
+    )
+
+    msa = MSA.from_manifest_section(section)
+
+    assert msa.name == "structure"
+    assert isinstance(msa.value, MultipleSeqAlignment)
+    assert msa.weights == arr
+
+
 def test_msa_weights_equals_len_msas(fasta_file: Path, tmp_path: Path) -> None:
     """A validation error is raised if weights length does not equal number
     of sequences."""
@@ -239,24 +275,6 @@ def test_msa_weights_equals_len_msas(fasta_file: Path, tmp_path: Path) -> None:
         ValueError,
         match="The length of weights must be equal to the number of sequences in"
         " the MSA.",
-    ):
-        MSA.from_manifest_section(section)
-
-
-def test_msa_from_manifest_section_fails_with_both_weights_and_weights_path(
-    fasta_file: Path, weights_file: Path
-) -> None:
-    """A ValueError is raised if both weights and weights_path are provided."""
-    section = MSAManifestSection(
-        path=fasta_file,
-        weights=[0.1, 0.5, 0.4],
-        weights_path=weights_file,
-    )
-
-    with pytest.raises(
-        ValueError,
-        match="Only one of weights and weights_path are allowed in the "
-        "manifest section.",
     ):
         MSA.from_manifest_section(section)
 
