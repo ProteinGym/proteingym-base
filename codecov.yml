@@ -1,0 +1,9 @@
+coverage:
+  status:
+    project: #add everything under here, more options at https://docs.codecov.com/docs/commit-status
+      default:
+        paths:
+          - "src"
+        target: 90%
+        # allow to drop by
+        threshold: 2%
