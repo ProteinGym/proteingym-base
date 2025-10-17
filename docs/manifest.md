@@ -95,6 +95,13 @@ path = "structures.pdb"
 [[ msas ]]
 path = "msas.a3m"
 format = "fasta"
+num_significant = 10
+bit_score = 0.5
+theta = 0.8
+reference_sequence = "abc"
+sequence_start = 1
+sequence_end = 10
+weights_path = "weights.npy"
 ```
 
 ### Top-level
@@ -188,7 +195,14 @@ The structures section contains a list of structures included in the dataset.
 
 The MSAs section contains a list of multiple sequence alignments included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                            |
-| --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
-| `format`  | `string` | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
+| **Field**           | **Type**         | **Required** | **Default** | **Description**                                                                                                                                            |
+|---------------------|------------------|--------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `path`              | `string`         | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
+| `format`            | `string`         | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
+| `num_significant`   | `int` \| None    | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
+| `bit_score`         | `float` \| None  | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
+| `theta`             | `float` \| None  | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
+| `reference_sequence`| `string` \| None | No           | `None`      | The reference sequence identifier in the MSA.                                                                                                              |
+| `sequence_start`    | `int` \| None    | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
+| `sequence_end`      | `int` \| None    | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
+| `weights_path`      | `string` \| None | No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`.                                                                                    |

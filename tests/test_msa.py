@@ -2,6 +2,7 @@ import io
 from pathlib import Path
 from zipfile import ZipFile
 
+import numpy as np
 import pytest
 import toml
 from Bio import AlignIO
@@ -39,6 +40,37 @@ def test_msa_manifest_section_with_relative_path(tmp_path: Path) -> None:
         raise AssertionError("Could not create MSAManifestSection") from e
     else:
         assert True, "MSAManifestSection created successfully with minimal fields."
+
+    weights_path = tmp_path / "weights.npy"
+    weights_path.touch()
+    context = {"relative_to_path": tmp_path}
+
+    try:
+        MSAManifestSection.model_validate(
+            {"path": "test.msa", "weights_path": "weights.npy"}, context=context
+        )
+    except ValidationError as e:
+        raise AssertionError(
+            "Could not create MSAManifestSection with weights_path"
+        ) from e
+    else:
+        assert True, "MSAManifestSection created successfully with weights_path."
+
+
+def test_msa_manifest_section_invalid_weight_path_format(tmp_path: Path) -> None:
+    """A validation error is raised if weights_path has invalid format."""
+    path = tmp_path / "test.msa"
+    path.touch()
+    weights_path = tmp_path / "weights.txt"
+    weights_path.touch()
+
+    with pytest.raises(
+        ValidationError, match="Unsupported MSA weight file format: txt"
+    ):
+        MSAManifestSection(
+            path=path,
+            weights_path=weights_path,
+        )
 
 
 def test_msa_manifest_section_missing_path() -> None:
@@ -162,6 +194,70 @@ def test_msa_from_manifest_section_with_a3m(a3m_file: Path) -> None:
 
     assert msa.name == "structure"
     assert isinstance(msa.value, MultipleSeqAlignment)
+
+
+@pytest.fixture
+def weights_file(tmp_path: Path) -> Path:
+    """Weights file for testing."""
+    arr = [0.1, 0.5, 0.4]
+    path = tmp_path / "weights.npy"
+    np.save(path, arr)
+    return path
+
+
+def test_msa_from_manifest_section_with_weights_path(
+    fasta_file: Path, weights_file: Path
+) -> None:
+    """A MSA can be created from a manifest section with weights_path."""
+    section = MSAManifestSection(
+        path=fasta_file,
+        weights_path=weights_file,
+    )
+
+    msa = MSA.from_manifest_section(section)
+
+    assert msa.name == "structure"
+    assert isinstance(msa.value, MultipleSeqAlignment)
+    assert msa.weights == [0.1, 0.5, 0.4]
+
+
+def test_msa_weights_equals_len_msas(fasta_file: Path, tmp_path: Path) -> None:
+    """A validation error is raised if weights length does not equal number
+    of sequences."""
+
+    arr = [0.1, 0.5]
+    weights_path = tmp_path / "weights.npy"
+    np.save(weights_path, arr)
+
+    section = MSAManifestSection(
+        path=fasta_file,
+        weights_path=weights_path,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="The length of weights must be equal to the number of sequences in"
+        " the MSA.",
+    ):
+        MSA.from_manifest_section(section)
+
+
+def test_msa_from_manifest_section_fails_with_both_weights_and_weights_path(
+    fasta_file: Path, weights_file: Path
+) -> None:
+    """A ValueError is raised if both weights and weights_path are provided."""
+    section = MSAManifestSection(
+        path=fasta_file,
+        weights=[0.1, 0.5, 0.4],
+        weights_path=weights_file,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Only one of weights and weights_path are allowed in the "
+        "manifest section.",
+    ):
+        MSA.from_manifest_section(section)
 
 
 def test_msa_as_manifest_section(fasta_file: Path) -> None:

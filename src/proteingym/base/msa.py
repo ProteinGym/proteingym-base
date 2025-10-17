@@ -3,6 +3,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from pydantic import (
@@ -22,6 +23,13 @@ class MSAFormat(StrEnum):
 
     FASTA = "fasta"
     """MSAs following the fasta format, also for a2m files."""
+
+
+class MSAWeightFormat(StrEnum):
+    """Enumeration for MSA weight file formats."""
+
+    NPY = "npy"
+    """NumPy binary file format."""
 
 
 class MSAManifestSection(BaseModel):
@@ -50,15 +58,60 @@ class MSAManifestSection(BaseModel):
     format: MSAFormat = MSAFormat.FASTA
     """The format of the multiple sequence alignment file."""
 
+    num_significant: int | None = None
+    """Number of evolutionary couplings that are considered significant."""
+
+    bit_score: float | None = None
+    """Bitscore threshold used to generate the alignment divided by the length of the"""
+    """target protein."""
+
+    theta: float | None = None
+    """Hamming distance cutoff for sequence re-weighting."""
+
+    reference_sequence: str | None = None
+    """The name of the reference sequence of MSA present in Dataset."""
+
+    sequence_start: int | None = None
+    """The starting position of the reference sequence in the MSA."""
+
+    sequence_end: int | None = None
+    """The ending position of the reference sequence in the MSA."""
+
+    weights_path: FilePath | None = Field(default=None, exclude=True)
+    """The weight file for each sequence in the MSA."""
+
+    weights: list[float] | None = None
+    """The weights for each sequence in the MSA (for internal manifest)."""
+
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the multiple sequence alignment."""
 
     @field_validator("path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
-        """Optionally, extend the path with the `relative_to_path` from the context."""
+        """Optionally, extend the path with the `relative_to_path` from the
+        context."""
+
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         return path
+
+    @field_validator("weights_path", mode="before", check_fields=True)
+    def validate_weights_path(
+        cls, weights_path: Path | None, info: ValidationInfo
+    ) -> Path | None:
+        """Extend the weights_path with the `relative_to_path` from the context."""
+
+        if (
+            weights_path is not None
+            and info.context
+            and info.context.get("relative_to_path")
+        ):
+            weights_path = info.context["relative_to_path"] / weights_path
+
+        format = weights_path.suffix[1:].lower()
+        if format not in MSAWeightFormat:
+            raise ValueError(f"Unsupported MSA weight file format: {format}")
+        return weights_path
 
     @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
@@ -71,6 +124,31 @@ class MSAManifestSection(BaseModel):
     def _serialize_str_enum(self, format: MSAFormat) -> str:
         """Serialize a StrEnum as a string."""
         return format.value
+
+    def __eq__(self, other: Any) -> bool:
+        """Custom equality that excludes `weights_path` from comparison.
+
+        `weights_path` is an input-only field used to load weights from a file.
+        """
+
+        if not isinstance(other, MSAManifestSection):
+            return False
+
+        # Compare all fields except weights_path
+        return (
+            self.path == other.path
+            and self.name == other.name
+            and self.description == other.description
+            and self.format == other.format
+            and self.num_significant == other.num_significant
+            and self.bit_score == other.bit_score
+            and self.theta == other.theta
+            and self.reference_sequence == other.reference_sequence
+            and self.sequence_start == other.sequence_start
+            and self.sequence_end == other.sequence_end
+            and self.weights == other.weights
+            and self.metadata == other.metadata
+        )
 
 
 @dataclasses.dataclass
@@ -85,6 +163,38 @@ class MSA:
 
     description: str | None = None
     """A brief description of the MSA."""
+
+    num_significant: int | None = None
+    """Number of evolutionary couplings that are considered significant."""
+
+    bit_score: float | None = None
+    """Bitscore threshold used to generate the alignment divided by the length of the
+    target protein."""
+
+    theta: float | None = None
+    """Hamming distance cutoff for sequence re-weighting."""
+
+    reference_sequence: str | None = None
+    """The name of the reference sequence of MSA present in Dataset."""
+
+    sequence_start: int | None = None
+    """The starting position of the reference sequence in the MSA."""
+
+    sequence_end: int | None = None
+    """The ending position of the reference sequence in the MSA."""
+
+    weights: list[float] | None = None
+    """The weights for each sequence in the MSA."""
+
+    def __post_init__(self):
+        """Check that the weights length matches the number of sequences
+        in the MSA."""
+        if self.weights:
+            if len(self.weights) != len(self.value):
+                raise ValueError(
+                    "The length of weights must be equal to the number of sequences"
+                    " in the MSA."
+                )
 
     def __eq__(self, item: Any) -> bool:
         """Implements the equality (==) operator for MSA.
@@ -123,10 +233,33 @@ class MSA:
 
         Raises :
             NotImplementedError if the file type is not supported.
+            ValueError if both weights and weights_path are provided.
         """
         name = section.name or section.path.stem
         value = AlignIO.read(section.path, section.format.value)
-        return MSA(name=name, value=value, description=section.description)
+        if section.weights_path:
+            weights = np.load(section.weights_path).tolist()
+            if section.weights:
+                raise ValueError(
+                    "Only one of weights and weights_path are allowed in the manifest"
+                    " section."
+                )
+        elif section.weights:
+            weights = section.weights
+        else:
+            weights = None
+        return MSA(
+            name=name,
+            value=value,
+            description=section.description,
+            num_significant=section.num_significant,
+            bit_score=section.bit_score,
+            theta=section.theta,
+            reference_sequence=section.reference_sequence,
+            sequence_start=section.sequence_start,
+            sequence_end=section.sequence_end,
+            weights=weights,
+        )
 
     def as_manifest_section(self, *, path: Path) -> MSAManifestSection:
         """Create a manifest section from the MSA instance.
@@ -141,6 +274,13 @@ class MSA:
             path=path,
             name=self.name,
             description=self.description,
+            num_significant=self.num_significant,
+            bit_score=self.bit_score,
+            theta=self.theta,
+            reference_sequence=self.reference_sequence,
+            sequence_start=self.sequence_start,
+            sequence_end=self.sequence_end,
+            weights=self.weights,
         )
 
     def dump(
