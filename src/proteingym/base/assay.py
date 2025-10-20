@@ -345,19 +345,22 @@ class Assay:
         else:
             target_names = self.target_feature_names
 
-        df = pl.DataFrame(self.records, schema=self.columns, orient="row").select(
-            [self.sequence_feature_name] + list(target_names)
-        )
-        df = df.with_columns(
-            pl.col(self.sequence_feature_name).map_elements(
-                lambda seq: str(seq.value), return_dtype=pl.Utf8
-            )
-        )
-        df = df.rename({self.sequence_feature_name: "sequence"})
+        variables = [
+            pl.lit(var_value).alias(var_name)
+            for var_name, var_value in self.variables.items()
+        ]
 
-        # Add the assay variables as columns to the DataFrame
-        for var_name, var_value in self.variables.items():
-            df = df.with_columns(pl.lit(var_value).alias(var_name))
+        df = (
+            pl.DataFrame(self.records, schema=self.columns, orient="row")
+            .select([self.sequence_feature_name] + list(target_names))
+            .with_columns(
+                pl.col(self.sequence_feature_name).map_elements(
+                    lambda seq: str(seq.value), return_dtype=pl.Utf8
+                )
+            )
+            .rename({self.sequence_feature_name: "sequence"})
+            .with_columns(variables)
+        )
 
         return df
 

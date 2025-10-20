@@ -401,6 +401,7 @@ class Dataset(BaseModel):
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
+
         Returns:
             pl.DataFrame: The DataFrame containing all records from all assays.
         """
@@ -414,28 +415,37 @@ class Dataset(BaseModel):
             ):
                 raise ValueError("Target names must be valid assay target names.")
         else:
-            target_names = [t.name for t in self.assay_targets]
+            target_names = {t.name for t in self.assay_targets}
 
         if not self.assays:
-            raise ValueError("No assays found in the dataset.")
+            return pl.DataFrame()
         variable_names = [v.name for v in self.assay_variables]
+
         assays_dfs = []
         for assay in self.assays:
             df = assay.to_df(target_names=target_names)
             # Add the missing columns from target names and variable names
-            for target_name in target_names:
-                if target_name not in df.columns:
-                    df = df.with_columns(pl.lit(None).alias(target_name))
-            for var_name in variable_names:
-                if var_name not in df.columns:
-                    df = df.with_columns(pl.lit(None).alias(var_name))
+            missing_targets = [
+                pl.lit(None).alias(target_name)
+                for target_name in target_names
+                if target_name not in df.columns
+            ]
+            df = df.with_columns(missing_targets)
+
+            missing_variables = [
+                pl.lit(None).alias(var_name)
+                for var_name in variable_names
+                if var_name not in df.columns
+            ]
+            df = df.with_columns(missing_variables)
+
             assays_dfs.append(
                 df.select(["sequence"] + variable_names + list(target_names))
             )
 
-        df = pl.concat(assays_dfs, how="vertical_relaxed")
-        # Drop all rows that have all targets missing
-        df = df.filter(~pl.all_horizontal([pl.col(t).is_null() for t in target_names]))
+        df = pl.concat(assays_dfs, how="vertical_relaxed").filter(
+            ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
+        )
 
         # Group by sequence and variables, and aggregate the target by mean
         df = (

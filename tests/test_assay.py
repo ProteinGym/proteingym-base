@@ -1,6 +1,8 @@
 from pathlib import Path
 from zipfile import ZipFile
 
+import polars as pl
+import polars.testing
 import pytest
 from pydantic import ValidationError
 from semver import Version
@@ -366,7 +368,7 @@ def test_manifest_with_valid_assay_variables(assay_file: Path) -> None:
                 }
             ],
         )
-    except ValidationError as e:
+    except AssertionError as e:
         raise AssertionError(f"Manifest raised ValidationError: {e}") from e
     else:
         assert manifest.assay_variables, "Valid assay variables should be present"
@@ -411,7 +413,7 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
                 }
             ],
         )
-    except ValidationError as e:
+    except AssertionError as e:
         raise AssertionError(f"Manifest raised ValidationError: {e}") from e
     else:
         assert manifest.assay_targets, "Valid assay targets should be present"
@@ -442,18 +444,33 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
 
 def test_dataset_to_df_no_assays() -> None:
     """Test converting a dataset with no assays to a DataFrame."""
-
     dataset = Dataset(name="test")
-    with pytest.raises(ValueError, match="No assays found in the dataset."):
-        dataset.to_df()
+    try:
+        df = dataset.to_df()
+    except AssertionError as e:
+        raise AssertionError(f"Should return empty DataFrame: {e}") from e
+    else:
+        assert df.is_empty()
 
 
-def test_dataset_to_df() -> None:
-    """Test converting a dataset with assays to a DataFrame."""
-    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
-    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
-    seq3 = Sequence(name="seq3", value="GHI", type="standard_sequence", alphabet="DNA")
-    assay1 = Assay(
+@pytest.fixture
+def seq1() -> Sequence:
+    return Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
+
+
+@pytest.fixture
+def seq2() -> Sequence:
+    return Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+
+
+@pytest.fixture
+def seq3() -> Sequence:
+    return Sequence(name="seq3", value="GHI", type="standard_sequence", alphabet="DNA")
+
+
+@pytest.fixture
+def assay1(seq1: Sequence, seq2: Sequence) -> Assay:
+    return Assay(
         name="assay1",
         records=[
             (seq1, 1.0, 0.5),
@@ -461,7 +478,11 @@ def test_dataset_to_df() -> None:
         ],
         columns=["sequence", "DMS Score", "DMS Score2"],
     )
-    assay2 = Assay(
+
+
+@pytest.fixture
+def assay2(seq1: Sequence, seq3: Sequence) -> Assay:
+    return Assay(
         name="assay2",
         records=[
             (seq1, 1.0, 0.7),
@@ -469,6 +490,10 @@ def test_dataset_to_df() -> None:
         ],
         columns=["sequence", "DMS Score", "DMS Score3"],
     )
+
+
+def test_dataset_to_df_single_target(assay1: Assay, assay2: Assay) -> None:
+    """Test converting a dataset with assays to a DataFrame."""
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
@@ -484,49 +509,89 @@ def test_dataset_to_df() -> None:
     except ValueError as e:
         raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
     else:
-        assert "sequence" in df.columns
-        assert "DMS Score" in df.columns
-        assert df.shape == (3, 2)
-        assert df["sequence"].to_list() == ["APC", "DEF", "GHI"]
-        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0]
+        expected_df = pl.DataFrame(
+            {
+                "sequence": ["APC", "DEF", "GHI"],
+                "DMS Score": [1.0, 2.0, 3.0],
+            }
+        )
+        pl.testing.assert_frame_equal(
+            df, expected_df, check_dtypes=False, check_column_order=False
+        )
 
+
+def test_dataset_to_df_no_target(assay1: Assay, assay2: Assay) -> None:
+    dataset = Dataset(
+        name="test_dataset",
+        assay_targets=[
+            AssayTarget(name="DMS Score"),
+            AssayTarget(name="DMS Score2"),
+            AssayTarget(name="DMS Score3"),
+        ],
+        assays=[assay1, assay2],
+    )
     try:
         df = dataset.to_df()
     except ValueError as e:
         raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
     else:
-        assert "sequence" in df.columns
-        assert "DMS Score" in df.columns
-        assert df.shape == (3, 4)
-        assert df["sequence"].to_list() == ["APC", "DEF", "GHI"]
-        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0]
-        assert df["DMS Score2"].to_list() == [0.5, 0.6, None]
-        assert df["DMS Score3"].to_list() == [0.7, None, 0.8]
+        expected_df = pl.DataFrame(
+            {
+                "sequence": ["APC", "DEF", "GHI"],
+                "DMS Score": [1.0, 2.0, 3.0],
+                "DMS Score2": [0.5, 0.6, None],
+                "DMS Score3": [0.7, None, 0.8],
+            }
+        )
+        pl.testing.assert_frame_equal(
+            df, expected_df, check_dtypes=False, check_column_order=False
+        )
 
+
+def test_dataset_to_df_invalid_target(assay1: Assay, assay2: Assay) -> None:
+    dataset = Dataset(
+        name="test_dataset",
+        assay_targets=[
+            AssayTarget(name="DMS Score"),
+            AssayTarget(name="DMS Score2"),
+            AssayTarget(name="DMS Score3"),
+        ],
+        assays=[assay1, assay2],
+    )
     with pytest.raises(
         ValueError,
         match=r"Target names must be valid assay target names.",
     ):
         dataset.to_df(target_names=["Invalid Target"])
 
+
+def test_dataset_to_df_string_target(assay1: Assay, assay2: Assay) -> None:
+    dataset = Dataset(
+        name="test_dataset",
+        assay_targets=[
+            AssayTarget(name="DMS Score"),
+            AssayTarget(name="DMS Score2"),
+            AssayTarget(name="DMS Score3"),
+        ],
+        assays=[assay1, assay2],
+    )
     try:
         df = dataset.to_df(target_names="DMS Score")
     except ValueError as e:
         raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
     else:
-        assert "sequence" in df.columns
-        assert "DMS Score" in df.columns
-        assert df.shape == (3, 2)
-        assert df["sequence"].to_list() == ["APC", "DEF", "GHI"]
-        assert df["DMS Score"].to_list() == [1.0, 2.0, 3.0]
+        expected_df = pl.DataFrame(
+            {"sequence": ["APC", "DEF", "GHI"], "DMS Score": [1.0, 2.0, 3.0]}
+        )
+        pl.testing.assert_frame_equal(
+            df, expected_df, check_dtypes=False, check_column_order=False
+        )
 
 
-def test_dataset_to_df_assay_with_different_targets() -> None:
+def test_dataset_to_df_assay_with_different_targets(
+    seq1: Sequence, seq2: Sequence, seq3: Sequence
+) -> None:
     """Test converting a dataset with assays having different targets to a DataFrame."""
-
-    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
-    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
-    seq3 = Sequence(name="seq3", value="GHI", type="standard_sequence", alphabet="DNA")
 
     assay1 = Assay(
         name="assay1",
@@ -575,14 +640,18 @@ def test_dataset_to_df_assay_with_different_targets() -> None:
     except ValueError as e:
         raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
     else:
-        assert "sequence" in df.columns
-        assert "DMS Score" in df.columns
-        assert df.shape == (4, 5)
-        assert df["sequence"].to_list() == ["APC", "APC", "DEF", "GHI"]
-        assert df["DMS Score"].to_list() == [None, 2.0, 2.0, None]
-        assert df["Binding Affinity"].to_list() == [0.8, None, None, 0.9]
-        assert df["pH"].to_list() == [7.0, 7.0, 7.0, 7.0]
-        assert df["T"].to_list() == [None, 30, 30, None]
+        expected_df = pl.DataFrame(
+            {
+                "sequence": ["APC", "APC", "DEF", "GHI"],
+                "pH": [7.0, 7.0, 7.0, 7.0],
+                "T": [None, 30, 30, None],
+                "DMS Score": [None, 2.0, 2.0, None],
+                "Binding Affinity": [0.8, None, None, 0.9],
+            }
+        )
+        pl.testing.assert_frame_equal(
+            df, expected_df, check_dtypes=False, check_column_order=False
+        )
 
 
 def test_dataset_to_df_failed_assay_to_df() -> None:
