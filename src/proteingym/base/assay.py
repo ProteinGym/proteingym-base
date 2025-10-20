@@ -1,5 +1,6 @@
 import dataclasses
 import itertools
+from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
 
@@ -317,6 +318,51 @@ class Assay:
             variables=self.variables,
             path=path,
         )
+
+    def to_df(
+        self, *, target_names: Collection[str] | str | None = None
+    ) -> pl.DataFrame:
+        """Returns the assay records with assay variables as a Polars DataFrame.
+
+        Args:
+            target_names (Collection[str] | str | None): The target name(s) to include.
+                If None, all target names are included. Defaults to None.
+
+        Returns:
+            pl.DataFrame: The DataFrame containing all records from the assay.
+        """
+        if not self.records:
+            # If no records are present, return empty DataFrame
+            return pl.DataFrame(schema=["sequence"])
+        if target_names:
+            if isinstance(target_names, str):
+                target_names = {target_names}
+            else:
+                target_names = set(target_names).intersection(self.target_feature_names)
+            if not target_names:
+                # If not matching target names, return empty DataFrame
+                return pl.DataFrame(schema=["sequence"])
+        else:
+            target_names = self.target_feature_names
+
+        variables = [
+            pl.lit(var_value).alias(var_name)
+            for var_name, var_value in self.variables.items()
+        ]
+
+        df = (
+            pl.DataFrame(self.records, schema=self.columns, orient="row")
+            .select([self.sequence_feature_name] + list(target_names))
+            .with_columns(
+                pl.col(self.sequence_feature_name).map_elements(
+                    lambda seq: str(seq.value), return_dtype=pl.Utf8
+                )
+            )
+            .rename({self.sequence_feature_name: "sequence"})
+            .with_columns(variables)
+        )
+
+        return df
 
     def dump(
         self, *, path: Path | None = None, format: AssayFormat = AssayFormat.CSV

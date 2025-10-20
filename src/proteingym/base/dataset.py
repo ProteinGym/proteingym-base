@@ -2,11 +2,13 @@ import collections
 import dataclasses
 import itertools
 import json
+from collections.abc import Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 from zipfile import ZipFile
 
+import polars as pl
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -470,3 +472,68 @@ class Dataset(BaseModel):
                 path, temporary_directory=Path(temp_dir)
             )
         return archive_path
+
+    def to_df(
+        self,
+        *,
+        target_names: Collection[str] | str | None = None,
+    ) -> pl.DataFrame:
+        """Returns the dataset assay records as a Polars DataFrame.
+
+        Args:
+            target_names (Collection[str] | str | None): The target name(s) to include.
+                If None, all target names are included. Defaults to None.
+
+        Returns:
+            pl.DataFrame: The DataFrame containing all records from all assays.
+        """
+
+        if isinstance(target_names, str):
+            target_names = {target_names}
+        if target_names:
+            if not all(
+                target_name in [t.name for t in self.assay_targets]
+                for target_name in target_names
+            ):
+                raise ValueError("Target names must be valid assay target names.")
+        else:
+            target_names = {t.name for t in self.assay_targets}
+
+        if not self.assays:
+            return pl.DataFrame()
+        variable_names = [v.name for v in self.assay_variables]
+
+        assays_dfs = []
+        for assay in self.assays:
+            df = assay.to_df(target_names=target_names)
+            # Add the missing columns from target names and variable names
+            missing_targets = [
+                pl.lit(None).alias(target_name)
+                for target_name in target_names
+                if target_name not in df.columns
+            ]
+            df = df.with_columns(missing_targets)
+
+            missing_variables = [
+                pl.lit(None).alias(var_name)
+                for var_name in variable_names
+                if var_name not in df.columns
+            ]
+            df = df.with_columns(missing_variables)
+
+            assays_dfs.append(
+                df.select(["sequence"] + variable_names + list(target_names))
+            )
+
+        df = pl.concat(assays_dfs, how="vertical_relaxed").filter(
+            ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
+        )
+
+        # Group by sequence and variables, and aggregate the target by mean
+        df = (
+            df.group_by(["sequence"] + variable_names)
+            .agg([pl.col(t).mean().alias(t) for t in target_names])
+            .sort(["sequence"] + variable_names)
+        )
+
+        return df
