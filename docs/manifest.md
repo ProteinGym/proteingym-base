@@ -61,15 +61,24 @@ description = "This is an example dataset for demonstration purposes."
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
+type = "float"
+
+[[ assay_variables ]]
+name = "T"
+description = "Temperature level of the samples"
+unit = "C"
+type = "float"
 
 [[ assay_targets ]]
 name = "DMS Score"
 description = "DMS score of the samples"
 unit = "log fold change"
+type = "float"
 
 [[ assay_targets ]]
 name = "DMS Score Bin"
 description = "DMS score bin of the samples"
+type = "bool"
 
 [[ assays ]]
 name = "assay"

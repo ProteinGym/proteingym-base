@@ -1,7 +1,7 @@
 import dataclasses
 import itertools
-from enum import StrEnum, Enum
 from collections.abc import Collection
+from enum import Enum, StrEnum
 from pathlib import Path
 
 import polars as pl
@@ -31,67 +31,58 @@ class AssayFormat(StrEnum):
 class AssayDataType(Enum):
     """Supported assay data types."""
 
-    BOOLEAN = "bool"
+    BOOL = "bool"
     """Boolean data type."""
 
     NUMERICAL = "float"
     """Numerical data type."""
 
-    CATEGORICAL = "str"
-    """Categorical data type."""
+    STRING = "str"
+    """String data type."""
 
-class AssayVariable(BaseModel):
+
+class AssayData(BaseModel):
+    """Definition of assay data, can be variable or target."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=False,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
+    name: str
+    """The name of the data."""
+
+    unit: str | None = None
+    """The unit of the data."""
+
+    value: bool | float | str | None = None
+    """The value of the data, can be a bool, float, or str."""
+
+    type: AssayDataType | None = None
+    """The data type of the data."""
+
+    description: str | None = None
+    """Description of the data."""
+
+    @field_serializer("type")
+    def serialize_type(self, type_value: AssayDataType | None) -> str | None:
+        """Serialize the type to a string."""
+        return type_value.value if type_value else None
+
+
+class AssayVariable(AssayData):
     """Definition of an assay variable."""
 
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
-
-    name: str
-    """The name of the variable."""
-
-    unit: str | None = None
-    """The unit of the variable."""
-
-    value: bool | int | float | str | None = None
-    """The value of the variable, can be a bool, int, float, or str."""
-
-    type: AssayDataType | None = None
-    """The data type of the variable."""
-
-    description: str | None = None
-    """Description of the variable."""
+    pass
 
 
-class AssayTarget(BaseModel):
+class AssayTarget(AssayData):
     """Definition of an assay target."""
 
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
-
-    name: str
-    """The name of the target."""
-
-    unit: str | None = None
-    """The unit of the target."""
-
-    value: bool | int | float | str | None = None
-    """The value of the target, can be a bool, int, float, or str."""
-
-    type: AssayDataType | None = None
-    """The data type of the target."""
-
-    description: str | None = None
-    """Description of the target."""
+    pass
 
 
 class AssayManifestSection(BaseModel):

@@ -6,24 +6,24 @@ version = "1.0.0"
 name = "PH"
 description = "pH level of the samples"
 unit = "pH"
-type = "numerical"
+type = "float"
 
 [[ assay_variables ]]
 name = "T"
 description = "Temperature level of the samples"
 unit = "C"
-type = "numerical"
+type = "float"
 
 [[ assay_targets ]]
 name = "DMS Score"
 description = "DMS score of the samples"
 unit = "log fold change"
-type = "numerical"
+type = "float"
 
 [[ assay_targets ]]
 name = "DMS Score Bin"
 description = "DMS score bin of the samples"
-type = "categorical"
+type = "bool"
 
 [[ assays ]]
 sequence = "mutated_sequence"
