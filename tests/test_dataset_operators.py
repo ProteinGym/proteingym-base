@@ -2,14 +2,16 @@
 Module for testing dataset operators.
 """
 
+from functools import reduce
+
 import pytest
 from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay, AssayTarget
-from proteingym.base.dataset import Dataset, DatasetSlice
+from proteingym.base.assay import Assay, AssayTarget, AssayVariable
+from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
@@ -39,8 +41,8 @@ def dataset_with_assay() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[],
-        assay_targets=[AssayTarget(name="DMS_score")],
+        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_targets=[AssayTarget(name="target1", description="A test target")],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -61,7 +63,8 @@ def dataset_with_assays() -> Dataset:
     dataset = Dataset(
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
-        assay_variables=[],
+        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_targets=[AssayTarget(name="target1", description="A test target")],
         assays=[assay1, assay2],
         sequences=[],
         structures=[],
@@ -222,6 +225,24 @@ def dataset_with_msas() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_everything(
+    dataset_with_assays: Dataset,
+    dataset_with_sequences: Dataset,
+    dataset_with_structures: Dataset,
+    dataset_with_msas: Dataset,
+) -> Dataset:
+    """A dataset containing everything."""
+    # Tightly coupled with datasets fixture
+    dataset = (
+        dataset_with_assays
+        | dataset_with_sequences
+        | dataset_with_structures
+        | dataset_with_msas
+    ).model_copy(update={"name": "dataset_with_everything"})
+    return dataset
+
+
+@pytest.fixture
 def datasets(
     empty_dataset: Dataset,
     dataset_with_assay: Dataset,
@@ -232,6 +253,7 @@ def datasets(
     dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
     dataset_with_msas: Dataset,
+    dataset_with_everything: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
     return [
@@ -244,6 +266,7 @@ def datasets(
         dataset_with_structures,
         dataset_with_msa,
         dataset_with_msas,
+        dataset_with_everything,
     ]
 
 
@@ -275,36 +298,139 @@ ALL_DATASET_NAMES = [
     "dataset_with_multiple_structures",
     "dataset_with_single_msa",
     "dataset_with_multiple_msas",
+    "dataset_with_everything",
 ]
 
 
-def test_dataset_slice_raises_type_error(empty_dataset: Dataset) -> None:
-    """Slicing a dataset with a Python builtin type should raise a TypeError."""
-    with pytest.raises(
-        TypeError, match="Dataset can only be sliced with a DatasetSlice"
-    ):
-        empty_dataset[:]
+def test_dataset_not_equals_integer(empty_dataset: Dataset) -> None:
+    """A dataset should not equal an integer."""
+    assert empty_dataset != 1
 
 
-def test_dataset_slice_all_empty_dataset(empty_dataset: Dataset) -> None:
-    """Slicing a dataset with [:] should return the same dataset."""
-    assert empty_dataset == empty_dataset[DatasetSlice(assays=[])]
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_equals_itself(dataset: Dataset) -> None:
+    """A dataset should equal itself."""
+    assert dataset == dataset
 
 
-@pytest.mark.parametrize("slc", [slice(None), [True]])
-def test_dataset_slice_all_dataset_with_single_assay(
-    slc: slice | list[bool],
-    dataset_with_assay: Dataset,
+def test_dataset_does_not_contain_integer(empty_dataset: Dataset) -> None:
+    """A dataset should not contain an integer."""
+    assert 1 not in empty_dataset
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_contains_itself(dataset: Dataset) -> None:
+    """A dataset should contain itself."""
+    assert dataset in dataset
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_always_contains_empty_dataset(
+    empty_dataset: Dataset, dataset: Dataset
 ) -> None:
-    """Slicing a dataset with [:] should return the same dataset."""
-    assert dataset_with_assay == dataset_with_assay[DatasetSlice(assays=[slc])]
+    """An empty dataset should be contained in any dataset."""
+    assert empty_dataset in dataset
 
 
-@pytest.mark.parametrize("slc", [slice(None), [True]])
-def test_dataset_slice_all_dataset_with_multiple_assays(
-    slc: slice | list[bool],
-    dataset_with_assays: Dataset,
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_sequence",
+        "dataset_with_single_structure",
+        "dataset_with_single_msa",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_assay_not_in(
+    dataset_with_assay: Dataset, dataset: Dataset
 ) -> None:
-    """Slicing a dataset with [:] should return the same dataset."""
-    dataset_slice = DatasetSlice(assays=[slc] * len(dataset_with_assays.assays))
-    assert dataset_with_assays == dataset_with_assays[dataset_slice]
+    """A dataset with a single assay should not be contained in the other dataset."""
+    assert dataset_with_assay not in dataset
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_assay",
+        "dataset_with_single_structure",
+        "dataset_with_single_msa",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_sequence_not_in(
+    dataset_with_sequence: Dataset, dataset: Dataset
+) -> None:
+    """A dataset with a single sequence should not be contained in the other dataset."""
+    assert dataset_with_sequence not in dataset
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_assay",
+        "dataset_with_single_sequence",
+        "dataset_with_single_msa",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_structure_not_in(
+    dataset_with_structure: Dataset, dataset: Dataset
+) -> None:
+    """A dataset with a single struct should not be contained in the other dataset."""
+    assert dataset_with_structure not in dataset
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "empty_dataset",
+        "dataset_with_single_assay",
+        "dataset_with_single_sequence",
+        "dataset_with_single_structure",
+    ],
+    indirect=True,
+)
+def test_dataset_with_single_msa_not_in(
+    dataset_with_msa: Dataset, dataset: Dataset
+) -> None:
+    """A dataset with a single msa should not be contained in the other dataset."""
+    assert dataset_with_msa not in dataset
+
+
+dataset2 = dataset  # To have a second fixture for union tests
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+@pytest.mark.parametrize("dataset2", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_union_contains_both(dataset: Dataset, dataset2: Dataset) -> None:
+    """The union of two datasets should contain both datasets."""
+    union = dataset | dataset2
+    assert dataset in union
+    assert dataset2 in union
+
+    # If one dataset is not a subset of the other, then both should not be equal
+    # to the union
+    is_subset = dataset in dataset2 or dataset2 in dataset
+    assert is_subset or dataset != union
+    assert is_subset or dataset2 != union
+
+
+@pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
+def test_dataset_with_everything_all_contains_other(
+    datasets: list[Dataset], dataset: Dataset
+) -> None:
+    """A dataset with everything should always contain any other dataset."""
+    dataset_with_all = reduce(lambda d1, d2: d1 | d2, datasets)
+    assert dataset in dataset_with_all
+
+
+def test_dataset_union_keeps_descriptions(
+    empty_dataset: Dataset, dataset_with_assay: Dataset
+) -> None:
+    """The union of two datasets should keep the description of both dataset."""
+    union = empty_dataset | dataset_with_assay
+    assert empty_dataset.description in union.description
+    assert dataset_with_assay.description in union.description

@@ -128,6 +128,15 @@ class Sequence:
     description: str | None = None
     """The description of the sequence."""
 
+    def __eq__(self, item: "Sequence") -> bool:
+        """Implements the equality (==) operator for Sequence.
+
+        For equality, we only look at the sequence value.
+        """
+        if not isinstance(item, Sequence):
+            return False
+        return self.value == item.value and self.alphabet == item.alphabet
+
     def __repr__(self) -> str:
         """Return a string representation of the Sequence object."""
         lines = [f"Sequence(\n\tname='{self.name}',"]

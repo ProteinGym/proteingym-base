@@ -2,10 +2,13 @@ import collections
 import dataclasses
 import itertools
 import json
+from collections.abc import Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 from zipfile import ZipFile
 
+import polars as pl
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -99,6 +102,85 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
+    def __or__(self, other: "Dataset") -> "Dataset":
+        """Implements the union operator (|) for Dataset.
+
+        Returns a new Dataset containing the union of:
+        - assays, including assay variables and targets
+        - sequences
+        - structures
+        - msas
+        """
+
+        def list_union(left: list[Any], right: list[Any]) -> list[Any]:
+            """Return the union of two lists.
+
+            Preserving order and removing duplicates
+            """
+            return left + [item for item in right if item not in left]
+
+        return Dataset(
+            name=f"{self.name}_union_{other.name}",
+            description=(
+                f"Union of {self.name} and {other.name} datasets."
+                f"\n{self.description}\n{other.description}"
+            ),
+            assay_variables=list_union(self.assay_variables, other.assay_variables),
+            assay_targets=list_union(self.assay_targets, other.assay_targets),
+            assays=list_union(self.assays, other.assays),
+            sequences=list_union(self.sequences, other.sequences),
+            structures=list_union(self.structures, other.structures),
+            msas=list_union(self.msas, other.msas),
+        )
+
+    def __eq__(self, item: Any) -> bool:
+        """Implements the equality operator (==) for Dataset."""
+        if not isinstance(item, Dataset):
+            return False
+
+        def sort_by_name(
+            values: list[Assay | Sequence | Structure | MSA],
+        ) -> list[Assay | Sequence | Structure | MSA]:
+            """Sort a list of BaseModel by name, placing unnamed items at the end."""
+            return sorted(values, key=lambda value: value.name)
+
+        is_assay_match = sort_by_name(self.assays) == sort_by_name(item.assays)
+        is_sequence_match = sort_by_name(self.sequences) == sort_by_name(item.sequences)
+        is_structure_match = sort_by_name(self.structures) == sort_by_name(
+            item.structures
+        )
+        is_msa_match = sort_by_name(self.msas) == sort_by_name(item.msas)
+        return (
+            is_assay_match and is_sequence_match and is_structure_match and is_msa_match
+        )
+
+    def __contains__(self, item: Any) -> bool:
+        """Implements the 'in' operator for Dataset."""
+        if not isinstance(item, Dataset):
+            return False
+        # If a protein data type is empty,
+        # it is a (mathematical) subset of any other
+        is_assay_subset = (
+            all(assay in self.assays for assay in item.assays) or len(item.assays) == 0
+        )
+        is_sequence_subset = (
+            all(seq in self.sequences for seq in item.sequences)
+            or len(item.sequences) == 0
+        )
+        is_structure_subset = (
+            all(struct in self.structures for struct in item.structures)
+            or len(item.structures) == 0
+        )
+        is_msa_subset = (
+            all(msa in self.msas for msa in item.msas) or len(item.msas) == 0
+        )
+        return (
+            is_assay_subset
+            and is_sequence_subset
+            and is_structure_subset
+            and is_msa_subset
+        )
+
     def __getitem__(self, item: DatasetSlice) -> "Dataset":
         """Get a slice of the dataset.
 
@@ -160,6 +242,8 @@ class Dataset(BaseModel):
 
         data_types = {
             Assay: self.assays,
+            AssayVariable: self.assay_variables,
+            AssayTarget: self.assay_targets,
             Sequence: self.sequences,
             Structure: self.structures,
             MSA: self.msas,
@@ -388,3 +472,68 @@ class Dataset(BaseModel):
                 path, temporary_directory=Path(temp_dir)
             )
         return archive_path
+
+    def to_df(
+        self,
+        *,
+        target_names: Collection[str] | str | None = None,
+    ) -> pl.DataFrame:
+        """Returns the dataset assay records as a Polars DataFrame.
+
+        Args:
+            target_names (Collection[str] | str | None): The target name(s) to include.
+                If None, all target names are included. Defaults to None.
+
+        Returns:
+            pl.DataFrame: The DataFrame containing all records from all assays.
+        """
+
+        if isinstance(target_names, str):
+            target_names = {target_names}
+        if target_names:
+            if not all(
+                target_name in [t.name for t in self.assay_targets]
+                for target_name in target_names
+            ):
+                raise ValueError("Target names must be valid assay target names.")
+        else:
+            target_names = {t.name for t in self.assay_targets}
+
+        if not self.assays:
+            return pl.DataFrame()
+        variable_names = [v.name for v in self.assay_variables]
+
+        assays_dfs = []
+        for assay in self.assays:
+            df = assay.to_df(target_names=target_names)
+            # Add the missing columns from target names and variable names
+            missing_targets = [
+                pl.lit(None).alias(target_name)
+                for target_name in target_names
+                if target_name not in df.columns
+            ]
+            df = df.with_columns(missing_targets)
+
+            missing_variables = [
+                pl.lit(None).alias(var_name)
+                for var_name in variable_names
+                if var_name not in df.columns
+            ]
+            df = df.with_columns(missing_variables)
+
+            assays_dfs.append(
+                df.select(["sequence"] + variable_names + list(target_names))
+            )
+
+        df = pl.concat(assays_dfs, how="vertical_relaxed").filter(
+            ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
+        )
+
+        # Group by sequence and variables, and aggregate the target by mean
+        df = (
+            df.group_by(["sequence"] + variable_names)
+            .agg([pl.col(t).mean().alias(t) for t in target_names])
+            .sort(["sequence"] + variable_names)
+        )
+
+        return df

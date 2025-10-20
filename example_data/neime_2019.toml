@@ -32,6 +32,7 @@ sequence_alphabet = "AA"
 
 [ assays.targets ]
 "DMS Score" = "DMS_score"
+"DMS Score Bin" = "DMS_score_bin"
 
 [ assays.variables ]
 T = 37
