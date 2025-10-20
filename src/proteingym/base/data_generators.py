@@ -112,7 +112,7 @@ def charge_ladder_dataset(n_rows: int = 200, seq_len: int = 20) -> pl.DataFrame:
     parent = _generate_sequence(seq_len)
 
     sequences = set()
-    for _ in iter(lambda: len(sequences) < n_rows, False):
+    while len(sequences) < n_rows:
         sequences.add(charge_mutations(parent, random.randint(0, seq_len)))
 
     charge = [peptide_charge(seq) for seq in sequences]
