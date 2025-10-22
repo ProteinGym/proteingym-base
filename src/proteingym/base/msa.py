@@ -15,6 +15,7 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
 
@@ -32,7 +33,38 @@ class MSAWeightFormat(StrEnum):
     """NumPy binary file format."""
 
 
-class MSAManifestSection(BaseModel):
+class MSAMetadataManifestSection(BaseModel):
+    """Metadata for the multiple sequence alignment."""
+
+    model_config = ConfigDict(
+        extra="allow",
+        frozen=True,
+        use_attribute_docstrings=True,
+    )
+    """Configuration for the Pydantic model."""
+
+    num_significant: int | None = None
+    """Number of evolutionary couplings that are considered significant."""
+
+    bit_score: float | None = None
+    """Bitscore threshold used to generate the alignment divided
+    by the length of the target protein.
+    """
+
+    theta: float | None = None
+    """Hamming distance cutoff for sequence re-weighting."""
+
+    reference_sequence: str | None = None
+    """The name of the reference sequence of MSA present in Dataset."""
+
+    sequence_start: int | None = None
+    """The starting position of the reference sequence in the MSA."""
+
+    sequence_end: int | None = None
+    """The ending position of the reference sequence in the MSA."""
+
+
+class MSAManifestSection(MSAMetadataManifestSection):
     """The multiple sequence alignment section of the manifest."""
 
     model_config = ConfigDict(
@@ -57,25 +89,6 @@ class MSAManifestSection(BaseModel):
 
     format: MSAFormat = MSAFormat.FASTA
     """The format of the multiple sequence alignment file."""
-
-    num_significant: int | None = None
-    """Number of evolutionary couplings that are considered significant."""
-
-    bit_score: float | None = None
-    """Bitscore threshold used to generate the alignment divided by the length of the"""
-    """target protein."""
-
-    theta: float | None = None
-    """Hamming distance cutoff for sequence re-weighting."""
-
-    reference_sequence: str | None = None
-    """The name of the reference sequence of MSA present in Dataset."""
-
-    sequence_start: int | None = None
-    """The starting position of the reference sequence in the MSA."""
-
-    sequence_end: int | None = None
-    """The ending position of the reference sequence in the MSA."""
 
     weights_path: FilePath | None = Field(default=None, exclude=True)
     """The weight file for each sequence in the MSA."""
@@ -112,6 +125,19 @@ class MSAManifestSection(BaseModel):
         if format not in MSAWeightFormat:
             raise ValueError(f"Unsupported MSA weight file format: {format}")
         return weights_path
+
+    @model_validator(mode="after")
+    def check_weights_and_weights_path(
+        self, info: ValidationInfo
+    ) -> "MSAManifestSection":
+        """Ensure that both weights and weights_path are not provided together."""
+
+        if self.weights is not None and self.weights_path is not None:
+            raise ValueError(
+                "Only one of weights and weights_path can be provided in the manifest"
+                " section."
+            )
+        return self
 
     @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
@@ -168,8 +194,9 @@ class MSA:
     """Number of evolutionary couplings that are considered significant."""
 
     bit_score: float | None = None
-    """Bitscore threshold used to generate the alignment divided by the length of the
-    target protein."""
+    """Bitscore threshold used to generate the alignment divided
+    by the length of the target protein.
+    """
 
     theta: float | None = None
     """Hamming distance cutoff for sequence re-weighting."""
@@ -239,11 +266,6 @@ class MSA:
         value = AlignIO.read(section.path, section.format.value)
         if section.weights_path:
             weights = np.load(section.weights_path).tolist()
-            if section.weights:
-                raise ValueError(
-                    "Only one of weights and weights_path are allowed in the manifest"
-                    " section."
-                )
         elif section.weights:
             weights = section.weights
         else:

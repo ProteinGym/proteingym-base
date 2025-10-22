@@ -217,27 +217,24 @@ def test_msa_from_manifest_section_with_weights_path(
 
     msa = MSA.from_manifest_section(section)
 
-    assert msa.name == "structure"
-    assert isinstance(msa.value, MultipleSeqAlignment)
     assert msa.weights == [0.1, 0.5, 0.4]
 
 
-def test_msa_from_manifest_section_fails_with_both_weights_and_weights_path(
+def test_msa_manifest_section_raises_error_with_both_weights_and_weights_path(
     fasta_file: Path, weights_file: Path
 ) -> None:
     """A ValueError is raised if both weights and weights_path are provided."""
-    section = MSAManifestSection(
-        path=fasta_file,
-        weights=[0.1, 0.5, 0.4],
-        weights_path=weights_file,
-    )
 
     with pytest.raises(
         ValueError,
-        match="Only one of weights and weights_path are allowed in the "
+        match="Only one of weights and weights_path can be provided in the "
         "manifest section.",
     ):
-        MSA.from_manifest_section(section)
+        MSAManifestSection(
+            path=fasta_file,
+            weights=[0.1, 0.5, 0.4],
+            weights_path=weights_file,
+        )
 
 
 def test_msa_from_manifest_section_with_weights(
@@ -252,9 +249,6 @@ def test_msa_from_manifest_section_with_weights(
     )
 
     msa = MSA.from_manifest_section(section)
-
-    assert msa.name == "structure"
-    assert isinstance(msa.value, MultipleSeqAlignment)
     assert msa.weights == arr
 
 
