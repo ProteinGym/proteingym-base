@@ -11,6 +11,22 @@ from .dataset import Dataset, DatasetSlice
 from .superset import Superset
 
 
+def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
+    """Cast a list of indices to a boolean mask.
+
+    Args:
+        indices (list[int]): List of indices to be set to True.
+        length (int): Length of the resulting mask.
+
+    Returns:
+        list[bool]: Boolean mask with True at the specified indices.
+    """
+    mask = [False] * length
+    for index in indices:
+        mask[index] = True
+    return mask
+
+
 class RandomSplitter:
     """Randomly split a dataset.
 
@@ -59,8 +75,9 @@ class RandomSplitter:
 
         slices, offset = [], 0
         for size in sizes:
-            # TODO: Convert indices to a mask
-            slc = indices[offset : offset + size]
+            slc = _cast_indices_to_mask(
+                indices[offset : offset + size], length=len(assay)
+            )
             dataset_slice = DatasetSlice(assays=[slc])  # Assuming one assay here
             slices.append(dataset_slice)
             offset += size
