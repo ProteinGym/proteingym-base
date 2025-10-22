@@ -251,8 +251,6 @@ def test_manifest_dump_from_path_unit_docs_example(
             f"Loading manifest failed:``` toml\n{path.read_text()}```"
         ) from e
     else:
-        print(loaded_manifest.msas)
-        print(manifest.msas)
         assert loaded_manifest == manifest, (
             f"Loaded manifest does not match dumped manifest: {path.read_text()}"
         )
