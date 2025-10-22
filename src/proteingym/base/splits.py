@@ -35,7 +35,7 @@ class RandomSplitter:
         """Splits the dataset into a Superset.
 
         The dataset is split into a Superset with randomized splits according to
-        fractions.
+        given fractions. Currently, the implementation only splits assays.
 
         Returns:
             Superset: The superset containing the splits.
@@ -44,6 +44,11 @@ class RandomSplitter:
             raise NotImplementedError(
                 "Random splitting is not implemented for multi-assay datasets."
             )
+
+        if len(self.dataset.assays) == 0:
+            slices = [DatasetSlice(assays=[]) for _ in self.fractions]
+            return Superset(dataset=self.dataset, slices=slices)
+
         assay = self.dataset.assays[0]
 
         indices = list(range(len(assay)))
