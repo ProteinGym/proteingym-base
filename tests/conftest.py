@@ -274,6 +274,24 @@ def dataset_with_everything(
 
 
 @pytest.fixture
+def dataset_with_everything(
+    dataset_with_assays: Dataset,
+    dataset_with_sequences: Dataset,
+    dataset_with_structures: Dataset,
+    dataset_with_msas: Dataset,
+) -> Dataset:
+    """A dataset containing everything."""
+    # Tightly coupled with datasets fixture
+    dataset = (
+        dataset_with_assays
+        | dataset_with_sequences
+        | dataset_with_structures
+        | dataset_with_msas
+    ).model_copy(update={"name": "dataset_with_everything"})
+    return dataset
+
+
+@pytest.fixture
 def datasets(
     dataset_empty: Dataset,
     dataset_with_assay: Dataset,
@@ -284,6 +302,7 @@ def datasets(
     dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
     dataset_with_msas: Dataset,
+    dataset_with_everything: Dataset,
     dataset_with_everything: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
@@ -297,6 +316,7 @@ def datasets(
         dataset_with_structures,
         dataset_with_msa,
         dataset_with_msas,
+        dataset_with_everything,
         dataset_with_everything,
     ]
 
@@ -319,4 +339,4 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
     return dataset
 
 
-dataset2 = dataset  # A second fixture for tests using two datasets
+dataset2 = dataset  # To have a second fixture for union tests
