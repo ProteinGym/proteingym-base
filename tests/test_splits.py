@@ -33,5 +33,5 @@ def test_random_splitter_splits_in_dataset(dataset_with_assay: Dataset):
     fractions = [0.8, 0.2]
     splitter = RandomSplitter(dataset=dataset_with_assay, fractions=fractions)
     superset = splitter.split()
-    for split in superset:
-        assert split in dataset_with_assay
+    for i, split in enumerate(superset):
+        assert split in dataset_with_assay, f"Split {i + 1} not in original dataset."
