@@ -17,6 +17,7 @@ def test_cast_indices_to_mask(
 ) -> None:
     """Unit test the _cast_indices_to_mask function."""
     assert _cast_indices_to_mask(indices, length=length) == expected
+from proteingym.base.splits import RandomSplitter, _reshape_list
 
 
 @pytest.mark.parametrize(
