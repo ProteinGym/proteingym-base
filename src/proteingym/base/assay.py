@@ -28,16 +28,9 @@ class AssayFormat(StrEnum):
     """A comma separated text file"""
 
 
-class AssayVariable(BaseModel):
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayVariable:
     """Definition of an assay variable."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the variable."""
@@ -52,16 +45,9 @@ class AssayVariable(BaseModel):
     """Description of the variable."""
 
 
-class AssayTarget(BaseModel):
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayTarget:
     """Definition of an assay target."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the target."""
