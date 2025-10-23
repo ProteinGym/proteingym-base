@@ -29,6 +29,15 @@ def test_random_splitter_splits_length(empty_dataset: Dataset) -> None:
 
 
 @pytest.mark.parametrize(
+    "dataset",
+    [
+        "dataset_with_assay_empty",
+        "dataset_with_single_assay",
+        "dataset_with_multiple_assays",
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize(
     "fractions",
     [
         [0.5, 0.5],  # Each splits with one record
@@ -36,19 +45,28 @@ def test_random_splitter_splits_length(empty_dataset: Dataset) -> None:
     ],
 )
 def test_random_splitter_splits_in_dataset(
-    dataset_with_assay: Dataset, fractions: list[float]
+    dataset: Dataset, fractions: list[float]
 ) -> None:
     """Test that RandomSplitter splits the dataset into the correct number of slices."""
-    splitter = RandomSplitter(dataset=dataset_with_assay, fractions=fractions)
+    splitter = RandomSplitter(dataset=dataset, fractions=fractions)
     superset = splitter.split()
     for i, split in enumerate(superset):
-        assert split in dataset_with_assay, f"Split {i + 1} not in original dataset."
+        assert split in dataset, f"Split {i + 1} not in original dataset."
 
 
-def test_random_splitter_splits_are_disjoint(dataset_with_assay: Dataset) -> None:
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "dataset_with_assay_empty",
+        "dataset_with_single_assay",
+        "dataset_with_multiple_assays",
+    ],
+    indirect=True,
+)
+def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     """Test that RandomSplitter splits are disjoint."""
     fractions = [0.5, 0.5]
-    splitter = RandomSplitter(dataset=dataset_with_assay, fractions=fractions)
+    splitter = RandomSplitter(dataset=dataset, fractions=fractions)
     split_first, split_second = list(splitter.split())
     assert split_first not in split_second
     assert split_second not in split_first
