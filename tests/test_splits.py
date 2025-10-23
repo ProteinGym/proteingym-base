@@ -46,7 +46,7 @@ def test_random_splitter_splits_in_dataset(
 
 
 def test_random_splitter_splits_are_disjoint(dataset_with_assay: Dataset) -> None:
-    """Thest that RandomSplitter splits are disjoint."""
+    """Test that RandomSplitter splits are disjoint."""
     fractions = [0.5, 0.5]
     splitter = RandomSplitter(dataset=dataset_with_assay, fractions=fractions)
     split_first, split_second = list(splitter.split())
