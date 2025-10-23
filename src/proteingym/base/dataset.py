@@ -183,8 +183,13 @@ class Dataset(BaseModel):
             return False
         # If a protein data type is empty,
         # it is a (mathematical) subset of any other
-        is_assay_subset = len(item.assays) == 0 or all(
-            assay in self.assays for assay in item.assays
+        is_assay_subset = (
+            len(item.assays) == 0
+            # An assay can be a subset of another assay, hence the double loop
+            or all(
+                any(other_assay in self_assay for self_assay in self.assays)
+                for other_assay in item.assays
+            )
         )
         is_sequence_subset = len(item.sequences) == 0 or all(
             seq in self.sequences for seq in item.sequences
