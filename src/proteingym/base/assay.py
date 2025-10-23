@@ -75,6 +75,17 @@ class AssayTarget(BaseModel):
     description: str | None = None
     """Description of the target."""
 
+    def __eq__(self, other: "AssayTarget") -> bool:
+        """Implements the '==' operator for AssayTarget."""
+        if not isinstance(other, AssayTarget):
+            return False
+        return (
+            # Description is not considered for equality
+            self.name == other.name
+            and self.unit == other.unit
+            and self.value == other.value
+        )
+
 
 class AssayManifestSection(BaseModel):
     """This is the manifest section for Assays.
