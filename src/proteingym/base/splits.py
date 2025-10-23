@@ -75,34 +75,35 @@ class RandomSplitter:
         """Splits the dataset into a Superset.
 
         The dataset is split into a Superset with randomized splits according to
-        given fractions. Currently, the implementation only splits assays.
+        given fractions. The task is approached by considering all records in
+        all assays to be a single list. Then, we shuffle the indices across all
+        records. Finally, we reshape shuffled indices back into the original
+        assay shapes after converting them into a boolean mask.
 
         Returns:
             Superset: The superset containing the splits.
         """
-        if len(self.dataset.assays) > 1:
-            raise NotImplementedError(
-                "Random splitting is not implemented for multi-assay datasets."
-            )
-
         if len(self.dataset.assays) == 0:
             slices = [DatasetSlice(assays=[]) for _ in self.fractions]
             return Superset(dataset=self.dataset, slices=slices)
 
-        assay = self.dataset.assays[0]
-
-        indices = list(range(len(assay)))
+        records_shape = tuple(len(assay) for assay in self.dataset.assays)
+        indices = list(range(sum(records_shape)))
         random.shuffle(indices)
 
-        sizes = [int(round(f * len(assay))) for f in self.fractions[:-1]]
-        sizes.append(len(assay) - sum(sizes[:-1]))  # Ensure all items are used
+        # Ensure all items are used due to rounding errors by treating the last
+        # fraction separately
+        sizes = [int(round(f * len(indices))) for f in self.fractions[:-1]]
+        sizes.append(len(indices) - sum(sizes))
 
         slices, offset = [], 0
         for size in sizes:
-            slc = _cast_indices_to_mask(
-                indices[offset : offset + size], length=len(assay)
+            mask = _cast_indices_to_mask(
+                indices[offset : offset + size], length=len(indices)
             )
-            dataset_slice = DatasetSlice(assays=[slc])  # Assuming one assay here
+            dataset_slice = DatasetSlice(
+                assays=_reshape_list(mask, shape=records_shape)
+            )
             slices.append(dataset_slice)
             offset += size
 
