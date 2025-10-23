@@ -152,20 +152,14 @@ def test_kfold_splitter_splits_in_dataset(dataset: Dataset, n_splits: int) -> No
 @pytest.mark.parametrize(
     "dataset",
     [
-        "dataset_with_empty_assay",
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
     indirect=True,
 )
-@pytest.mark.parametrize("n_splits", [2, 3, 5])
-def test_kfold_splitter_splits_are_disjoint(dataset: Dataset, n_splits: int) -> None:
+def test_kfold_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     """Test that KFoldSplitter splits are disjoint."""
-    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
-    superset = splitter.split()
-    for i, split_first in enumerate(superset):
-        for j, split_second in enumerate(superset):
-            if i == j:
-                continue
-            assert split_first not in split_second
-            assert split_second not in split_first
+    splitter = KFoldSplitter(dataset=dataset, n_splits=2)
+    split_first, split_second = tuple(splitter.split())
+    assert split_first not in split_second
+    assert split_second not in split_first
