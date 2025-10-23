@@ -2,6 +2,7 @@ import dataclasses
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Iterator
 from zipfile import ZipFile
 
 from .dataset import Dataset, DatasetArchiveLayout, DatasetSlice
