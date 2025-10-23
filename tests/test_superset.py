@@ -7,9 +7,9 @@ from proteingym.base.dataset import Dataset, DatasetSlice
 from proteingym.base.superset import Superset
 
 
-def test_superset_iterate_over_empty(empty_dataset: Dataset) -> None:
+def test_superset_iterate_over_empty(dataset_empty: Dataset) -> None:
     """Test that iterating over an empty superset does not yield any elements."""
-    superset = Superset(dataset=empty_dataset, slices=[])
+    superset = Superset(dataset=dataset_empty, slices=[])
     for _ in superset:
         raise AssertionError("Should not iterate over empty superset")
 
@@ -18,14 +18,14 @@ def test_superset_iterate_over_empty(empty_dataset: Dataset) -> None:
     "slices, length",
     [([], 0), ([True, False], 2)],
 )
-def test_superset_length(empty_dataset: Dataset, slices: list, length: int) -> None:
+def test_superset_length(dataset_empty: Dataset, slices: list, length: int) -> None:
     """Test that iterating over an empty superset does not yield any elements."""
-    superset = Superset(dataset=empty_dataset, slices=slices)
+    superset = Superset(dataset=dataset_empty, slices=slices)
     assert len(superset) == length
 
 
 ALL_DATASET_NAMES = [
-    "empty_dataset",
+    "dataset_empty",
     "dataset_with_single_assay",
     "dataset_with_multiple_assays",
     "dataset_with_single_sequence",
