@@ -134,7 +134,7 @@ def test_kfold_splitter_splits_length(dataset: Dataset, n_splits: int) -> None:
 @pytest.mark.parametrize(
     "dataset",
     [
-        "dataset_with_assay_empty",
+        "dataset_with_empty_assay",
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
@@ -152,7 +152,7 @@ def test_kfold_splitter_splits_in_dataset(dataset: Dataset, n_splits: int) -> No
 @pytest.mark.parametrize(
     "dataset",
     [
-        "dataset_with_assay_empty",
+        "dataset_with_empty_assay",
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
