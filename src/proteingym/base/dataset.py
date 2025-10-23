@@ -57,15 +57,15 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[list[bool], slice] = dataclasses.field(default_factory=list)
-    """The list of assay slices."""
+    assays: list[list[bool]] = dataclasses.field(default_factory=list)
+    """The list of assay slices as boolean masks."""
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
         """Create a dataset slice from a JSON string.
 
         Args:
-            contents: The JSON string to create the dataset slice from.
+            contents (str): The JSON string to create the dataset slice from.
 
         Returns:
             The dataset slice created from the JSON string.
