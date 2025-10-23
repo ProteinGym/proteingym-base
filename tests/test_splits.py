@@ -291,8 +291,7 @@ def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     assert split_first not in split_second
     assert split_second not in split_first
 =======
-@pytest.mark.parametrize("n_splits", [2, 3, 5])
-def test_kfold_splitter_splits_are_disjoint(dataset: Dataset, n_splits: int) -> None:
+def test_kfold_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     """Test that KFoldSplitter splits are disjoint."""
     splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
     superset = splitter.split()
@@ -302,4 +301,3 @@ def test_kfold_splitter_splits_are_disjoint(dataset: Dataset, n_splits: int) -> 
                 continue
             assert split_first not in split_second
             assert split_second not in split_first
->>>>>>> b988c75 (Add and test kfolds splitter)
