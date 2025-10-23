@@ -28,9 +28,17 @@ def test_random_splitter_splits_length(empty_dataset: Dataset):
     assert len(superset) == len(fractions)
 
 
-def test_random_splitter_splits_in_dataset(dataset_with_assay: Dataset):
+@pytest.mark.parametrize(
+    "fractions",
+    [
+        [0.5, 0.5],  # Each splits with one record
+        [0.9, 0.1],  # One split with no records
+    ],
+)
+def test_random_splitter_splits_in_dataset(
+    dataset_with_assay: Dataset, fractions: list[float]
+):
     """Test that RandomSplitter splits the dataset into the correct number of slices."""
-    fractions = [0.8, 0.2]
     splitter = RandomSplitter(dataset=dataset_with_assay, fractions=fractions)
     superset = splitter.split()
     for i, split in enumerate(superset):
