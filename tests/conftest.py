@@ -38,7 +38,7 @@ def dataset_with_assay() -> Dataset:
     sequence2 = Sequence(
         name="seq2",
         value=Seq("GFEDCA"),
-        type=sequence1.alphabet,
+        type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
     assay = Assay(
