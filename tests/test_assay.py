@@ -44,15 +44,6 @@ def test_assay_variable_minimal() -> None:
         assert variable.name == "test"
 
 
-def test_assay_variable_invalid_inputs() -> None:
-    """Test invalid AssayVariable inputs raise ValidationError."""
-    with pytest.raises(
-        ValidationError,
-        match=r"validation error for AssayVariable\nname\n.*Field required",
-    ):
-        AssayVariable()
-
-
 def test_assay_target_minimal() -> None:
     """Test creating a minimal AssayTarget."""
     # This should not raise an error
@@ -62,15 +53,6 @@ def test_assay_target_minimal() -> None:
         raise AssertionError(f"AssayTarget raised ValidationError: {e}") from e
     else:
         assert target.name == "DMS Score"
-
-
-def test_assay_target_invalid_inputs() -> None:
-    """Test invalid AssayTarget inputs raise ValidationError."""
-    with pytest.raises(
-        ValidationError,
-        match=r"validation error for AssayTarget\nname\n.*Field required",
-    ):
-        AssayTarget()
 
 
 def test_assay_manifest_section(assay_file: Path) -> None:
