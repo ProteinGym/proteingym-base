@@ -101,9 +101,7 @@ class RandomSplitter:
             mask = _cast_indices_to_mask(
                 indices[offset : offset + size], length=len(indices)
             )
-            dataset_slice = DatasetSlice(
-                assays=_reshape_list(mask, shape=records_shape)
-            )
+            dataset_slice = DatasetSlice(assays=_reshape_list(mask, records_shape))
             slices.append(dataset_slice)
             offset += size
 
