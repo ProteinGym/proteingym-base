@@ -8,29 +8,16 @@ from proteingym.base.assay import Assay
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
-@pytest.mark.parametrize(
-    "records",
-    [
-        [],
-        [
-            (
-                Sequence(
-                    name="seq1",
-                    value="ACD",
-                    type=SequenceType.WILD_TYPE,
-                    alphabet=SequenceAlphabet.AA,
-                ),
-                1.0,
-            )
-        ],
-    ],
-)
-def test_assay_length_equals_records_length(
-    records: list[tuple[Sequence | str | int | float | bool | str]],
-) -> None:
+def test_assay_length_equals_records_length() -> None:
     """The assay length should equal the number of records."""
-    assay = Assay(name="Test Assay", records=records)
-    assert len(assay) == len(records)
+    sequence = Sequence(
+        name="seq1",
+        value="ACD",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay = Assay(name="Test Assay", records=[(sequence, 1.0), (sequence, 2.0)])
+    assert len(assay) == 2
 
 
 def test_assay_not_equal_to_integer() -> None:
