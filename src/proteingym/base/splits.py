@@ -27,6 +27,30 @@ def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
     return mask
 
 
+def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
+    """Reshape to a two-dimensional list with varying sizes of the sublists.
+
+    Note that this different from numpy.reshape, which requires all sublists to
+    have the same size and thus the shape contain the size of each dimension.
+
+    Args:
+        flat_list (list): The flat list to reshape.
+        shape (tuple[int, ...]): The desired shape.
+
+    Returns:
+        list: The reshaped nested list.
+    """
+    if len(flat_list) != sum(shape):
+        raise ValueError("The size of the flat list does not match the desired shape.")
+
+    reshaped_list, index = [], 0
+    for size in shape:
+        sublist = flat_list[index : index + size]
+        reshaped_list.append(sublist)
+        index += size
+    return reshaped_list
+
+
 class RandomSplitter:
     """Randomly split a dataset.
 
