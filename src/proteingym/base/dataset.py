@@ -57,7 +57,7 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[list[bool], slice] = Field(default_factory=list)
+    assays: list[list[bool], slice] = dataclasses.field(default_factory=list)
     """The list of assay slices."""
 
     @classmethod
