@@ -12,10 +12,10 @@ from proteingym.base.structure import Structure
 
 
 @pytest.fixture
-def empty_dataset() -> Dataset:
+def dataset_empty() -> Dataset:
     """An empty dataset."""
     dataset = Dataset(
-        name="empty_dataset",
+        name="dataset_empty",
         description="An empty dataset for testing purposes.",
         assay_variables=[],
         assays=[],
@@ -275,7 +275,7 @@ def dataset_with_everything(
 
 @pytest.fixture
 def datasets(
-    empty_dataset: Dataset,
+    dataset_empty: Dataset,
     dataset_with_assay: Dataset,
     dataset_with_assays: Dataset,
     dataset_with_sequence: Dataset,
@@ -288,7 +288,7 @@ def datasets(
 ) -> list[Dataset]:
     """All test datasets."""
     return [
-        empty_dataset,
+        dataset_empty,
         dataset_with_assay,
         dataset_with_assays,
         dataset_with_sequence,

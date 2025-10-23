@@ -9,7 +9,7 @@ import pytest
 from proteingym.base.dataset import Dataset
 
 ALL_DATASET_NAMES = [
-    "empty_dataset",
+    "dataset_empty",
     "dataset_with_single_assay",
     "dataset_with_multiple_assays",
     "dataset_with_single_sequence",
@@ -22,9 +22,9 @@ ALL_DATASET_NAMES = [
 ]
 
 
-def test_dataset_not_equals_integer(empty_dataset: Dataset) -> None:
+def test_dataset_not_equals_integer(dataset_empty: Dataset) -> None:
     """A dataset should not equal an integer."""
-    assert empty_dataset != 1
+    assert dataset_empty != 1
 
 
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
@@ -33,9 +33,9 @@ def test_dataset_equals_itself(dataset: Dataset) -> None:
     assert dataset == dataset
 
 
-def test_dataset_does_not_contain_integer(empty_dataset: Dataset) -> None:
+def test_dataset_does_not_contain_integer(dataset_empty: Dataset) -> None:
     """A dataset should not contain an integer."""
-    assert 1 not in empty_dataset
+    assert 1 not in dataset_empty
 
 
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
@@ -45,17 +45,17 @@ def test_dataset_contains_itself(dataset: Dataset) -> None:
 
 
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
-def test_dataset_always_contains_empty_dataset(
-    empty_dataset: Dataset, dataset: Dataset
+def test_dataset_always_contains_dataset_empty(
+    dataset_empty: Dataset, dataset: Dataset
 ) -> None:
     """An empty dataset should be contained in any dataset."""
-    assert empty_dataset in dataset
+    assert dataset_empty in dataset
 
 
 @pytest.mark.parametrize(
     "dataset",
     [
-        "empty_dataset",
+        "dataset_empty",
         "dataset_with_single_sequence",
         "dataset_with_single_structure",
         "dataset_with_single_msa",
@@ -72,7 +72,7 @@ def test_dataset_with_single_assay_not_in(
 @pytest.mark.parametrize(
     "dataset",
     [
-        "empty_dataset",
+        "dataset_empty",
         "dataset_with_single_assay",
         "dataset_with_single_structure",
         "dataset_with_single_msa",
@@ -89,7 +89,7 @@ def test_dataset_with_single_sequence_not_in(
 @pytest.mark.parametrize(
     "dataset",
     [
-        "empty_dataset",
+        "dataset_empty",
         "dataset_with_single_assay",
         "dataset_with_single_sequence",
         "dataset_with_single_msa",
@@ -106,7 +106,7 @@ def test_dataset_with_single_structure_not_in(
 @pytest.mark.parametrize(
     "dataset",
     [
-        "empty_dataset",
+        "dataset_empty",
         "dataset_with_single_assay",
         "dataset_with_single_sequence",
         "dataset_with_single_structure",
@@ -145,9 +145,9 @@ def test_dataset_with_everything_all_contains_other(
 
 
 def test_dataset_union_keeps_descriptions(
-    empty_dataset: Dataset, dataset_with_assay: Dataset
+    dataset_empty: Dataset, dataset_with_assay: Dataset
 ) -> None:
     """The union of two datasets should keep the description of both dataset."""
-    union = empty_dataset | dataset_with_assay
-    assert empty_dataset.description in union.description
+    union = dataset_empty | dataset_with_assay
+    assert dataset_empty.description in union.description
     assert dataset_with_assay.description in union.description
