@@ -5,12 +5,15 @@ Module for testing assay operators.
 import pytest
 
 from proteingym.base.assay import Assay, AssayTarget
+from proteingym.base.assay import Assay, AssayTarget
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 def test_assay_target_equality_does_not_consider_description() -> None:
     """Test that assay target equality does not consider the description."""
-    assay_target1 = AssayTarget(name="DMS Score", description="DMS score")
+    assay_target1 = AssayTarget(
+        name="DMS Score", description="Deep mutational scan score"
+    )
     assay_target2 = AssayTarget(name="DMS Score", description="Different description")
     assert assay_target1 == assay_target2
 
