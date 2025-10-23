@@ -16,7 +16,7 @@ def test_superset_iterate_over_empty(empty_dataset: Dataset) -> None:
 
 @pytest.mark.parametrize(
     "slices, length",
-    [([], 0), ([slice(0, 1)], 1), ([True, False], 2)],
+    [([], 0), ([True, False], 2)],
 )
 def test_superset_length(empty_dataset: Dataset, slices: list, length: int) -> None:
     """Test that iterating over an empty superset does not yield any elements."""
@@ -40,7 +40,7 @@ ALL_DATASET_NAMES = [
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
 def test_superset_iterate_over_single_full_slice(dataset: Dataset) -> None:
     """Iterating over a superset with a single full slice yields the entire dataset."""
-    slc = DatasetSlice(assays=[slice(None)] * len(dataset.assays))
+    slc = DatasetSlice(assays=[[True] * len(assay) for assay in dataset.assays])
     superset = Superset(dataset=dataset, slices=[slc])
     assert list(superset) == [dataset]
 
@@ -49,7 +49,7 @@ def test_superset_iterate_over_single_full_slice(dataset: Dataset) -> None:
 def superset_fifty_fifty(dataset_with_assay: Dataset) -> Superset:
     """A superset which cuts a dataset with two assays in half."""
     slc1 = DatasetSlice(assays=[[True, False]])
-    slc2 = DatasetSlice(assays=[slice(1, None)])  # Test using slice, not just mask
+    slc2 = DatasetSlice(assays=[[False, True]])
     superset = Superset(dataset=dataset_with_assay, slices=[slc1, slc2])
     return superset
 

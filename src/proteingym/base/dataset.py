@@ -5,7 +5,7 @@ import json
 from collections.abc import Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Iterable
+from typing import Any
 from zipfile import ZipFile
 
 import polars as pl
@@ -57,68 +57,28 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[list[bool], slice] = dataclasses.field(default_factory=list)
-    """The list of assay slices."""
+    assays: list[list[bool]] = dataclasses.field(default_factory=list)
+    """The list of assay slices as boolean masks."""
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
         """Create a dataset slice from a JSON string.
 
-        The slice is encoded as a tuple of (start, stop, step) where each value
-        is an optional integer as the slice object is non-hashable.
-
         Args:
-            contents: The JSON string to create the dataset slice from.
+            contents (str): The JSON string to create the dataset slice from.
 
         Returns:
             The dataset slice created from the JSON string.
         """
-
-        def is_integer(value: Any) -> bool:
-            return isinstance(value, int) and not isinstance(value, bool)
-
-        def is_slice_iterable(iterable: Iterable) -> bool:
-            return any(is_integer(el) or el is None for el in iterable)
-
-        def as_slice(
-            slc: list[bool] | tuple[int | None, int | None, int | None],
-        ) -> list[bool] | slice:
-            """Convert an iterable to a slice object."""
-            if is_slice_iterable(slc):
-                return slice(*slc)
-            return slc
-
-        def as_dataset_slice(raw: dict) -> DatasetSlice:
-            assay_slices = [as_slice(slc) for slc in raw.get("assays", [])]
-            return cls(assays=assay_slices)
-
-        instance = json.loads(contents, object_hook=as_dataset_slice)
-        return instance
+        return cls(**json.loads(contents))
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
 
-        The slice is encoded as a tuple of (start, stop, step) where each value
-        is an optional integer as the slice object is non-hashable.
-
         Returns:
             A JSON string representation of the dataset slice.
         """
-
-        def encode_slice(
-            slc: list[bool] | slice,
-        ) -> list[bool] | tuple[int | None, int | None, int | None]:
-            """Encode a slice object as a tuple."""
-            if isinstance(slc, slice):
-                return (slc.start, slc.stop, slc.step)
-            return slc
-
-        def encode(dataset_slice: DatasetSlice) -> dict:
-            """Encode a DatasetSlice as a dictionary."""
-            slices = [encode_slice(s) for s in dataset_slice.assays]
-            return {"assays": slices}
-
-        return json.dumps(self, default=encode)
+        return json.dumps(dataclasses.asdict(self))
 
 
 class Dataset(BaseModel):
