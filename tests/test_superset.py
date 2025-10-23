@@ -47,7 +47,7 @@ def test_superset_iterate_over_single_full_slice(dataset: Dataset) -> None:
 
 @pytest.fixture
 def superset_fifty_fifty(dataset_with_assay: Dataset) -> Superset:
-    """A superset which cuts a dataset with two assays in half."""
+    """A superset which cuts a dataset with two assay records in half."""
     slc1 = DatasetSlice(assays=[[True, False]])
     slc2 = DatasetSlice(assays=[[False, True]])
     superset = Superset(dataset=dataset_with_assay, slices=[slc1, slc2])
