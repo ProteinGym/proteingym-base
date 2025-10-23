@@ -134,10 +134,6 @@ class KFoldSplitter:
         Returns:
             Superset: The superset containing the splits.
         """
-        if len(self.dataset.assays) == 0:
-            slices = [DatasetSlice(assays=[]) for _ in range(self.n_splits)]
-            return Superset(dataset=self.dataset, slices=slices)
-
         records_shape = tuple(len(assay) for assay in self.dataset.assays)
         indices = list(range(sum(records_shape)))
         if self.shuffle:
