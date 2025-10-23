@@ -1,3 +1,7 @@
+import functools
+
+import polars as pl
+import polars.testing
 import pytest
 
 from proteingym.base import Dataset
@@ -163,3 +167,29 @@ def test_kfold_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     split_first, split_second = tuple(splitter.split())
     assert split_first not in split_second
     assert split_second not in split_first
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "dataset_with_empty_assay",
+        "dataset_with_single_assay",
+        "dataset_with_multiple_assays",
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize("n_splits", [2, 3, 5])
+def test_kfold_splitter_splits_contain_all_records(
+    dataset: Dataset, n_splits: int
+) -> None:
+    """Test that KFoldSplitter splits contain all records from the original dataset."""
+    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
+    dataset_with_all_splits = functools.reduce(lambda d1, d2: d1 | d2, splitter.split())
+    # Using a dataframe comparision here as the dataset reconstructed from the
+    # folds will have the records spread over multiple assays
+    pl.testing.assert_frame_equal(
+        dataset.to_df(),
+        dataset_with_all_splits.to_df(),
+        check_dtypes=False,
+        check_column_order=False,
+    )
