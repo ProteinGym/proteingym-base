@@ -103,3 +103,52 @@ class RandomSplitter:
 
         superset = Superset(dataset=self.dataset, slices=slices)
         return superset
+
+
+class KFoldSplitter:
+    """Split dataset into K consecutive folds (without shuffling).
+
+    Args:
+        dataset (Dataset): The dataset to split.
+        n_splits (int): Number of folds. Must be at least 2.
+
+    Sources:
+        https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.KFold.html
+    """
+
+    def __init__(self, dataset: Dataset, n_splits: int) -> None:
+        if n_splits < 2:
+            raise ValueError("Number of splits must be at least 2.")
+
+        self.dataset = dataset
+        self.n_splits = n_splits
+
+    def split(self) -> Superset:
+        """Splits the dataset into K folds.
+
+        Returns:
+            Superset: The superset containing the splits.
+        """
+        if len(self.dataset.assays) == 0:
+            slices = [DatasetSlice(assays=[]) for _ in range(self.n_splits)]
+            return Superset(dataset=self.dataset, slices=slices)
+
+        records_shape = tuple(len(assay) for assay in self.dataset.assays)
+        indices = list(range(sum(records_shape)))
+
+        # Ensure all items are used due to rounding errors
+        fold_sizes = [len(indices) // self.n_splits] * self.n_splits
+        for i in range(len(indices) % self.n_splits):
+            fold_sizes[i] += 1
+
+        slices, offset = [], 0
+        for size in fold_sizes:
+            mask = _cast_indices_to_mask(
+                indices[offset : offset + size], length=len(indices)
+            )
+            dataset_slice = DatasetSlice(assays=_reshape_list(mask, records_shape))
+            slices.append(dataset_slice)
+            offset += size
+
+        superset = Superset(dataset=self.dataset, slices=slices)
+        return superset
