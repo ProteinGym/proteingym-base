@@ -1,7 +1,12 @@
 import pytest
 
 from proteingym.base import Dataset
-from proteingym.base.splits import RandomSplitter, _cast_indices_to_mask, _reshape_list
+from proteingym.base.splits import (
+    KFoldSplitter,
+    RandomSplitter,
+    _cast_indices_to_mask,
+    _reshape_list,
+)
 
 
 @pytest.mark.parametrize(
@@ -111,6 +116,7 @@ def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     split_first, split_second = tuple(splitter.split(dataset=dataset))
     assert split_first not in split_second
     assert split_second not in split_first
+<<<<<<< HEAD
 from proteingym.base.splits import RandomSplitter
 
 
@@ -134,6 +140,8 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
     splitter = RandomSplitter(fractions)
     subsets = splitter.split(dataset_empty)
     assert len(subsets) == len(fractions)
+=======
+>>>>>>> b988c75 (Add and test kfolds splitter)
 
 
 @pytest.mark.parametrize(
@@ -145,6 +153,7 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
     ],
     indirect=True,
 )
+<<<<<<< HEAD
 @pytest.mark.parametrize(
     "fractions",
     [
@@ -159,17 +168,47 @@ def test_random_splitter_splits_in_dataset(
     splitter = RandomSplitter(fractions)
     subsets = splitter.split(dataset)
     for i, split in enumerate(subsets):
+=======
+@pytest.mark.parametrize("n_splits", [2, 3, 5])
+def test_kfold_splitter_splits_length(dataset: Dataset, n_splits: int) -> None:
+    """Test that KFoldSplitter splits the dataset into the correct number of folds."""
+    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
+    superset = splitter.split()
+    assert len(superset) == n_splits
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "dataset_with_assay_empty",
+        "dataset_with_single_assay",
+        "dataset_with_multiple_assays",
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize("n_splits", [2, 3, 5])
+def test_kfold_splitter_splits_in_dataset(dataset: Dataset, n_splits: int) -> None:
+    """Test that KFoldSplitter splits the dataset into the correct number of slices."""
+    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
+    superset = splitter.split()
+    for i, split in enumerate(superset):
+>>>>>>> b988c75 (Add and test kfolds splitter)
         assert split in dataset, f"Split {i + 1} not in original dataset."
 
 
 @pytest.mark.parametrize(
     "dataset",
     [
+<<<<<<< HEAD
+=======
+        "dataset_with_assay_empty",
+>>>>>>> b988c75 (Add and test kfolds splitter)
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
     indirect=True,
 )
+<<<<<<< HEAD
 def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     """Test that RandomSplitter splits are disjoint."""
     fractions = [0.5, 0.5]
@@ -243,3 +282,16 @@ def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     split_first, split_second = tuple(splitter.split(dataset=dataset))
     assert split_first not in split_second
     assert split_second not in split_first
+=======
+@pytest.mark.parametrize("n_splits", [2, 3, 5])
+def test_kfold_splitter_splits_are_disjoint(dataset: Dataset, n_splits: int) -> None:
+    """Test that KFoldSplitter splits are disjoint."""
+    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
+    superset = splitter.split()
+    for i, split_first in enumerate(superset):
+        for j, split_second in enumerate(superset):
+            if i == j:
+                continue
+            assert split_first not in split_second
+            assert split_second not in split_first
+>>>>>>> b988c75 (Add and test kfolds splitter)
