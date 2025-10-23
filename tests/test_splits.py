@@ -150,7 +150,7 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
 @pytest.mark.parametrize(
     "fractions",
     [
-        [0.5, 0.5],  # Each splits with one record
+        [0.5, 0.5],  # Each split with one record
         [0.9, 0.1],  # One split with no records
     ],
 )
