@@ -31,7 +31,7 @@ def test_random_splitter_splits_length(empty_dataset: Dataset) -> None:
 @pytest.mark.parametrize(
     "dataset",
     [
-        "dataset_with_assay_empty",
+        "dataset_with_empty_assay",
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
@@ -57,7 +57,7 @@ def test_random_splitter_splits_in_dataset(
 @pytest.mark.parametrize(
     "dataset",
     [
-        "dataset_with_assay_empty",
+        "dataset_with_empty_assay",
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
