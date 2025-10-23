@@ -106,6 +106,14 @@ def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     assert split_second not in split_first
 
 
+def test_kfold_splitter_raises_value_error_if_n_splits_below_two(
+    dataset_empty: Dataset,
+) -> None:
+    """Test that KFoldSplitter raises ValueError if n_splits is below 2."""
+    with pytest.raises(ValueError, match="Number of splits must be at least 2."):
+        KFoldSplitter(dataset=dataset_empty, n_splits=1)
+
+
 @pytest.mark.parametrize(
     "dataset",
     [
