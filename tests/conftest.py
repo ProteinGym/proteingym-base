@@ -295,24 +295,6 @@ def dataset_with_everything(
 
 
 @pytest.fixture
-def dataset_with_everything(
-    dataset_with_assays: Dataset,
-    dataset_with_sequences: Dataset,
-    dataset_with_structures: Dataset,
-    dataset_with_msas: Dataset,
-) -> Dataset:
-    """A dataset containing everything."""
-    # Tightly coupled with datasets fixture
-    dataset = (
-        dataset_with_assays
-        | dataset_with_sequences
-        | dataset_with_structures
-        | dataset_with_msas
-    ).model_copy(update={"name": "dataset_with_everything"})
-    return dataset
-
-
-@pytest.fixture
 def datasets(
     dataset_empty: Dataset,
     dataset_with_assay_empty: Dataset,
