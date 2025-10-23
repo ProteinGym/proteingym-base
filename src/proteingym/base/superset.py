@@ -32,11 +32,7 @@ class Superset:
     """The dataset to which this superset belongs."""
 
     slices: list[DatasetSlice] = dataclasses.field(default_factory=list)
-    """The slices that belong to this superset.
-
-    TODO: Also support a dict `dict[str, DatasetSlice]` that maps split methods
-    to slices.
-    """
+    """The slices that belong to this superset."""
 
     def __len__(self) -> int:
         """The length of the superset."""
