@@ -1,7 +1,22 @@
 import pytest
 
 from proteingym.base import Dataset
-from proteingym.base.splits import RandomSplitter
+from proteingym.base.splits import RandomSplitter, _reshape_list
+
+
+@pytest.mark.parametrize(
+    "flat_list, shape, expected",
+    [
+        ([1, 2, 3, 4], (1, 3), [[1], [2, 3, 4]]),
+        ([1, 2, 3, 4], (4,), [[1, 2, 3, 4]]),
+        ([1, 2, 3, 4, 5, 6], (2, 2, 2), [[1, 2], [3, 4], [5, 6]]),
+    ],
+)
+def test_reshape_list(
+    flat_list: list[int], shape: tuple[int, ...], expected: list[int]
+) -> None:
+    """Unit test the _reshape_list function."""
+    assert _reshape_list(flat_list, shape) == expected
 
 
 def test_random_splitter_raises_value_error_if_fractions_do_not_sum_to_one(
