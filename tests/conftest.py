@@ -325,7 +325,6 @@ def datasets(
     dataset_with_msa: Dataset,
     dataset_with_msas: Dataset,
     dataset_with_everything: Dataset,
-    dataset_with_everything: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
     return [
@@ -339,7 +338,6 @@ def datasets(
         dataset_with_structures,
         dataset_with_msa,
         dataset_with_msas,
-        dataset_with_everything,
         dataset_with_everything,
     ]
 
