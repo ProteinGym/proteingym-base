@@ -203,19 +203,17 @@ class Dataset(BaseModel):
             return False
         # If a protein data type is empty,
         # it is a (mathematical) subset of any other
-        is_assay_subset = (
-            all(assay in self.assays for assay in item.assays) or len(item.assays) == 0
+        is_assay_subset = len(item.assays) == 0 or all(
+            assay in self.assays for assay in item.assays
         )
-        is_sequence_subset = (
-            all(seq in self.sequences for seq in item.sequences)
-            or len(item.sequences) == 0
+        is_sequence_subset = len(item.sequences) == 0 or all(
+            seq in self.sequences for seq in item.sequences
         )
-        is_structure_subset = (
-            all(struct in self.structures for struct in item.structures)
-            or len(item.structures) == 0
+        is_structure_subset = len(item.structures) == 0 or all(
+            struct in self.structures for struct in item.structures
         )
-        is_msa_subset = (
-            all(msa in self.msas for msa in item.msas) or len(item.msas) == 0
+        is_msa_subset = len(item.msas) == 0 or all(
+            msa in self.msas for msa in item.msas
         )
         return (
             is_assay_subset
