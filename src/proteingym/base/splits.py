@@ -111,17 +111,22 @@ class KFoldSplitter:
     Args:
         dataset (Dataset): The dataset to split.
         n_splits (int): Number of folds. Must be at least 2.
+        shuffle (bool, optional): Whether to shuffle the data before splitting.
+            Defaults to False.
 
     Sources:
         https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.KFold.html
     """
 
-    def __init__(self, dataset: Dataset, n_splits: int) -> None:
+    def __init__(
+        self, dataset: Dataset, n_splits: int, *, shuffle: bool = False
+    ) -> None:
         if n_splits < 2:
             raise ValueError("Number of splits must be at least 2.")
 
         self.dataset = dataset
         self.n_splits = n_splits
+        self.shuffle = shuffle
 
     def split(self) -> Superset:
         """Splits the dataset into K folds.
@@ -135,6 +140,8 @@ class KFoldSplitter:
 
         records_shape = tuple(len(assay) for assay in self.dataset.assays)
         indices = list(range(sum(records_shape)))
+        if self.shuffle:
+            random.shuffle(indices)
 
         # Ensure all items are used due to rounding errors
         fold_sizes = [len(indices) // self.n_splits] * self.n_splits
