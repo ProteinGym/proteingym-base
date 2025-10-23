@@ -137,3 +137,12 @@ def test_random_splitter_splits_in_dataset(
     superset = splitter.split()
     for i, split in enumerate(superset):
         assert split in dataset_with_assay, f"Split {i + 1} not in original dataset."
+
+
+def test_random_splitter_splits_are_disjoint(dataset_with_assay: Dataset) -> None:
+    """Thest that RandomSplitter splits are disjoint."""
+    fractions = [0.5, 0.5]
+    splitter = RandomSplitter(dataset=dataset_with_assay, fractions=fractions)
+    split_first, split_second = list(splitter.split())
+    assert split_first not in split_second
+    assert split_second not in split_first
