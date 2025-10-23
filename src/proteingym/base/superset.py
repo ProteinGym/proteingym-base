@@ -42,7 +42,7 @@ class Superset:
         """The length of the superset."""
         return len(self.slices)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Dataset]:
         """Iterate over the slices in this superset."""
         for slc in self.slices:
             yield self.dataset[slc]
