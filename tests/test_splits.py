@@ -1,7 +1,22 @@
 import pytest
 
 from proteingym.base import Dataset
-from proteingym.base.splits import RandomSplitter, _reshape_list
+from proteingym.base.splits import RandomSplitter, _cast_indices_to_mask, _reshape_list
+
+
+@pytest.mark.parametrize(
+    "indices, length, expected",
+    [
+        ([0, 2, 4], 6, [True, False, True, False, True, False]),
+        ([1, 3], 5, [False, True, False, True, False]),
+        ([], 4, [False, False, False, False]),
+    ],
+)
+def test_cast_indices_to_mask(
+    indices: list[int], length: int, expected: list[bool]
+) -> None:
+    """Unit test the _cast_indices_to_mask function."""
+    assert _cast_indices_to_mask(indices, length=length) == expected
 
 
 @pytest.mark.parametrize(
