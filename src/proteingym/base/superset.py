@@ -91,15 +91,12 @@ class Superset:
         path = path or Path.cwd()
         if path.is_dir():
             path = path / f"{self.dataset.name}{SupersetArchiveLayout.SUFFIX}"
-        with ZipFile(path, "w") as zip:
-            # While a SE practice is to avoid IO to disk where possible,
-            # we use a temporary directory here as long as dataset dump requires
-            # it.
-            with TemporaryDirectory() as temp_dir:
-                dataset_archive = self.dataset.dump(path=Path(temp_dir))
-                zip.write(
-                    dataset_archive, arcname=SupersetArchiveLayout.DATASET_ARCHIVE
-                )
+        # While a SE practice is to avoid IO to disk where possible,
+        # we use a temporary directory here as long as dataset dump requires
+        # it.
+        with ZipFile(path, "w") as zip, TemporaryDirectory() as temp_dir:
+            dataset_archive = self.dataset.dump(path=Path(temp_dir))
+            zip.write(dataset_archive, arcname=SupersetArchiveLayout.DATASET_ARCHIVE)
             slices_str = json.dumps([slc.to_json() for slc in self.slices])
             zip.writestr(SupersetArchiveLayout.SLICES_FILE, slices_str)
         return path
