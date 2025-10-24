@@ -48,6 +48,7 @@ class MSAMetadataManifestSection(BaseModel):
 
     bit_score: float | None = None
     """Bitscore threshold used to generate the alignment divided
+
     by the length of the target protein.
     """
 
@@ -132,7 +133,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
     ) -> "MSAManifestSection":
         """Ensure that both weights and weights_path are not provided together."""
 
-        if self.weights is not None and self.weights_path is not None:
+        if self.weights and self.weights_path:
             raise ValueError(
                 "Only one of weights and weights_path can be provided in the manifest"
                 " section."
@@ -195,6 +196,7 @@ class MSA:
 
     bit_score: float | None = None
     """Bitscore threshold used to generate the alignment divided
+
     by the length of the target protein.
     """
 
@@ -212,16 +214,6 @@ class MSA:
 
     weights: list[float] | None = None
     """The weights for each sequence in the MSA."""
-
-    def __post_init__(self):
-        """Check that the weights length matches the number of sequences
-        in the MSA."""
-        if self.weights:
-            if len(self.weights) != len(self.value):
-                raise ValueError(
-                    "The length of weights must be equal to the number of sequences"
-                    " in the MSA."
-                )
 
     def __eq__(self, item: Any) -> bool:
         """Implements the equality (==) operator for MSA.

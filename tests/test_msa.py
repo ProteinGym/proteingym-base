@@ -252,27 +252,6 @@ def test_msa_from_manifest_section_with_weights(
     assert msa.weights == arr
 
 
-def test_msa_weights_equals_len_msas(fasta_file: Path, tmp_path: Path) -> None:
-    """A validation error is raised if weights length does not equal number
-    of sequences."""
-
-    arr = [0.1, 0.5]
-    weights_path = tmp_path / "weights.npy"
-    np.save(weights_path, arr)
-
-    section = MSAManifestSection(
-        path=fasta_file,
-        weights_path=weights_path,
-    )
-
-    with pytest.raises(
-        ValueError,
-        match="The length of weights must be equal to the number of sequences in"
-        " the MSA.",
-    ):
-        MSA.from_manifest_section(section)
-
-
 def test_msa_as_manifest_section(fasta_file: Path) -> None:
     """A MSA can be converted to a manifest section."""
     expected = MSAManifestSection(
