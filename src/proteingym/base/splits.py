@@ -153,12 +153,15 @@ class KFoldSplitter:
 
     Args:
         n_splits (int): Number of folds. Must be at least 2.
+        shuffle (bool): Whether to shuffle the dataset before splitting.
+            Defaults to False.
     """
 
-    def __init__(self, n_splits: int) -> None:
+    def __init__(self, n_splits: int, *, shuffle: bool = False) -> None:
         if n_splits < 2:
             raise ValueError("Number of splits must be at least 2.")
         self.n_splits = n_splits
+        self.shuffle = shuffle
 
     def split(self, dataset: Dataset) -> list[Subsets]:
         """Splits the dataset into k folds for cross-validation.
@@ -176,6 +179,9 @@ class KFoldSplitter:
         """
         records_shape = tuple(len(assay) for assay in dataset.assays)
         indices = list(range(sum(records_shape)))
+
+        if self.shuffle:
+            random.shuffle(indices)
 
         # Split indices into k folds
         sizes = [len(indices) // self.n_splits] * self.n_splits
