@@ -5,7 +5,10 @@ For example, split dataset for machine learning into training, validation, and
 test sets.
 """
 
+import numbers
 import random
+
+import numpy as np
 
 from .dataset import Dataset, DatasetSlice, Subsets
 
@@ -47,7 +50,6 @@ def _check_random_state(
     raise ValueError(
         "%r cannot be used to seed a numpy.random.RandomState instance" % seed
     )
-
 
 
 def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
