@@ -5,12 +5,14 @@ For example, split dataset for machine learning into training, validation, and
 test sets.
 """
 
+import logging
 import numbers
-import random
 
 import numpy as np
 
 from .dataset import Dataset, DatasetSlice, Subsets
+
+logger = logging.getLogger(__name__)
 
 
 def _check_random_state(
@@ -102,9 +104,16 @@ class RandomSplitter:
         fractions (list[float]): A list of floats representing the fractions.
             The fractions must sum to 1. Provide two fractions for a train/test split;
             provide three fractions for a train/val/test split.
+        random_state (int | np.random.RandomState | None): Seed or random state for
+            reproducibility. If None, the global numpy random state is used.
     """
 
-    def __init__(self, fractions: list[float]) -> None:
+    def __init__(
+        self,
+        fractions: list[float],
+        *,
+        random_state: int | np.random.RandomState | None = None,
+    ) -> None:
         sum_precision = 2  # Sum of fractions must be equal to 1.0 up to this precision.
         if not round(sum(fractions), sum_precision) == 1.0:
             raise ValueError("Fractions must sum to 1.")
@@ -112,6 +121,7 @@ class RandomSplitter:
             raise ValueError("Fractions must be positive numbers.")
 
         self.fractions = fractions
+        self.random_state = _check_random_state(random_state)
 
     def split(self, dataset: Dataset) -> Subsets:
         """Splits the dataset into a subsets.
@@ -130,7 +140,7 @@ class RandomSplitter:
         """
         records_shape = tuple(len(assay) for assay in dataset.assays)
         indices = list(range(sum(records_shape)))
-        random.shuffle(indices)
+        self.random_state.shuffle(indices)
 
         # Ensure all items are used due to rounding errors by treating the last
         # fraction separately
@@ -157,13 +167,24 @@ class KFoldSplitter:
         n_splits (int): Number of folds. Must be at least 2.
         shuffle (bool): Whether to shuffle the dataset before splitting.
             Defaults to False.
+        random_state (int | np.random.RandomState | None): Seed or random state for
+            reproducibility. If None, the global numpy random state is used.
     """
 
-    def __init__(self, n_splits: int, *, shuffle: bool = False) -> None:
+    def __init__(
+        self,
+        n_splits: int,
+        *,
+        shuffle: bool = False,
+        random_state: int | np.random.RandomState | None = None,
+    ) -> None:
         if n_splits < 2:
             raise ValueError("Number of splits must be at least 2.")
+        if not shuffle and random_state is not None:
+            logger.warning("random_state is ignored when shuffle is False.")
         self.n_splits = n_splits
         self.shuffle = shuffle
+        self.random_state = _check_random_state(random_state)
 
     def split(self, dataset: Dataset) -> list[Subsets]:
         """Splits the dataset into k folds for cross-validation.
@@ -183,7 +204,7 @@ class KFoldSplitter:
         indices = list(range(sum(records_shape)))
 
         if self.shuffle:
-            random.shuffle(indices)
+            self.random_state.shuffle(indices)
 
         # Split indices into k folds
         sizes = [len(indices) // self.n_splits] * self.n_splits
