@@ -7,8 +7,7 @@ test sets.
 
 import random
 
-from .dataset import Dataset, DatasetSlice
-from .superset import Superset
+from .dataset import Dataset, DatasetSlice, Subsets
 
 
 def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
@@ -72,10 +71,10 @@ class RandomSplitter:
 
         self.fractions = fractions
 
-    def split(self, dataset: Dataset) -> Superset:
-        """Splits the dataset into a Superset.
+    def split(self, dataset: Dataset) -> Subsets:
+        """Splits the dataset into a subsets.
 
-        The dataset is split into a Superset with randomized splits according to
+        The dataset is split into subsets with randomized splits according to
         given fractions. The task is approached by considering all records in
         all assays to be a single list. Then, we shuffle the indices across all
         records. Finally, we reshape shuffled indices back into the original
@@ -85,7 +84,7 @@ class RandomSplitter:
             dataset (Dataset): The dataset to split.
 
         Returns:
-            Superset: The superset containing the splits.
+            Subsets: The subsets containing the splits.
         """
         records_shape = tuple(len(assay) for assay in dataset.assays)
         indices = list(range(sum(records_shape)))
@@ -105,5 +104,5 @@ class RandomSplitter:
             slices.append(dataset_slice)
             offset += size
 
-        superset = Superset(dataset=dataset, slices=slices)
-        return superset
+        subsets = Subsets(dataset=dataset, slices=slices)
+        return subsets

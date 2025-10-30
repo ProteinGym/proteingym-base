@@ -50,8 +50,8 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
     """Test that RandomSplitter splits the dataset into the correct number of slices."""
     fractions = [0.8, 0.2]
     splitter = RandomSplitter(fractions)
-    superset = splitter.split(dataset_empty)
-    assert len(superset) == len(fractions)
+    subsets = splitter.split(dataset_empty)
+    assert len(subsets) == len(fractions)
 
 
 @pytest.mark.parametrize(
@@ -75,8 +75,8 @@ def test_random_splitter_splits_in_dataset(
 ) -> None:
     """Test that RandomSplitter splits the dataset into the correct number of slices."""
     splitter = RandomSplitter(fractions)
-    superset = splitter.split(dataset)
-    for i, split in enumerate(superset):
+    subsets = splitter.split(dataset)
+    for i, split in enumerate(subsets):
         assert split in dataset, f"Split {i + 1} not in original dataset."
 
 
