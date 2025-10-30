@@ -75,7 +75,7 @@ list of sequences list.
 
 ## Decision
 
-The superset: a dataset of datasets.
+Subsets (of datasets) will hold the split information.
 
 ## Decision Drivers
 
