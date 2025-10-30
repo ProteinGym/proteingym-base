@@ -146,3 +146,50 @@ class RandomSplitter:
 
         subsets = Subsets(dataset=dataset, slices=slices)
         return subsets
+
+
+class KFoldSplitter:
+    """Split a dataset into k folds for cross-validation.
+
+    Args:
+        n_splits (int): Number of folds. Must be at least 2.
+    """
+
+    def __init__(self, n_splits: int) -> None:
+        if n_splits < 2:
+            raise ValueError("Number of splits must be at least 2.")
+        self.n_splits = n_splits
+
+    def split(self, dataset: Dataset) -> list[Subsets]:
+        """Splits the dataset into k folds for cross-validation.
+
+        The dataset is split into k folds with approximately equal sizes. Each
+        fold is used as a validation set once, while the remaining folds form
+        the training set.
+
+        Args:
+            dataset (Dataset): The dataset to split.
+
+        Returns:
+            list[Subsets]: A list of Subsets, where each Subset contains a training set
+            and a validation set for one fold.
+        """
+        records_shape = tuple(len(assay) for assay in dataset.assays)
+        indices = list(range(sum(records_shape)))
+
+        # Split indices into k folds
+        sizes = [len(indices) // self.n_splits] * self.n_splits
+        for i in range(len(indices) % self.n_splits):
+            sizes[i] += 1
+
+        slices, offset = [], 0
+        for size in sizes:
+            mask = _cast_indices_to_mask(
+                indices[offset : offset + size], length=len(indices)
+            )
+            dataset_slice = DatasetSlice(assays=_reshape_list(mask, records_shape))
+            slices.append(dataset_slice)
+            offset += size
+
+        subsets = Subsets(dataset=dataset, slices=slices)
+        return subsets

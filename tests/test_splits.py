@@ -148,12 +148,10 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
 >>>>>>> b988c75 (Add and test kfolds splitter)
 
 
-def test_kfold_splitter_raises_value_error_if_n_splits_below_two(
-    dataset_empty: Dataset,
-) -> None:
+def test_kfold_splitter_raises_value_error_if_n_splits_below_two() -> None:
     """Test that KFoldSplitter raises ValueError if n_splits is below 2."""
     with pytest.raises(ValueError, match="Number of splits must be at least 2."):
-        KFoldSplitter(dataset=dataset_empty, n_splits=1)
+        KFoldSplitter(n_splits=1)
 
 
 @pytest.mark.parametrize(
@@ -184,15 +182,15 @@ def test_random_splitter_splits_in_dataset(
 @pytest.mark.parametrize("n_splits", [2, 3, 5])
 def test_kfold_splitter_splits_length(dataset: Dataset, n_splits: int) -> None:
     """Test that KFoldSplitter splits the dataset into the correct number of folds."""
-    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
-    superset = splitter.split()
+    splitter = KFoldSplitter(n_splits=n_splits)
+    superset = splitter.split(dataset=dataset)
     assert len(superset) == n_splits
 
 
 @pytest.mark.parametrize(
     "dataset",
     [
-        "dataset_with_assay_empty",
+        "dataset_with_empty_assay",
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
@@ -201,8 +199,8 @@ def test_kfold_splitter_splits_length(dataset: Dataset, n_splits: int) -> None:
 @pytest.mark.parametrize("n_splits", [2, 3, 5])
 def test_kfold_splitter_splits_in_dataset(dataset: Dataset, n_splits: int) -> None:
     """Test that KFoldSplitter splits the dataset into the correct number of slices."""
-    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
-    superset = splitter.split()
+    splitter = KFoldSplitter(n_splits=n_splits)
+    superset = splitter.split(dataset=dataset)
     for i, split in enumerate(superset):
 >>>>>>> b988c75 (Add and test kfolds splitter)
         assert split in dataset, f"Split {i + 1} not in original dataset."
@@ -212,20 +210,30 @@ def test_kfold_splitter_splits_in_dataset(dataset: Dataset, n_splits: int) -> No
     "dataset",
     [
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         "dataset_with_assay_empty",
 >>>>>>> b988c75 (Add and test kfolds splitter)
+=======
+>>>>>>> 50a0d3d (Put back KFoldSplitter)
         "dataset_with_single_assay",
         "dataset_with_multiple_assays",
     ],
     indirect=True,
 )
 <<<<<<< HEAD
+<<<<<<< HEAD
 def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     """Test that RandomSplitter splits are disjoint."""
     fractions = [0.5, 0.5]
     splitter = RandomSplitter(fractions)
     split_first, split_second = tuple(splitter.split(dataset=dataset))
+=======
+def test_kfold_splitter_splits_are_disjoint(dataset: Dataset) -> None:
+    """Test that KFoldSplitter splits are disjoint."""
+    splitter = KFoldSplitter(n_splits=2)
+    split_first, split_second = tuple(splitter.split(dataset))
+>>>>>>> 50a0d3d (Put back KFoldSplitter)
     assert split_first not in split_second
     assert split_second not in split_first
 <<<<<<< HEAD
@@ -315,8 +323,9 @@ def test_kfold_splitter_splits_contain_all_records(
     dataset: Dataset, n_splits: int
 ) -> None:
     """Test that KFoldSplitter splits contain all records from the original dataset."""
-    splitter = KFoldSplitter(dataset=dataset, n_splits=n_splits)
-    dataset_with_all_splits = functools.reduce(lambda d1, d2: d1 | d2, splitter.split())
+    splitter = KFoldSplitter(n_splits=n_splits)
+    subsets = splitter.split(dataset)
+    dataset_with_all_splits = functools.reduce(lambda d1, d2: d1 | d2, subsets)
     # Using a dataframe comparision here as the dataset reconstructed from the
     # folds will have the records spread over multiple assays
     pl.testing.assert_frame_equal(
