@@ -73,6 +73,60 @@ class AssayTarget:
         )
 
 
+class AssayMeasurement(BaseModel):
+    """Definition of an assay measurement."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=False,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
+    target: AssayTarget
+    """The target of the measurement."""
+
+    value: bool | int | float | str | None = None
+    """The value of the measurement, can be a bool, int, float, or str."""
+
+    unit: str | None = None
+    """The unit of the measurement."""
+
+    description: str | None = None
+    """Description of the measurement."""
+
+
+class AssayStatistic(BaseModel):
+    """Definition of an assay statistic."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=False,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
+    name: str
+    """The name of the statistic."""
+
+    value: bool | int | float | str | None = None
+    """The value of the statistic, can be a bool, int, float, or str."""
+
+    unit: str | None = None
+    """The unit of the statistic."""
+
+    description: str | None = None
+    """Description of the statistic."""
+
+    relative_to: str | None = None
+    """The sequence name of the reference sequence the statistic is relative to."""
+
+    is_primary_target: bool = False
+    """Whether the statistic is a primary target."""
+
+
 class AssayManifestSection(BaseModel):
     """This is the manifest section for Assays.
 
@@ -107,17 +161,26 @@ class AssayManifestSection(BaseModel):
     """The variable key:value pairs, key is the name of the assay variable (defined in
     dataset manifest and value of the variable."""
 
+    measurements: list[AssayMeasurement] = Field(default_factory=list)
+    """The measurements defined for the assay."""
+
+    statistics: list[AssayStatistic] = Field(default_factory=list)
+    """The statistics defined for the assay."""
+
     path: FilePath
     """The path to the assay file, csv only."""
 
-    @field_validator("path", mode="before", check_fields=True)
+    measurements_path: FilePath | None = None
+    """The path to the assay measurements file, csv only."""
+
+    @field_validator("path", "measurements_path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         return path
 
-    @field_serializer("path", check_fields=True)
+    @field_serializer("path", "measurements_path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
         if info.context and info.context.get("relative_to_path"):
@@ -160,6 +223,15 @@ class Assay:
 
     description: str | None = None
     """The description of the assay."""
+
+    measurements: list[AssayMeasurement] | None = None
+    """The measurements of the assay."""
+
+    statistics: list[AssayStatistic] | None = None
+    """The statistics of the assay."""
+
+    measurements_data: pl.DataFrame | None = None
+    """The measurements data of the assay."""
 
     @property
     def sequence_feature_name(self) -> str:
