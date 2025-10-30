@@ -565,7 +565,7 @@ class Dataset(BaseModel):
 class SubsetsArchiveLayout:
     """The layout of a subsets archive."""
 
-    SUFFIX = ".splits.pgdata"
+    SUFFIX = f".splits{DatasetArchiveLayout.SUFFIX}"
     """The suffix of a subsets archive."""
 
     DATASET_ARCHIVE = f"dataset{DatasetArchiveLayout.SUFFIX}"
