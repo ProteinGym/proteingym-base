@@ -140,7 +140,20 @@ class Dataset(BaseModel):
 
             Preserving order and removing duplicates
             """
-            return left + [item for item in right if item not in left]
+            union = left + [item for item in right if item not in left]
+
+            # Deduplicate names to create a valid Dataset (see @model_validator)
+            name_counts = collections.Counter(item.name for item in union)
+            union_with_unique_names = []
+            for i, item in enumerate(union):
+                unique_name = (
+                    item.name if name_counts[item.name] == 1 else f"{item.name}{i}"
+                )
+                union_with_unique_names.append(
+                    dataclasses.replace(item, name=unique_name)
+                )
+
+            return union_with_unique_names
 
         return Dataset(
             name=f"{self.name}_union_{other.name}",
