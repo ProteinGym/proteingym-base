@@ -5,7 +5,6 @@ Module for testing assay operators.
 import pytest
 
 from proteingym.base.assay import Assay, AssayTarget
-from proteingym.base.assay import Assay, AssayTarget
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
@@ -84,27 +83,6 @@ def test_assay_with_record_contains_itself() -> None:
         name="Test Assay", records=[(sequence, 1.0)], columns=["sequence", "DMS_score"]
     )
     assert assay in assay
-
-
-def test_assay_empty_in_assay_with_record() -> None:
-    """An empty assay should be a subset of an assay with a record."""
-    assay_empty = Assay(name="Empty Assay", records=[])
-    assay = Assay(
-        name="Test Assay",
-        records=[
-            (
-                Sequence(
-                    name="seq1",
-                    value="APC",
-                    type=SequenceType.WILD_TYPE,
-                    alphabet=SequenceAlphabet.AA,
-                ),
-                1.0,
-            )
-        ],
-        columns=["sequence", "DMS_score"],
-    )
-    assert assay_empty in assay
 
 
 def test_assay_empty_in_assay_with_record() -> None:
