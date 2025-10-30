@@ -20,17 +20,21 @@ everyone has the same *random* split.
 
 ### Dataset slice
 
-The term "dataset slice" is used to refer to a subset of a dataset. Slice is common
-term in programming to create a subset of a data structure, for example 
-[array slicing](https://en.wikipedia.org/wiki/Array_slicing) or search for "slice"
-and your programming language of choice. Note that "slice" is used 
-both as a verb ([function](https://docs.python.org/3/library/functions.html#slice)) 
-and a noun ([object](https://docs.python.org/3/glossary.html#term-slice)). Also see 
+The term "dataset slice" refers to the accessors that create a  subset of a
+dataset. Slice is common term in programming to create a subset of a data
+structure, for example 
+[array slicing](https://en.wikipedia.org/wiki/Array_slicing) or search for
+"slice" and your programming language of choice. 
+
+Note that "slice" is used both as a verb 
+([function](https://docs.python.org/3/library/functions.html#slice))
+and a noun ([object](https://docs.python.org/3/glossary.html#term-slice)). Also
+see 
 [slicings in Python](https://docs.python.org/3/reference/expressions.html#slicings).
 
-For the protein gym [data model](../data_model.md), a dataset slice is a subset
-of a dataset that is created by selecting specific assay, sequences, structures, or
-MSAs. 
+For the protein gym [data model](../data_model.md), a dataset slice is a
+collection of accessors for a dataset to select specific (subsets of) assays,
+sequences, structures, or MSAs. 
 
 ### Dataset operators
 
