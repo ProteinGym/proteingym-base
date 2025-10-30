@@ -172,6 +172,7 @@ The chosen suffix is `.splits.pgdata` .
 The following additional suffixes were considered:
 - `.splits`
 - `.superset`
+- `.subsets`
 
 These suffixes can go before or after the `.pgdata` suffix, e.g.: `.splits.pgdata` or
 `.pgdata.splits`. Or, without the `.pgdata` suffix, e.g.: `.splits` or
@@ -179,26 +180,46 @@ These suffixes can go before or after the `.pgdata` suffix, e.g.: `.splits.pgdat
 
 ##### Decision matrix for suffix
 
-| Option              | Non-breaking | Consistent | Explicit |
-| ------------------- | ------------ | ---------- | -------- |
-| `.splits.pgdata`    | High         | High       | High     |
-| `.pgdata.splits`    | High         | Medium     | High     |
-| `.splits`           | Low          | Low        | High     |
-| `.superset.pgdata`  | High         | High       | Medium   |
-| `.pgdata.superset`  | High         | Medium     | Medium   |
-| `.superset`         | Low          | Low        | Medium   |
+| Option             | Non-breaking | Consistent | Explicit |
+| ------------------ | ------------ | ---------- | -------- |
+| `.splits.pgdata`   | High         | High       | High     |
+| `.pgdata.splits`   | High         | Medium     | High     |
+| `.splits`          | Low          | Low        | High     |
+| `.superset.pgdata` | High         | High       | Low      |
+| `.pgdata.superset` | High         | Medium     | Medium   |
+| `.superset`        | Low          | Low        | Low      |
+| `.subsets.pgdata`  | High         | High       | Medium   |
+| `.pgdata.subsets`  | High         | Medium     | Medium   |
+| `.subsets`         | Low          | Low        | Medium   |
 
 The `.splits.pgdata` suffix is the most straigh-forward option as the archives
 remain to end with `.pgdata` and the `.splits` suffix clearly indicates the
 purpose of this "special" archive. (That the archive has splits.)
 
-## Considered Options
+## Splits archive
 
-- Add a split index to the [archive](../dataset_archive.md)
-- `Superset`: a dataset of datasets. See Wikipedia on
-  [subset](https://en.wikipedia.org/wiki/Subset).
+Through archiving the splits, they can be shared and reused consistently.
 
-### 1. Add a split index to the archive
+### Splits archive decision
+
+Introduce a splits archive with a split index next to the dataset archive.
+
+### Decision Drivers for splits archive
+
+- Non-breaking : The splits archive implementation should not break existing
+  dataset archiving.
+- Separation of concerns: The splits archive implementation should
+  separate the split information from the dataset archive.
+- Efficient : The archive implementation should be reasonably efficient in
+  terms of storage.
+
+### Considered splits archive implementations
+
+1. Add a split index in the [dataset archive](../dataset_archive.md)
+2. Splits archive: with split index next to dataset archive.
+3. Superset archive: a set of datasets.
+
+#### 1. Add a split index to the archive
 
 One option is to add a split index to the archive that tracks how the dataset
 is split:
@@ -236,12 +257,24 @@ The index file tracks how the dimensions of the splits:
 > Note: the index file format is just an example, the actual format can be
 > different. 
 
-### 2. Superset: a dataset of datasets
+#### 2. Splits archive
+
+Simlarly to the above implementation, but instead of adding the split index to the
+archive itself, we create a splits archive that contains the split index next to the
+dataset archive:
+
+``` tree
+|   # inside dataset_with_splits.splits.pgdata
+├── split_index.lock
+├── dataset.pgdata
+```
+
+### 3. Superset: a dataset of datasets
 
 A superset is a dataset that contains multiple datasets, it could be an archive of archives:
 
 ``` tree
-|   # inside dataset_with_splits.pgdata
+|   # inside dataset_with_splits.splits.pgdata
 ├── split_index.lock
 ├── train1.pgdata
 ├── test1.pgdata
@@ -267,16 +300,16 @@ Additionally, an index file tracks how the dimensions of the splits:
 > Note: the index file format is just an example, the actual format can be
 > different. 
 
-## Decision matrix
+### Decision matrix for splits archive
 
-| Option                            | Split strategy agnostic | Adjustable dimensions | Consistent for archived datasets | Flexibility |
-| --------------------------------- | ----------------------- | --------------------- | -------------------------------- | ----------- |
-| Add a split index to the archive  | High                    | High                  | High                             | Medium      |
-| `Superset`: a dataset of datasets | High                    | High                  | High                             | High        |
+| Option                            | Non-breaking | Separation of concerns | Efficient |
+| --------------------------------- | ------------ | ---------------------- | --------- |
+| Add a split index to the archive  | Medium       | Low                    | High      |
+| Splits archive                    | High         | Medium                 | High      |
+| `Superset`: a dataset of datasets | High         | High                   | Low       |
 
-Both options score equally well on the most important decision drivers. However,
-the `Superset` option introduces a clearer separation of concerns that is more
-flexible.
+
+The splits archive allows is separate from the dataset archive, while reusing it.
 
 ## Consequences
 
