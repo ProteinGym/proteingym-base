@@ -55,23 +55,21 @@ class RandomSplitter:
     """Randomly split a dataset.
 
     Args:
-        dataset (Dataset): The dataset to split.
         fractions (list[float]): A list of floats representing the fractions.
             The fractions must sum to 1. Provide two fractions for a train/test split;
             provide three fractions for a train/val/test split.
     """
 
-    def __init__(self, dataset: Dataset, fractions: list[float]) -> None:
+    def __init__(self, fractions: list[float]) -> None:
         sum_precision = 2  # Sum of fractions must be equal to 1.0 up to this precision.
         if not round(sum(fractions), sum_precision) == 1.0:
             raise ValueError("Fractions must sum to 1.")
         if not all(0 < fraction for fraction in fractions):
             raise ValueError("Fractions must be positive numbers.")
 
-        self.dataset = dataset
         self.fractions = fractions
 
-    def split(self) -> Superset:
+    def split(self, dataset: Dataset) -> Superset:
         """Splits the dataset into a Superset.
 
         The dataset is split into a Superset with randomized splits according to
@@ -80,10 +78,13 @@ class RandomSplitter:
         records. Finally, we reshape shuffled indices back into the original
         assay shapes after converting them into a boolean mask.
 
+        Args:
+            dataset (Dataset): The dataset to split.
+
         Returns:
             Superset: The superset containing the splits.
         """
-        records_shape = tuple(len(assay) for assay in self.dataset.assays)
+        records_shape = tuple(len(assay) for assay in dataset.assays)
         indices = list(range(sum(records_shape)))
         random.shuffle(indices)
 
@@ -101,5 +102,5 @@ class RandomSplitter:
             slices.append(dataset_slice)
             offset += size
 
-        superset = Superset(dataset=self.dataset, slices=slices)
+        superset = Superset(dataset=dataset, slices=slices)
         return superset
