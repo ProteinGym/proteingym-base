@@ -5,9 +5,50 @@ For example, split dataset for machine learning into training, validation, and
 test sets.
 """
 
-import random
+import numbers
+
+import numpy as np
 
 from .dataset import Dataset, DatasetSlice, Subsets
+
+
+def _check_random_state(
+    seed: None | int | np.random.RandomState,
+) -> np.random.RandomState:
+    """Turn seed into a np.random.RandomState instance.
+
+    Parameters
+    ----------
+    seed : None, int or instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
+
+    Returns
+    -------
+    :class:`numpy:numpy.random.RandomState`
+        The random state object based on `seed` parameter.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_random_state
+    >>> check_random_state(42)
+    RandomState(MT19937) at 0x...
+
+    Sources
+    -------
+    Copied from scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/886829ae577ba7a47307e9cfbe6bcc6118296830/sklearn/utils/validation.py#L1439
+    """
+    if seed is None or seed is np.random:
+        return np.random.mtrand._rand
+    if isinstance(seed, numbers.Integral):
+        return np.random.RandomState(seed)
+    if isinstance(seed, np.random.RandomState):
+        return seed
+    raise ValueError(
+        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+    )
 
 
 def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
@@ -62,7 +103,12 @@ class RandomSplitter:
             provide three fractions for a train/val/test split.
     """
 
-    def __init__(self, fractions: list[float]) -> None:
+    def __init__(
+        self,
+        fractions: list[float],
+        *,
+        random_state: None | int | np.random.RandomState = None,
+    ) -> None:
         sum_precision = 2  # Sum of fractions must be equal to 1.0 up to this precision.
         if not round(sum(fractions), sum_precision) == 1.0:
             raise ValueError("Fractions must sum to 1.")
@@ -70,6 +116,7 @@ class RandomSplitter:
             raise ValueError("Fractions must be positive numbers.")
 
         self.fractions = fractions
+        self.random_state = _check_random_state(random_state)
 
     def split(self, dataset: Dataset) -> Subsets:
         """Splits the dataset into a subsets.
@@ -88,7 +135,7 @@ class RandomSplitter:
         """
         records_shape = tuple(len(assay) for assay in dataset.assays)
         indices = list(range(sum(records_shape)))
-        random.shuffle(indices)
+        self.random_state.shuffle(indices)
 
         # Ensure all items are used due to rounding errors by treating the last
         # fraction separately
