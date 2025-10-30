@@ -48,27 +48,6 @@ def dataset_with_assay_empty() -> Dataset:
 
 
 @pytest.fixture
-def dataset_with_assay_empty() -> Dataset:
-    """A dataset containing an empty assay."""
-    assay = Assay(
-        name="empty_assay",
-        records=[],
-        columns=["sequence", "DMS Score"],
-    )
-    dataset = Dataset(
-        name="dataset_with_empty_assay",
-        description="A dataset containing an empty assay.",
-        assay_variables=[],
-        assay_targets=[AssayTarget(name="DMS Score")],
-        assays=[assay],
-        sequences=[],
-        structures=[],
-        msas=[],
-    )
-    return dataset
-
-
-@pytest.fixture
 def dataset_with_assay() -> Dataset:
     """A dataset containing a single assay."""
     sequence1 = Sequence(
@@ -294,24 +273,6 @@ def dataset_with_msas() -> Dataset:
         structures=[],
         msas=[msa1, msa2],
     )
-    return dataset
-
-
-@pytest.fixture
-def dataset_with_everything(
-    dataset_with_assays: Dataset,
-    dataset_with_sequences: Dataset,
-    dataset_with_structures: Dataset,
-    dataset_with_msas: Dataset,
-) -> Dataset:
-    """A dataset containing everything."""
-    # Tightly coupled with datasets fixture
-    dataset = (
-        dataset_with_assays
-        | dataset_with_sequences
-        | dataset_with_structures
-        | dataset_with_msas
-    ).model_copy(update={"name": "dataset_with_everything"})
     return dataset
 
 
