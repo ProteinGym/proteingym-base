@@ -40,7 +40,7 @@ sequences, structures, or MSAs.
 
 The introduction of splits introduces the notion for dataset operators for
 communicating about the relationships between datasets, dataset splits, and
-dataset slices. 
+subsets of datasets (other word for splits).
 
 For example, when splitting a dataset, for each split the following is true:
 
@@ -51,7 +51,7 @@ split is contained in dataset
 
 > See Wikipedia on this [subsets](https://en.wikipedia.org/wiki/Set_(mathematics)#Subsets)
 
-When splitting a dataset the following operations hold true:
+When splitting a dataset into two, the following operations hold true:
 
 ```
 split_1 union split_2 equals dataset
@@ -59,14 +59,13 @@ split_1 intersection split_2 equals empty set
 dataset difference split_1 equals split_2
 ```
 
-> Assuming a dataset is split here into two splits: split_1 and split_2.
-
-The difference between a dataset split and slice is that splits are always
-[disjoint](https://en.wikipedia.org/wiki/Disjoint_sets) while slices can overlap.
+The difference between a dataset split and subset is that splits are always
+[disjoint](https://en.wikipedia.org/wiki/Disjoint_sets) while subsets may
+overlap.
 
 ```
-split_1 intersection split_2 equals empty set      # Always disjoint
-slice_1 intersection slice_2 not equals empty set  # Can overlap
+split_1 intersection split_2 equals empty set        # Always disjoint
+subset_1 intersection subset_2 not equals empty set  # May overlap
 ```
 
 For the protein gym [data model](../data_model.md), this implies that a dataset
