@@ -177,25 +177,28 @@ class Dataset(BaseModel):
             is_assay_match and is_sequence_match and is_structure_match and is_msa_match
         )
 
-    def __contains__(self, item: Any) -> bool:
+    def __contains__(self, other: Any) -> bool:
         """Implements the 'in' operator for Dataset."""
-        if not isinstance(item, Dataset):
+        if not isinstance(other, Dataset):
             return False
         # If a protein data type is empty,
         # it is a (mathematical) subset of any other
         is_assay_subset = (
-            all(assay in self.assays for assay in item.assays) or len(item.assays) == 0
+            len(other.assays) == 0
+            # An assay can be a subset of another assay, hence the double loop
+            or all(
+                any(other_assay in self_assay for self_assay in self.assays)
+                for other_assay in other.assays
+            )
         )
-        is_sequence_subset = (
-            all(seq in self.sequences for seq in item.sequences)
-            or len(item.sequences) == 0
+        is_sequence_subset = len(other.sequences) == 0 or all(
+            seq in self.sequences for seq in other.sequences
         )
-        is_structure_subset = (
-            all(struct in self.structures for struct in item.structures)
-            or len(item.structures) == 0
+        is_structure_subset = len(other.structures) == 0 or all(
+            struct in self.structures for struct in other.structures
         )
-        is_msa_subset = (
-            all(msa in self.msas for msa in item.msas) or len(item.msas) == 0
+        is_msa_subset = len(other.msas) == 0 or all(
+            msa in self.msas for msa in other.msas
         )
         return (
             is_assay_subset

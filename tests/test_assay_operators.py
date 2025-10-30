@@ -4,8 +4,15 @@ Module for testing assay operators.
 
 import pytest
 
-from proteingym.base.assay import Assay
+from proteingym.base.assay import Assay, AssayTarget
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
+
+
+def test_assay_target_equality_does_not_consider_description() -> None:
+    """Test that assay target equality does not consider the description."""
+    assay_target1 = AssayTarget(name="DMS Score", description="DMS score")
+    assay_target2 = AssayTarget(name="DMS Score", description="Different description")
+    assert assay_target1 == assay_target2
 
 
 def test_assay_length_equals_records_length() -> None:
@@ -66,6 +73,21 @@ def test_assay_with_record_equals_itself() -> None:
 
 def test_assay_with_record_contains_itself() -> None:
     """An assay with a record should contain itself."""
+    sequence = Sequence(
+        name="seq1",
+        value="APC",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay = Assay(
+        name="Test Assay", records=[(sequence, 1.0)], columns=["sequence", "DMS_score"]
+    )
+    assert assay in assay
+
+
+def test_assay_empty_in_assay_with_record() -> None:
+    """An empty assay should be a subset of an assay with a record."""
+    assay_empty = Assay(name="Empty Assay", records=[])
     assay = Assay(
         name="Test Assay",
         records=[
@@ -81,7 +103,7 @@ def test_assay_with_record_contains_itself() -> None:
         ],
         columns=["sequence", "DMS_score"],
     )
-    assert assay in assay
+    assert assay_empty in assay
 
 
 def test_assay_contains_subset() -> None:

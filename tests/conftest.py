@@ -27,6 +27,27 @@ def dataset_empty() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_assay_empty() -> Dataset:
+    """A dataset containing an empty assay."""
+    assay = Assay(
+        name="empty_assay",
+        records=[],
+        columns=["sequence", "DMS Score"],
+    )
+    dataset = Dataset(
+        name="dataset_with_empty_assay",
+        description="A dataset containing an empty assay.",
+        assay_variables=[],
+        assay_targets=[AssayTarget(name="DMS Score")],
+        assays=[assay],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
 def dataset_with_assay() -> Dataset:
     """A dataset containing a single assay."""
     sequence1 = Sequence(
@@ -276,6 +297,7 @@ def dataset_with_everything(
 @pytest.fixture
 def datasets(
     dataset_empty: Dataset,
+    dataset_with_assay_empty: Dataset,
     dataset_with_assay: Dataset,
     dataset_with_assays: Dataset,
     dataset_with_sequence: Dataset,
@@ -289,6 +311,7 @@ def datasets(
     """All test datasets."""
     return [
         dataset_empty,
+        dataset_with_assay_empty,
         dataset_with_assay,
         dataset_with_assays,
         dataset_with_sequence,
@@ -319,4 +342,4 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
     return dataset
 
 
-dataset2 = dataset  # A second fixture for tests using two datasets
+dataset2 = dataset  # To have a second fixture for union tests
