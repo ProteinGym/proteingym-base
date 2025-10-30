@@ -176,6 +176,10 @@ class Assay:
         # The first column is the sequence
         return list(self.columns[1:])
 
+    def __len__(self) -> int:
+        """The length of the assay, i.e. the number of records."""
+        return len(self.records)
+
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
 

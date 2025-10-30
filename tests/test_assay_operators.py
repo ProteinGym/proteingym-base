@@ -8,6 +8,18 @@ from proteingym.base.assay import Assay
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
+def test_assay_length_equals_records_length() -> None:
+    """The assay length should equal the number of records."""
+    sequence = Sequence(
+        name="seq1",
+        value="ACD",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay = Assay(name="Test Assay", records=[(sequence, 1.0), (sequence, 2.0)])
+    assert len(assay) == 2
+
+
 def test_assay_not_equal_to_integer() -> None:
     """An assay is not equal to an integer"""
     assay = Assay(name="Test Assay", records=[])
