@@ -14,6 +14,9 @@ from .superset import Superset
 def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
     """Cast a list of indices to a boolean mask.
 
+    The indices in the input list are set to True in the output mask, while all other
+    positions are set to False.
+
     Args:
         indices (list[int]): List of indices to be set to True.
         length (int): Length of the resulting mask.
