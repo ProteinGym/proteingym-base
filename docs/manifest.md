@@ -101,7 +101,7 @@ theta = 0.8
 reference_sequence = "abc"
 sequence_start = 1
 sequence_end = 10
-weights_path = "weights.npy"
+weights = [0.1, 0.2, 0.3] # Can also be defined in `weights_path`
 ```
 
 ### Top-level
