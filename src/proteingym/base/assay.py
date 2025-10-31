@@ -257,9 +257,16 @@ class Assay:
         """
         if not isinstance(item, Assay):
             return False
-        return all(record in self.records for record in item.records) and all(
-            k in self.variables and self.variables[k] == v
-            for k, v in item.variables.items()
+        return (
+            all(record in self.records for record in item.records)
+            and all(
+                k in self.variables and self.variables[k] == v
+                for k, v in item.variables.items()
+            )
+            and all(
+                measurement in self.measurements for measurement in item.measurements
+            )
+            and all(statistic in self.statistics for statistic in item.statistics)
         )
 
     def __eq__(self, item: "Assay") -> bool:
@@ -270,6 +277,8 @@ class Assay:
             self.records == item.records
             and self.variables == item.variables
             and self.columns == item.columns
+            and self.statistics == item.statistics
+            and self.measurements == item.measurements
         )
 
     def __getitem__(self, slc: slice | list[int | bool]) -> "Assay":
@@ -357,18 +366,43 @@ class Assay:
             df.select("sequence_object", *section.targets.values()).iter_rows()
         )
 
-        measurements_df = (
-            pl.read_csv(section.measurements_path)
-            if section.measurements_path
-            else None
-        )
+        # Load measurements data if measurements_path is provided
+        if section.measurements_path:
+            measurements_data = pl.read_csv(section.measurements_path)
+            if "sequence" not in measurements_data.columns:
+                raise ValueError("sequence column not found in measurements file.")
+        else:
+            measurements_data = section.measurements_data
+
+        # Ensure that the measurement names given in the manifest are present in the
+        # measurements data
+        if measurements_data is not None:
+            measurement_names = {m.name for m in section.measurements}
+            missing_measurements = measurement_names - set(measurements_data.columns)
+            if missing_measurements:
+                raise ValueError(
+                    f"Measurements {missing_measurements} not found in measurements."
+                )
+
+        # Ensure that sequences in measurements data are present in the assay records
+        # The first record in the tuples of records is the sequence object
+        assay_sequences = {str(record[0].value) for record in records}
+        if measurements_data is not None:
+            measurement_sequences = set(measurements_data["sequence"].to_list())
+            missing_sequences = measurement_sequences - assay_sequences
+            if missing_sequences:
+                raise ValueError(
+                    f"Sequences {missing_sequences} found in measurements "
+                    f"data file but not in assay records."
+                )
+
         return cls(
             name=section.name or section.path.stem,
             records=records,
             columns=[section.sequence] + list(section.targets.keys()),
             description=section.description,
             variables=section.variables,
-            measurements_data=measurements_df,
+            measurements_data=measurements_data,
             measurements=section.measurements,
             statistics=section.statistics,
         )

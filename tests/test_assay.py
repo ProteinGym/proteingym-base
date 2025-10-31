@@ -158,6 +158,41 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
         )
 
 
+def test_assay_manifest_section_both_measurement_data_and_path_provided(
+    assay_file: Path, assay_measurement_file: Path
+) -> None:
+    """Test that AssayManifestSection raises error if both measurements_data and
+
+    measurements_path are provided."""
+
+    with pytest.raises(
+        ValueError,
+        match=r"Only one of measurements_data or measurements_path should be provided.",
+    ):
+        AssayManifestSection(
+            name="test_assay",
+            description="Test assay",
+            sequence="sequence",
+            sequence_alphabet="AA",
+            targets={"DMS Score": "target", "DMS Score2": "target2"},
+            variables={"test_cond1": "true", "test_cond2": 42},
+            path=assay_file,
+            measurements=[
+                AssayMeasurement(name="measurement1"),
+                AssayMeasurement(name="measurement2"),
+            ],
+            statistics=[
+                AssayStatistic(name="statistic1"),
+                AssayStatistic(name="statistic2"),
+            ],
+            measurements_path=assay_measurement_file,
+            measurements_data=[
+                [1, 2],
+                [3, 4],
+            ],
+        )
+
+
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [
@@ -236,6 +271,98 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
                 t in ["DMS Score", "DMS Score2"] for t in assay.target_feature_names
             )
         assert assay.sequence_feature_name == "sequence"
+
+
+def test_from_manifest_section_measurement_file_missing_sequence_name(
+    assay_file: Path,
+) -> None:
+    """Test that Assay.from_manifest_section raises error if measurement file has
+
+    sequences not in records."""
+
+    measurement_path = assay_file.parent / "measurements.csv"
+    measurement_path.write_text("""bad_name,measurement1,measurement2""")
+    with pytest.raises(
+        ValueError, match="sequence column not found in measurements file."
+    ):
+        Assay.from_manifest_section(
+            AssayManifestSection(
+                name="assay",
+                sequence="sequence",
+                sequence_alphabet=SequenceAlphabet.DNA,
+                targets={"DMS Score": "target", "DMS Score2": "target2"},
+                path=assay_file,
+                measurements=[
+                    AssayMeasurement(name="measurement1"),
+                    AssayMeasurement(name="measurement2"),
+                ],
+                variables={"test_cond1": "true", "test_cond2": 42},
+                measurements_path=measurement_path,
+            )
+        )
+
+
+def test_from_manifest_section_measurement_file_with_missing_measurement(
+    assay_file: Path,
+) -> None:
+    """Test raises error if the measurement data have missing measurement names."""
+    assay_measurement_file = assay_file.parent / "measurements.csv"
+    assay_measurement_file.write_text(
+        """sequence,measurement1
+        F1I,0.1
+        F1L,0.2
+        """
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Measurements {'measurement2'} not found in measurements.",
+    ):
+        Assay.from_manifest_section(
+            AssayManifestSection(
+                name="assay",
+                sequence="sequence",
+                sequence_alphabet=SequenceAlphabet.DNA,
+                targets={"DMS Score": "target", "DMS Score2": "target2"},
+                path=assay_file,
+                measurements=[
+                    AssayMeasurement(name="measurement1"),
+                    AssayMeasurement(name="measurement2"),
+                ],
+                variables={"test_cond1": "true", "test_cond2": 42},
+                measurements_path=assay_measurement_file,
+            )
+        )
+
+
+def test_from_manifest_section_measurement_missing_sequences(assay_file: Path) -> None:
+    """Test raises error if measurement data have sequences not in assay records."""
+    assay_measurement_file = assay_file.parent / "measurements.csv"
+    assay_measurement_file.write_text(
+        """sequence,measurement1,measurement2
+BAD_SEQ,0.1,0.2"""
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Sequences {'BAD_SEQ'} found in measurements data file but not in assay \
+records.",
+    ):
+        Assay.from_manifest_section(
+            AssayManifestSection(
+                name="assay",
+                sequence="sequence",
+                sequence_alphabet=SequenceAlphabet.DNA,
+                targets={"DMS Score": "target", "DMS Score2": "target2"},
+                path=assay_file,
+                measurements=[
+                    AssayMeasurement(name="measurement1"),
+                    AssayMeasurement(name="measurement2"),
+                ],
+                variables={"test_cond1": "true", "test_cond2": 42},
+                measurements_path=assay_measurement_file,
+            )
+        )
 
 
 def test_as_manifest_section(tmp_path: Path) -> None:
