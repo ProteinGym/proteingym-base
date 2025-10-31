@@ -177,7 +177,7 @@ class AssayManifestSection(BaseModel):
                 path = path.relative_to(info.context["relative_to_path"])
             return path.as_posix()
         return None
-    
+
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
@@ -357,14 +357,18 @@ class Assay:
             df.select("sequence_object", *section.targets.values()).iter_rows()
         )
 
-        measurements_df = pl.read_csv(section.measurements_path) if section.measurements_path else None
+        measurements_df = (
+            pl.read_csv(section.measurements_path)
+            if section.measurements_path
+            else None
+        )
         return cls(
             name=section.name or section.path.stem,
             records=records,
             columns=[section.sequence] + list(section.targets.keys()),
             description=section.description,
             variables=section.variables,
-            measurements_data = measurements_df,
+            measurements_data=measurements_df,
             measurements=section.measurements,
             statistics=section.statistics,
         )
@@ -396,7 +400,9 @@ class Assay:
             path=path,
             measurements=self.measurements,
             statistics=self.statistics,
-            measurements_data=self.measurements_data.rows() if self.measurements_data is not None else None,
+            measurements_data=self.measurements_data.rows()
+            if self.measurements_data is not None
+            else None,
         )
 
     def to_df(

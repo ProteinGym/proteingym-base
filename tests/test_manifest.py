@@ -79,7 +79,14 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     msa_weights_file = tmp_path / "weights.npy"
     assay_file = tmp_path / "assay.csv"
     assay_measurement_file = tmp_path / "measurements.csv"
-    for path in sequence_file, structure_file, msa_file, msa_weights_file, assay_file, assay_measurement_file:
+    for path in (
+        sequence_file,
+        structure_file,
+        msa_file,
+        msa_weights_file,
+        assay_file,
+        assay_measurement_file,
+    ):
         path.touch()
     # Write header in the assay file
     assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
