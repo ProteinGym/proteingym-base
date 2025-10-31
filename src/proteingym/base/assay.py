@@ -73,19 +73,12 @@ class AssayTarget:
         )
 
 
-class AssayMeasurement(BaseModel):
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayMeasurement:
     """Definition of an assay measurement."""
 
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
-
-    target: AssayTarget
-    """The target of the measurement."""
+    name: str
+    """The name of the measurement."""
 
     value: bool | int | float | str | None = None
     """The value of the measurement, can be a bool, int, float, or str."""
@@ -97,16 +90,9 @@ class AssayMeasurement(BaseModel):
     """Description of the measurement."""
 
 
-class AssayStatistic(BaseModel):
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayStatistic:
     """Definition of an assay statistic."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the statistic."""
@@ -173,6 +159,9 @@ class AssayManifestSection(BaseModel):
     measurements_path: FilePath | None = None
     """The path to the assay measurements file, csv only."""
 
+    measurements_data: list[list] | None = None
+    """The measurements data of the assay."""
+
     @field_validator("path", "measurements_path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
@@ -183,10 +172,12 @@ class AssayManifestSection(BaseModel):
     @field_serializer("path", "measurements_path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
-        if info.context and info.context.get("relative_to_path"):
-            path = path.relative_to(info.context["relative_to_path"])
-        return path.as_posix()
-
+        if path:
+            if info.context and info.context.get("relative_to_path"):
+                path = path.relative_to(info.context["relative_to_path"])
+            return path.as_posix()
+        return None
+    
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
@@ -195,6 +186,15 @@ class AssayManifestSection(BaseModel):
         for v in [self.sequence] + list(self.targets.values()):
             if v not in header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
+        return self
+
+    @model_validator(mode="after")
+    def validate_measurements_and_path(self) -> "AssayManifestSection":
+        """Ensure that only one of measurement_data or measurements_path is provided."""
+        if self.measurements_data and self.measurements_path:
+            raise ValueError(
+                "Only one of measurements_data or measurements_path should be provided."
+            )
         return self
 
     @field_serializer("sequence_alphabet")
@@ -224,10 +224,10 @@ class Assay:
     description: str | None = None
     """The description of the assay."""
 
-    measurements: list[AssayMeasurement] | None = None
+    measurements: list[AssayMeasurement] = dataclasses.field(default_factory=list)
     """The measurements of the assay."""
 
-    statistics: list[AssayStatistic] | None = None
+    statistics: list[AssayStatistic] = dataclasses.field(default_factory=list)
     """The statistics of the assay."""
 
     measurements_data: pl.DataFrame | None = None
@@ -357,12 +357,16 @@ class Assay:
             df.select("sequence_object", *section.targets.values()).iter_rows()
         )
 
+        measurements_df = pl.read_csv(section.measurements_path) if section.measurements_path else None
         return cls(
             name=section.name or section.path.stem,
             records=records,
             columns=[section.sequence] + list(section.targets.keys()),
             description=section.description,
             variables=section.variables,
+            measurements_data = measurements_df,
+            measurements=section.measurements,
+            statistics=section.statistics,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -390,6 +394,9 @@ class Assay:
             ),
             variables=self.variables,
             path=path,
+            measurements=self.measurements,
+            statistics=self.statistics,
+            measurements_data=self.measurements_data.rows() if self.measurements_data is not None else None,
         )
 
     def to_df(

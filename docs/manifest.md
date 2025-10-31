@@ -76,6 +76,7 @@ name = "assay"
 path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
+measurements_path = "measurements.csv"
 
 [ assays.targets ]
 "DMS Score" = "DMS_score"
@@ -83,6 +84,12 @@ sequence_alphabet = "AA"
 
 [ assays.variables ]
 PH = "7"
+
+[[ assays.measurements ]]
+name = "OD"
+
+[[ assays.statistics ]]
+name = "performance over wild-type"
 
 [[ sequences ]]
 type = "wild_type"
@@ -143,19 +150,48 @@ The assay targets section contains a list of assay targets defined in the datase
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement. |
 | `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the target. |
 
+
+### Assay Measurements
+
+The assay measurements section contains a list of measurements within an assay. Measurements represent observed or calculated values for specific targets.
+
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**                                           |
+| ------------- | ------------------------------------- | ------------ | ----------- | --------------------------------------------------------- |
+| `name`        | `string`                              | Yes          | N/A         | The name of the measurement (references an assay target). |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the measurement.                             |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of the measurement.                              |
+| `description` | `string \| None`                      | No           | `None`      | A brief description of the measurement.                   |
+
+### Assay Statistics
+
+The assay statistics section contains statistical analyses or derived metrics from the assay data.
+
+| **Field**           | **Type**                              | **Required** | **Default** | **Description**                                                           |
+| ------------------- | ------------------------------------- | ------------ | ----------- | ------------------------------------------------------------------------- |
+| `name`              | `string`                              | Yes          | N/A         | The name of the statistic.                                                |
+| `value`             | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the statistic.                                               |
+| `unit`              | `string \| None`                      | No           | `None`      | The unit of the statistic.                                                |
+| `description`       | `string \| None`                      | No           | `None`      | A brief description of the statistic.                                     |
+| `relative_to`       | `string \| None`                      | No           | `None`      | The sequence name of the reference sequence the statistic is relative to. |
+| `is_primary_target` | `bool`                                | No           | `False`     | Whether the statistic is a primary target of interest.                    |
+
 ### Assays
 
 The assays section contains a list of assays included in the dataset.
 
-| **Field**           | **Type**         | **Required** | **Default**  | **Description**                                                          |
+| **Field**            | **Type**         | **Required** | **Default**  | **Description**                                                             |
 |---------------------|------------------|--------------|--------------|--------------------------------------------------------------------------|
-| `name`              | `string`         | No           | `None`       | The name of the assay.                                                   |
-| `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.           |
-| `targets`           | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay. |
-| `sequence`          | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                                  |
-| `sequence_alphabet` | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                    |
-| `variables`         | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                              |
+| `name`               | `string`         | No           | `None`       | The name of the assay.                                                      |
+| `path`               | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.              |
+| `targets`            | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay.    |
+| `sequence`           | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                                     |
+| `sequence_alphabet`  | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                       |
+| `variables`          | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                                 |
+| `measurements`       | `list[map]`      | No           | Empty list   | The measurements defined for the assay.                                     |
+| `measurements_path`  | `string`         | No           | `None`       | The path to a separate measurements data file. Supported extensions: `.csv`.|
+| `statistics`         | `list[map]`      | No           | Empty list   | The statistics defined for the assay.                                       |
 
+// ...existing code...
 Example of an assay file:
 
 ``` csv

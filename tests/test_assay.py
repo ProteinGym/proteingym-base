@@ -14,6 +14,8 @@ from proteingym.base.assay import (
     AssayManifestSection,
     AssayTarget,
     AssayVariable,
+    AssayStatistic,
+    AssayMeasurement
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -32,6 +34,17 @@ F1L,0.6,0.4""".lstrip()
     )
     return path
 
+@pytest.fixture
+def assay_measurement_file(tmp_path: Path) -> Path:
+    """Fixture to create a temporary assay measurement file."""
+    path = tmp_path / "measurements.csv"
+    path.write_text(
+        """
+sequence,measurement1,measurement2
+F1I,0.1,0.2
+F1L,0.3,0.4""".lstrip()
+    )
+    return path
 
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
@@ -55,7 +68,27 @@ def test_assay_target_minimal() -> None:
         assert target.name == "DMS Score"
 
 
-def test_assay_manifest_section(assay_file: Path) -> None:
+def test_assay_measurement_minimal() -> None:
+    """Test creating a minimal AssayMeasurement."""
+    try:
+        statistic = AssayMeasurement(name="measurement1")
+    except ValidationError as e:
+        raise AssertionError(f"AssayMeasurement raised ValidationError: {e}") from e
+    else:
+        assert statistic.name == "measurement1"
+
+
+def test_assay_statistic_minimal() -> None:
+    """Test creating a minimal AssayStatistic."""
+    try:
+        statistic = AssayStatistic(name="statistic1")
+    except ValidationError as e:
+        raise AssertionError(f"AssayStatistic raised ValidationError: {e}") from e
+    else:
+        assert statistic.name == "statistic1"
+
+
+def test_assay_manifest_section(assay_file: Path, assay_measurement_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
         section = AssayManifestSection(
@@ -66,6 +99,15 @@ def test_assay_manifest_section(assay_file: Path) -> None:
             targets={"DMS Score": "target", "DMS Score2": "target2"},
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
+            measurements_path=assay_measurement_file,
+            measurements=[
+                AssayMeasurement(name="measurement1"),
+                AssayMeasurement(name="measurement2"),
+            ],
+            statistics=[
+                AssayStatistic(name="statistic1"),
+                AssayStatistic(name="statistic2"),
+            ],
         )
     except ValidationError as e:
         raise AssertionError(f"AssayManifestSection raised ValidationError: {e}") from e
@@ -81,14 +123,16 @@ def test_assay_manifest_section(assay_file: Path) -> None:
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     """Test AssayManifestSection with a relative path."""
     path = tmp_path / "assay.csv"
+    measurement_path = tmp_path / "measurements.csv"
     path.write_text("sequence,target\nF1I,1.59\nF1L,0.6")
+    measurement_path.write_text("sequence,measurement1\nF1I,0.1\nF1L,0.3")
     context = {"relative_to_path": tmp_path}
     section = AssayManifestSection.model_validate(
-        {"path": "assay.csv", "sequence_alphabet": "AA"},
+        {"path": "assay.csv", "sequence_alphabet": "AA", "measurements_path": "measurements.csv"},
         context=context,
     )
     assert section.path == path
-
+    assert section.measurements_path == measurement_path
 
 def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None:
     """Test that AssayManifestSection raises error for invalid feature names."""
@@ -136,6 +180,21 @@ def test_assay() -> None:
             variables={"test_cond1": "true", "test_cond2": 42},
             records=records,
             columns=["sequence", "DMS Score"],
+            measurements=[
+                AssayMeasurement(name="measurement1"),
+                AssayMeasurement(name="measurement2"),
+            ],
+            statistics=[
+                AssayStatistic(name="statistic1"),
+                AssayStatistic(name="statistic2"),
+            ],
+            measurements_data=pl.DataFrame(
+                {
+                    "sequence": ["APC", "DEF"],
+                    "measurement1": [0.1, 0.2],
+                    "measurement2": [0.3, 0.4],
+                }
+            )
         )
     except ValidationError as e:
         raise AssertionError(f"Assay raised ValidationError: {e}") from e
