@@ -136,12 +136,13 @@ def create_datasets(reference_csv: str) -> Dataset:
     datasets_to_create = df['DMS_id'].to_list()
 
     for dataset in datasets_to_create:
-        create_dataset(dataset, df)
+        manifest_fp = create_manifest(dataset, df)
+        validate_manifest(manifest_fp)
 
 def write_sequence_to_fasta(sequence: str, sequence_id: str, path: Path) -> None:
     with open(path, 'w') as file:
         file.write(f'>{sequence_id}\n')
-        file.write(f'>{sequence}\n')
+        file.write(f'{sequence}\n')
 
 def create_manifest(DMS_id: str, references: polars.DataFrame):
 
@@ -185,5 +186,7 @@ def validate_manifest(manifest: Manifest):
     except Exception as e:
         print(e)
 
-manifest_fp = create_manifest('NP_000007.1', polars.read_csv('reference_substitutions.csv'))
-validate_manifest(manifest_fp)
+# manifest_fp = create_manifest('NP_000007.1', polars.read_csv('reference_substitutions.csv'))
+# validate_manifest(manifest_fp)
+reference_file = polars.read_csv('reference_substitutions.csv')
+create_datasets('reference_substitutions.csv')
