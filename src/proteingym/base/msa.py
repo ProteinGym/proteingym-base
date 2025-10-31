@@ -170,8 +170,8 @@ class MSA:
     """Number of evolutionary couplings that are considered significant."""
 
     bit_score: float | None = None
-    """Bitscore threshold 
-    
+    """Bitscore threshold
+
     It is used to generate the alignment divided by the length of the target protein.
     """
 
