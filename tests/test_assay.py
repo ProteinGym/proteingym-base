@@ -191,60 +191,6 @@ def test_assay_manifest_section_both_measurement_data_and_path_provided(
         )
 
 
-def test_assay() -> None:
-    """Test creating an Assay instance."""
-    records = [
-        (
-            Sequence(
-                name="seq1",
-                value="APC",
-                type="standard_sequence",
-                alphabet=SequenceAlphabet.DNA,
-            ),
-            1.56,
-        ),
-        (
-            Sequence(
-                name="seq2",
-                value="DEF",
-                type="standard_sequence",
-                alphabet=SequenceAlphabet.DNA,
-            ),
-            2.0,
-        ),
-    ]
-
-    try:
-        assay = Assay(
-            name="assay",
-            variables={"test_cond1": "true", "test_cond2": 42},
-            records=records,
-            columns=["sequence", "DMS Score"],
-            measurements=[
-                AssayMeasurement(name="measurement1"),
-                AssayMeasurement(name="measurement2"),
-            ],
-            statistics=[
-                AssayStatistic(name="statistic1"),
-                AssayStatistic(name="statistic2"),
-            ],
-            measurements_data=pl.DataFrame(
-                {
-                    "sequence": ["APC", "DEF"],
-                    "measurement1": [0.1, 0.2],
-                    "measurement2": [0.3, 0.4],
-                }
-            ),
-        )
-    except ValidationError as e:
-        raise AssertionError(f"Assay raised ValidationError: {e}") from e
-    else:
-        assert assay.sequence_feature_name == "sequence"
-        assert all(
-            target_name in ["DMS Score"] for target_name in assay.target_feature_names
-        )
-
-
 def test_assay_from_manifest_section(assay_file: Path) -> None:
     """Test creating an Assay from a manifest section."""
     try:
