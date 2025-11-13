@@ -122,6 +122,19 @@ def test_assay_manifest_section_with_relative_measurements_path(
     assert section.measurements_path == measurement_path
 
 
+def test_assay_manifest_section_validate_path_with_invalid_format(
+    tmp_path: Path,
+) -> None:
+    """An error should be raised for invalid assay file formats."""
+    path = tmp_path / "assay.txt"
+    path.touch()
+    with pytest.raises(
+        ValueError,
+        match=rf"Invalid assay file format for file: {path}",
+    ):
+        AssayManifestSection(path=path)
+
+
 def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None:
     """Test that AssayManifestSection raises error for invalid feature names."""
     with pytest.raises(
