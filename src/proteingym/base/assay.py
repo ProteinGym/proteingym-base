@@ -174,7 +174,10 @@ class AssayManifestSection(BaseModel):
 
     @field_validator("measurements_path", mode="after", check_fields=True)
     def validate_measurements_path(cls, path: Path) -> Path:
-        """The measurements file should contain the 'sequence' column."""
+        """The measurements file should contain the 'sequence' column.
+
+        Assuming CSV file format which is checked during path validation.
+        """
         if path is None:  # Handle optional paths
             return path
         with path.open("r") as f:
@@ -194,7 +197,10 @@ class AssayManifestSection(BaseModel):
 
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
-        """Validate whether feature names are present in the `path` file."""
+        """Validate whether feature names are present in the `path` file.
+
+        Assuming CSV file format which is checked during path validation.
+        """
         with self.path.open("r") as f:
             header = f.readline()
         for v in [self.sequence] + list(self.targets.values()):
