@@ -121,9 +121,9 @@ class MSAManifestSection(MSAMetadataManifestSection):
         ):
             weights_path = info.context["relative_to_path"] / weights_path
 
-        format = weights_path.suffix[1:].lower()
-        if format not in MSAWeightFormat:
-            raise ValueError(f"Unsupported MSA weight file format: {format}")
+        weights_format = weights_path.suffix[1:].lower()
+        if weights_format not in MSAWeightFormat:
+            raise ValueError(f"Unsupported MSA weight file format: {weights_format}")
         return weights_path
 
     @model_validator(mode="after")
