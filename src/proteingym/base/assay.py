@@ -200,12 +200,14 @@ class Assay:
             and self.columns == item.columns
         )
 
-    def __getitem__(self, slc: slice | list[int | bool]) -> "Assay":
-        """Slice the assay to get a subset of records.
+    def __getitem__(self, slc: slice | list[int | bool | str]) -> "Assay":
+        """Slice the assay to get a subset.
 
         Args:
-            slc (slice | list[int | bool]): The slice or list of indices to get
-                If a list of bool is given, it is treated as a mask.
+            slc (slice | list[int | bool]):
+                1. The slice or list of row indices to get. If a list of booleans
+                    is given, it is treated as a mask.
+                2. The list of column names to get.
         """
         if isinstance(slc, int):
             # The Assay is a container with more than records, getting a single record
@@ -213,11 +215,24 @@ class Assay:
             # a list of one record. The former is not desired and the latter is
             # ambiguous with the slicing operation.
             raise NotImplementedError("Getting a single record is not supported.")
+
+        columns = self.columns
         if isinstance(slc, list):
-            records_slice = list(itertools.compress(self.records, slc))
+            if len(slc) > 0 and isinstance(slc[0], str):  # Column slice
+                undefined_columns = set(slc) - set(self.columns)
+                if undefined_columns:
+                    raise KeyError(f"Undefined columns: {undefined_columns}")
+                columns = list(slc)
+                column_indices = [self.columns.index(col) for col in columns]
+                records_slice = [
+                    tuple(record[col_idx] for col_idx in column_indices)
+                    for record in self.records
+                ]
+            else:  # Row slice
+                records_slice = list(itertools.compress(self.records, slc))
         else:
             records_slice = self.records[slc]
-        return dataclasses.replace(self, records=records_slice)
+        return dataclasses.replace(self, records=records_slice, columns=columns)
 
     def __repr__(self) -> str:
         """Return a string representation of the Assay object."""
