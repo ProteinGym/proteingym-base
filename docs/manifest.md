@@ -76,7 +76,6 @@ name = "assay"
 path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
-measurements_path = "measurements.csv"
 
 [ assays.targets ]
 "DMS Score" = "DMS_score"
@@ -87,6 +86,7 @@ PH = "7"
 
 [[ assays.measurements ]]
 name = "OD"
+value = 0.1  # Can also be loaded from `measurements_path`
 
 [[ assays.statistics ]]
 name = "performance over wild-type"

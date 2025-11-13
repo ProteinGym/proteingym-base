@@ -33,7 +33,6 @@ name = "assay"
 path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
-measurements_path = "measurements.csv"
 
 [ assays.targets ]
 "DMS Score" = "DMS_score"
@@ -44,6 +43,7 @@ PH = "7"
 
 [[ assays.measurements ]]
 name = "OD"
+value = 0.1  # Can also be loaded from `measurements_path`
 
 [[ assays.statistics ]]
 name = "performance over wild-type"
@@ -79,6 +79,7 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     structure_file = tmp_path / "structures.pdb"
     msa_file = tmp_path / "msas.a3m"
     for path in (
+        assay_measurement_file,
         sequence_file,
         structure_file,
         msa_file,
@@ -86,12 +87,6 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
         path.touch()
     # Write header in the assay file
     assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
-    assay_measurement_file.write_text(
-        """
-sequence,OD
-F1I,0.1
-F1L,0.3""".lstrip()
-    )
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
