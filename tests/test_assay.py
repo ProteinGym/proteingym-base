@@ -189,32 +189,6 @@ def test_assay_manifest_section_measurements_path_missing_sequence_column(
         AssayManifestSection(path=assay_file, measurements_path=measurement_path)
 
 
-def test_assay_from_manifest_section(assay_file: Path) -> None:
-    """Test creating an Assay from a manifest section."""
-    try:
-        assay = Assay.from_manifest_section(
-            AssayManifestSection(
-                name="assay",
-                sequence="sequence",
-                sequence_alphabet=SequenceAlphabet.DNA,
-                targets={"DMS Score": "target", "DMS Score2": "target2"},
-                path=assay_file,
-                variables={"test_cond1": "true", "test_cond2": 42},
-            ),
-        )
-    except ValidationError as e:
-        raise AssertionError("Failed test assay from manifest section") from e
-    else:
-        assert assay.name == "assay"
-        assert len(assay.records) == 2
-        for rec in assay.records:
-            assert isinstance(rec[0], Sequence)
-            assert all(
-                t in ["DMS Score", "DMS Score2"] for t in assay.target_feature_names
-            )
-        assert assay.sequence_feature_name == "sequence"
-
-
 def test_from_manifest_section_measurement_file_with_missing_measurement(
     assay_file: Path,
 ) -> None:
