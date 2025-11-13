@@ -167,7 +167,7 @@ class AssayManifestSection(BaseModel):
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
-        file_format = path.suffix.lower()[1:]
+        file_format = path.suffix.lower()
         if file_format not in AssayFormat:
             raise ValueError(f"Unsupported file format for file: {path}")
         return path

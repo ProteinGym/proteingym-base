@@ -90,6 +90,16 @@ def test_assay_statistic_minimal() -> None:
         assert statistic.name == "statistic1"
 
 
+def test_assay_manifest_section_minimal(assay_file: Path) -> None:
+    """Test creating a minimal AssayManifestSection."""
+    try:
+        section = AssayManifestSection(path=assay_file)
+    except ValidationError as e:
+        raise AssertionError(f"AssayManifestSection raised ValidationError: {e}") from e
+    else:
+        assert section.path == assay_file
+
+
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     """Test AssayManifestSection with a relative path."""
     path = tmp_path / "assay.csv"
