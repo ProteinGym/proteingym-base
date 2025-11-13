@@ -221,36 +221,6 @@ def test_assay_manifest_section_measurement_file_with_missing_measurement(
         )
 
 
-def test_from_manifest_section_measurement_missing_sequences(assay_file: Path) -> None:
-    """Test raises error if measurement data have sequences not in assay records."""
-    assay_measurement_file = assay_file.parent / "measurements.csv"
-    assay_measurement_file.write_text(
-        """sequence,measurement1,measurement2
-BAD_SEQ,0.1,0.2"""
-    )
-
-    with pytest.raises(
-        ValueError,
-        match="Sequences {'BAD_SEQ'} found in measurements data file but not in assay \
-records.",
-    ):
-        Assay.from_manifest_section(
-            AssayManifestSection(
-                name="assay",
-                sequence="sequence",
-                sequence_alphabet=SequenceAlphabet.DNA,
-                targets={"DMS Score": "target", "DMS Score2": "target2"},
-                path=assay_file,
-                measurements=[
-                    AssayMeasurement(name="measurement1"),
-                    AssayMeasurement(name="measurement2"),
-                ],
-                variables={"test_cond1": "true", "test_cond2": 42},
-                measurements_path=assay_measurement_file,
-            )
-        )
-
-
 def test_as_manifest_section(tmp_path: Path) -> None:
     """Test converting an Assay to a manifest section."""
     assay = Assay(

@@ -409,23 +409,10 @@ class Assay:
             df.select("sequence_object", *section.targets.values()).iter_rows()
         )
 
-        # Load measurements data if measurements_path is provided
         if section.measurements_path:
             measurements_data = pl.read_csv(section.measurements_path)
         else:
             measurements_data = section.measurements_data
-
-        # Ensure that sequences in measurements data are present in the assay records
-        # The first record in the tuples of records is the sequence object
-        assay_sequences = {str(record[0].value) for record in records}
-        if measurements_data is not None:
-            measurement_sequences = set(measurements_data["sequence"].to_list())
-            missing_sequences = measurement_sequences - assay_sequences
-            if missing_sequences:
-                raise ValueError(
-                    f"Sequences {missing_sequences} found in measurements "
-                    f"data file but not in assay records."
-                )
 
         return cls(
             name=section.name or section.path.stem,
