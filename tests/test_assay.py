@@ -257,9 +257,7 @@ def test_assay_to_df() -> None:
     )
     df = assay.to_df()
 
-    pl.testing.assert_frame_equal(
-        df, expected, check_dtypes=False, check_column_order=False
-    )
+    pl.testing.assert_frame_equal(df, expected, check_dtypes=False)
 
 
 def test_assay_to_df_single_target() -> None:
