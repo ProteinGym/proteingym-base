@@ -302,6 +302,26 @@ class Dataset(BaseModel):
             raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
         return self
 
+    @model_validator(mode="after")
+    def _validate_msa_reference_sequences(self) -> "Dataset":
+        """Ensure that MSA reference sequences are present in the sequences.
+
+        Returns:
+            Dataset: The validated dataset instance.
+
+        Raises:
+            ValueError: If a reference sequence is specified in an MSA but not found
+                in the dataset's sequences.
+        """
+        sequence_names = {seq.name for seq in self.sequences}
+        for msa in self.msas:
+            if msa.reference_sequence and msa.reference_sequence not in sequence_names:
+                raise ValueError(
+                    f"MSA '{msa.name}' reference sequence '{msa.reference_sequence}'"
+                    " is not present in the dataset's sequences."
+                )
+        return self
+
     def model_dump_json(self, **kwargs) -> str:
         """Override to ensure JSON serialization works with Bio objects.
 

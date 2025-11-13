@@ -52,6 +52,13 @@ path = "structures.pdb"
 [[ msas ]]
 path = "msas.a3m"
 format = "fasta"
+num_significant = 10
+bit_score = 0.5
+theta = 0.8
+reference_sequence = "abc"
+sequence_start = 1
+sequence_end = 10
+weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
 """
 
 
@@ -62,8 +69,9 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     sequence_file = tmp_path / "sequences.fasta"
     structure_file = tmp_path / "structures.pdb"
     msa_file = tmp_path / "msas.a3m"
+    msa_weights_file = tmp_path / "weights.npy"
     assay_file = tmp_path / "assay.csv"
-    for path in sequence_file, structure_file, msa_file, assay_file:
+    for path in sequence_file, structure_file, msa_file, msa_weights_file, assay_file:
         path.touch()
     # Write header in the assay file
     assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")

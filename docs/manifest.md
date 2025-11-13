@@ -95,6 +95,13 @@ path = "structures.pdb"
 [[ msas ]]
 path = "msas.a3m"
 format = "fasta"
+num_significant = 10
+bit_score = 0.5
+theta = 0.8
+reference_sequence = "abc"
+sequence_start = 1
+sequence_end = 10
+weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
 ```
 
 ### Top-level
@@ -103,7 +110,7 @@ The top-level of the manifest contains the dataset metadata and references to
 the protein data types.
 
 | **Field**         | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                                                                                                          |
-|-------------------|-----------------------|--------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ----------------- | --------------------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `version`         | `string`              | Yes          | N/A         | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>.<patch>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. A patch version change indicates bug fixes or minor improvements. |
 | `name`            | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                                                                                                 |
 | `description`     | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                                                                                                      |
@@ -119,7 +126,7 @@ the protein data types.
 The assay variables section contains a list of assay variables defined in the dataset. E.g., the pH a certain assay was run at, or the round of engineering that an assay belonged to.
 
 | **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
-|---------------|---------------------------------------|--------------|-------------|----------------------------|
+| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------- |
 | `name`        | `string`                              | Yes          | N/A         | The assay variable name    |
 | `description` | `string \| None`                      | No           | `None`      | A brief description.       |
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
@@ -129,19 +136,19 @@ The assay variables section contains a list of assay variables defined in the da
 
 The assay targets section contains a list of assay targets defined in the dataset. E.g., the target measured in a certain assay, like binding affinity or stability.
 
-| **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
-|---------------|---------------------------------------|--------------|-------------|----------------------------|
-| `name`        | `string`                              | Yes          | N/A         | The assay target name      |
-| `description` | `string \| None`                      | No           | `None`      | A brief description.       |
-| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
-| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the target.   |
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**          |
+| ------------- | ------------------------------------- | ------------ | ----------- | ------------------------ |
+| `name`        | `string`                              | Yes          | N/A         | The assay target name    |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.     |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement. |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the target. |
 
 ### Assays
 
 The assays section contains a list of assays included in the dataset.
 
 | **Field**           | **Type**         | **Required** | **Default**  | **Description**                                                          |
-|---------------------|------------------|--------------|--------------|--------------------------------------------------------------------------|
+| ------------------- | ---------------- | ------------ | ------------ | ------------------------------------------------------------------------ |
 | `name`              | `string`         | No           | `None`       | The name of the assay.                                                   |
 | `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.           |
 | `targets`           | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay. |
@@ -188,7 +195,15 @@ The structures section contains a list of structures included in the dataset.
 
 The MSAs section contains a list of multiple sequence alignments included in the dataset.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                            |
-| --------- | -------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`    | `string` | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
-| `format`  | `string` | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
+| **Field**            | **Type**              | **Required** | **Default** | **Description**                                                                                                                                            |
+| -------------------- | --------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`               | `string`              | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
+| `format`             | `string`              | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
+| `num_significant`    | `int` \| None         | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
+| `bit_score`          | `float` \| None       | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
+| `theta`              | `float` \| None       | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
+| `reference_sequence` | `string` \| None      | No           | `None`      | The reference sequence identifier in the MSA.                                                                                                              |
+| `sequence_start`     | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
+| `sequence_end`       | `int` \| None         | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
+| `weights`            | `list[float]` \| None | No           | `None`      | The weights for the MSA.                                                                                                                                   |
+| `weights_path`       | `string` \| None      | No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`.                                                                                    |
