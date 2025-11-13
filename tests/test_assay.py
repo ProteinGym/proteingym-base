@@ -175,30 +175,14 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
 def test_assay_manifest_section_both_measurement_data_and_path_provided(
     assay_file: Path, assay_measurement_file: Path
 ) -> None:
-    """Test that AssayManifestSection raises error if both measurements_data and
-
-    measurements_path are provided."""
+    """Measurements path or data should be provided, not both."""
 
     with pytest.raises(
         ValueError,
         match=r"Only one of measurements_data or measurements_path should be provided.",
     ):
         AssayManifestSection(
-            name="test_assay",
-            description="Test assay",
-            sequence="sequence",
-            sequence_alphabet="AA",
-            targets={"DMS Score": "target", "DMS Score2": "target2"},
-            variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
-            measurements=[
-                AssayMeasurement(name="measurement1"),
-                AssayMeasurement(name="measurement2"),
-            ],
-            statistics=[
-                AssayStatistic(name="statistic1"),
-                AssayStatistic(name="statistic2"),
-            ],
             measurements_path=assay_measurement_file,
             measurements_data=[
                 [1, 2],
