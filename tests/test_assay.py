@@ -130,9 +130,23 @@ def test_assay_manifest_section_validate_path_with_invalid_format(
     path.touch()
     with pytest.raises(
         ValueError,
-        match=rf"Invalid assay file format for file: {path}",
+        match=rf"Unsupported file format for file: {path}",
     ):
         AssayManifestSection(path=path)
+
+
+def test_assay_manifest_section_validate_path_with_invalid_measurements_format(
+    tmp_path: Path,
+    assay_file: Path,
+) -> None:
+    """An error should be raised for invalid measurements file formats."""
+    path = tmp_path / "measurements.txt"
+    path.touch()
+    with pytest.raises(
+        ValueError,
+        match=rf"Unsupported file format for file: {path}",
+    ):
+        AssayManifestSection(path=assay_file, measurements_path=path)
 
 
 def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None:

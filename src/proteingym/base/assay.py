@@ -169,7 +169,7 @@ class AssayManifestSection(BaseModel):
             path = info.context["relative_to_path"] / path
         file_format = path.suffix.lower()[1:]
         if file_format not in AssayFormat:
-            raise ValueError(f"Invalid assay file format for file: {path}")
+            raise ValueError(f"Unsupported file format for file: {path}")
         return path
 
     @field_validator("measurements_path", mode="after", check_fields=True)
