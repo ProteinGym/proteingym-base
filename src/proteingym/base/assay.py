@@ -163,8 +163,10 @@ class AssayManifestSection(BaseModel):
     """The measurements data of the assay."""
 
     @field_validator("path", "measurements_path", mode="before", check_fields=True)
-    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+    def validate_path(cls, path: Path | str, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
+        if isinstance(path, str):  # Consequence of running before validation
+            path = Path(path)
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         file_format = path.suffix.lower()
