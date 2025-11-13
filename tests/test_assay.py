@@ -95,13 +95,11 @@ def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     path = tmp_path / "assay.csv"
     path.write_text("sequence,target\nF1I,1.59\nF1L,0.6")
     context = {"relative_to_path": tmp_path}
+
     section = AssayManifestSection.model_validate(
-        {
-            "path": "assay.csv",
-            "sequence_alphabet": "AA",
-        },
-        context=context,
+        {"path": "assay.csv"}, context=context
     )
+
     assert section.path == path
 
 
