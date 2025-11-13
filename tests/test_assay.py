@@ -125,19 +125,33 @@ def test_assay_manifest_section(assay_file: Path, assay_measurement_file: Path) 
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     """Test AssayManifestSection with a relative path."""
     path = tmp_path / "assay.csv"
-    measurement_path = tmp_path / "measurements.csv"
     path.write_text("sequence,target\nF1I,1.59\nF1L,0.6")
-    measurement_path.write_text("sequence,measurement1\nF1I,0.1\nF1L,0.3")
     context = {"relative_to_path": tmp_path}
     section = AssayManifestSection.model_validate(
         {
             "path": "assay.csv",
             "sequence_alphabet": "AA",
-            "measurements_path": "measurements.csv",
         },
         context=context,
     )
     assert section.path == path
+
+
+def test_assay_manifest_section_with_relative_measurements_path(
+    tmp_path: Path, assay_file: Path
+) -> None:
+    """Test AssayManifestSection with a relative measurements path."""
+    measurement_path = tmp_path / "measurements.csv"
+    measurement_path.write_text("sequence,measurement1\nF1I,0.1\nF1L,0.3")
+    context = {"relative_to_path": tmp_path}
+    section = AssayManifestSection.model_validate(
+        {
+            "path": assay_file.as_posix(),
+            "sequence_alphabet": "AA",
+            "measurements_path": "measurements.csv",
+        },
+        context=context,
+    )
     assert section.measurements_path == measurement_path
 
 
