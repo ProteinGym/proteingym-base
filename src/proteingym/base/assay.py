@@ -169,6 +169,17 @@ class AssayManifestSection(BaseModel):
             path = info.context["relative_to_path"] / path
         return path
 
+    @field_validator("measurements_path", mode="after", check_fields=True)
+    def validate_measurements_path(cls, path: Path) -> Path:
+        """The measurements file should contain the 'sequence' column."""
+        if path is None:  # Handle optional paths
+            return path
+        with path.open("r") as f:
+            header = f.readline()
+        if "sequence" not in header:
+            raise ValueError("sequence column not found in measurements file.")
+        return path
+
     @field_serializer("path", "measurements_path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
@@ -369,8 +380,6 @@ class Assay:
         # Load measurements data if measurements_path is provided
         if section.measurements_path:
             measurements_data = pl.read_csv(section.measurements_path)
-            if "sequence" not in measurements_data.columns:
-                raise ValueError("sequence column not found in measurements file.")
         else:
             measurements_data = section.measurements_data
 
