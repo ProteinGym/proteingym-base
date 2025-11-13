@@ -680,6 +680,22 @@ def seq2() -> Sequence:
     return seq2
 
 
+def test_assay_slice_column_string_raises_not_implemented_error(
+    seq1: Sequence, seq2: Sequence
+) -> None:
+    """Slicing an assay with a column string raises a NotImplementedError."""
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    with pytest.raises(
+        NotImplementedError, match="Getting a single column is not supported."
+    ):
+        assay["stability"]
+
+
 def test_assay_slice_column(seq1: Sequence, seq2: Sequence) -> None:
     """Slicing an assay with a column returns an assay with only that column."""
     expected = Assay(name="Test assay", records=[(1.5,), (2.5,)], columns=["stability"])
