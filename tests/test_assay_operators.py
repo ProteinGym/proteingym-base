@@ -696,6 +696,20 @@ def test_assay_slice_column_string_raises_not_implemented_error(
         assay["stability"]
 
 
+def test_assay_slice_column_string_raises_key_error_for_unknown_column(
+    seq1: Sequence, seq2: Sequence
+) -> None:
+    """Slicing an assy with an unknown column string raises a KeyError."""
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    with pytest.raises(KeyError, match=r"Undefined columns: {'unknown'}"):
+        assay[["sequence", "unknown"]]
+
+
 def test_assay_slice_column(seq1: Sequence, seq2: Sequence) -> None:
     """Slicing an assay with a column returns an assay with only that column."""
     expected = Assay(name="Test assay", records=[(1.5,), (2.5,)], columns=["stability"])
