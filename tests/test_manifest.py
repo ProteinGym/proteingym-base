@@ -78,11 +78,13 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     sequence_file = tmp_path / "sequences.fasta"
     structure_file = tmp_path / "structures.pdb"
     msa_file = tmp_path / "msas.a3m"
+    msa_weights_file = tmp_path / "weights.npy"
     for path in (
         assay_measurement_file,
         sequence_file,
         structure_file,
         msa_file,
+        msa_weights_file,
     ):
         path.touch()
     # Write header in the assay file
