@@ -172,11 +172,11 @@ class AssayManifestSection(BaseModel):
     @field_serializer("path", "measurements_path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
-        if path:
-            if info.context and info.context.get("relative_to_path"):
-                path = path.relative_to(info.context["relative_to_path"])
-            return path.as_posix()
-        return None
+        if path is None:  # Handle optional paths
+            return None
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
+        return path.as_posix()
 
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
