@@ -1,5 +1,8 @@
 """
 Module for testing assay operators.
+
+TODO:
+Move repetitive sequence and assay into fixtures.
 """
 
 import pytest
