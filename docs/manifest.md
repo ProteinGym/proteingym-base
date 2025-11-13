@@ -191,7 +191,6 @@ The assays section contains a list of assays included in the dataset.
 | `measurements_path`  | `string`         | No           | `None`       | The path to a separate measurements data file. Supported extensions: `.csv`.|
 | `statistics`         | `list[map]`      | No           | Empty list   | The statistics defined for the assay.                                       |
 
-// ...existing code...
 Example of an assay file:
 
 ``` csv
