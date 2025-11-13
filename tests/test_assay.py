@@ -262,22 +262,28 @@ def test_assay_to_df() -> None:
     )
 
 
-def test_assay_to_df_single_string_target():
-    """Test Assay.to_df with target_names as a single string."""
+def test_assay_to_df_single_target() -> None:
+    """Only the specified target column should be included in the DataFrame."""
+    expected = pl.DataFrame(
+        {
+            "sequence": ["APC", "DEF"],
+            "DMS Score": [1.56, 2.0],
+        }
+    )
+
     seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
     seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
     assay = Assay(
         name="assay",
         records=[
-            (seq1, 1.56),
-            (seq2, 2.0),
+            (seq1, 1.56, 0.5),
+            (seq2, 2.0, 0.6),
         ],
-        columns=["sequence", "DMS Score"],
+        columns=["sequence", "DMS Score", "DMS Score2"],
     )
+
     df = assay.to_df(target_names="DMS Score")
-    assert "DMS Score" in df.columns
-    assert df.shape == (2, 2)
-    assert df["DMS Score"].to_list() == [1.56, 2.0]
+    pl.testing.assert_frame_equal(df, expected)
 
 
 def test_assay_to_df_invalid_target_name_returns_empty_df() -> None:
