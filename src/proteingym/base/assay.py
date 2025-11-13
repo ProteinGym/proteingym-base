@@ -209,6 +209,29 @@ class AssayManifestSection(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def validate_measurement_names(self) -> Path:
+        """The measurement names should be present in the measurements file.
+
+        Assuming CSV file format which is checked during path validation.
+        """
+        if self.measurements_path is None:
+            return self
+
+        with self.measurements_path.open("r") as f:
+            header = f.readline()
+        missing_measurements = []
+        for measurement in self.measurements:
+            if measurement.name not in header:
+                missing_measurements.append(measurement.name)
+        if missing_measurements:
+            raise ValueError(
+                f"Measurements {', '.join(missing_measurements)} not found in "
+                f"measurements file: {self.measurements_path}"
+            )
+
+        return self
+
+    @model_validator(mode="after")
     def validate_measurements_and_path(self) -> "AssayManifestSection":
         """Ensure that only one of measurement_data or measurements_path is provided."""
         if self.measurements_data and self.measurements_path:
@@ -391,16 +414,6 @@ class Assay:
             measurements_data = pl.read_csv(section.measurements_path)
         else:
             measurements_data = section.measurements_data
-
-        # Ensure that the measurement names given in the manifest are present in the
-        # measurements data
-        if measurements_data is not None:
-            measurement_names = {m.name for m in section.measurements}
-            missing_measurements = measurement_names - set(measurements_data.columns)
-            if missing_measurements:
-                raise ValueError(
-                    f"Measurements {missing_measurements} not found in measurements."
-                )
 
         # Ensure that sequences in measurements data are present in the assay records
         # The first record in the tuples of records is the sequence object

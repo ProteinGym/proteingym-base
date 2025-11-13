@@ -199,36 +199,25 @@ def test_assay_manifest_section_measurements_path_missing_sequence_column(
         AssayManifestSection(path=assay_file, measurements_path=measurement_path)
 
 
-def test_from_manifest_section_measurement_file_with_missing_measurement(
+def test_assay_manifest_section_measurement_file_with_missing_measurement(
+    tmp_path: Path,
     assay_file: Path,
 ) -> None:
-    """Test raises error if the measurement data have missing measurement names."""
-    assay_measurement_file = assay_file.parent / "measurements.csv"
-    assay_measurement_file.write_text(
-        """sequence,measurement1
-        F1I,0.1
-        F1L,0.2
-        """
-    )
+    """Test raises error if the measurement data misses measurements."""
+    path = tmp_path / "measurements.csv"
+    path.write_text("sequence,measurement1")
 
     with pytest.raises(
         ValueError,
-        match="Measurements {'measurement2'} not found in measurements.",
+        match=rf"Measurements measurement2 not found in measurements file: {path}",
     ):
-        Assay.from_manifest_section(
-            AssayManifestSection(
-                name="assay",
-                sequence="sequence",
-                sequence_alphabet=SequenceAlphabet.DNA,
-                targets={"DMS Score": "target", "DMS Score2": "target2"},
-                path=assay_file,
-                measurements=[
-                    AssayMeasurement(name="measurement1"),
-                    AssayMeasurement(name="measurement2"),
-                ],
-                variables={"test_cond1": "true", "test_cond2": 42},
-                measurements_path=assay_measurement_file,
-            )
+        AssayManifestSection(
+            path=assay_file,
+            measurements=[
+                AssayMeasurement(name="measurement1"),
+                AssayMeasurement(name="measurement2"),
+            ],
+            measurements_path=path,
         )
 
 
