@@ -73,23 +73,25 @@ weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
 def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     """A (temporary) manifest file."""
     # Mock files need to exist for the manifest validation to pass
+    assay_file = tmp_path / "assay.csv"
+    assay_measurement_file = tmp_path / "measurements.csv"
     sequence_file = tmp_path / "sequences.fasta"
     structure_file = tmp_path / "structures.pdb"
     msa_file = tmp_path / "msas.a3m"
-    msa_weights_file = tmp_path / "weights.npy"
-    assay_file = tmp_path / "assay.csv"
-    assay_measurement_file = tmp_path / "measurements.csv"
     for path in (
         sequence_file,
         structure_file,
         msa_file,
-        msa_weights_file,
-        assay_file,
-        assay_measurement_file,
     ):
         path.touch()
     # Write header in the assay file
     assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
+    assay_measurement_file.write_text(
+        """
+sequence,OD
+F1I,0.1
+F1L,0.3""".lstrip()
+    )
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
