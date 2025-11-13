@@ -156,7 +156,7 @@ class AssayManifestSection(BaseModel):
     path: FilePath
     """The path to the assay file, csv only."""
 
-    measurements_path: FilePath | None = None
+    measurements_path: FilePath | None = Field(default=None, exclude=True)
     """The path to the assay measurements file, csv only."""
 
     measurements_data: list[list] | None = None
