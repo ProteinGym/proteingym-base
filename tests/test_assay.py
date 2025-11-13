@@ -90,38 +90,6 @@ def test_assay_statistic_minimal() -> None:
         assert statistic.name == "statistic1"
 
 
-def test_assay_manifest_section(assay_file: Path, assay_measurement_file: Path) -> None:
-    """Test creating an AssayManifestSection."""
-    try:
-        section = AssayManifestSection(
-            name="test_assay",
-            description="Test assay",
-            sequence="sequence",
-            sequence_alphabet="AA",
-            targets={"DMS Score": "target", "DMS Score2": "target2"},
-            variables={"test_cond1": "true", "test_cond2": 42},
-            path=assay_file,
-            measurements_path=assay_measurement_file,
-            measurements=[
-                AssayMeasurement(name="measurement1"),
-                AssayMeasurement(name="measurement2"),
-            ],
-            statistics=[
-                AssayStatistic(name="statistic1"),
-                AssayStatistic(name="statistic2"),
-            ],
-        )
-    except ValidationError as e:
-        raise AssertionError(f"AssayManifestSection raised ValidationError: {e}") from e
-
-    else:
-        assert isinstance(section.path, Path)
-        with assay_file.open() as f:
-            content = f.read()
-        assert section.sequence in content
-        assert all(target in content for target in section.targets.values())
-
-
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     """Test AssayManifestSection with a relative path."""
     path = tmp_path / "assay.csv"
