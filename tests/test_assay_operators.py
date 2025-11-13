@@ -656,26 +656,33 @@ def test_assay_get_first_raises_not_implemented_error() -> None:
         assay[0]  # noqa
 
 
-def test_assay_slice_column() -> None:
-    """Slicing an assay with a column returns an assay with only that column."""
+@pytest.fixture
+def seq1() -> Sequence:
+    """A test sequence 1."""
     seq1 = Sequence(
         name="seq1",
         value="APC",
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
+    return seq1
+
+
+@pytest.fixture
+def seq2() -> Sequence:
+    """A test sequence 2."""
     seq2 = Sequence(
         name="seq2",
         value="GTC",
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
+    return seq2
 
-    expected = Assay(
-        name="Test assay",
-        records=[(1.5,), (2.5,)],
-        columns=["stability"],
-    )
+
+def test_assay_slice_column(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay with a column returns an assay with only that column."""
+    expected = Assay(name="Test assay", records=[(1.5,), (2.5,)], columns=["stability"])
 
     assay = Assay(
         name="Test assay",
