@@ -101,7 +101,7 @@ theta = 0.8
 reference_sequence = "abc"
 sequence_start = 1
 sequence_end = 10
-weights = [0.1, 0.2, 0.3] # Can also be defined in `weights_path`
+weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
 ```
 
 ### Top-level
