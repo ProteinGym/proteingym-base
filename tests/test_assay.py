@@ -221,38 +221,15 @@ def test_assay_manifest_section_measurement_file_with_missing_measurement(
         )
 
 
-def test_as_manifest_section(tmp_path: Path) -> None:
-    """Test converting an Assay to a manifest section."""
-    assay = Assay(
-        name="assay",
-        records=[
-            (
-                Sequence(
-                    name="seq1",
-                    value="APC",
-                    type="standard_sequence",
-                    alphabet=SequenceAlphabet.DNA,
-                ),
-                1.56,
-            ),
-            (
-                Sequence(
-                    name="seq2",
-                    value="DEF",
-                    type="standard_sequence",
-                    alphabet=SequenceAlphabet.DNA,
-                ),
-                2.0,
-            ),
-        ],
-        columns=["sequence", "DMS Score"],
-    )
-    path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
-    manifest = assay.as_manifest_section(path=path)
-    assert "DMS Score" in manifest.path.read_text()
-    assert "sequence" in manifest.path.read_text()
-    assert "1.56" in manifest.path.read_text()
-    assert "2.0" in manifest.path.read_text()
+def test_assay_as_manifest_section_name(assay_file: Path) -> None:
+    """Test converting an assay to a minimal manifest section.
+
+    Could be extended to additional fields to name, but sanity checking the
+    happy path here.
+    """
+    assay = Assay(name="assay", records=[])
+    manifest = assay.as_manifest_section(path=assay_file)
+    assert AssayManifestSection(name="assay", path=assay_file) == manifest
 
 
 def test_assay_to_df() -> None:
