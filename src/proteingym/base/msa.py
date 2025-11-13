@@ -47,9 +47,9 @@ class MSAMetadataManifestSection(BaseModel):
     """Number of evolutionary couplings that are considered significant."""
 
     bit_score: float | None = None
-    """Bitscore threshold used to generate the alignment divided
+    """Bitscore threshold.
 
-    by the length of the target protein.
+    Used to generate the alignment divided by the length of the target protein.
     """
 
     theta: float | None = None
@@ -102,8 +102,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
 
     @field_validator("path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
-        """Optionally, extend the path with the `relative_to_path` from the
-        context."""
+        """Extend the path with the `relative_to_path` from the context."""
 
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
