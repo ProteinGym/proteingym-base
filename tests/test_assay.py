@@ -128,15 +128,7 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
         ValueError,
         match=r"Feature 'invalid_feature' not found in the file: .*assay.csv",
     ):
-        AssayManifestSection(
-            name="test_assay",
-            description="Test assay",
-            sequence="invalid_feature",
-            sequence_alphabet="AA",
-            targets={"DMS Score": "invalid_feature"},
-            variables={"test_cond1": "true", "test_cond2": 42},
-            path=assay_file,
-        )
+        AssayManifestSection(sequence="invalid_feature", path=assay_file)
 
 
 def test_assay_manifest_section_both_measurement_data_and_path_provided(
