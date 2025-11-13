@@ -215,6 +215,13 @@ class Assay:
             # a list of one record. The former is not desired and the latter is
             # ambiguous with the slicing operation.
             raise NotImplementedError("Getting a single record is not supported.")
+        if isinstance(slc, str):
+            # This would return a vector, but we sticking with a matrix-like
+            # structure.
+            raise NotImplementedError(
+                "Getting a single column is not supported. "
+                f"Use a list with one element instead: [{slc}]"
+            )
 
         columns = self.columns
         if isinstance(slc, list):
