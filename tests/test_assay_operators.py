@@ -654,3 +654,34 @@ def test_assay_get_first_raises_not_implemented_error() -> None:
         NotImplementedError, match="Getting a single record is not supported."
     ):
         assay[0]  # noqa
+
+
+def test_assay_slice_column() -> None:
+    """Slicing an assay with a column returns an assay with only that column."""
+    seq1 = Sequence(
+        name="seq1",
+        value="APC",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value="GTC",
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+
+    expected = Assay(
+        name="Test assay",
+        records=[(1.5,), (2.5,)],
+        columns=["stability"],
+    )
+
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[["stability"]]
+    assert actual == expected
