@@ -234,6 +234,16 @@ def test_assay_as_manifest_section_name(assay_file: Path) -> None:
 
 def test_assay_to_df() -> None:
     """Test converting an Assay to a Polars DataFrame."""
+    expected = pl.DataFrame(
+        {
+            "sequence": ["APC", "DEF"],
+            "DMS Score": [1.56, 2.0],
+            "DMS Score2": [0.5, 0.6],
+            "test_cond1": ["true", "true"],
+            "test_cond2": [42, 42],
+        }
+    )
+
     seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
     seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
     assay = Assay(
@@ -245,20 +255,11 @@ def test_assay_to_df() -> None:
         variables={"test_cond1": "true", "test_cond2": 42},
         columns=["sequence", "DMS Score", "DMS Score2"],
     )
-    try:
-        df = assay.to_df()
-    except ValidationError as e:
-        raise AssertionError(f"Assay raised ValidationError: {e}") from e
-    else:
-        assert "sequence" in df.columns
-        assert "DMS Score" in df.columns
-        assert all(
-            assay_var in df.columns for assay_var in ["test_cond1", "test_cond2"]
-        )
-        assert df.shape == (2, 5)
-        assert df["sequence"].to_list() == ["APC", "DEF"]
-        assert df["DMS Score"].to_list() == [1.56, 2.0]
-        assert df["DMS Score2"].to_list() == [0.5, 0.6]
+    df = assay.to_df()
+
+    pl.testing.assert_frame_equal(
+        df, expected, check_dtypes=False, check_column_order=False
+    )
 
 
 def test_assay_to_df_single_string_target():
