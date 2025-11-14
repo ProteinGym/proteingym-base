@@ -39,7 +39,7 @@ supported.
 ## Decision matrix
 
 | Option | User-friendly | Preserve info | Windows | Free license |
-| ------ | ------------- | ------------- | ------- | ------------ |
+|--------|---------------|---------------|---------|--------------|
 | ZIP    | High          | High          | High    | High         |
 | TAR.GZ | Medium        | High          | Medium  | High         |
 
@@ -78,7 +78,7 @@ The chosen archive file extension is `.pgdata`.
 ### Decision matrix for archive file extension
 
 | Option      | Branding | Avoid internals | Context                                                    | User-friendly |
-| ----------- | -------- | --------------- | ---------------------------------------------------------- | ------------- |
+|-------------|----------|-----------------|------------------------------------------------------------|---------------|
 | .zip        | Low      | High            | Low                                                        | High          |
 | .proteingym | High     | High            | Medium* The bigger context not just `proteingym-base` repo | Medium        |
 | .pgdata     | High     | High            | High* The context is clearly defined as protein datasets   | High          |

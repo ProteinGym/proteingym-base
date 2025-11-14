@@ -32,10 +32,10 @@ We will use Architecture Decision Records, as [described by Michael Nygard](http
 ## Decision matrix
 
 | Option                              | Clarity | Traceability | Collaboration | Simplicity | Low barrier to entry |
-| ----------------------------------- | ------- | ------------ | ------------- | ---------- | -------------------- |
-| Markdown file in git                | High    | High         | High          | Medium     | High                  |
-| Previous option with dedicated tool | High    | High         | High          | High       | Medium                |
-| Wiki                                | High    | Medium       | Medium        | Low        | Low                   |
+|-------------------------------------|---------|--------------|---------------|------------|----------------------|
+| Markdown file in git                | High    | High         | High          | Medium     | High                 |
+| Previous option with dedicated tool | High    | High         | High          | High       | Medium               |
+| Wiki                                | High    | Medium       | Medium        | Low        | Low                  |
 
 [adr-tools](https://github.com/npryce/adr-tools) is chosen as dedicated tool
 option to automate handling ADRs.

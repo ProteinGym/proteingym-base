@@ -182,6 +182,6 @@ This dataset is stored in `example_data/NEIME_2019` and contains the following:
 
 For a full overview of available data see the following table:
 
-|      | Dataset name | Link to website    | Relative path to manifest                              |
-| :--- | :----------- | :----------------- | :----------------------------------------------------- |
-| 1.   | NEIME2019    | www.proteingym.org | [example_data/neime_2019.toml](example_data/neime_2019.toml) |
+|    | Dataset name | Link to website    | Relative path to manifest                                    |
+|:---|:-------------|:-------------------|:-------------------------------------------------------------|
+| 1. | NEIME2019    | www.proteingym.org | [example_data/neime_2019.toml](example_data/neime_2019.toml) |
