@@ -30,7 +30,12 @@ class AssayFormat(StrEnum):
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayVariable:
-    """Definition of an assay variable."""
+    """Definition of an assay variable.
+
+    Assay variables are used to track constants associated with an assay, e.g. the pH
+    or temperature. When combining data from multiple assays, the assay variables may
+    become informative for predicting the assay outcome.
+    """
 
     name: str
     """The name of the variable."""
@@ -47,19 +52,23 @@ class AssayVariable:
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayTarget:
-    """Definition of an assay target."""
+    """Definition of an assay target.
+
+    The conceptual quantity of interest for a given assay - e.g., stability or
+    activity.
+    """
 
     name: str
     """The name of the target."""
 
-    unit: str | None = None
-    """The unit of the target."""
-
-    value: bool | int | float | str | None = None
-    """The value of the target, can be a bool, int, float, or str."""
+    statistic: str | None = None
+    """The name of the AssayStatistic used to quantify the target value."""
 
     description: str | None = None
     """Description of the target."""
+
+    is_primary_target: bool = False
+    """Whether the target is a primary target."""
 
     def __eq__(self, other: "AssayTarget") -> bool:
         """Implements the '==' operator for AssayTarget."""
@@ -68,8 +77,7 @@ class AssayTarget:
         return (
             # Description is not considered for equality
             self.name == other.name
-            and self.unit == other.unit
-            and self.value == other.value
+            and self.statistic == other.statistic
         )
 
 
@@ -79,9 +87,6 @@ class AssayMeasurement:
 
     name: str
     """The name of the measurement."""
-
-    value: bool | int | float | str | None = None
-    """The value of the measurement, can be a bool, int, float, or str."""
 
     unit: str | None = None
     """The unit of the measurement."""
@@ -97,9 +102,6 @@ class AssayStatistic:
     name: str
     """The name of the statistic."""
 
-    value: bool | int | float | str | None = None
-    """The value of the statistic, can be a bool, int, float, or str."""
-
     unit: str | None = None
     """The unit of the statistic."""
 
@@ -108,9 +110,6 @@ class AssayStatistic:
 
     relative_to: str | None = None
     """The sequence name of the reference sequence the statistic is relative to."""
-
-    is_primary_target: bool = False
-    """Whether the statistic is a primary target."""
 
 
 class AssayManifestSection(BaseModel):
@@ -147,20 +146,14 @@ class AssayManifestSection(BaseModel):
     """The variable key:value pairs, key is the name of the assay variable (defined in
     dataset manifest and value of the variable."""
 
-    measurements: list[AssayMeasurement] = Field(default_factory=list)
-    """The measurements defined for the assay."""
-
-    statistics: list[AssayStatistic] = Field(default_factory=list)
-    """The statistics defined for the assay."""
+    measurements: dict[str, str] = Field(default_factory=dict)
+    """The map of measurement names in dataset to measurement feature names in assay."""
 
     path: FilePath
     """The path to the assay file, csv only."""
 
     measurements_path: FilePath | None = Field(default=None, exclude=True)
     """The path to the assay measurements file, csv only."""
-
-    measurements_data: list[list] | None = None
-    """The measurements data of the assay."""
 
     @field_validator("path", "measurements_path", mode="before", check_fields=True)
     def validate_path(cls, path: Path | str, info: ValidationInfo) -> Path:
@@ -174,22 +167,8 @@ class AssayManifestSection(BaseModel):
             raise ValueError(f"Unsupported file format for file: {path}")
         return path
 
-    @field_validator("measurements_path", mode="after", check_fields=True)
-    def validate_measurements_path(cls, path: Path) -> Path:
-        """The measurements file should contain the 'sequence' column.
-
-        Assuming CSV file format which is checked during path validation.
-        """
-        if path is None:  # Handle optional paths
-            return path
-        with path.open("r") as f:
-            header = f.readline()
-        if "sequence" not in header:
-            raise ValueError("sequence column not found in measurements file.")
-        return path
-
     @field_serializer("path", "measurements_path", check_fields=True)
-    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str | None:
         """Serialize the path as a Posix path."""
         if path is None:  # Handle optional paths
             return None
@@ -203,49 +182,27 @@ class AssayManifestSection(BaseModel):
 
         Assuming CSV file format which is checked during path validation.
         """
+
         with self.path.open("r") as f:
             header = f.readline()
         for v in [self.sequence] + list(self.targets.values()):
             if v not in header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
-        return self
+        if self.measurements_path:
+            with self.measurements_path.open("r") as f:
+                header = f.readline()
+            for v in [self.sequence] + list(self.measurements.values()):
+                if v not in header:
+                    raise ValueError(
+                        f"Feature '{v}' not found in the file: {self.path}"
+                    )
 
-    @model_validator(mode="after")
-    def validate_measurement_names(self) -> Path:
-        """The measurement names should be present in the measurements file.
-
-        Assuming CSV file format which is checked during path validation.
-        """
-        if self.measurements_path is None:
-            return self
-
-        with self.measurements_path.open("r") as f:
-            header = f.readline()
-        missing_measurements = []
-        for measurement in self.measurements:
-            if measurement.name not in header:
-                missing_measurements.append(measurement.name)
-        if missing_measurements:
-            raise ValueError(
-                f"Measurements {', '.join(missing_measurements)} not found in "
-                f"measurements file: {self.measurements_path}"
-            )
-
-        return self
-
-    @model_validator(mode="after")
-    def validate_measurements_and_path(self) -> "AssayManifestSection":
-        """Ensure that only one of measurement_data or measurements_path is provided."""
-        if self.measurements_data and self.measurements_path:
-            raise ValueError(
-                "Only one of measurements_data or measurements_path should be provided."
-            )
         return self
 
     @field_serializer("sequence_alphabet")
     def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
         """Serialize the sequence alphabet as a string."""
-        return sequence_alphabet.value
+        return sequence_alphabet.value  # noqa
 
 
 @dataclasses.dataclass
@@ -258,8 +215,16 @@ class Assay:
     records: list[tuple[Sequence | str | int | float | bool | str]]
     """The records of the assay, tuple with Sequence, target values."""
 
+    measurement_records: list[tuple[Sequence | str | int | float | bool | str]]
+    """The records of the assay, tuple with Sequence, target values."""
+
     columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
-    """The column names in the assay records."""
+    """The column names in the statistics records."""
+
+    measurement_columns: list[str] = dataclasses.field(
+        default_factory=lambda: ["sequence"]
+    )
+    """The column names in the measurement records."""
 
     variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
@@ -268,15 +233,6 @@ class Assay:
 
     description: str | None = None
     """The description of the assay."""
-
-    measurements: list[AssayMeasurement] = dataclasses.field(default_factory=list)
-    """The measurements of the assay."""
-
-    statistics: list[AssayStatistic] = dataclasses.field(default_factory=list)
-    """The statistics of the assay."""
-
-    measurements_data: pl.DataFrame | None = None
-    """The measurements data of the assay."""
 
     @property
     def sequence_feature_name(self) -> str:
@@ -290,6 +246,13 @@ class Assay:
         # The first column is the sequence
         return list(self.columns[1:])
 
+    @property
+    def measurement_feature_names(self) -> list[str]:
+        """Returns the measurement feature names in the assay records."""
+        # Get the target feature names from the measurement columns
+        # The first column is the sequence
+        return list(self.measurement_columns[1:])
+
     def __len__(self) -> int:
         """The length of the assay, i.e. the number of records."""
         return len(self.records)
@@ -300,18 +263,12 @@ class Assay:
         If the given item is an Assay, checks if all its records and variables
         are contained in this assay.
         """
+        # TODO: should this pay attention to measurements? not relevant when splitting
         if not isinstance(item, Assay):
             return False
-        return (
-            all(record in self.records for record in item.records)
-            and all(
-                k in self.variables and self.variables[k] == v
-                for k, v in item.variables.items()
-            )
-            and all(
-                measurement in self.measurements for measurement in item.measurements
-            )
-            and all(statistic in self.statistics for statistic in item.statistics)
+        return all(record in self.records for record in item.records) and all(
+            k in self.variables and self.variables[k] == v
+            for k, v in item.variables.items()
         )
 
     def __eq__(self, item: "Assay") -> bool:
@@ -322,8 +279,6 @@ class Assay:
             self.records == item.records
             and self.variables == item.variables
             and self.columns == item.columns
-            and self.statistics == item.statistics
-            and self.measurements == item.measurements
         )
 
     def __getitem__(self, slc: slice | list[int | bool]) -> "Assay":
@@ -383,6 +338,35 @@ class Assay:
         return "\n".join(lines)
 
     @classmethod
+    def _read_records(
+        cls,
+        path: Path,
+        sequence: str,
+        features: dict[str, str],
+        sequence_alphabet: SequenceAlphabet,
+    ) -> list[tuple[Sequence | str | int | float | bool | str]]:
+        df = pl.read_csv(path, columns=[sequence] + list(features.values()))
+        df = df.with_columns(
+            # Sequences are created from sequence strings present in the file
+            # The sequence name is taken from the string itself as the name is not
+            # provided in the assay file.
+            pl.col(sequence)
+            .map_elements(
+                lambda seq: Sequence(
+                    # The type of the sequence is set to "standard". This would be
+                    # removed in future and support lookup into dataset.sequences.
+                    name=seq,
+                    value=Seq(seq),
+                    type=SequenceType.STANDARD,
+                    alphabet=sequence_alphabet,
+                ),
+                return_dtype=pl.Object,
+            )
+            .alias("sequence_object")
+        )
+        return list(df.select("sequence_object", *features.values()).iter_rows())
+
+    @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
 
@@ -407,24 +391,27 @@ class Assay:
             )
             .alias("sequence_object")
         )
-        records = list(
-            df.select("sequence_object", *section.targets.values()).iter_rows()
+        records = cls._read_records(
+            section.path, section.sequence, section.targets, section.sequence_alphabet
         )
 
         if section.measurements_path:
-            measurements_data = pl.read_csv(section.measurements_path)
+            measurement_records = cls._read_records(
+                section.path,
+                section.sequence,
+                section.measurements,
+                section.sequence_alphabet,
+            )
         else:
-            measurements_data = section.measurements_data
+            measurement_records = []
 
         return cls(
             name=section.name or section.path.stem,
             records=records,
+            measurement_records=measurement_records,
             columns=[section.sequence] + list(section.targets.keys()),
             description=section.description,
             variables=section.variables,
-            measurements_data=measurements_data,
-            measurements=section.measurements,
-            statistics=section.statistics,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -452,12 +439,17 @@ class Assay:
             ),
             variables=self.variables,
             path=path,
-            measurements=self.measurements,
-            statistics=self.statistics,
-            measurements_data=self.measurements_data.rows()
-            if self.measurements_data is not None
-            else None,
+            measurements=dict(
+                zip(
+                    self.measurement_feature_names,
+                    self.measurement_feature_names,
+                    strict=False,
+                )
+            ),
         )
+
+    def to_measurements_df(self):
+        raise NotImplementedError
 
     def to_df(
         self, *, target_names: Collection[str] | str | None = None

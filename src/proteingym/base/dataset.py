@@ -16,7 +16,7 @@ from pydantic import (
     model_validator,
 )
 
-from .assay import Assay, AssayTarget, AssayVariable
+from .assay import Assay, AssayTarget, AssayVariable, AssayMeasurement, AssayStatistic
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .sequence import Sequence
@@ -113,6 +113,12 @@ class Dataset(BaseModel):
     assay_targets: list[AssayTarget] = Field(default_factory=list)
     """The list of assay targets relevant to the dataset."""
 
+    assay_statistics: list[AssayStatistic] = Field(default_factory=list)
+    """The list of assay statistics relevant to the dataset."""
+
+    assay_measurements: list[AssayMeasurement] = Field(default_factory=list)
+    """The list of assay measurements to the dataset."""
+
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
 
@@ -163,6 +169,10 @@ class Dataset(BaseModel):
             ),
             assay_variables=list_union(self.assay_variables, other.assay_variables),
             assay_targets=list_union(self.assay_targets, other.assay_targets),
+            assay_statistics=list_union(self.assay_statistics, other.assay_statistics),
+            assay_measurements=list_union(
+                self.assay_measurements, other.assay_measurements
+            ),
             assays=list_union(self.assays, other.assays),
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
@@ -257,6 +267,8 @@ class Dataset(BaseModel):
         lines.append(f"\t\tstructures: {len(self.structures)},")
         lines.append(f"\t\tmsas: {len(self.msas)},")
         lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
+        lines.append(f"\t\tassay_statistics: {len(self.assay_statistics)},")
+        lines.append(f"\t\tassay_measurements: {len(self.assay_measurements)},")
         lines.append(")")
         return "\n".join(lines)
 
@@ -283,6 +295,8 @@ class Dataset(BaseModel):
             Assay: self.assays,
             AssayVariable: self.assay_variables,
             AssayTarget: self.assay_targets,
+            AssayStatistic: self.assay_statistics,
+            AssayMeasurement: self.assay_measurements,
             Sequence: self.sequences,
             Structure: self.structures,
             MSA: self.msas,
@@ -328,7 +342,7 @@ class Dataset(BaseModel):
         Biopython objects: Seq, Structure, MultipleSeqAlignment,
         don't have custom JSONEncoder, thus we rely on their __str__ method
         to return a string representation in order for
-        Bio objects to be sereializable.
+        Bio objects to be serializable.
 
         See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
         """
@@ -361,6 +375,8 @@ class Dataset(BaseModel):
             description=manifest.description,
             assay_variables=manifest.assay_variables,
             assay_targets=manifest.assay_targets,
+            assay_statistics=manifest.assay_statistics,
+            assay_measurements=manifest.assay_measurements,
             assays=assays,
             sequences=sequences,
             structures=structures,
@@ -437,6 +453,8 @@ class Dataset(BaseModel):
             description=self.description,
             assay_targets=self.assay_targets,
             assay_variables=self.assay_variables,
+            assay_statistics=self.assay_statistics,
+            assay_measurements=self.assay_measurements,
             assays=[
                 a.as_manifest_section(path=path)
                 for a, path in zip(self.assays, data_paths.get(Assay, []), strict=True)

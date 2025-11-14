@@ -14,7 +14,13 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from .assay import AssayManifestSection, AssayTarget, AssayVariable
+from .assay import (
+    AssayManifestSection,
+    AssayTarget,
+    AssayVariable,
+    AssayStatistic,
+    AssayMeasurement,
+)
 from .msa import MSAManifestSection
 from .sequence import SequenceManifestSection
 from .structure import StructureManifestSection
@@ -109,6 +115,12 @@ class Manifest(BaseModel):
     assay_targets: list[AssayTarget] = Field(default_factory=list)
     """The targets for the assays defined in the dataset."""
 
+    assay_statistics: list[AssayStatistic] = Field(default_factory=list)
+    """The variables for the assays defined in the dataset."""
+
+    assay_measurements: list[AssayMeasurement] = Field(default_factory=list)
+    """The targets for the assays defined in the dataset."""
+
     assays: list[AssayManifestSection] = Field(default_factory=list)
     """The assays included in the dataset."""
 
@@ -156,7 +168,9 @@ class Manifest(BaseModel):
             path = Path(path)
         context = {
             # Resolve paths defined as relative paths to the manifest file
-            "relative_to_path": path.parent if isinstance(path, Path) else None,
+            "relative_to_path": path.parent
+            if isinstance(path, Path)
+            else None,
         }
         return cls.model_validate(toml.load(path), context=context)
 
