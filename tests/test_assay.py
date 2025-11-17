@@ -1,9 +1,11 @@
 from pathlib import Path
+from string import ascii_uppercase
 from zipfile import ZipFile
 
 import polars as pl
 import polars.testing
 import pytest
+from Bio.Seq import Seq
 from pydantic import ValidationError
 from semver import Version
 
@@ -17,7 +19,7 @@ from proteingym.base.assay import (
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
-from proteingym.base.sequence import Sequence, SequenceAlphabet
+from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 @pytest.fixture
@@ -62,7 +64,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
             name="test_assay",
             description="Test assay",
             sequence="sequence",
-            sequence_alphabet="AA",
+            sequence_alphabet=SequenceAlphabet.AA,
             targets={"DMS Score": "target", "DMS Score2": "target2"},
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
@@ -100,7 +102,7 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
             name="test_assay",
             description="Test assay",
             sequence="invalid_feature",
-            sequence_alphabet="AA",
+            sequence_alphabet=SequenceAlphabet.AA,  # noqa
             targets={"DMS Score": "invalid_feature"},
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
@@ -113,8 +115,8 @@ def test_assay() -> None:
         (
             Sequence(
                 name="seq1",
-                value="APC",
-                type="standard_sequence",
+                value=Seq("APC"),
+                type=SequenceType.STANDARD,
                 alphabet=SequenceAlphabet.DNA,
             ),
             1.56,
@@ -122,8 +124,8 @@ def test_assay() -> None:
         (
             Sequence(
                 name="seq2",
-                value="DEF",
-                type="standard_sequence",
+                value=Seq("DEF"),
+                type=SequenceType.STANDARD,
                 alphabet=SequenceAlphabet.DNA,
             ),
             2.0,
@@ -180,8 +182,8 @@ def test_as_manifest_section(tmp_path: Path) -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
-                    type="standard_sequence",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 1.56,
@@ -189,8 +191,8 @@ def test_as_manifest_section(tmp_path: Path) -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="DEF",
-                    type="standard_sequence",
+                    value=Seq("DEF"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 2.0,
@@ -208,8 +210,18 @@ def test_as_manifest_section(tmp_path: Path) -> None:
 
 def test_assay_to_df() -> None:
     """Test converting an Assay to a Polars DataFrame."""
-    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
-    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
     assay = Assay(
         name="assay",
         records=[
@@ -237,8 +249,18 @@ def test_assay_to_df() -> None:
 
 def test_assay_to_df_single_string_target():
     """Test Assay.to_df with target_names as a single string."""
-    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
-    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
     assay = Assay(
         name="assay",
         records=[
@@ -260,13 +282,19 @@ def test_assay_to_df_invalid_target_name_returns_empty_df() -> None:
         records=[
             (
                 Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                    name="seq1",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 1.56,
             ),
             (
                 Sequence(
-                    name="seq2", value="DEF", type="standard_sequence", alphabet="AA"
+                    name="seq2",
+                    value=Seq("DEF"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 2.0,
             ),
@@ -314,13 +342,19 @@ def test_assay_dump(tmp_path: Path) -> None:
         records=[
             (
                 Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                    name="seq1",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 1.56,
             ),
             (
                 Sequence(
-                    name="seq2", value="DEF", type="standard_sequence", alphabet="AA"
+                    name="seq2",
+                    value=Seq("DEF"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 2.0,
             ),
@@ -341,8 +375,8 @@ def test_manifest_with_valid_assay_variables(assay_file: Path) -> None:
         manifest = Manifest(
             version=Version(1, 0),
             name="test_manifest",
-            assay_variables=[{"name": "pH"}, {"name": "temperature"}],
-            assays=[
+            assay_variables=[{"name": "pH"}, {"name": "temperature"}],  # noqa
+            assays=[  # noqa
                 {
                     "path": assay_file,
                     "sequence_alphabet": "DNA",
@@ -366,8 +400,8 @@ def test_manifest_with_undefined_assay_variable(assay_file: Path) -> None:
         Manifest(
             version=Version(1, 0),
             name="test_manifest",
-            assay_variables=[{"name": "pH"}],
-            assays=[
+            assay_variables=[{"name": "pH"}],  # noqa
+            assays=[  # noqa
                 {
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
@@ -387,7 +421,7 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
                 AssayTarget(name="DMS Score"),
                 AssayTarget(name="DMS Score2"),
             ],
-            assays=[
+            assays=[  # noqa
                 {
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
@@ -414,7 +448,7 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
             assay_targets=[
                 AssayTarget(name="DMS Bin"),
             ],
-            assays=[
+            assays=[  # noqa
                 {
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
@@ -437,17 +471,32 @@ def test_dataset_to_df_no_assays() -> None:
 
 @pytest.fixture
 def seq1() -> Sequence:
-    return Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
+    return Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
 
 
 @pytest.fixture
 def seq2() -> Sequence:
-    return Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    return Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
 
 
 @pytest.fixture
 def seq3() -> Sequence:
-    return Sequence(name="seq3", value="GHI", type="standard_sequence", alphabet="DNA")
+    return Sequence(
+        name="seq3",
+        value=Seq("GHI"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
 
 
 @pytest.fixture
@@ -638,8 +687,18 @@ def test_dataset_to_df_assay_with_different_targets(
 
 def test_dataset_to_df_failed_assay_to_df() -> None:
     """Test that Dataset.to_df raises error if all Assay.to_df fail."""
-    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
-    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
     assay1 = Assay(
         name="assay1",
         records=[
@@ -668,8 +727,18 @@ def test_dataset_to_df_failed_assay_to_df() -> None:
 
 def test_dataset_to_df_drops_empty_target_rows() -> None:
     """Test that Dataset.to_df drops rows with all target values as None."""
-    seq1 = Sequence(name="seq1", value="APC", type="standard_sequence", alphabet="DNA")
-    seq2 = Sequence(name="seq2", value="DEF", type="standard_sequence", alphabet="DNA")
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
     assay1 = Assay(
         name="assay1",
         records=[
@@ -680,7 +749,7 @@ def test_dataset_to_df_drops_empty_target_rows() -> None:
     )
     assay2 = Assay(
         name="assay2",
-        records=[
+        records=[  # noqa
             (seq1, None),
             (seq2, None),
         ],
@@ -692,9 +761,10 @@ def test_dataset_to_df_drops_empty_target_rows() -> None:
         assays=[assay1, assay2],
     )
     df = dataset.to_df(target_names=["DMS Score"])
-    assert df.shape == (1, 2), (
-        "DataFrame should drop rows with all target values as None"
-    )
+    assert df.shape == (
+        1,
+        2,
+    ), "DataFrame should drop rows with all target values as None"
     assert df["sequence"].to_list() == ["APC"]
     assert df["DMS Score"].to_list() == [1.0]
 
@@ -707,8 +777,8 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
-                    type="standard_sequence",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 1.0,
@@ -716,8 +786,8 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="DEF",
-                    type="standard_sequence",
+                    value=Seq("DEF"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 2.0,
@@ -731,8 +801,8 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
-                    type="standard_sequence",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 1.0,
@@ -740,8 +810,8 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="DEF",
-                    type="standard_sequence",
+                    value=Seq("DEF"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 3.0,
@@ -774,14 +844,20 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
             # The sequence names are kept same as
             (
                 Sequence(
-                    name="APC", value="APC", type="standard_sequence", alphabet="AA"
+                    name="APC",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 1.56,
                 0.5,
             ),
             (
                 Sequence(
-                    name="DEF", value="DEF", type="standard_sequence", alphabet="AA"
+                    name="DEF",
+                    value=Seq("DEF"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 2.0,
                 0.6,
@@ -816,8 +892,8 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
-                    type="standard_sequence",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 1.0,
@@ -831,8 +907,8 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
-                    type="standard_sequence",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 2.0,
@@ -846,8 +922,8 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
-                    type="standard_sequence",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 3.0,
@@ -861,8 +937,8 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
-                    type="standard_sequence",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
                     alphabet=SequenceAlphabet.DNA,
                 ),
                 4.0,
@@ -919,7 +995,10 @@ def test_assay_repr() -> None:
         records=[
             (
                 Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                    name="seq1",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 1.0,
             ),
@@ -937,7 +1016,10 @@ def test_assay_repr() -> None:
         records=[
             (
                 Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                    name="seq1",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 2.0,
             ),
@@ -954,7 +1036,10 @@ def test_assay_repr() -> None:
         records=[
             (
                 Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                    name="seq1",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 3.0,
             ),
@@ -970,7 +1055,10 @@ def test_assay_repr() -> None:
         records=[
             (
                 Sequence(
-                    name="seq1", value="APC", type="standard_sequence", alphabet="AA"
+                    name="seq1",
+                    value=Seq("APC"),
+                    type=SequenceType.STANDARD,
+                    alphabet=SequenceAlphabet.AA,
                 ),
                 4.0,
             ),
@@ -986,7 +1074,10 @@ def test_assay_repr() -> None:
     records = [
         (
             Sequence(
-                name=f"seq{i}", value=f"SEQ{i}", type="standard_sequence", alphabet="AA"
+                name=f"seq{i}",
+                value=Seq(ascii_uppercase[i]),
+                type=SequenceType.STANDARD,
+                alphabet=SequenceAlphabet.AA,
             ),
             i,
         )

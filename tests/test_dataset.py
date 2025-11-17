@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import pytest
 from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
+from Bio.Seq import Seq
 from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
@@ -158,7 +159,7 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
 def test_list_datasets_json_serialization() -> None:
     sequence = Sequence(
         name="test",
-        value="test",
+        value=Seq("test"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )

@@ -3,6 +3,7 @@ Module for testing assay operators.
 """
 
 import pytest
+from Bio.Seq import Seq
 
 from proteingym.base.assay import Assay, AssayTarget
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -19,7 +20,7 @@ def test_assay_length_equals_records_length() -> None:
     """The assay length should equal the number of records."""
     sequence = Sequence(
         name="seq1",
-        value="ACD",
+        value=Seq("ACD"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
@@ -59,7 +60,7 @@ def test_assay_with_record_equals_itself() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -75,7 +76,7 @@ def test_assay_with_record_contains_itself() -> None:
     """An assay with a record should contain itself."""
     sequence = Sequence(
         name="seq1",
-        value="APC",
+        value=Seq("APC"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
@@ -94,7 +95,7 @@ def test_assay_empty_in_assay_with_record() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -114,7 +115,7 @@ def test_assay_contains_subset() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -123,7 +124,7 @@ def test_assay_contains_subset() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -138,7 +139,7 @@ def test_assay_contains_subset() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -158,7 +159,7 @@ def test_assay_contains_subset_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -167,7 +168,7 @@ def test_assay_contains_subset_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -182,7 +183,7 @@ def test_assay_contains_subset_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -202,7 +203,7 @@ def test_assay_equals_with_name_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -211,7 +212,7 @@ def test_assay_equals_with_name_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -227,7 +228,7 @@ def test_assay_equals_with_name_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -236,7 +237,7 @@ def test_assay_equals_with_name_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -257,7 +258,7 @@ def test_assay_equals_with_variable() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -266,7 +267,7 @@ def test_assay_equals_with_variable() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -287,7 +288,7 @@ def test_assay_equals_with_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -296,7 +297,7 @@ def test_assay_equals_with_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -312,7 +313,7 @@ def test_assay_equals_with_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -321,7 +322,7 @@ def test_assay_equals_with_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -342,7 +343,7 @@ def test_assay_contains_includes_variables() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -351,7 +352,7 @@ def test_assay_contains_includes_variables() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -367,7 +368,7 @@ def test_assay_contains_includes_variables() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -376,7 +377,7 @@ def test_assay_contains_includes_variables() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -397,7 +398,7 @@ def test_assay_contains_includes_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -406,7 +407,7 @@ def test_assay_contains_includes_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -422,7 +423,7 @@ def test_assay_contains_includes_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -431,7 +432,7 @@ def test_assay_contains_includes_variable_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -452,7 +453,7 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -461,7 +462,7 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -477,7 +478,7 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -486,7 +487,7 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -508,7 +509,7 @@ def test_assay_slice_all(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -517,7 +518,7 @@ def test_assay_slice_all(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -539,7 +540,7 @@ def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -548,7 +549,7 @@ def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -563,7 +564,7 @@ def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -584,7 +585,7 @@ def test_assay_slice_last(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -593,7 +594,7 @@ def test_assay_slice_last(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -608,7 +609,7 @@ def test_assay_slice_last(slc: slice | list[bool]) -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -628,7 +629,7 @@ def test_assay_get_first_raises_not_implemented_error() -> None:
             (
                 Sequence(
                     name="seq1",
-                    value="APC",
+                    value=Seq("APC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -637,7 +638,7 @@ def test_assay_get_first_raises_not_implemented_error() -> None:
             (
                 Sequence(
                     name="seq2",
-                    value="GTC",
+                    value=Seq("GTC"),
                     type=SequenceType.WILD_TYPE,
                     alphabet=SequenceAlphabet.AA,
                 ),
@@ -649,4 +650,4 @@ def test_assay_get_first_raises_not_implemented_error() -> None:
     with pytest.raises(
         NotImplementedError, match="Getting a single record is not supported."
     ):
-        assay[0]
+        assay[0]  # noqa
