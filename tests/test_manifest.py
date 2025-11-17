@@ -19,12 +19,12 @@ name = "PH"
 description = "pH level of the samples"
 unit = "pH"
 
-[[ assay_targets ]]
+[[ assay_observables ]]
 name = "DMS Score"
 description = "DMS score of the samples"
 unit = "log fold change"
 
-[[ assay_targets ]]
+[[ assay_observables ]]
 name = "DMS Score Bin"
 description = "DMS score bin of the samples"
 

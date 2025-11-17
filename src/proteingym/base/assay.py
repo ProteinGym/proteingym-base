@@ -30,7 +30,12 @@ class AssayFormat(StrEnum):
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayVariable:
-    """Definition of an assay variable."""
+    """Definition of an assay variable.
+
+    An assay variable is used to represent a quantity that is constant during the course
+    of an individual assay. When combining many assays, assay variables may become
+    informative for predicting targets of interest.
+    """
 
     name: str
     """The name of the variable."""
@@ -46,30 +51,28 @@ class AssayVariable:
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayTarget:
-    """Definition of an assay target."""
+class AssayObservable:
+    """Definition of an assay observable.
+
+    An observable is quantity that can tracked for each of the assayed proteins.
+    """
 
     name: str
-    """The name of the target."""
+    """The name of the observable."""
 
     unit: str | None = None
-    """The unit of the target."""
-
-    value: bool | int | float | str | None = None
-    """The value of the target, can be a bool, int, float, or str."""
+    """The unit of the observable."""
 
     description: str | None = None
-    """Description of the target."""
+    """Description of the observable."""
 
-    def __eq__(self, other: "AssayTarget") -> bool:
-        """Implements the '==' operator for AssayTarget."""
-        if not isinstance(other, AssayTarget):
+    def __eq__(self, other: "AssayObservable") -> bool:
+        """Implements the '==' operator for AssayObservable."""
+        if not isinstance(other, AssayObservable):
             return False
         return (
             # Description is not considered for equality
-            self.name == other.name
-            and self.unit == other.unit
-            and self.value == other.value
+            self.name == other.name and self.unit == other.unit
         )
 
 
@@ -101,7 +104,8 @@ class AssayManifestSection(BaseModel):
     """The alphabet of the sequences of the assay."""
 
     targets: dict[str, str] = Field(default_factory=dict)
-    """The map of target names in dataset to target feature names in assay."""
+    """The map of the names of the target observables in dataset to the target feature
+    names in assay."""
 
     variables: dict[str, bool | int | float | str] = Field(default_factory=dict)
     """The variable key:value pairs, key is the name of the assay variable (defined in

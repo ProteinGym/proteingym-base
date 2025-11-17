@@ -14,7 +14,7 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from .assay import AssayManifestSection, AssayTarget, AssayVariable
+from .assay import AssayManifestSection, AssayObservable, AssayVariable
 from .msa import MSAManifestSection
 from .sequence import SequenceManifestSection
 from .structure import StructureManifestSection
@@ -106,7 +106,7 @@ class Manifest(BaseModel):
     assay_variables: list[AssayVariable] = Field(default_factory=list)
     """The variables for the assays defined in the dataset."""
 
-    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    assay_observables: list[AssayObservable] = Field(default_factory=list)
     """The targets for the assays defined in the dataset."""
 
     assays: list[AssayManifestSection] = Field(default_factory=list)
@@ -138,8 +138,11 @@ class Manifest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_assay_targets(self) -> "Manifest":
-        """Validate that all assay targets are defined in the manifest."""
-        defined_target_names = {target.name for target in self.assay_targets}
+        """Validate that all assay targets are defined in the manifest.
+
+        All assay targets must be declared among the assay observables in the manifest.
+        """
+        defined_target_names = {target.name for target in self.assay_observables}
         for assay in self.assays:
             undefined_target_names = set(assay.targets.keys()) - defined_target_names
             if undefined_target_names:
