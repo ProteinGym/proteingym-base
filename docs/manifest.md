@@ -71,15 +71,23 @@ unit = "log fold change"
 name = "DMS Score Bin"
 description = "DMS score bin of the samples"
 
+[[ assay_observables ]]
+name = "OD"
+description = "optical density"
+
 [[ assays ]]
 name = "assay"
 path = "assay.csv"
+raw_data_path = "raw_data.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
 
 [ assays.targets ]
 "DMS Score" = "DMS_score"
 "DMS Score Bin" = "DMS_score_bin"
+
+[ assays.raw_data ]
+"OD" = "OD"
 
 [ assays.variables ]
 PH = "7"
@@ -149,11 +157,14 @@ The assays section contains a list of assays included in the dataset.
 | **Field**           | **Type**         | **Required** | **Default**  | **Description**                                                                                                            |
 |---------------------|------------------|--------------|--------------|----------------------------------------------------------------------------------------------------------------------------|
 | `name`              | `string`         | No           | `None`       | The name of the assay.                                                                                                     |
-| `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.                                                             |
-| `targets`           | `dict[str, str]` | Yes          | N/A          | The map of names of target observables given in manifest to feature names in the assay (columns in the provided csv file). |
+| `description`       | `string`         | No           | N/A          | A text description of the assay.                                                                                           |
 | `sequence`          | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                                                                                    |
 | `sequence_alphabet` | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                                                                      |
+| `targets`           | `dict[str, str]` | Yes          | N/A          | The map of names of target observables given in manifest to feature names in the assay (columns in the provided csv file). |
 | `variables`         | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                                                                                |
+| `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.                                                             |
+| `raw_data`          | `dict[str, str]` | No           | Empty dict   | A map of names of raw-data observables given in the manifest to features names in the raw data file (columns).             |
+| `raw_data_path`     | `string`         | Yes          | N/A          | The path to the raw data file. Supported extensions: `.csv`.                                                               |
 
 Example of an assay file:
 

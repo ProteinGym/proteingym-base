@@ -137,19 +137,20 @@ class Manifest(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def _validate_assay_targets(self) -> "Manifest":
-        """Validate that all assay targets are defined in the manifest.
+    def _validate_references_to_observables(self) -> "Manifest":
+        """Validate that all targets and raw-data are defined in the manifest.
 
-        All assay targets must be declared among the assay observables in the manifest.
+        All targets and raw-data features must be declared assay observables.
         """
-        defined_target_names = {target.name for target in self.assay_observables}
+        defined_observable_names = {e.name for e in self.assay_observables}
         for assay in self.assays:
-            undefined_target_names = set(assay.targets.keys()) - defined_target_names
-            if undefined_target_names:
-                raise ValueError(
-                    f"Assay {assay.name} contains undefined targets:"
-                    f"{undefined_target_names}"
-                )
+            for names in (set(assay.targets.keys()), set(assay.raw_data.keys())):
+                undefined_names = names - defined_observable_names
+                if undefined_names:
+                    raise ValueError(
+                        f"Assay {assay.name} contains undefined observables: "
+                        f"{undefined_names}"
+                    )
         return self
 
     @classmethod
@@ -159,7 +160,9 @@ class Manifest(BaseModel):
             path = Path(path)
         context = {
             # Resolve paths defined as relative paths to the manifest file
-            "relative_to_path": path.parent if isinstance(path, Path) else None,
+            "relative_to_path": path.parent
+            if isinstance(path, Path)
+            else None,
         }
         return cls.model_validate(toml.load(path), context=context)
 

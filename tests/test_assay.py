@@ -35,6 +35,19 @@ F1L,0.6,0.4""".lstrip()
     return path
 
 
+@pytest.fixture
+def assay_raw_data_file(tmp_path: Path) -> Path:
+    """Fixture to create a temporary assay raw-data file."""
+    path = tmp_path / "raw_data.csv"
+    path.write_text(
+        """
+sequence,measurement1,measurement2
+F1I,0.1,0.2
+F1L,0.3,0.4""".lstrip()
+    )
+    return path
+
+
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     # This should not raise an error
@@ -90,6 +103,49 @@ def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
         context=context,
     )
     assert section.path == path
+
+def test_assay_manifest_section_with_relative_raw_data_path(
+    tmp_path: Path, assay_file: Path
+) -> None:
+    """Test AssayManifestSection with a relative raw-data path."""
+    raw_data_manager_path = tmp_path / "raw_data.csv"
+    raw_data_manager_path.write_text("sequence,measurement1\nF1I,0.1\nF1L,0.3")
+    context = {"relative_to_path": tmp_path}
+
+    section = AssayManifestSection.model_validate(
+        {
+            "path": assay_file.as_posix(),
+            "raw_data_path": "raw_data.csv",
+        },
+        context=context,
+    )
+
+    assert section.raw_data_path == raw_data_manager_path
+
+def test_assay_manifest_section_validate_path_with_invalid_format(
+    tmp_path: Path,
+) -> None:
+    """An error should be raised for invalid assay file formats."""
+    path = tmp_path / "assay.txt"
+    path.touch()
+    with pytest.raises(
+        ValueError,
+        match=rf"Unsupported file format for file: {path}",
+    ):
+        AssayManifestSection(path=path)
+
+def test_assay_manifest_section_validate_path_with_invalid_raw_data_format(
+    tmp_path: Path,
+    assay_file: Path,
+) -> None:
+    """An error should be raised for invalid measurements file formats."""
+    path = tmp_path / "raw_data.txt"
+    path.touch()
+    with pytest.raises(
+        ValueError,
+        match=rf"Unsupported file format for file: {path}",
+    ):
+        AssayManifestSection(path=assay_file, raw_data_path=path)
 
 
 def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None:
@@ -440,7 +496,7 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
     with pytest.raises(
         ValidationError,
         match=r"validation error for Manifest\n"
-        r".*Value error, Assay .* contains undefined targets",
+        r".*Value error, Assay .* contains undefined observables",
     ):
         Manifest(
             version=Version(1, 0),

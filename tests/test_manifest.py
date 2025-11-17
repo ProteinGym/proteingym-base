@@ -28,15 +28,23 @@ unit = "log fold change"
 name = "DMS Score Bin"
 description = "DMS score bin of the samples"
 
+[[ assay_observables ]]
+name = "OD"
+description = "optical density"
+
 [[ assays ]]
 name = "assay"
 path = "assay.csv"
+raw_data_path = "raw_data.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
 
 [ assays.targets ]
 "DMS Score" = "DMS_score"
 "DMS Score Bin" = "DMS_score_bin"
+
+[ assays.raw_data ]
+"OD" = "OD"
 
 [ assays.variables ]
 PH = "7"
@@ -66,14 +74,23 @@ weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
 def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     """A (temporary) manifest file."""
     # Mock files need to exist for the manifest validation to pass
+    assay_file = tmp_path / "assay.csv"
+    assay_raw_data_file = tmp_path / "raw_data.csv"
     sequence_file = tmp_path / "sequences.fasta"
     structure_file = tmp_path / "structures.pdb"
     msa_file = tmp_path / "msas.a3m"
     msa_weights_file = tmp_path / "weights.npy"
-    assay_file = tmp_path / "assay.csv"
-    for path in sequence_file, structure_file, msa_file, msa_weights_file, assay_file:
+    for path in (
+        assay_file,
+        assay_raw_data_file,
+        sequence_file,
+        structure_file,
+        msa_file,
+        msa_weights_file,
+    ):
         path.touch()
     # Write header in the assay file
+    assay_raw_data_file.write_text("sequence,OD\n")
     assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")

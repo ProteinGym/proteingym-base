@@ -114,34 +114,58 @@ class AssayManifestSection(BaseModel):
     path: FilePath
     """The path to the assay file, csv only."""
 
-    @field_validator("path", mode="before", check_fields=True)
-    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+    raw_data: dict[str, str] = Field(default_factory=dict)
+    """The map of the names of raw data observables in dataset to the corresponding
+    features in the assay."""
+
+    raw_data_path: FilePath | None = Field(default=None)
+    """The path to the assay raw data file, csv only."""
+
+    @field_validator("path", "raw_data_path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path | str, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
+        if isinstance(path, str):  # Consequence of running before validation
+            path = Path(path)
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
+        file_format = path.suffix.lower()
+        if file_format not in AssayFormat:
+            raise ValueError(f"Unsupported file format for file: {path}")
         return path
 
-    @field_serializer("path", check_fields=True)
-    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
+    @field_serializer("path", "raw_data_path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str | None:
         """Serialize the path as a Posix path."""
+        if path is None:  # Handle optional paths
+            return None
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
-        """Validate whether feature names are present in the `path` file."""
-        with self.path.open("r") as f:
-            header = f.readline()
-        for v in [self.sequence] + list(self.targets.values()):
-            if v not in header:
-                raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
+        """Validate whether feature names are present in the `path` file.
+
+        Assuming CSV file format which is checked during path validation.
+        """
+
+        def _validate(path: Path, expected_columns: list[str]):
+            with path.open("r") as f:
+                header = f.readline()
+            for v in [self.sequence] + expected_columns:
+                if v not in header:
+                    raise ValueError(f"Feature '{v}' not found in the file: {path}")
+
+        _validate(self.path, list(self.targets.values()))
+        if self.raw_data_path:
+            _validate(self.raw_data_path, list(self.raw_data.values()))
+
         return self
 
     @field_serializer("sequence_alphabet")
     def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
         """Serialize the sequence alphabet as a string."""
-        return sequence_alphabet.value
+        return sequence_alphabet.value  # noqa
 
 
 @dataclasses.dataclass
@@ -154,8 +178,18 @@ class Assay:
     records: list[tuple[Sequence | str | int | float | bool | str, ...]]
     """The records of the assay, tuple with Sequence, target values."""
 
+    raw_data_records: list[
+        tuple[Sequence | str | int | float | bool | str]
+    ] = dataclasses.field(default_factory=list)
+    """The records of the assay, tuple with Sequence, target values."""
+
     columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
-    """The column names in the assay records."""
+    """The column names in the data records."""
+
+    raw_data_columns: list[str] = dataclasses.field(
+        default_factory=lambda: ["sequence"]
+    )
+    """The column names in the raw-data records."""
 
     variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
@@ -177,6 +211,13 @@ class Assay:
         # The first column is the sequence
         return list(self.columns[1:])
 
+    @property
+    def raw_data_feature_names(self) -> list[str]:
+        """Returns the measurement feature names in the assay records."""
+        # Get the target feature names from the measurement columns
+        # The first column is the sequence
+        return list(self.raw_data_columns[1:])
+
     def __len__(self) -> int:
         """The length of the assay, i.e. the number of records."""
         return len(self.records)
@@ -187,6 +228,7 @@ class Assay:
         If the given item is an Assay, checks if all its records and variables
         are contained in this assay.
         """
+        # TODO: should this pay attention to measurements? not relevant when splitting
         if not isinstance(item, Assay):
             return False
         return all(record in self.records for record in item.records) and all(
@@ -261,17 +303,19 @@ class Assay:
         return "\n".join(lines)
 
     @classmethod
-    def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
-        """Create an Assay instance from a manifest section."""
-
-        df = pl.read_csv(
-            section.path, columns=[section.sequence] + list(section.targets.values())
-        )
+    def _read_records(
+        cls,
+        path: Path,
+        sequence: str,
+        features: list[str],
+        sequence_alphabet: SequenceAlphabet,
+    ) -> list[tuple[Sequence | str | int | float | bool | str]]:
+        df = pl.read_csv(path, columns=[sequence] + features)
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
             # provided in the assay file.
-            pl.col(section.sequence)
+            pl.col(sequence)
             .map_elements(
                 lambda seq: Sequence(
                     # The type of the sequence is set to "standard". This would be
@@ -279,19 +323,39 @@ class Assay:
                     name=seq,
                     value=Seq(seq),
                     type=SequenceType.STANDARD,
-                    alphabet=section.sequence_alphabet,
+                    alphabet=sequence_alphabet,
                 ),
                 return_dtype=pl.Object,
             )
             .alias("sequence_object")
         )
-        records = list(
-            df.select("sequence_object", *section.targets.values()).iter_rows()
+        return list(df.select("sequence_object", *features).iter_rows())
+
+    @classmethod
+    def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
+        """Create an Assay instance from a manifest section."""
+
+        records = cls._read_records(
+            section.path,
+            section.sequence,
+            list(section.targets.values()),
+            section.sequence_alphabet,
         )
+
+        if section.raw_data_path:
+            raw_data_records = cls._read_records(
+                section.path,
+                section.sequence,
+                list(section.raw_data.values()),
+                section.sequence_alphabet,
+            )
+        else:
+            raw_data_records = []
 
         return cls(
             name=section.name or section.path.stem,
             records=records,
+            raw_data_records=raw_data_records,
             columns=[section.sequence] + list(section.targets.keys()),
             description=section.description,
             variables=section.variables,
@@ -322,7 +386,17 @@ class Assay:
             ),
             variables=self.variables,
             path=path,
+            raw_data=dict(
+                zip(
+                    self.raw_data_feature_names,
+                    self.raw_data_feature_names,
+                    strict=False,
+                )
+            ),
         )
+
+    def to_measurements_df(self):
+        raise NotImplementedError
 
     def to_df(
         self, *, target_names: Collection[str] | str | None = None
@@ -385,7 +459,7 @@ class Assay:
         Raises:
             NotImplementedError if the file type is not supported.
         """
-
+        # TODO: support for raw-data
         path = path or Path.cwd()
         if path.is_dir():
             path = path / f"{self.name}{format.value}"
