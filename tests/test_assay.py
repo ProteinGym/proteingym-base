@@ -1,7 +1,7 @@
+import warnings
 from pathlib import Path
 from string import ascii_uppercase
 from zipfile import ZipFile
-import warnings
 
 import polars as pl
 import polars.testing
@@ -682,7 +682,7 @@ def test_dataset_to_df_assay_with_different_targets(
         assay_variables=[AssayVariable(name="pH"), AssayVariable(name="T")],
         assays=[assay1, assay2, assay3, assay4],
     )
-    
+
     # Aggregation function now returns warnings for hidden
     # (default) behavior. Catching the warnings here as
     # warnings get tested in test_dataframe_aggregation.py

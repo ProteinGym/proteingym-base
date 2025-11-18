@@ -536,11 +536,12 @@ class Dataset(BaseModel):
     @staticmethod
     def _default_aggregation_fn(col: pl.Expr, dtype: pl.DataType) -> pl.Expr:
         """Default aggregation function that adapts to data type.
-        
+
         Example custom aggregation functions:
         - lambda col, dtype: col.median()  # Use median for all
         - lambda col, dtype: col.first()   # Use first for all
-        - lambda col, dtype: col.max() if dtype.is_numeric() else col.mode().first()  # Max for numeric, mode for categorical
+        - lambda col, dtype: col.max() if dtype.is_numeric() else col.mode().first()
+            # Max for numeric, mode for categorical
         """
         if dtype.is_numeric():
             return col.mean()
@@ -551,29 +552,40 @@ class Dataset(BaseModel):
         self,
         *,
         target_names: Collection[str] | str | None = None,
-        aggregation_fn: Callable[[pl.Expr, pl.DataType], pl.Expr] | None = None,
-        custom_aggregation: dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None = None,
+        aggregation_fn: (
+            Callable[[pl.Expr, pl.DataType], pl.Expr] | None
+        ) = None,
+        custom_aggregation: (
+            dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None
+        ) = None,
     ) -> pl.DataFrame:
         """Returns the dataset assay records as a Polars DataFrame.
 
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
-            aggregation_fn (Callable[[pl.Expr, pl.DataType], pl.Expr] | None): 
-                Default aggregation function for all targets. Takes a polars expression 
-                and data type, returns aggregated expression. If None, uses built-in 
+            aggregation_fn (
+                Callable[[pl.Expr, pl.DataType], pl.Expr] | None
+            ):
+                Default aggregation function for all targets. Takes a polars expression
+                and data type, returns aggregated expression. If None, uses built-in
                 default (mean for numeric, first for categorical).
-            custom_aggregation (dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None):
-                Custom aggregation functions per target. Overrides aggregation_fn for 
+            custom_aggregation (
+                dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None
+            ):
+                Custom aggregation functions per target. Overrides aggregation_fn for
                 specified targets.
 
         Returns:
             pl.DataFrame: The DataFrame containing all records from all assays.
-            
+
         Examples:
             # Use median for all numeric targets
-            df = dataset.to_df(aggregation_fn=lambda col, dtype: col.median() if dtype.is_numeric() else col.first())
-            
+            df = dataset.to_df(
+                aggregation_fn=lambda col, dtype: col.median() if dtype.is_numeric()
+                else col.first()
+            )
+
             # Custom per-target aggregation
             df = dataset.to_df(custom_aggregation={
                 "score": lambda col, dtype: col.max(),
@@ -628,14 +640,14 @@ class Dataset(BaseModel):
             return df.sort(group_cols)
 
         agg_fn = aggregation_fn or self._default_aggregation_fn
-        
+
         # Test aggregation function and build expressions
         agg_exprs = []
         applied_methods = []
-        
+
         for t in target_names:
             dtype = df[t].dtype
-            
+
             if custom_aggregation and t in custom_aggregation:
                 try:
                     agg_expr = custom_aggregation[t](pl.col(t), dtype).alias(t)
@@ -670,7 +682,8 @@ class Dataset(BaseModel):
                     applied_methods.append(f"{t}: first (fallback)")
 
         warnings.warn(
-            f"Found {duplicate_count} groups with duplicates. Aggregation applied: {', '.join(applied_methods)}",
+            (f"Found {duplicate_count} groups with duplicates. "
+            f"Aggregation applied: {', '.join(applied_methods)}"),
             UserWarning,
             stacklevel=2
         )
