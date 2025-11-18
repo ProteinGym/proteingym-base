@@ -2,7 +2,8 @@ import collections
 import dataclasses
 import itertools
 import json
-from collections.abc import Collection
+import warnings
+from collections.abc import Callable, Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Iterator
@@ -532,21 +533,53 @@ class Dataset(BaseModel):
             )
         return archive_path
 
+    @staticmethod
+    def _default_aggregation_fn(col: pl.Expr, dtype: pl.DataType) -> pl.Expr:
+        """Default aggregation function that adapts to data type.
+        
+        Example custom aggregation functions:
+        - lambda col, dtype: col.median()  # Use median for all
+        - lambda col, dtype: col.first()   # Use first for all
+        - lambda col, dtype: col.max() if dtype.is_numeric() else col.mode().first()  # Max for numeric, mode for categorical
+        """
+        if dtype.is_numeric():
+            return col.mean()
+        else:
+            return col.first()
+
     def to_df(
         self,
         *,
         target_names: Collection[str] | str | None = None,
+        aggregation_fn: Callable[[pl.Expr, pl.DataType], pl.Expr] | None = None,
+        custom_aggregation: dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None = None,
     ) -> pl.DataFrame:
         """Returns the dataset assay records as a Polars DataFrame.
 
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
+            aggregation_fn (Callable[[pl.Expr, pl.DataType], pl.Expr] | None): 
+                Default aggregation function for all targets. Takes a polars expression 
+                and data type, returns aggregated expression. If None, uses built-in 
+                default (mean for numeric, first for categorical).
+            custom_aggregation (dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None):
+                Custom aggregation functions per target. Overrides aggregation_fn for 
+                specified targets.
 
         Returns:
             pl.DataFrame: The DataFrame containing all records from all assays.
+            
+        Examples:
+            # Use median for all numeric targets
+            df = dataset.to_df(aggregation_fn=lambda col, dtype: col.median() if dtype.is_numeric() else col.first())
+            
+            # Custom per-target aggregation
+            df = dataset.to_df(custom_aggregation={
+                "score": lambda col, dtype: col.max(),
+                "category": lambda col, dtype: col.mode().first()
+            })
         """
-
         if isinstance(target_names, str):
             target_names = {target_names}
         if target_names:
@@ -588,19 +621,64 @@ class Dataset(BaseModel):
             ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
         )
 
-        # Group by sequence and variables, and aggregate the target by mean,
-        # except if target is str (e.g. categorical), take first
+        # If no duplication no need for aggregation
+        group_cols = ["sequence"] + variable_names
+        duplicate_count = df.group_by(group_cols).len().filter(pl.col("len") > 1).height
+        if duplicate_count == 0:
+            return df.sort(group_cols)
+
+        agg_fn = aggregation_fn or self._default_aggregation_fn
+        
+        # Test aggregation function and build expressions
         agg_exprs = []
+        applied_methods = []
+        
         for t in target_names:
-            if df[t].dtype in [pl.Float32, pl.Float64, pl.Int32, pl.Int64]:
-                agg_exprs.append(pl.col(t).mean().alias(t))
+            dtype = df[t].dtype
+            
+            if custom_aggregation and t in custom_aggregation:
+                try:
+                    agg_expr = custom_aggregation[t](pl.col(t), dtype).alias(t)
+                    agg_exprs.append(agg_expr)
+                    applied_methods.append(f"{t}: custom")
+                except Exception as e:
+                    warnings.warn(
+                        f"Custom aggregation failed for '{t}': {e}. Using default.",
+                        UserWarning,
+                        stacklevel=2
+                    )
+                    agg_expr = agg_fn(pl.col(t), dtype).alias(t)
+                    agg_exprs.append(agg_expr)
+                    applied_methods.append(f"{t}: default")
             else:
-                agg_exprs.append(pl.col(t).first().alias(t))
+                try:
+                    agg_expr = agg_fn(pl.col(t), dtype).alias(t)
+                    agg_exprs.append(agg_expr)
+                    # Determine method name for warning
+                    if agg_fn == self._default_aggregation_fn:
+                        method = "mean" if dtype.is_numeric() else "first"
+                    else:
+                        method = "custom"
+                    applied_methods.append(f"{t}: {method}")
+                except Exception as e:
+                    warnings.warn(
+                        f"Aggregation failed for '{t}': {e}. Using first().",
+                        UserWarning,
+                        stacklevel=2
+                    )
+                    agg_exprs.append(pl.col(t).first().alias(t))
+                    applied_methods.append(f"{t}: first (fallback)")
+
+        warnings.warn(
+            f"Found {duplicate_count} groups with duplicates. Aggregation applied: {', '.join(applied_methods)}",
+            UserWarning,
+            stacklevel=2
+        )
 
         df = (
-            df.group_by(["sequence"] + variable_names)
+            df.group_by(group_cols)
             .agg(agg_exprs)
-            .sort(["sequence"] + variable_names)
+            .sort(group_cols)
         )
         return df
 
