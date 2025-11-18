@@ -147,9 +147,9 @@ class MSAManifestSection(MSAMetadataManifestSection):
         return path.as_posix()
 
     @field_serializer("format", check_fields=True)
-    def _serialize_str_enum(self, format: MSAFormat) -> str:
+    def _serialize_str_enum(self, fmt: MSAFormat) -> str:
         """Serialize a StrEnum as a string."""
-        return format.value
+        return fmt.value
 
 
 @dataclasses.dataclass
@@ -272,7 +272,7 @@ class MSA:
         )
 
     def dump(
-        self, *, path: Path | None = None, format: MSAFormat = MSAFormat.FASTA
+        self, *, path: Path | None = None, fmt: MSAFormat = MSAFormat.FASTA
     ) -> Path:
         """Dump the multiple sequence alignment to a file.
 
@@ -282,7 +282,7 @@ class MSA:
         Args:
             path (Path | None): The directory path to save the MSA file in.
                 Defaults to the current working directory.
-            format (MSAFormat): The format to save the MSA in. Defaults to
+            fmt (MSAFormat): The format to save the MSA in. Defaults to
                 MSAFormat.FASTA.
 
         Raises:
@@ -296,10 +296,10 @@ class MSA:
             sequence alignment. This metadata should be stored with dumping the
             dataset.
         """
-        if format not in MSAFormat:
-            raise ValueError(f"Format {format} is not supported for MSA dumping.")
+        if fmt not in MSAFormat:
+            raise ValueError(f"Format {fmt} is not supported for MSA dumping.")
         path = path or Path.cwd()
         if path.is_dir():
-            path /= f"{self.name}.{format.value}"
-        AlignIO.write(self.value, path, format=format.value)
+            path /= f"{self.name}.{fmt.value}"
+        AlignIO.write(self.value, path, format=fmt.value)
         return path

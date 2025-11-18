@@ -224,7 +224,7 @@ def test_structure_dump_to_cif(tmp_path: Path, bio_structure: BioStructure) -> N
     """A Structure can be dumped to a cif file."""
     structure = Structure(name="test", value=bio_structure)
 
-    path = structure.dump(path=tmp_path, format=StructureFormat.MMCIF)
+    path = structure.dump(path=tmp_path, fmt=StructureFormat.MMCIF)
 
     # There is an inconsistency in biopython that loads the full name of an Atom
     # differently for a PDB and CIF file - the full name is trimmed for the

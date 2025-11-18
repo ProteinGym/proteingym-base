@@ -471,7 +471,7 @@ class Assay:
         return df
 
     def dump(
-        self, *, path: Path | None = None, format: AssayFormat = AssayFormat.CSV
+        self, *, path: Path | None = None, fmt: AssayFormat = AssayFormat.CSV
     ) -> Path:
         """Dump the assay data to a file.
 
@@ -481,7 +481,7 @@ class Assay:
         Args:
             path (Path): The output directory to dump the assay file in. If
                 None, the current working directory is used.
-            format (AssayFormat): The file format
+            fmt (AssayFormat): The file format
 
         Raises:
             NotImplementedError if the file type is not supported.
@@ -489,7 +489,7 @@ class Assay:
 
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}{format.value}"
+            path = path / f"{self.name}{fmt.value}"
 
         df = pl.DataFrame(
             self.records,
@@ -501,9 +501,9 @@ class Assay:
                 lambda seq: str(seq.value), return_dtype=pl.Utf8
             )
         )
-        match format:
+        match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)
             case _:
-                raise NotImplementedError(f"Unsupported file type: {format.value}")
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
         return path

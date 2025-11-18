@@ -485,7 +485,7 @@ class Dataset(BaseModel):
 
     def _write_paths_to_zip(
         self,
-        zip: ZipFile,
+        zip_: ZipFile,
         *paths: Path,
         arcname: Path | None = None,
         arcname_prefix: Path = Path(),
@@ -496,7 +496,7 @@ class Dataset(BaseModel):
             "because it creates a name collision"
         )
         for path in paths:
-            zip.write(path, arcname=arcname_prefix / (arcname or path.name))
+            zip_.write(path, arcname=arcname_prefix / (arcname or path.name))
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
@@ -506,27 +506,27 @@ class Dataset(BaseModel):
         data_paths = self._dump_data(temporary_directory)
         manifest = self._create_manifest(data_paths)
         manifest_path = manifest.dump(path=temporary_directory)
-        with ZipFile(archive_path, "w") as zip:
+        with ZipFile(archive_path, "w") as zip_:
             self._write_paths_to_zip(
-                zip, manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE
+                zip_, manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[assay.path for assay in manifest.assays],
                 arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[sequence.path for sequence in manifest.sequences],
                 arcname_prefix=DatasetArchiveLayout.SEQUENCES_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[structure.path for structure in manifest.structures],
                 arcname_prefix=DatasetArchiveLayout.STRUCTURES_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[msa.path for msa in manifest.msas],
                 arcname_prefix=DatasetArchiveLayout.MSAS_DIRECTORY,
             )
@@ -837,12 +837,12 @@ class Subsets:
         # While a SE practice is to avoid IO to disk where possible,
         # we use a temporary directory here as long as dataset dump requires
         # it.
-        with ZipFile(path, "r") as zip, TemporaryDirectory() as temp_dir:
-            dataset_archive = zip.extract(
+        with ZipFile(path, "r") as zip_, TemporaryDirectory() as temp_dir:
+            dataset_archive = zip_.extract(
                 SubsetsArchiveLayout.DATASET_ARCHIVE, path=temp_dir
             )
             dataset = Dataset.from_path(dataset_archive)
-            slices_str = zip.read(SubsetsArchiveLayout.SLICES_FILE)
+            slices_str = zip_.read(SubsetsArchiveLayout.SLICES_FILE)
             slices = cls._loads_slices(slices_str)
         return cls(dataset=dataset, slices=slices)
 
@@ -880,9 +880,9 @@ class Subsets:
         # While a SE practice is to avoid IO to disk where possible,
         # we use a temporary directory here as long as dataset dump requires
         # it.
-        with ZipFile(path, "w") as zip, TemporaryDirectory() as temp_dir:
+        with ZipFile(path, "w") as zip_, TemporaryDirectory() as temp_dir:
             dataset_archive = self.dataset.dump(path=Path(temp_dir))
-            zip.write(dataset_archive, arcname=SubsetsArchiveLayout.DATASET_ARCHIVE)
+            zip_.write(dataset_archive, arcname=SubsetsArchiveLayout.DATASET_ARCHIVE)
             slices_str = self._dumps_slices()
-            zip.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
+            zip_.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
         return path

@@ -168,7 +168,7 @@ class Structure:
         )
 
     def dump(
-        self, *, path: Path | None = None, format: StructureFormat = StructureFormat.PDB
+        self, *, path: Path | None = None, fmt: StructureFormat = StructureFormat.PDB
     ) -> Path:
         """Dump the structure to a file.
 
@@ -181,20 +181,20 @@ class Structure:
         Args:
             path (Path): The output directory path to dump the structure to. If
                 None, the current working directory is used.
-            format (StructureFormat): The format to dump the structure in.
+            fmt (StructureFormat): The format to dump the structure in.
 
         Raises:
             NotImplementedError if the file type is not supported.
         """
         path = path or Path.cwd()
-        structure_path = path / f"{self.name}{format.value}"
-        match format:
+        structure_path = path / f"{self.name}{fmt.value}"
+        match fmt:
             case StructureFormat.PDB:
                 io = PDBIO()
             case StructureFormat.MMCIF:
                 io = MMCIFIO()
             case _:
-                raise NotImplementedError(f"Unsupported file type: {format.value}")
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
         io.set_structure(self.value)
         with structure_path.open("w", encoding="utf-8") as file:
             io.save(file)
