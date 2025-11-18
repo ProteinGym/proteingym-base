@@ -155,7 +155,9 @@ def test_aggregation_error_handling(dataset_with_duplicates: Dataset) -> None:
     )
 
 
-def test_custom_aggregation_with_error_fallback(dataset_with_duplicates: Dataset) -> None:
+def test_custom_aggregation_with_error_fallback(
+        dataset_with_duplicates: Dataset
+    ) -> None:
     """Test custom aggregation with error in specific target."""
     custom_agg = {
         "numeric_target": lambda col, dtype: col.invalid_method(),  # Fails
@@ -168,7 +170,10 @@ def test_custom_aggregation_with_error_fallback(dataset_with_duplicates: Dataset
 
         # Should warn about custom aggregation failure
         warning_messages = [str(warning.message) for warning in w]
-        assert any("custom aggregation failed" in msg.lower() for msg in warning_messages)
+        assert any(
+            "custom aggregation failed" in msg.lower()
+            for msg in warning_messages
+        )
 
     # Should use default for failed target, custom for successful target
     expected_df = pl.DataFrame({
