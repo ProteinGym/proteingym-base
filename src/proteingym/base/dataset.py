@@ -549,10 +549,18 @@ class Dataset(BaseModel):
             ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
         )
 
-        # Group by sequence and variables, and aggregate the target by mean
+        # Group by sequence and variables, and aggregate the target by mean,
+        # except if target is categorical, take first
+        agg_exprs = []
+        for t in target_names:
+            if df[t].dtype in [pl.Float32, pl.Float64, pl.Int32, pl.Int64]:
+                agg_exprs.append(pl.col(t).mean().alias(t))
+            else:
+                agg_exprs.append(pl.col(t).first().alias(t))
+
         df = (
             df.group_by(["sequence"] + variable_names)
-            .agg([pl.col(t).mean().alias(t) for t in target_names])
+            .agg(agg_exprs)
             .sort(["sequence"] + variable_names)
         )
 
