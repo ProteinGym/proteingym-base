@@ -147,7 +147,7 @@ class Assay:
     name: str
     """The name of the assay."""
 
-    records: list[tuple[Sequence | str | int | float | bool | str]]
+    records: list[tuple[Sequence | str | int | float | bool | str, ...]]
     """The records of the assay, tuple with Sequence, target values."""
 
     columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])

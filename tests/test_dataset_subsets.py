@@ -93,5 +93,5 @@ def test_subsets_dump_creates_valid_archive(
 ) -> None:
     """Dumping a subsets creates a valid archive."""
     archive_path = subsets_fifty_fifty.dump(path=tmp_path)
-    with ZipFile(archive_path, "r") as zip:
-        assert zip.testzip() is None  # No corrupt files
+    with ZipFile(archive_path, "r") as zip_:
+        assert zip_.testzip() is None  # No corrupt files

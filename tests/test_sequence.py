@@ -26,7 +26,7 @@ def test_sequence_manifest_section_minimal(tmp_path: Path) -> None:
     path.touch()
 
     try:
-        SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
+        SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)  # noqa
     except ValidationError as e:
         raise AssertionError("Could not create SequenceManifestSection") from e
     else:
@@ -62,8 +62,8 @@ def test_sequence_manifest_section_missing_path() -> None:
     )
     with pytest.raises(ValidationError, match=match):
         SequenceManifestSection(
-            type="wild_type",
-            alphabet="DNA",
+            type="wild_type",  # noqa
+            alphabet="DNA",  # noqa
             path=Path("non_existent.fasta"),
         )
 
@@ -73,7 +73,7 @@ def test_sequence_manifest_section_serialize_path_as_posix(tmp_path: Path) -> No
     path = tmp_path / "sequence.fasta"
     path.touch()
 
-    section = SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
+    section = SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)  # noqa
 
     assert section.model_dump().get("path") == path.as_posix()
 
@@ -81,12 +81,12 @@ def test_sequence_manifest_section_serialize_path_as_posix(tmp_path: Path) -> No
 def test_sequence_manifest_section_serialize_path_as_posix_relative_to(
     tmp_path: Path,
 ) -> None:
-    """The path is serialized as a Posix path relatie to another path."""
+    """The path is serialized as a Posix path relative to another path."""
     path = tmp_path / "sequence.fasta"
     path.touch()
     context = {"relative_to_path": tmp_path}
 
-    section = SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
+    section = SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)  # noqa
 
     assert section.model_dump(context=context).get("path") == "sequence.fasta"
 
@@ -107,8 +107,8 @@ def test_sequence_manifest_section_serialize_strenum_as_string(tmp_path: Path) -
     )
 
     section_in_toml = toml.dumps(section.model_dump())
-    assert SequenceType.WILD_TYPE.value in section_in_toml
-    assert SequenceAlphabet.DNA.value in section_in_toml
+    assert str(SequenceType.WILD_TYPE.value) in section_in_toml
+    assert str(SequenceAlphabet.DNA.value) in section_in_toml
 
 
 def test_sequence_manifest_section_raises_validation_error_for_unsupported_format(
@@ -123,11 +123,11 @@ def test_sequence_manifest_section_raises_validation_error_for_unsupported_forma
         "Unsupported sequence format: unsupported"
     )
     with pytest.raises(ValidationError, match=match):
-        SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)
+        SequenceManifestSection(type="wild_type", alphabet="DNA", path=path)  # noqa
 
 
 @pytest.mark.parametrize(
-    "name, value, description, type, alphabet",
+    "name, value, description, type_, alphabet",
     [
         ("seq1", Seq("ATCG"), "Test sequence 1", SequenceType("wild_type"), "DNA"),
         ("seq2", Seq("AUGC"), "Test sequence 2", "starting_sequence", "RNA"),
@@ -140,12 +140,12 @@ def test_sequence_manifest_section_raises_validation_error_for_unsupported_forma
         ),
     ],
 )
-def test_sequence(name, value, description, type, alphabet):
+def test_sequence(name, value, description, type_, alphabet):
     sequence = Sequence(
         name=name,
         value=value,
         description=description,
-        type=SequenceType(type),
+        type=SequenceType(type_),
         alphabet=SequenceAlphabet(alphabet),
     )
     assert isinstance(sequence.value, Seq)
@@ -158,8 +158,8 @@ def test_sequence_from_manifest_section_multiple_seqs_in_file(tmp_path: Path) ->
     fasta_file.write_text(">seq1\nATCG\n>seq2\nAUGC\n")
 
     section = SequenceManifestSection(
-        type="wild_type",
-        alphabet="DNA",
+        type="wild_type",  # noqa
+        alphabet="DNA",  # noqa
         path=fasta_file,
     )
 
@@ -208,13 +208,13 @@ def test_dataset_dump_with_sequence(tmp_path: Path) -> None:
 
     path = dataset.dump(path=tmp_path)
 
-    zip = ZipFile(path)
-    assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "sequences/seq.fasta" in zip.namelist(), (
+    zip_ = ZipFile(path)
+    assert not zip_.testzip(), "Dataset dump contains a bad file."
+    assert "sequences/seq.fasta" in zip_.namelist(), (
         "Sequence file not found in dataset dump."
     )
 
-    with zip.open("sequences/seq.fasta", "r") as sequence_file:
+    with zip_.open("sequences/seq.fasta", "r") as sequence_file:
         string_io = io.StringIO(sequence_file.read().decode("utf-8"))
         loaded_sequence = SeqIO.read(string_io, "fasta")
         assert bio_sequence == loaded_sequence.seq
@@ -322,7 +322,7 @@ def test_dataset_loads_multiple_sequences_from_file(tmp_path: Path) -> None:
     dataset_manifest = Manifest(
         version=MANIFEST_LATEST_VERSION,
         name="test",
-        sequences=[
+        sequences=[  # noqa
             {
                 "path": fasta_file,
                 "type": "wild_type",

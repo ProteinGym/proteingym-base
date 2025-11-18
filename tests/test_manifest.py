@@ -191,9 +191,9 @@ def test_manifest_from_path_has_protein_data(
 
 
 def test_manifest_version() -> None:
-    """The manifest version should support comparisions."""
-    manifest_v1 = Manifest(name="test", version="1.0.0")
-    manifest_v2 = Manifest(name="test", version="2.0.0")
+    """The manifest version should support comparisons."""
+    manifest_v1 = Manifest(name="test", version="1.0.0")  # noqa
+    manifest_v2 = Manifest(name="test", version="2.0.0")  # noqa
 
     assert manifest_v1.version == manifest_v1.version
     assert manifest_v1.version <= manifest_v1.version
@@ -208,7 +208,7 @@ def test_manifest_version() -> None:
 
 def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
     """The manifest dump should create a file with content."""
-    manifest = Manifest(version="1.0.0", name="test")
+    manifest = Manifest(version="1.0.0", name="test")  # noqa
 
     path = manifest.dump(path=tmp_path)
 
@@ -218,7 +218,7 @@ def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
 
 def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
     """The manifest dump creates a file that can be loaded back with same content."""
-    manifest = Manifest(version="1.0.0", name="test")
+    manifest = Manifest(version="1.0.0", name="test")  # noqa
 
     path = manifest.dump(path=tmp_path)
 
@@ -258,7 +258,7 @@ def test_manifest_dump_from_path_unit_docs_example(
 
 def test_manifest_dump_version_string(tmp_path: Path) -> None:
     """The version should be dumped as a string."""
-    manifest = Manifest(name="test", version="1.0.0")
+    manifest = Manifest(name="test", version="1.0.0")  # noqa
 
     path = manifest.dump(path=tmp_path)
 
