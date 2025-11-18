@@ -599,7 +599,6 @@ class Dataset(BaseModel):
 
         df = (
             df.group_by(["sequence"] + variable_names)
-            .agg([pl.col(t).mean().alias(t) for t in target_names])
             .agg(agg_exprs)
             .sort(["sequence"] + variable_names)
         )
