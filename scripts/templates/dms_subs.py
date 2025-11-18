@@ -14,6 +14,18 @@ sequence_alphabet = "AA"
 name = "$coarse_selection_type"
 description = "$selection_assay measurement for $selection_type with $molecule_name"
 
+[[ assay_variables ]]
+name = "DMS binarization cutoff"
+description = "Cutoff value for determinating the DMS bins"
+
+[[ assay_variables ]]
+name = "DMS binarization method"
+description = "Method for generating the DMS bins"
+
+[ assay.variables ]
+"DMS binarization cutoff" = $dms_binarization_cutoff
+"DMS binarization method" = $dms_binarization_method
+
 [ assays.targets ]
 "$coarse_selection_type" = "DMS_score"
 
@@ -21,11 +33,6 @@ description = "$selection_assay measurement for $selection_type with $molecule_n
 UniProt_ID = "$uniprot_id"
 taxon = "$taxon"
 organism = "$source_organism"
-total_mutations = "$total_mutations"
-single_mutants = "$single_mutants"
-multiple_mutants = "$multiple_mutants"
-DMS_binarization_cutoff = "$dms_binarization_cutoff"
-DMS_binarization_method = "$dms_binarization_method"
 selection_assay = "$selection_assay"
 selection_type = "$selection_type"
 
