@@ -28,16 +28,9 @@ class AssayFormat(StrEnum):
     """A comma separated text file"""
 
 
-class AssayVariable(BaseModel):
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayVariable:
     """Definition of an assay variable."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the variable."""
@@ -52,16 +45,9 @@ class AssayVariable(BaseModel):
     """Description of the variable."""
 
 
-class AssayTarget(BaseModel):
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayTarget:
     """Definition of an assay target."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
 
     name: str
     """The name of the target."""
@@ -74,6 +60,17 @@ class AssayTarget(BaseModel):
 
     description: str | None = None
     """Description of the target."""
+
+    def __eq__(self, other: "AssayTarget") -> bool:
+        """Implements the '==' operator for AssayTarget."""
+        if not isinstance(other, AssayTarget):
+            return False
+        return (
+            # Description is not considered for equality
+            self.name == other.name
+            and self.unit == other.unit
+            and self.value == other.value
+        )
 
 
 class AssayManifestSection(BaseModel):
@@ -175,6 +172,10 @@ class Assay:
         # Get the target feature names from the columns
         # The first column is the sequence
         return list(self.columns[1:])
+
+    def __len__(self) -> int:
+        """The length of the assay, i.e. the number of records."""
+        return len(self.records)
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.

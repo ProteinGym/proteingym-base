@@ -5,7 +5,7 @@ import json
 from collections.abc import Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Iterator
 from zipfile import ZipFile
 
 import polars as pl
@@ -25,6 +25,9 @@ from .structure import Structure
 
 class DatasetArchiveLayout:
     """The layout of the dataset archive."""
+
+    SUFFIX = ".pgdata"
+    """The suffix of the dataset archive."""
 
     MANIFEST_FILE = Path("manifest.lock")
     """The internal manifest file inside the dataset archive."""
@@ -54,8 +57,28 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[list[int], slice] = Field(default_factory=list)
-    """The list of assay slices."""
+    assays: list[list[bool]] = dataclasses.field(default_factory=list)
+    """The list of assay slices as boolean masks."""
+
+    @classmethod
+    def from_json(cls, contents: str) -> "DatasetSlice":
+        """Create a dataset slice from a JSON string.
+
+        Args:
+            contents (str): The JSON string to create the dataset slice from.
+
+        Returns:
+            The dataset slice created from the JSON string.
+        """
+        return cls(**json.loads(contents))
+
+    def to_json(self) -> str:
+        """Convert the dataset slice to a JSON string.
+
+        Returns:
+            A JSON string representation of the dataset slice.
+        """
+        return json.dumps(dataclasses.asdict(self))
 
 
 class Dataset(BaseModel):
@@ -117,7 +140,20 @@ class Dataset(BaseModel):
 
             Preserving order and removing duplicates
             """
-            return left + [item for item in right if item not in left]
+            union = left + [item for item in right if item not in left]
+
+            # Deduplicate names to create a valid Dataset (see @model_validator)
+            name_counts = collections.Counter(item.name for item in union)
+            union_with_unique_names = []
+            for i, item in enumerate(union):
+                unique_name = (
+                    item.name if name_counts[item.name] == 1 else f"{item.name}{i}"
+                )
+                union_with_unique_names.append(
+                    dataclasses.replace(item, name=unique_name)
+                )
+
+            return union_with_unique_names
 
         return Dataset(
             name=f"{self.name}_union_{other.name}",
@@ -154,25 +190,28 @@ class Dataset(BaseModel):
             is_assay_match and is_sequence_match and is_structure_match and is_msa_match
         )
 
-    def __contains__(self, item: Any) -> bool:
+    def __contains__(self, other: Any) -> bool:
         """Implements the 'in' operator for Dataset."""
-        if not isinstance(item, Dataset):
+        if not isinstance(other, Dataset):
             return False
         # If a protein data type is empty,
         # it is a (mathematical) subset of any other
         is_assay_subset = (
-            all(assay in self.assays for assay in item.assays) or len(item.assays) == 0
+            len(other.assays) == 0
+            # An assay can be a subset of another assay, hence the double loop
+            or all(
+                any(other_assay in self_assay for self_assay in self.assays)
+                for other_assay in other.assays
+            )
         )
-        is_sequence_subset = (
-            all(seq in self.sequences for seq in item.sequences)
-            or len(item.sequences) == 0
+        is_sequence_subset = len(other.sequences) == 0 or all(
+            seq in self.sequences for seq in other.sequences
         )
-        is_structure_subset = (
-            all(struct in self.structures for struct in item.structures)
-            or len(item.structures) == 0
+        is_structure_subset = len(other.structures) == 0 or all(
+            struct in self.structures for struct in other.structures
         )
-        is_msa_subset = (
-            all(msa in self.msas for msa in item.msas) or len(item.msas) == 0
+        is_msa_subset = len(other.msas) == 0 or all(
+            msa in self.msas for msa in other.msas
         )
         return (
             is_assay_subset
@@ -438,7 +477,7 @@ class Dataset(BaseModel):
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
-        archive_path = path / f"{self.name}.pgdata"
+        archive_path = path / f"{self.name}{DatasetArchiveLayout.SUFFIX}"
         # The manifest Pydantic base model checks if the data path exists,
         # hence, we dump the data before creating and dumping the Manifest
         data_paths = self._dump_data(temporary_directory)
@@ -565,3 +604,94 @@ class Dataset(BaseModel):
         )
 
         return df
+
+
+class SubsetsArchiveLayout:
+    """The layout of a subsets archive."""
+
+    SUFFIX = f".splits{DatasetArchiveLayout.SUFFIX}"
+    """The suffix of a subsets archive."""
+
+    DATASET_ARCHIVE = f"dataset{DatasetArchiveLayout.SUFFIX}"
+    """The directory containing the dataset."""
+
+    SLICES_FILE = "slices.json"
+    """The file containing the slices."""
+
+
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class Subsets:
+    """A collection of dataset subsets (slices).
+
+    References:
+    ../../docs/decisions/0007-dataset-splits.md
+    """
+
+    dataset: Dataset
+    """The dataset that is sliced."""
+
+    slices: list[DatasetSlice] = dataclasses.field(default_factory=list)
+    """The slices that create the collection of subsets."""
+
+    def __len__(self) -> int:
+        """The length of the subset collection."""
+        return len(self.slices)
+
+    def __iter__(self) -> Iterator[Dataset]:
+        """Iterate over the slices in this subset collection."""
+        for slc in self.slices:
+            yield self.dataset[slc]
+
+    @classmethod
+    def from_path(cls, path: Path) -> "Subsets":
+        """Create a `Subsets` from an archive.
+
+        Extract the contents to a temporary directory and load the dataset
+        from the manifest file.
+
+        Args:
+            path: The path to the subsets archive.
+
+        Returns:
+            The subsets from the archive
+
+        Raises:
+            ValueError: If multiple manifest files are found in the ZIP archive.
+            FileNotFoundError: If no manifest file is found in the ZIP archive.
+        """
+        # While a SE practice is to avoid IO to disk where possible,
+        # we use a temporary directory here as long as dataset dump requires
+        # it.
+        with ZipFile(path, "r") as zip, TemporaryDirectory() as temp_dir:
+            dataset_archive = zip.extract(
+                SubsetsArchiveLayout.DATASET_ARCHIVE, path=temp_dir
+            )
+            dataset = Dataset.from_path(dataset_archive)
+            slices_str = json.loads(zip.read(SubsetsArchiveLayout.SLICES_FILE))
+            slices = [DatasetSlice.from_json(slc) for slc in slices_str]
+        return cls(dataset=dataset, slices=slices)
+
+    def dump(self, *, path: Path | str | None = None) -> Path:
+        """Dump the subsets.
+
+        Args:
+            path (Path | str | None): The path to dump the dataset in. If None,
+                the current working directory is used. Defaults to None.
+
+        Returns:
+            Path: The path to the dumped dataset archive.
+        """
+        if isinstance(path, str):  # User-friendly interface to support str
+            path = Path(path)
+        path = path or Path.cwd()
+        if path.is_dir():
+            path = path / f"{self.dataset.name}{SubsetsArchiveLayout.SUFFIX}"
+        # While a SE practice is to avoid IO to disk where possible,
+        # we use a temporary directory here as long as dataset dump requires
+        # it.
+        with ZipFile(path, "w") as zip, TemporaryDirectory() as temp_dir:
+            dataset_archive = self.dataset.dump(path=Path(temp_dir))
+            zip.write(dataset_archive, arcname=SubsetsArchiveLayout.DATASET_ARCHIVE)
+            slices_str = json.dumps([slc.to_json() for slc in self.slices])
+            zip.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
+        return path
