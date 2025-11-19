@@ -19,6 +19,7 @@ from pydantic import (
 from .assay import Assay, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
+from .references import XrefCollection
 from .sequence import Sequence
 from .structure import Structure
 
@@ -125,6 +126,10 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
+    crossreferences: XrefCollection = Field(default_factory=XrefCollection)
+    """External cross-references for the dataset."""
+
+
     def __or__(self, other: "Dataset") -> "Dataset":
         """Implements the union operator (|) for Dataset.
 
@@ -167,6 +172,9 @@ class Dataset(BaseModel):
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
             msas=list_union(self.msas, other.msas),
+            crossreferences=XrefCollection(
+                list_union(self.crossreferences, other.crossreferences)
+            ),
         )
 
     def __eq__(self, item: Any) -> bool:
@@ -186,8 +194,10 @@ class Dataset(BaseModel):
             item.structures
         )
         is_msa_match = sort_by_name(self.msas) == sort_by_name(item.msas)
+        is_crossreferences_match = self.crossreferences == item.crossreferences
         return (
-            is_assay_match and is_sequence_match and is_structure_match and is_msa_match
+            is_assay_match and is_sequence_match and is_structure_match
+            and is_msa_match and is_crossreferences_match
         )
 
     def __contains__(self, other: Any) -> bool:
@@ -213,11 +223,15 @@ class Dataset(BaseModel):
         is_msa_subset = len(other.msas) == 0 or all(
             msa in self.msas for msa in other.msas
         )
+        is_crossreferences_subset = len(other.crossreferences) == 0 or all(
+            xref in self.crossreferences for xref in other.crossreferences
+        )
         return (
             is_assay_subset
             and is_sequence_subset
             and is_structure_subset
             and is_msa_subset
+            and is_crossreferences_subset
         )
 
     def __getitem__(self, item: DatasetSlice) -> "Dataset":
@@ -257,6 +271,7 @@ class Dataset(BaseModel):
         lines.append(f"\t\tstructures: {len(self.structures)},")
         lines.append(f"\t\tmsas: {len(self.msas)},")
         lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
+        lines.append(f"\t\tcrossreferences: {len(self.crossreferences)},")
         lines.append(")")
         return "\n".join(lines)
 
@@ -365,6 +380,7 @@ class Dataset(BaseModel):
             sequences=sequences,
             structures=structures,
             msas=msas,
+            crossreferences=XrefCollection(manifest.crossreferences),
         )
 
     @classmethod
@@ -457,6 +473,7 @@ class Dataset(BaseModel):
                 m.as_manifest_section(path=path)
                 for m, path in zip(self.msas, data_paths.get(MSA, []), strict=True)
             ],
+            crossreferences=self.crossreferences,
         )
         return manifest
 

@@ -22,6 +22,7 @@ def dataset_empty() -> Dataset:
         sequences=[],
         structures=[],
         msas=[],
+
     )
     return dataset
 
@@ -43,6 +44,7 @@ def dataset_with_assay_empty() -> Dataset:
         sequences=[],
         structures=[],
         msas=[],
+
     )
     return dataset
 
@@ -79,6 +81,7 @@ def dataset_with_assay() -> Dataset:
         sequences=[],
         structures=[],
         msas=[],
+
     )
     return dataset
 
@@ -121,6 +124,7 @@ def dataset_with_assays() -> Dataset:
         sequences=[],
         structures=[],
         msas=[],
+
     )
     return dataset
 
@@ -142,6 +146,7 @@ def dataset_with_sequence() -> Dataset:
         sequences=[sequence],
         structures=[],
         msas=[],
+
     )
     return dataset
 
@@ -169,6 +174,7 @@ def dataset_with_sequences() -> Dataset:
         sequences=[sequence1, sequence2],
         structures=[],
         msas=[],
+
     )
     return dataset
 
@@ -190,6 +196,7 @@ def dataset_with_structure() -> Dataset:
         sequences=[],
         structures=[structure],
         msas=[],
+
     )
     return dataset
 
@@ -217,6 +224,7 @@ def dataset_with_structures() -> Dataset:
         sequences=[],
         structures=[structure1, structure2],
         msas=[],
+
     )
     return dataset
 
@@ -243,6 +251,7 @@ def dataset_with_msa() -> Dataset:
         sequences=[],
         structures=[],
         msas=[msa],
+
     )
     return dataset
 
@@ -272,6 +281,7 @@ def dataset_with_msas() -> Dataset:
         sequences=[],
         structures=[],
         msas=[msa1, msa2],
+
     )
     return dataset
 
