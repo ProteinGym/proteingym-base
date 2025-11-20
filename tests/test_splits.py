@@ -106,6 +106,17 @@ def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     assert split_second not in split_first
 
 
+def test_random_splitter_splits_with_targets_columns(
+    dataset_with_assay: Dataset,
+) -> None:
+    """A split with targets should contain the target and sequence columns."""
+    expected_columns = ["sequence", "DMS Score"]
+    splitter = RandomSplitter([0.5, 0.5])
+    splits = splitter.split(dataset_with_assay, targets=["DMS Score"])
+    assays = [assay for split in splits for assay in split.assays]
+    assert all(expected_columns == assay.columns for assay in assays)
+
+
 def test_kfold_splitter_raises_value_error_if_n_splits_below_two() -> None:
     """Test that KFoldSplitter raises ValueError if n_splits is below 2."""
     with pytest.raises(ValueError, match="Number of splits must be at least 2."):

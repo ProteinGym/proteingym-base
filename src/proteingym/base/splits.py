@@ -123,7 +123,7 @@ class RandomSplitter:
         self.fractions = fractions
         self.random_state = _check_random_state(random_state)
 
-    def split(self, dataset: Dataset) -> Subsets:
+    def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
         """Splits the dataset into a subsets.
 
         The dataset is split into subsets with randomized splits according to
@@ -134,6 +134,8 @@ class RandomSplitter:
 
         Args:
             dataset (Dataset): The dataset to split.
+            targets (list[str] | None): List of target column names to include in the
+                splits. If None, all columns are included.
 
         Returns:
             Subsets: The subsets containing the splits.
