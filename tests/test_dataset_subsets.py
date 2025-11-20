@@ -98,6 +98,30 @@ def test_subsets_dump_creates_valid_archive(
     archive_path = subsets_fifty_fifty.dump(path=tmp_path)
     with ZipFile(archive_path, "r") as zip_:
         assert zip_.testzip() is None  # No corrupt files
+
+
+def test_subsets_dump_from_path_is_unit_function_with_strategies(
+    tmp_path: Path,
+    dataset_with_assay: Dataset,
+) -> None:
+    """Dumping and loading subsets is a unit function."""
+    slices_skewed = [
+        DatasetSlice(assays=[[True, True]]),
+        DatasetSlice(assays=[[False, False]]),
+    ]
+    slices_balanced = [
+        DatasetSlice(assays=[[True, False]]),
+        DatasetSlice(assays=[[False, True]]),
+    ]
+    subsets = Subsets(
+        dataset=dataset_with_assay,
+        slices={"balanced": slices_balanced, "skewed": slices_skewed},
+    )
+
+    archive_path = subsets.dump(path=tmp_path)
+    subsets_recovered = Subsets.from_path(archive_path)
+
+    assert subsets == subsets_recovered
     with ZipFile(archive_path, "r") as zip:
         assert zip.testzip() is None  # No corrupt files
 

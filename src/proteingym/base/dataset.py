@@ -740,6 +740,25 @@ class Subsets:
         for slc in self.slices:
             yield self.dataset[slc]
 
+    @staticmethod
+    def _loads_slices(
+        slices_str: str,
+    ) -> list[DatasetSlice] | dict[str, list[DatasetSlice]]:
+        """Load the slices from a JSON string.
+
+        Args:
+            slices_str (str): The JSON string representation of the slices.
+        """
+        data = json.loads(slices_str)
+        if isinstance(data, dict):
+            slices = {
+                key: [DatasetSlice(**slc) for slc in slc_list]
+                for key, slc_list in data.items()
+            }
+        else:
+            slices = [DatasetSlice(**slc) for slc in data]
+        return slices
+
     @classmethod
     def from_path(cls, path: Path) -> "Subsets":
         """Create a `Subsets` from an archive.
@@ -765,9 +784,25 @@ class Subsets:
                 SubsetsArchiveLayout.DATASET_ARCHIVE, path=temp_dir
             )
             dataset = Dataset.from_path(dataset_archive)
-            slices_str = json.loads(zip.read(SubsetsArchiveLayout.SLICES_FILE))
-            slices = [DatasetSlice.from_json(slc) for slc in slices_str]
+            slices_str = zip.read(SubsetsArchiveLayout.SLICES_FILE)
+            slices = cls._loads_slices(slices_str)
         return cls(dataset=dataset, slices=slices)
+
+    def _dumps_slices(self) -> str:
+        """Dump the slices to a JSON string.
+
+        Returns:
+            str: The JSON string representation of the slices.
+        """
+        if isinstance(self.slices, dict):
+            data = {
+                key: [dataclasses.asdict(slc) for slc in slices]
+                for key, slices in self.slices.items()
+            }
+        else:
+            data = [dataclasses.asdict(slc) for slc in self.slices]
+        slices_str = json.dumps(data)
+        return slices_str
 
     def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the subsets.
@@ -790,6 +825,6 @@ class Subsets:
         with ZipFile(path, "w") as zip, TemporaryDirectory() as temp_dir:
             dataset_archive = self.dataset.dump(path=Path(temp_dir))
             zip.write(dataset_archive, arcname=SubsetsArchiveLayout.DATASET_ARCHIVE)
-            slices_str = json.dumps([slc.to_json() for slc in self.slices])
+            slices_str = self._dumps_slices()
             zip.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
         return path
