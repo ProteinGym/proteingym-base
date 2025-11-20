@@ -158,3 +158,13 @@ def test_subsets_with_strategies_get_balanced(
     subsets_balanced = subsets_with_data_distribution_scenarios["balanced"]
     left, right = list(subsets_balanced)
     assert len(left.to_df()) == len(right.to_df())
+
+
+def test_subsets_with_strategies_loop_over_all(
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """Looping over all subsets with strategies works.
+
+    Note that this is unlikely to be used in practice, but we test it for completeness.
+    """
+    assert len(subsets_with_data_distribution_scenarios) == 4

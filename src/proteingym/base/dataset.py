@@ -757,7 +757,11 @@ class Subsets:
 
     def __iter__(self) -> Iterator[Dataset]:
         """Iterate over the slices in this subset collection."""
-        for slc in self.slices:
+        if isinstance(self.slices, dict):
+            slices = itertools.chain.from_iterable(self.slices.values())
+        else:
+            slices = self.slices
+        for slc in slices:
             yield self.dataset[slc]
 
     @staticmethod
