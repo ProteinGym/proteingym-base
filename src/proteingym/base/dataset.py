@@ -245,7 +245,6 @@ class Dataset(BaseModel):
         assays = [
             assay[slc] for assay, slc in zip(self.assays, item.assays, strict=True)
         ]
-        # TODO: Should the AssayTargets only include those referenced by the assays?
         return self.model_copy(update={"assays": assays})
 
     def __repr__(self) -> str:
