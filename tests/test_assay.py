@@ -120,6 +120,22 @@ def test_assay_slice_from_json_mask() -> None:
     assert slc == expected
 
 
+def test_assay_slice_from_json_mask_no_columns() -> None:
+    """Test that a assay slice can be created from a JSON string without columns."""
+    expected = AssaySlice(records=[True, False, True])
+    contents = '{"records": [true, false, true]}'
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
+def test_assay_slice_from_json_mask_columns_is_null() -> None:
+    """Test that a assay slice can be created from a JSON string without columns."""
+    expected = AssaySlice(records=[True, False, True])
+    contents = '{"columns": null, "records": [true, false, true]}'
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
 def test_assay_slice_dumps_mask() -> None:
     """Test that a assay slice with a boolean mask is correctly dumped to JSON."""
     contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
