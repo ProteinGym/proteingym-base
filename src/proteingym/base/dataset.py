@@ -723,8 +723,13 @@ class Subsets:
     dataset: Dataset
     """The dataset that is sliced."""
 
-    slices: list[DatasetSlice] = dataclasses.field(default_factory=list)
-    """The slices that create the collection of subsets."""
+    slices: list[DatasetSlice] | dict[str | list[DatasetSlice]] = dataclasses.field(
+        default_factory=list
+    )
+    """The slices that create the collection of subsets.
+
+    The dictionary allows to identify slices like for split strategies.
+    """
 
     def __len__(self) -> int:
         """The length of the subset collection."""
