@@ -141,6 +141,10 @@ class RandomSplitter:
         Returns:
             Subsets: The subsets containing the splits.
         """
+        if targets:
+            columns = ["sequence"] + targets
+        else:
+            columns = None
         records_shape = tuple(len(assay) for assay in dataset.assays)
         indices = list(range(sum(records_shape)))
         self.random_state.shuffle(indices)
@@ -156,7 +160,8 @@ class RandomSplitter:
                 indices[offset : offset + size], length=len(indices)
             )
             assay_slices = [
-                AssaySlice(records=msk) for msk in _reshape_list(mask, records_shape)
+                AssaySlice(records=msk, columns=columns)
+                for msk in _reshape_list(mask, records_shape)
             ]
             dataset_slice = DatasetSlice(assays=assay_slices)
             slices.append(dataset_slice)
