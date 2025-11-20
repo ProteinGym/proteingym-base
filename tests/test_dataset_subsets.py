@@ -140,3 +140,21 @@ def test_dataset_slice_with_columns_slices_assay_columns(
     subset = dataset_with_assay[slc]
 
     assert all(assay.columns == expected_columns for assay in subset.assays)
+
+
+def test_subsets_with_strategies_get_skewed(
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """The skewed subsets have different lengths."""
+    subsets_skewed = subsets_with_data_distribution_scenarios["skewed"]
+    left, right = list(subsets_skewed)
+    assert len(left.to_df()) != len(right.to_df())
+
+
+def test_subsets_with_strategies_get_balanced(
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """The balanced subsets have the same lengths."""
+    subsets_balanced = subsets_with_data_distribution_scenarios["balanced"]
+    left, right = list(subsets_balanced)
+    assert len(left.to_df()) == len(right.to_df())

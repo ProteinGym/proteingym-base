@@ -735,6 +735,26 @@ class Subsets:
         """The length of the subset collection."""
         return len(self.slices)
 
+    def __getitem__(self, key: str) -> "Subsets":
+        """Get a subset by key.
+
+        Args:
+            key (str): The key of the subset to get.
+
+        Returns:
+            Subset: The subset corresponding to the key.
+
+        Raises:
+            TypeError: If the slices are not stored as a dictionary.
+            KeyError: If the key is not found in the slices.
+        """
+        if not isinstance(self.slices, dict):
+            raise TypeError("Subsets slices are not stored as a dictionary.")
+        if key not in self.slices:
+            raise KeyError(f"Key '{key}' not found in subsets slices.")
+        slices = self.slices[key]
+        return Subsets(dataset=self.dataset, slices=slices)
+
     def __iter__(self) -> Iterator[Dataset]:
         """Iterate over the slices in this subset collection."""
         for slc in self.slices:
