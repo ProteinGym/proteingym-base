@@ -110,7 +110,7 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
         )
 
 
-def test_assay_slice_from_json_mask() -> None:
+def test_assay_slice_from_json_columns_and_records() -> None:
     """Test that a assay slice can be created from a JSON string."""
     expected = AssaySlice(
         columns=["sequence", "DMS Score"], records=[True, False, True]
@@ -120,8 +120,8 @@ def test_assay_slice_from_json_mask() -> None:
     assert slc == expected
 
 
-def test_assay_slice_from_json_mask_no_columns() -> None:
-    """Test that a assay slice can be created from a JSON string without columns."""
+def test_assay_slice_from_json_mask_records_only() -> None:
+    """Test that a assay slice can be created from a JSON string with just records."""
     expected = AssaySlice(records=[True, False, True])
     contents = '{"records": [true, false, true]}'
     slc = AssaySlice.from_json(contents)
@@ -129,17 +129,24 @@ def test_assay_slice_from_json_mask_no_columns() -> None:
 
 
 def test_assay_slice_from_json_mask_columns_is_null() -> None:
-    """Test that a assay slice can be created from a JSON string without columns."""
+    """Test that a assay slice can be created from a JSON string with just records."""
     expected = AssaySlice(records=[True, False, True])
     contents = '{"columns": null, "records": [true, false, true]}'
     slc = AssaySlice.from_json(contents)
     assert slc == expected
 
 
-def test_assay_slice_dumps_mask() -> None:
-    """Test that a assay slice with a boolean mask is correctly dumped to JSON."""
+def test_assay_slice_to_json_columns_and_records() -> None:
+    """Test that a assay slice is correctly dumped to JSON."""
     contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
     slc = AssaySlice(columns=["sequence", "DMS Score"], records=[True, False, True])
+    assert slc.to_json() == contents
+
+
+def test_assay_slice_to_json_with_columns_only() -> None:
+    """Test that a assay slice with columns only is correctly dumped to JSON."""
+    contents = '{"columns": ["sequence", "DMS Score"], "records": null}'
+    slc = AssaySlice(columns=["sequence", "DMS Score"])
     assert slc.to_json() == contents
 
 
