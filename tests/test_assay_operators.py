@@ -503,9 +503,9 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
     assert subset not in assay
 
 
-@pytest.mark.parametrize("slc", [slice(None), [True, True]])
-def test_assay_slice_all(slc: slice | list[bool]) -> None:
+def test_assay_slice_all() -> None:
     """Slicing an assay with [:] should return the same assay."""
+    slc = [True, True]
     assay = Assay(
         name="Test assay",
         records=[
@@ -534,9 +534,9 @@ def test_assay_slice_all(slc: slice | list[bool]) -> None:
     assert assay == assay[slc]
 
 
-@pytest.mark.parametrize("slc", [slice(0, 1), [True, False]])
-def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
+def test_assay_slice_first_with_slice() -> None:
     """Slicing an assay with [:1] should return the first record."""
+    slc = [True, False]
     assay = Assay(
         name="Test assay",
         records=[
@@ -579,9 +579,9 @@ def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
     assert first == assay[slc]
 
 
-@pytest.mark.parametrize("slc", [slice(1, 2), [False, True]])
-def test_assay_slice_last(slc: slice | list[bool]) -> None:
+def test_assay_slice_last() -> None:
     """Slicing an assay with [1:] should return the last record."""
+    slc = [False, True]
     assay = Assay(
         name="Test assay",
         records=[

@@ -154,8 +154,8 @@ class AssaySlice:
     columns: list[str] | None = None
     """The list of column names to get. If None, all columns are included."""
 
-    records: slice | list[bool] | None = None
-    """The slice or list of row indices to get. If None, all records are included."""
+    records: list[bool] | None = None
+    """The boolean mask for the records. If None, all records are included."""
 
     @classmethod
     def from_json(cls, contents: str) -> "AssaySlice":
@@ -242,11 +242,8 @@ class Assay:
     def _slice_columns(assay: "Assay", slc: list[str] | None) -> "Assay":
         """Slice the assay columns given a list of column names."""
         is_columns_slice = (
-            isinstance(slc, list)
-            and len(slc) > 0
-            and isinstance(slc[0], str)
-            or isinstance(slc, list)
-            and len(slc) == 0  # Empty slice
+            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str))
+            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
         )
         if not is_columns_slice or slc is None:
             return assay
@@ -267,36 +264,36 @@ class Assay:
         return dataclasses.replace(assay, records=records, columns=columns)
 
     @staticmethod
-    def _slice_records(assay: "Assay", slc: slice | list[bool] | None) -> "Assay":
+    def _slice_records(assay: "Assay", slc: list[bool] | None) -> "Assay":
         """Slice the assay records given a slice or a boolean masks."""
         is_records_slice = (
-            isinstance(slc, slice)
-            or (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool))
+            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool))
             or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
         )
         if not is_records_slice or slc is None:
             return assay
 
-        if isinstance(slc, list) and len(slc) == 0:
+        if len(slc) == 0:
             records = []
-        elif isinstance(slc, list):
-            records = list(itertools.compress(assay.records, slc))
         else:
-            records = assay.records[slc]
+            records = list(itertools.compress(assay.records, slc))
         return dataclasses.replace(assay, records=records)
 
-    def __getitem__(self, slc: AssaySlice | slice | list[bool | str]) -> "Assay":
+    def __getitem__(self, slc: AssaySlice | list[bool | str]) -> "Assay":
         """Slice the assay to get a subset.
 
         Args:
-            slc (AssaySlice | slice | list[bool | str]):
-                1. Both records and columns can be sliced using AssaySlice.
-                2. The slice or list of row indices to get. If a list of booleans
-                    is given, it is treated as a mask.
-                3.. The list of column names to get, if a list of strings is given.
+            slc (AssaySlice | list[bool | str]):
+                1. If an AssaySlice is given, it can contain both column names and
+                    a boolean mask for the records.
+                2. If a list of strings is given, it is treated as a list of
+                    column names.
+                3. If a list of booleans, it is treated as a boolean mask for
+                    the records.
 
         Note:
-        An empty slice returns an empty assay WITH the same columns.
+        An empty list returns an assay WITHOUT records and WITH the columns. If
+        you want to slice to have no columns, use AssaySlice(columns=[]) instead.
         """
         if isinstance(slc, int):
             # The Assay is a container with more than records, getting a single record
@@ -314,7 +311,7 @@ class Assay:
 
         assay = self
         is_assay_slice = isinstance(slc, AssaySlice)
-        if not (isinstance(slc, list) and len(slc) == 0):
+        if is_assay_slice or len(slc) > 0:
             # An empty list is treated as an empty records slice. If you want to
             # have an empty column slice use AssaySlice(columns=[])
             assay = self._slice_columns(assay, slc.columns if is_assay_slice else slc)
