@@ -198,3 +198,5 @@ def test_splitter_splits_with_target_not_in_all_assays(
     splits = splitter.split(dataset_with_assays, targets=["stability"])
     assays = [assay for split in splits for assay in split.assays]
     assert all(assay.is_empty() for assay in assays if "stability" not in assay.columns)
+    # Make sure we do not lose all data
+    assert any(not split.to_df().is_empty() for split in splits)
