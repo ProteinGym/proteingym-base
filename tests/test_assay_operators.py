@@ -765,3 +765,24 @@ def test_assay_slice_object_with_columns(seq1: Sequence, seq2: Sequence) -> None
 
     actual = assay[slc]
     assert actual == expected
+
+
+def test_assay_slice_object_with_records(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay with records returns an assay with those records."""
+    expected = Assay(
+        name="Test assay",
+        records=[
+            (seq1, 1.0, 1.5),
+        ],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    slc = AssaySlice(records=[True, False])
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[slc]
+    assert actual == expected
