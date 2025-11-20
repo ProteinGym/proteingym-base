@@ -100,11 +100,9 @@ def test_subsets_dump_creates_valid_archive(
         assert zip_.testzip() is None  # No corrupt files
 
 
-def test_subsets_dump_from_path_is_unit_function_with_strategies(
-    tmp_path: Path,
-    dataset_with_assay: Dataset,
-) -> None:
-    """Dumping and loading subsets is a unit function."""
+@pytest.fixture
+def subsets_with_data_distribution_scenarios(dataset_with_assay: Dataset) -> Subsets:
+    """Create a Subsets instance with skewed and balanced slices."""
     slices_skewed = [
         DatasetSlice(assays=[[True, True]]),
         DatasetSlice(assays=[[False, False]]),
@@ -117,11 +115,17 @@ def test_subsets_dump_from_path_is_unit_function_with_strategies(
         dataset=dataset_with_assay,
         slices={"balanced": slices_balanced, "skewed": slices_skewed},
     )
+    return subsets
 
-    archive_path = subsets.dump(path=tmp_path)
+
+def test_subsets_dump_from_path_is_unit_function_with_strategies(
+    tmp_path: Path,
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """Dumping and loading subsets is a unit function."""
+    archive_path = subsets_with_data_distribution_scenarios.dump(path=tmp_path)
     subsets_recovered = Subsets.from_path(archive_path)
-
-    assert subsets == subsets_recovered
+    assert subsets_with_data_distribution_scenarios == subsets_recovered
     with ZipFile(archive_path, "r") as zip:
         assert zip.testzip() is None  # No corrupt files
 
