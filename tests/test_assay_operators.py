@@ -823,3 +823,18 @@ def test_assay_slice_object_with_records_and_columns(
 
     actual = assay[slc]
     assert actual == expected
+
+
+def test_assay_slice_object_with_empty_columns(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay without columns returns an empty assay."""
+    expected = Assay(name="Test assay", records=[], columns=[])
+
+    slc = AssaySlice(records=[True, False], columns=[])
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[slc]
+    assert actual == expected

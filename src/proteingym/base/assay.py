@@ -242,7 +242,11 @@ class Assay:
     def _slice_columns(assay: "Assay", slc: list[str] | None) -> "Assay":
         """Slice the assay columns given a list of column names."""
         is_columns_slice = (
-            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str)
+            isinstance(slc, list)
+            and len(slc) > 0
+            and isinstance(slc[0], str)
+            or isinstance(slc, list)
+            and len(slc) == 0  # Empty slice
         )
         if not is_columns_slice or slc is None:
             return assay
@@ -252,11 +256,14 @@ class Assay:
             raise KeyError(f"Undefined columns: {undefined_columns}")
 
         columns = list(slc)
-        column_indices = [assay.columns.index(column) for column in columns]
-        records = [
-            tuple(record[column_index] for column_index in column_indices)
-            for record in assay.records
-        ]
+        if len(slc) == 0:
+            records = []
+        else:
+            column_indices = [assay.columns.index(column) for column in columns]
+            records = [
+                tuple(record[column_index] for column_index in column_indices)
+                for record in assay.records
+            ]
         return dataclasses.replace(assay, records=records, columns=columns)
 
     @staticmethod
@@ -304,9 +311,15 @@ class Assay:
                 "Getting a single column is not supported. "
                 f"Use a list with one element instead: [{slc}]"
             )
+
+        assay = self
         is_assay_slice = isinstance(slc, AssaySlice)
-        assay = self._slice_columns(self, slc.columns if is_assay_slice else slc)
+        if not (isinstance(slc, list) and len(slc) == 0):
+            # An empty list is treated as an empty records slice. If you want to
+            # have an empty column slice use AssaySlice(columns=[])
+            assay = self._slice_columns(assay, slc.columns if is_assay_slice else slc)
         assay = self._slice_records(assay, slc.records if is_assay_slice else slc)
+
         return assay
 
     def __repr__(self) -> str:
