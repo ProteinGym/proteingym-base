@@ -120,18 +120,16 @@ def test_assay_slice_from_json_columns_and_records() -> None:
     assert slc == expected
 
 
-def test_assay_slice_from_json_mask_records_only() -> None:
+@pytest.mark.parametrize(
+    "contents",
+    [
+        '{"columns": null, "records": [true, false, true]}',
+        '{"records": [true, false, true]}',
+    ],
+)
+def test_assay_slice_from_json_mask_records_only(contents: str) -> None:
     """Test that a assay slice can be created from a JSON string with just records."""
     expected = AssaySlice(records=[True, False, True])
-    contents = '{"records": [true, false, true]}'
-    slc = AssaySlice.from_json(contents)
-    assert slc == expected
-
-
-def test_assay_slice_from_json_mask_columns_is_null() -> None:
-    """Test that a assay slice can be created from a JSON string with just records."""
-    expected = AssaySlice(records=[True, False, True])
-    contents = '{"columns": null, "records": [true, false, true]}'
     slc = AssaySlice.from_json(contents)
     assert slc == expected
 
