@@ -223,23 +223,37 @@ class Assay:
                 f"Use a list with one element instead: [{slc}]"
             )
 
-        columns = self.columns
-        if isinstance(slc, list):
-            if len(slc) > 0 and isinstance(slc[0], str):  # Column slice
-                undefined_columns = set(slc) - set(self.columns)
-                if undefined_columns:
-                    raise KeyError(f"Undefined columns: {undefined_columns}")
-                columns = list(slc)
-                column_indices = [self.columns.index(col) for col in columns]
-                records_slice = [
-                    tuple(record[col_idx] for col_idx in column_indices)
-                    for record in self.records
-                ]
-            else:  # Row slice
-                records_slice = list(itertools.compress(self.records, slc))
-        else:
-            records_slice = self.records[slc]
-        return dataclasses.replace(self, records=records_slice, columns=columns)
+        columns, records = self.columns, self.records
+
+        is_column_slice = (
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str)
+        )
+        if is_column_slice:
+            undefined_columns = set(slc) - set(self.columns)
+            if undefined_columns:
+                raise KeyError(f"Undefined columns: {undefined_columns}")
+            columns = list(slc)
+            column_indices = [self.columns.index(column) for column in columns]
+            records = [
+                tuple(record[column_index] for column_index in column_indices)
+                for record in records
+            ]
+
+        is_records_slice = isinstance(slc, slice) or (
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], (bool, int))
+        )
+        if is_records_slice:
+            if isinstance(slc, list):
+                records = list(itertools.compress(records, slc))
+            else:
+                records = records[slc]
+
+        # An empty slice returns an empty assay WITH the same columns
+        is_empty_slice = isinstance(slc, list) and len(slc) == 0
+        if is_empty_slice:
+            records = []
+
+        return dataclasses.replace(self, records=records, columns=columns)
 
     def __repr__(self) -> str:
         """Return a string representation of the Assay object."""
