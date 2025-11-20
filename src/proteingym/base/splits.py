@@ -200,7 +200,9 @@ class KFoldSplitter:
         self.shuffle = shuffle
         self.random_state = _check_random_state(random_state)
 
-    def split(self, dataset: Dataset) -> list[Subsets]:
+    def split(
+        self, dataset: Dataset, targets: list[str] | None = None
+    ) -> list[Subsets]:
         """Splits the dataset into k folds for cross-validation.
 
         The dataset is split into k folds with approximately equal sizes. Each
@@ -209,6 +211,8 @@ class KFoldSplitter:
 
         Args:
             dataset (Dataset): The dataset to split.
+            targets (list[str] | None): List of target column names to include in the
+                splits. If None, all columns are included.
 
         Returns:
             list[Subsets]: A list of Subsets, where each Subset contains a training set
@@ -227,10 +231,21 @@ class KFoldSplitter:
 
         slices, offset = [], 0
         for size in sizes:
-            mask = _cast_indices_to_mask(
-                indices[offset : offset + size], length=len(indices)
+            index_slice = indices[offset : offset + size]
+            masks = _reshape_list(
+                _cast_indices_to_mask(index_slice, length=len(indices)), records_shape
             )
-            dataset_slice = DatasetSlice(assays=_reshape_list(mask, records_shape))
+
+            assay_slices = []
+            for mask, assay in zip(masks, dataset.assays, strict=True):
+                if targets:
+                    columns = [assay.sequence_feature_name] + targets
+                else:
+                    columns = None
+                assay_slice = AssaySlice(records=mask, columns=columns)
+                assay_slices.append(assay_slice)
+
+            dataset_slice = DatasetSlice(assays=assay_slices)
             slices.append(dataset_slice)
             offset += size
 
