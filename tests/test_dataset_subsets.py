@@ -3,6 +3,7 @@ from zipfile import ZipFile
 
 import pytest
 
+from proteingym.base.assay import AssaySlice
 from proteingym.base.dataset import Dataset, DatasetSlice, Subsets
 
 
@@ -95,3 +96,17 @@ def test_subsets_dump_creates_valid_archive(
     archive_path = subsets_fifty_fifty.dump(path=tmp_path)
     with ZipFile(archive_path, "r") as zip_:
         assert zip_.testzip() is None  # No corrupt files
+    with ZipFile(archive_path, "r") as zip:
+        assert zip.testzip() is None  # No corrupt files
+
+
+def test_dataset_slice_with_target_names_slices_assays(
+    dataset_with_assay: Dataset,
+) -> None:
+    """Slicing a dataset with target names should slice the assays."""
+    expected_columns = ["DMS Score"]
+    slc = DatasetSlice(assays=[AssaySlice(columns=["DMS Score"])])
+
+    subset = dataset_with_assay[slc]
+
+    assert all(assay.columns == expected_columns for assay in subset.assays)

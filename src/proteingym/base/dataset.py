@@ -16,7 +16,7 @@ from pydantic import (
     model_validator,
 )
 
-from .assay import Assay, AssayTarget, AssayVariable
+from .assay import Assay, AssaySlice, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .sequence import Sequence
@@ -57,8 +57,10 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[list[bool]] = dataclasses.field(default_factory=list)
-    """The list of assay slices as boolean masks."""
+    assays: list[AssaySlice | slice | list[bool | str]] = dataclasses.field(
+        default_factory=list
+    )
+    """The list of assay slices."""
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
