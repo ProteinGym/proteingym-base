@@ -102,10 +102,10 @@ def test_subsets_dump_creates_valid_archive(
         assert zip.testzip() is None  # No corrupt files
 
 
-def test_dataset_slice_with_target_names_slices_assays(
+def test_dataset_slice_with_columns_slices_assay_columns(
     dataset_with_assay: Dataset,
 ) -> None:
-    """Slicing a dataset with target names should slice the assays."""
+    """Slicing a dataset with columns should slice the assay columns."""
     expected_columns = ["DMS Score"]
     slc = DatasetSlice(assays=[AssaySlice(columns=["DMS Score"])])
 
