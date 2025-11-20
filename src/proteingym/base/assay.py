@@ -140,6 +140,23 @@ class AssayManifestSection(BaseModel):
         return sequence_alphabet.value
 
 
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssaySlice:
+    """A slice of an assay.
+
+    Python builtin slices are also supported for slicing assays. However, if
+    both columns and records need to be sliced, this class can be used.
+
+    See :func:Assay.__getitem__ for more information.
+    """
+
+    records: slice | list[bool] | None = None
+    """The slice or list of row indices to get. If None, all records are included."""
+
+    columns: list[str] | None = None
+    """The list of column names to get. If None, all columns are included."""
+
+
 @dataclasses.dataclass
 class Assay:
     """An assay in the dataset."""
@@ -200,14 +217,15 @@ class Assay:
             and self.columns == item.columns
         )
 
-    def __getitem__(self, slc: slice | list[bool | str]) -> "Assay":
+    def __getitem__(self, slc: AssaySlice | slice | list[bool | str]) -> "Assay":
         """Slice the assay to get a subset.
 
         Args:
-            slc (slice | list[bool | str]):
-                1. The slice or list of row indices to get. If a list of booleans
+            slc (AssaySlice | slice | list[bool | str]):
+                1. Both records and columns can be sliced using AssaySlice.
+                2. The slice or list of row indices to get. If a list of booleans
                     is given, it is treated as a mask.
-                2. The list of column names to get, if a list of strings is given.
+                3.. The list of column names to get, if a list of strings is given.
         """
         if isinstance(slc, int):
             # The Assay is a container with more than records, getting a single record
