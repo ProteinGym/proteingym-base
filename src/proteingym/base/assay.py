@@ -200,14 +200,14 @@ class Assay:
             and self.columns == item.columns
         )
 
-    def __getitem__(self, slc: slice | list[int | bool | str]) -> "Assay":
+    def __getitem__(self, slc: slice | list[bool | str]) -> "Assay":
         """Slice the assay to get a subset.
 
         Args:
-            slc (slice | list[int | bool]):
+            slc (slice | list[bool | str]):
                 1. The slice or list of row indices to get. If a list of booleans
                     is given, it is treated as a mask.
-                2. The list of column names to get.
+                2. The list of column names to get, if a list of strings is given.
         """
         if isinstance(slc, int):
             # The Assay is a container with more than records, getting a single record
@@ -240,7 +240,7 @@ class Assay:
             ]
 
         is_records_slice = isinstance(slc, slice) or (
-            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], (bool, int))
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool)
         )
         if is_records_slice:
             if isinstance(slc, list):
