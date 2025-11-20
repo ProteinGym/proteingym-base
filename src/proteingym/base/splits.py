@@ -10,6 +10,7 @@ import numbers
 
 import numpy as np
 
+from .assay import AssaySlice
 from .dataset import Dataset, DatasetSlice, Subsets
 
 logger = logging.getLogger(__name__)
@@ -154,7 +155,10 @@ class RandomSplitter:
             mask = _cast_indices_to_mask(
                 indices[offset : offset + size], length=len(indices)
             )
-            dataset_slice = DatasetSlice(assays=_reshape_list(mask, records_shape))
+            assay_slices = [
+                AssaySlice(records=msk) for msk in _reshape_list(mask, records_shape)
+            ]
+            dataset_slice = DatasetSlice(assays=assay_slices)
             slices.append(dataset_slice)
             offset += size
 
