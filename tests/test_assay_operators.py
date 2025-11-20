@@ -680,6 +680,20 @@ def seq2() -> Sequence:
     return seq2
 
 
+def test_assay_slice_empty(seq1: Sequence, seq2: Sequence) -> None:
+    """An empty mask should return the assay without records"""
+    excepted = Assay(
+        name="Test assay", records=[], columns=["sequence", "DMS_score", "stability"]
+    )
+
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+    assert assay[[]] == excepted
+
+
 def test_assay_slice_column_string_raises_not_implemented_error(
     seq1: Sequence, seq2: Sequence
 ) -> None:
