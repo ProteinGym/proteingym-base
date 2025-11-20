@@ -1,5 +1,6 @@
 import dataclasses
 import itertools
+import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
@@ -150,11 +151,31 @@ class AssaySlice:
     See :func:Assay.__getitem__ for more information.
     """
 
+    columns: list[str] | None = None
+    """The list of column names to get. If None, all columns are included."""
+
     records: slice | list[bool] | None = None
     """The slice or list of row indices to get. If None, all records are included."""
 
-    columns: list[str] | None = None
-    """The list of column names to get. If None, all columns are included."""
+    @classmethod
+    def from_json(cls, contents: str) -> "AssaySlice":
+        """Create an assay slice from a JSON string.
+
+        Args:
+            contents (str): The JSON string to create the assay slice from.
+
+        Returns:
+            The assay slice created from the JSON string.
+        """
+        return cls(**json.loads(contents))
+
+    def to_json(self) -> str:
+        """Convert the assay slice to a JSON string.
+
+        Returns:
+            A JSON string representation of the assay slice.
+        """
+        return json.dumps(dataclasses.asdict(self))
 
 
 @dataclasses.dataclass

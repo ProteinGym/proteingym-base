@@ -14,6 +14,7 @@ from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
+    AssaySlice,
     AssayTarget,
     AssayVariable,
 )
@@ -107,6 +108,23 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
+
+
+def test_assay_slice_from_json_mask() -> None:
+    """Test that a assay slice can be created from a JSON string."""
+    expected = AssaySlice(
+        columns=["sequence", "DMS Score"], records=[True, False, True]
+    )
+    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
+def test_assay_slice_dumps_mask() -> None:
+    """Test that a assay slice with a boolean mask is correctly dumped to JSON."""
+    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
+    slc = AssaySlice(columns=["sequence", "DMS Score"], records=[True, False, True])
+    assert slc.to_json() == contents
 
 
 def test_assay() -> None:
