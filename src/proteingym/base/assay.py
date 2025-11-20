@@ -217,6 +217,46 @@ class Assay:
             and self.columns == item.columns
         )
 
+    @staticmethod
+    def _slice_columns(assay: "Assay", slc: list[str] | None) -> "Assay":
+        """Slice the assay columns given a list of column names."""
+        is_columns_slice = (
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str)
+        )
+        if not is_columns_slice or slc is None:
+            return assay
+
+        undefined_columns = set(slc) - set(assay.columns)
+        if undefined_columns:
+            raise KeyError(f"Undefined columns: {undefined_columns}")
+
+        columns = list(slc)
+        column_indices = [assay.columns.index(column) for column in columns]
+        records = [
+            tuple(record[column_index] for column_index in column_indices)
+            for record in assay.records
+        ]
+        return dataclasses.replace(assay, records=records, columns=columns)
+
+    @staticmethod
+    def _slice_records(assay: "Assay", slc: slice | list[bool] | None) -> "Assay":
+        """Slice the assay records given a slice or a boolean masks."""
+        is_records_slice = (
+            isinstance(slc, slice)
+            or (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool))
+            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
+        )
+        if not is_records_slice or slc is None:
+            return assay
+
+        if isinstance(slc, list) and len(slc) == 0:
+            records = []
+        elif isinstance(slc, list):
+            records = list(itertools.compress(assay.records, slc))
+        else:
+            records = assay.records[slc]
+        return dataclasses.replace(assay, records=records)
+
     def __getitem__(self, slc: AssaySlice | slice | list[bool | str]) -> "Assay":
         """Slice the assay to get a subset.
 
@@ -226,6 +266,9 @@ class Assay:
                 2. The slice or list of row indices to get. If a list of booleans
                     is given, it is treated as a mask.
                 3.. The list of column names to get, if a list of strings is given.
+
+        Note:
+        An empty slice returns an empty assay WITH the same columns.
         """
         if isinstance(slc, int):
             # The Assay is a container with more than records, getting a single record
@@ -240,38 +283,10 @@ class Assay:
                 "Getting a single column is not supported. "
                 f"Use a list with one element instead: [{slc}]"
             )
-
-        columns, records = self.columns, self.records
-
-        is_column_slice = (
-            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str)
-        )
-        if is_column_slice:
-            undefined_columns = set(slc) - set(self.columns)
-            if undefined_columns:
-                raise KeyError(f"Undefined columns: {undefined_columns}")
-            columns = list(slc)
-            column_indices = [self.columns.index(column) for column in columns]
-            records = [
-                tuple(record[column_index] for column_index in column_indices)
-                for record in records
-            ]
-
-        is_records_slice = isinstance(slc, slice) or (
-            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool)
-        )
-        if is_records_slice:
-            if isinstance(slc, list):
-                records = list(itertools.compress(records, slc))
-            else:
-                records = records[slc]
-
-        # An empty slice returns an empty assay WITH the same columns
-        is_empty_slice = isinstance(slc, list) and len(slc) == 0
-        if is_empty_slice:
-            records = []
-
-        return dataclasses.replace(self, records=records, columns=columns)
+        is_assay_slice = isinstance(slc, AssaySlice)
+        assay = self._slice_columns(self, slc.columns if is_assay_slice else slc)
+        assay = self._slice_records(assay, slc.records if is_assay_slice else slc)
+        return assay
 
     def __repr__(self) -> str:
         """Return a string representation of the Assay object."""
