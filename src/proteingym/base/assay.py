@@ -215,6 +215,10 @@ class Assay:
         """The length of the assay, i.e. the number of records."""
         return len(self.records)
 
+    def is_empty(self) -> bool:
+        """Returns True if the assay has no records."""
+        return len(self) == 0
+
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
 

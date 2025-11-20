@@ -28,7 +28,13 @@ def test_assay_length_equals_records_length() -> None:
         alphabet=SequenceAlphabet.AA,
     )
     assay = Assay(name="Test Assay", records=[(sequence, 1.0), (sequence, 2.0)])
-    assert len(assay) == 2
+    assert not assay.is_empty() and len(assay) == 2
+
+
+def test_assay_without_records_is_empty() -> None:
+    """An assay without records is empty."""
+    assay = Assay(name="Test Assay", records=[])
+    assert assay.is_empty() and len(assay) == 0
 
 
 def test_assay_not_equal_to_integer() -> None:
