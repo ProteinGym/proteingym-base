@@ -40,7 +40,9 @@ ALL_DATASET_NAMES = [
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
 def test_subsets_iterate_over_single_full_slice(dataset: Dataset) -> None:
     """Iterating over subsets with a single full slice yields the entire dataset."""
-    slc = DatasetSlice(assays=[[True] * len(assay) for assay in dataset.assays])
+    slc = DatasetSlice(
+        assays=[AssaySlice(records=[True] * len(assay)) for assay in dataset.assays]
+    )
     subsets = Subsets(dataset=dataset, slices=[slc])
     assert list(subsets) == [dataset]
 
@@ -48,8 +50,8 @@ def test_subsets_iterate_over_single_full_slice(dataset: Dataset) -> None:
 @pytest.fixture
 def subsets_fifty_fifty(dataset_with_assay: Dataset) -> Subsets:
     """Subsets that cut a dataset with two assay records in halfs."""
-    slc1 = DatasetSlice(assays=[[True, False]])
-    slc2 = DatasetSlice(assays=[[False, True]])
+    slc1 = DatasetSlice(assays=[AssaySlice(records=[True, False])])
+    slc2 = DatasetSlice(assays=[AssaySlice(records=[False, True])])
     subsets = Subsets(dataset=dataset_with_assay, slices=[slc1, slc2])
     return subsets
 

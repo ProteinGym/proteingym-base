@@ -57,10 +57,8 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[AssaySlice | slice | list[bool | str]] = dataclasses.field(
-        default_factory=list
-    )
-    """The list of assay slices."""
+    assays: list[AssaySlice] | None = None
+    """The list of assay slices. If None, all assays are included."""
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
@@ -72,7 +70,12 @@ class DatasetSlice:
         Returns:
             The dataset slice created from the JSON string.
         """
-        return cls(**json.loads(contents))
+        data = json.loads(contents)
+        if data.get("assays") is None:
+            assays = None
+        else:
+            assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
+        return cls(assays=assays)
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
@@ -80,7 +83,10 @@ class DatasetSlice:
         Returns:
             A JSON string representation of the dataset slice.
         """
-        return json.dumps(dataclasses.asdict(self))
+        data = {}
+        if self.assays is not None:
+            data["assays"] = [dataclasses.asdict(slc) for slc in self.assays]
+        return json.dumps(data)
 
 
 class Dataset(BaseModel):
