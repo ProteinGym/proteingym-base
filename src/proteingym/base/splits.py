@@ -3,6 +3,10 @@ The splits module provides functionality for splitting datasets.
 
 For example, split dataset for machine learning into training, validation, and
 test sets.
+
+TODO
+----
+- Introduce parent Splitter class when splitter patterns emerge.
 """
 
 import logging
