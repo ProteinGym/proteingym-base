@@ -8,7 +8,7 @@ Move repetitive sequence and assay into fixtures.
 import pytest
 from Bio.Seq import Seq
 
-from proteingym.base.assay import Assay, AssayTarget
+from proteingym.base.assay import Assay, AssaySlice, AssayTarget
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
@@ -742,4 +742,26 @@ def test_assay_slice_columns(seq1: Sequence, seq2: Sequence) -> None:
     )
 
     actual = assay[["sequence", "stability"]]
+    assert actual == expected
+
+
+def test_assay_slice_object_with_columns(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay with columns returns an assay with those columns."""
+    expected = Assay(
+        name="Test assay",
+        records=[
+            (seq1, 1.5),
+            (seq2, 2.5),
+        ],
+        columns=["sequence", "stability"],
+    )
+
+    slc = AssaySlice(columns=["sequence", "stability"])
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[slc]
     assert actual == expected
