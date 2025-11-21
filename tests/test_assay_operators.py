@@ -5,17 +5,15 @@ Module for testing assay operators.
 import pytest
 from Bio.Seq import Seq
 
-from proteingym.base.assay import Assay, AssayObservable
+from proteingym.base.assay import Assay, AssayField
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
-def test_assay_observable_equality_does_not_consider_description() -> None:
-    """Test that assay observable equality does not consider the description."""
-    assay_observable1 = AssayObservable(name="DMS Score", description="DMS score")
-    assay_observable2 = AssayObservable(
-        name="DMS Score", description="Different description"
-    )
-    assert assay_observable1 == assay_observable2
+def test_assay_field_equality_does_not_consider_description() -> None:
+    """Test that assay field equality does not consider the description."""
+    assay_field1 = AssayField(name="DMS Score", description="DMS score")
+    assay_field2 = AssayField(name="DMS Score", description="Different description")
+    assert assay_field1 == assay_field2
 
 
 def test_assay_length_equals_records_length() -> None:

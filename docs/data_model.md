@@ -28,7 +28,7 @@ classDiagram
         +MSA[] msas
         +Assay[] assays
         +AssayVariable[] assay_variables
-        +AssayObservables[] assay_observables
+        +AssayFields[] assay_fields
         +string creator   
         +string xref
         +dict metadata

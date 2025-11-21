@@ -16,7 +16,7 @@ from pydantic import (
     model_validator,
 )
 
-from .assay import Assay, AssayObservable, AssayVariable
+from .assay import Assay, AssayField, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .sequence import Sequence
@@ -110,8 +110,8 @@ class Dataset(BaseModel):
     assay_variables: list[AssayVariable] = Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
 
-    assay_observables: list[AssayObservable] = Field(default_factory=list)
-    """The list of assay observables relevant to the dataset."""
+    assay_fields: list[AssayField] = Field(default_factory=list)
+    """The list of assay fields relevant to the dataset."""
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
@@ -162,9 +162,7 @@ class Dataset(BaseModel):
                 f"\n{self.description}\n{other.description}"
             ),
             assay_variables=list_union(self.assay_variables, other.assay_variables),
-            assay_observables=list_union(
-                self.assay_observables, other.assay_observables
-            ),
+            assay_fields=list_union(self.assay_fields, other.assay_fields),
             assays=list_union(self.assays, other.assays),
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
@@ -284,7 +282,7 @@ class Dataset(BaseModel):
         data_types = {
             Assay: self.assays,
             AssayVariable: self.assay_variables,
-            AssayObservable: self.assay_observables,
+            AssayField: self.assay_fields,
             Sequence: self.sequences,
             Structure: self.structures,
             MSA: self.msas,
@@ -362,7 +360,7 @@ class Dataset(BaseModel):
             name=manifest.name,
             description=manifest.description,
             assay_variables=manifest.assay_variables,
-            assay_observables=manifest.assay_observables,
+            assay_fields=manifest.assay_fields,
             assays=assays,
             sequences=sequences,
             structures=structures,
@@ -437,7 +435,7 @@ class Dataset(BaseModel):
             version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
-            assay_observables=self.assay_observables,
+            assay_fields=self.assay_fields,
             assay_variables=self.assay_variables,
             assays=[
                 a.as_manifest_section(path=path)
@@ -553,12 +551,12 @@ class Dataset(BaseModel):
             target_names = {target_names}
         if target_names:
             if not all(
-                target_name in [t.name for t in self.assay_observables]
+                target_name in [t.name for t in self.assay_fields]
                 for target_name in target_names
             ):
                 raise ValueError("Target names must be valid assay target names.")
         else:
-            target_names = {t.name for t in self.assay_observables}
+            target_names = {t.name for t in self.assay_fields}
 
         if not self.assays:
             return pl.DataFrame()

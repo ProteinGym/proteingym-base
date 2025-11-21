@@ -51,24 +51,25 @@ class AssayVariable:
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayObservable:
-    """Definition of an assay observable.
+class AssayField:
+    """Definition of an assay field.
 
-    An observable is quantity that can tracked for each of the assayed proteins.
+    An assay field is variable recorded for each of the assayed proteins. It can be a
+    measured property of the enzyme, but also any other relevant data.
     """
 
     name: str
-    """The name of the observable."""
+    """The name of the field."""
 
     unit: str | None = None
-    """The unit of the observable."""
+    """The unit of the field."""
 
     description: str | None = None
-    """Description of the observable."""
+    """Description of the field."""
 
-    def __eq__(self, other: "AssayObservable") -> bool:
-        """Implements the '==' operator for AssayObservable."""
-        if not isinstance(other, AssayObservable):
+    def __eq__(self, other: "AssayField") -> bool:
+        """Implements the '==' operator for AssayField."""
+        if not isinstance(other, AssayField):
             return False
         return (
             # Description is not considered for equality
@@ -104,7 +105,7 @@ class AssayManifestSection(BaseModel):
     """The alphabet of the sequences of the assay."""
 
     targets: dict[str, str] = Field(default_factory=dict)
-    """The map of the names of the target observables in dataset to the target feature
+    """The map of the names of the target fields in dataset to the target feature
     names in assay."""
 
     variables: dict[str, bool | int | float | str] = Field(default_factory=dict)
