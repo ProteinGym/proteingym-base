@@ -105,12 +105,18 @@ class AssayManifestSection(BaseModel):
     """The alphabet of the sequences of the assay."""
 
     targets: dict[str, str] = Field(default_factory=dict)
-    """The map of the names of the target fields in dataset to the target feature
-    names in assay."""
+    """The map of the names of the target fields.
+
+    The targets are the quantities that are of interest to predict, e.g. stability or
+    activity.
+    """
 
     variables: dict[str, bool | int | float | str] = Field(default_factory=dict)
-    """The variable key:value pairs, key is the name of the assay variable (defined in
-    dataset manifest and value of the variable."""
+    """Assay variables defined for this assay.
+
+    The variable key:value pairs, key is the name of the assay variable (defined in
+    dataset manifest and value of the variable.
+    """
 
     path: FilePath
     """The path to the assay file, csv only."""
