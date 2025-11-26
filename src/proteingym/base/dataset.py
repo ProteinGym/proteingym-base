@@ -552,11 +552,10 @@ class Dataset(BaseModel):
         self,
         *,
         target_names: Collection[str] | str | None = None,
-        aggregation_fn: (
-            Callable[[pl.Expr, pl.DataType], pl.Expr] | None
-        ) = None,
-        custom_aggregation: (
-            dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None
+        agg: (
+            Callable[[pl.Expr, pl.DataType], pl.Expr]
+            | dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]]
+            | None
         ) = None,
     ) -> pl.DataFrame:
         """Returns the dataset assay records as a Polars DataFrame.
@@ -564,33 +563,35 @@ class Dataset(BaseModel):
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
-            aggregation_fn (
-                Callable[[pl.Expr, pl.DataType], pl.Expr] | None
+            agg (
+                Callable[[pl.Expr, pl.DataType], pl.Expr]
+                | dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]]
+                | None
             ):
-                Default aggregation function for all targets. Takes a polars expression
-                and data type, returns aggregated expression. If None, uses built-in
-                default (mean for numeric, first for categorical).
-            custom_aggregation (
-                dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None
-            ):
-                Custom aggregation functions per target. Overrides aggregation_fn for
-                specified targets.
+                Aggregation function or mapping. Can be:
+                - Function: Applied to all targets
+                - Dict: Maps target names to specific functions
+                - None: Uses default (mean for numeric, first for categorical)
 
         Returns:
             pl.DataFrame: The DataFrame containing all records from all assays.
 
         Examples:
-            # Use median for all numeric targets
-            df = dataset.to_df(
-                aggregation_fn=lambda col, dtype: col.median() if dtype.is_numeric()
-                else col.first()
-            )
+            >>> # Use median for all numeric targets
+            >>> df = dataset.to_df(
+            ...     agg=lambda col, dtype: col.median() if dtype.is_numeric()
+            ...     else col.first()
+            ... )
+            >>> isinstance(df, pl.DataFrame)
+            True
 
-            # Custom per-target aggregation
-            df = dataset.to_df(custom_aggregation={
-                "score": lambda col, dtype: col.max(),
-                "category": lambda col, dtype: col.mode().first()
-            })
+            >>> # Custom per-target aggregation
+            >>> df = dataset.to_df(agg={
+            ...     "score": lambda col, dtype: col.max(),
+            ...     "category": lambda col, dtype: col.mode().first()
+            ... })
+            >>> isinstance(df, pl.DataFrame)
+            True
         """
         if isinstance(target_names, str):
             target_names = {target_names}
@@ -639,54 +640,48 @@ class Dataset(BaseModel):
         if duplicate_count == 0:
             return df.sort(group_cols)
 
-        agg_fn = aggregation_fn or self._default_aggregation_fn
+        if callable(agg):
+            agg_fn = agg
+            custom_agg = None
+        elif isinstance(agg, dict):
+            agg_fn = self._default_aggregation_fn
+            custom_agg = agg
+        else:
+            agg_fn = self._default_aggregation_fn
+            custom_agg = None
 
-        # Test aggregation function and build expressions
         agg_exprs = []
         applied_methods = []
 
         for t in target_names:
             dtype = df[t].dtype
 
-            if custom_aggregation and t in custom_aggregation:
+            if custom_agg and t in custom_agg:
                 try:
-                    agg_expr = custom_aggregation[t](pl.col(t), dtype).alias(t)
+                    agg_expr = custom_agg[t](pl.col(t), dtype).alias(t)
                     agg_exprs.append(agg_expr)
                     applied_methods.append(f"{t}: custom")
                 except Exception as e:
-                    warnings.warn(
-                        f"Custom aggregation failed for '{t}': {e}. Using default.",
-                        UserWarning,
-                        stacklevel=2
-                    )
-                    agg_expr = agg_fn(pl.col(t), dtype).alias(t)
-                    agg_exprs.append(agg_expr)
-                    applied_methods.append(f"{t}: default")
+                    raise ValueError(f"Custom aggregation failed for '{t}': {e}") from e
             else:
                 try:
                     agg_expr = agg_fn(pl.col(t), dtype).alias(t)
                     agg_exprs.append(agg_expr)
-                    # Determine method name for warning
                     if agg_fn == self._default_aggregation_fn:
                         method = "mean" if dtype.is_numeric() else "first"
                     else:
                         method = "custom"
                     applied_methods.append(f"{t}: {method}")
                 except Exception as e:
-                    warnings.warn(
-                        f"Aggregation failed for '{t}': {e}. Using first().",
-                        UserWarning,
-                        stacklevel=2
-                    )
-                    agg_exprs.append(pl.col(t).first().alias(t))
-                    applied_methods.append(f"{t}: first (fallback)")
+                    raise ValueError(f"Aggregation failed for '{t}': {e}") from e
 
-        warnings.warn(
-            (f"Found {duplicate_count} groups with duplicates. "
-            f"Aggregation applied: {', '.join(applied_methods)}"),
-            UserWarning,
-            stacklevel=2
-        )
+        if duplicate_count > 0:
+            warnings.warn(
+                (f"Found {duplicate_count} groups with duplicates. "
+                f"Aggregation applied: {', '.join(applied_methods)}"),
+                UserWarning,
+                stacklevel=2
+            )
 
         df = (
             df.group_by(group_cols)
