@@ -15,16 +15,16 @@ For more consistent and reproducible results, the dataset should be split
 deterministicly while accommodating for different split strategies.  
 
 A counterintuitive example: the random split. Even for the random split, one could
-create such a split randomly, then share *their* split with other so that
+create such a split randomly, then share *their* split with others so that
 everyone has the same *random* split.
 
 ### Dataset slice
 
 The term "dataset slice" refers to the accessors that create a  subset of a
-dataset. Slice is common term in programming to create a subset of a data
+dataset. Slice is a common term in programming to create a subset of a data
 structure, for example 
 [array slicing](https://en.wikipedia.org/wiki/Array_slicing) or search for
-"slice" and your programming language of choice. 
+"slice" together with your programming language of choice. 
 
 Note that "slice" is used both as a verb 
 ([function](https://docs.python.org/3/library/functions.html#slice))
@@ -40,7 +40,7 @@ sequences, structures, or MSAs.
 
 The introduction of splits introduces the notion for dataset operators for
 communicating about the relationships between datasets, dataset splits, and
-subsets of datasets (other word for splits).
+subsets of datasets (other term for splits).
 
 For example, when splitting a dataset, for each split the following is true:
 
@@ -75,7 +75,7 @@ list of sequences list.
 
 ## Decision
 
-Subsets (of datasets) will hold the split information.
+Subsets (of a dataset) will hold the split information.
 
 ## Decision Drivers
 
@@ -113,16 +113,18 @@ train2.pgdata test2.pgdata
 The Python API should be as follows:
 
 ```python
-from pg2_dataset import Dataset 
+from proteingym.dataset import Subsets
 
-for train_set, test_set, val_set in Dataset.load_splits("./path/to/dataset_with_validation.splits.pgdata"):
+subsets = Subsets.from_path("./path/to/dataset_with_validation.splits.pgdata")
+for train_set, test_set, val_set in subsets:
     ...  # Do something with the splits
 
-for train_set, test_set in Dataset.load_splits("./path/to/dataset_without_validation.splits.pgdata"):
+subsets = Subsets.from_path("./path/to/dataset_without_validation.splits.pgdata")
+for train_set, test_set in subsets:
     ...  # Do something with the splits
 ```
 
-> Note: the `Dataset` class is just an example, the actual class can be different.
+> Note: the `Subsets` class is just an example, the actual class can be different.
 
 ### Splits marker
 
