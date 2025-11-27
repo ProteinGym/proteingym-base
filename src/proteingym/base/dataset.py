@@ -776,7 +776,7 @@ class Subsets:
         for subset in subsets.values():
             if subset.dataset != self.dataset:
                 raise ValueError(
-                    "Cannot update subsets with different datasets."
+                    "Cannot update subsets with different datasets. "
                     f"Got {subset.dataset} while having {self.dataset}."
                 )
         slices = {subset_name: subset.slices for subset_name, subset in subsets.items()}

@@ -196,3 +196,18 @@ def test_subsets_update_raises_type_error_when_slices_are_a_list(
     match = "Cannot update subsets when slices are not a dictionary."
     with pytest.raises(TypeError, match=match):
         subsets.update(raises_type_error=subsets)
+
+
+def test_subsets_update_raises_value_error_when_updating_with_different_dataset(
+    dataset_empty: Dataset,
+    dataset_with_assay: Dataset,
+) -> None:
+    """Subsets should refer to the same dataeset when updating."""
+    slices = [
+        DatasetSlice(assays=[[False, False]]),
+        DatasetSlice(assays=[[False, False]]),
+    ]
+    subsets = Subsets(dataset=dataset_with_assay, slices={"no_data": slices})
+    match = "Cannot update subsets with different datasets.*"
+    with pytest.raises(ValueError, match=match):
+        subsets.update(raise_value_error=Subsets(dataset=dataset_empty, slices=slices))
