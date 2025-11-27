@@ -169,7 +169,7 @@ def test_subsets_with_strategies_get_skewed(
 ) -> None:
     """The skewed subsets have different lengths."""
     subsets_skewed = subsets_with_data_distribution_scenarios["skewed"]
-    left, right = list(subsets_skewed)
+    left, right = tuple(subsets_skewed)
     assert len(left.to_df()) != len(right.to_df())
 
 
@@ -178,12 +178,12 @@ def test_subsets_with_strategies_get_balanced(
 ) -> None:
     """The balanced subsets have the same lengths."""
     subsets_balanced = subsets_with_data_distribution_scenarios["balanced"]
-    left, right = list(subsets_balanced)
+    left, right = tuple(subsets_balanced)
     assert len(left.to_df()) == len(right.to_df())
 
 
 def test_subsets_update_contains_new_strategy(
-    dataset_with_assay,
+    dataset_with_assay: Dataset,
     subsets_with_data_distribution_scenarios: Subsets,
 ) -> None:
     """Updating subsets with a new strategy works."""
@@ -197,7 +197,7 @@ def test_subsets_update_contains_new_strategy(
 
 
 def test_subsets_update_raises_type_error_when_slices_are_a_list(
-    dataset_with_assay,
+    dataset_with_assay: Dataset,
 ) -> None:
     """Updating a list of slices should raise a TypeError."""
     slices = [
