@@ -297,7 +297,8 @@ class Assay:
 
         Note:
         An empty list returns an assay WITHOUT records and WITH the columns. If
-        you want to slice to have no columns, use AssaySlice(columns=[]) instead.
+        you want to slice to have no columns, use `AssaySlice(columns=[])`
+        instead.
         """
         if isinstance(slc, int):
             # The Assay is a container with more than records, getting a single record
@@ -317,7 +318,7 @@ class Assay:
         is_assay_slice = isinstance(slc, AssaySlice)
         if is_assay_slice or len(slc) > 0:
             # An empty list is treated as an empty records slice. If you want to
-            # have an empty column slice use AssaySlice(columns=[])
+            # have an empty column slice use `AssaySlice(columns=[])`
             assay = self._slice_columns(assay, slc.columns if is_assay_slice else slc)
         assay = self._slice_records(assay, slc.records if is_assay_slice else slc)
 
