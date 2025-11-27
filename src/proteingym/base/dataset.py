@@ -740,7 +740,10 @@ class Subsets:
     )
     """The slices that create the collection of subsets.
 
-    The dictionary allows to identify slices like for split strategies.
+    Slices can be stored either as a list, or as a dict where the key is an
+    arbitrary label associated with a list of slices. The latter is useful for
+    storing slices obtained from different ways to slice the dataset and when it
+    is of interest to compare these.
     """
 
     def __len__(self) -> int:
