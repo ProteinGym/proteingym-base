@@ -90,8 +90,8 @@ class Measurements:
     )
     """The measurement records."""
 
-    columns: list[str] = dataclasses.field(default_factory=list)
-    """The measurement columns."""
+    fields: list[Field] = dataclasses.field(default_factory=list)
+    """The measurement fields."""
 
     description: str | None = None
     """A brief description"""
@@ -116,7 +116,7 @@ class Measurements:
         return cls(
             name=section.name,
             records=records,
-            columns=columns,
+            fields=section.fields,
             description=section.description,
         )
 
@@ -130,10 +130,9 @@ class Measurements:
             MeasurementsManifestSection: The manifest section representing
             the measurements.
         """
-        fields = [Field(name=column) for column in self.columns]
         return MeasurementsManifestSection(
             name=self.name,
             path=path,
             description=self.description,
-            fields=fields,
+            fields=self.fields,
         )
