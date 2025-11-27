@@ -1,4 +1,3 @@
-import warnings
 from pathlib import Path
 from string import ascii_uppercase
 from zipfile import ZipFile
@@ -608,22 +607,18 @@ def test_dataset_to_df_string_target(assay1: Assay, assay2: Assay) -> None:
         ],
         assays=[assay1, assay2],
     )
-    # Aggregation function now returns warnings for hidden
-    # (default) behavior. Catching the warnings here as
-    # warnings get tested in test_dataframe_aggregation.py
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        try:
-            df = dataset.to_df(target_names="DMS Score")
-        except ValueError as e:
-            raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
-        else:
-            expected_df = pl.DataFrame(
-                {"sequence": ["APC", "DEF", "GHI"], "DMS Score": [1.0, 2.0, 3.0]}
-            )
-            pl.testing.assert_frame_equal(
-                df, expected_df, check_dtypes=False, check_column_order=False
-            )
+
+    try:
+        df = dataset.to_df(target_names="DMS Score")
+    except ValueError as e:
+        raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
+    else:
+        expected_df = pl.DataFrame(
+            {"sequence": ["APC", "DEF", "GHI"], "DMS Score": [1.0, 2.0, 3.0]}
+        )
+        pl.testing.assert_frame_equal(
+            df, expected_df, check_dtypes=False, check_column_order=False
+        )
 
 
 def test_dataset_to_df_assay_with_different_targets(
@@ -673,28 +668,23 @@ def test_dataset_to_df_assay_with_different_targets(
         assays=[assay1, assay2, assay3, assay4],
     )
 
-    # Aggregation function now returns warnings for hidden
-    # (default) behavior. Catching the warnings here as
-    # warnings get tested in test_dataframe_aggregation.py
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        try:
-            df = dataset.to_df(target_names=["DMS Score", "Binding Affinity"])
-        except ValueError as e:
-            raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
-        else:
-            expected_df = pl.DataFrame(
-                {
-                    "sequence": ["APC", "APC", "DEF", "GHI"],
-                    "pH": [7.0, 7.0, 7.0, 7.0],
-                    "T": [None, 30, 30, None],
-                    "DMS Score": [None, 2.0, 2.0, None],
-                    "Binding Affinity": [0.8, None, None, 0.9],
-                }
-            )
-            pl.testing.assert_frame_equal(
-                df, expected_df, check_dtypes=False, check_column_order=False
-            )
+    try:
+        df = dataset.to_df(target_names=["DMS Score", "Binding Affinity"])
+    except ValueError as e:
+        raise ValueError(f"Failed to convert dataset to DataFrame: {e}") from e
+    else:
+        expected_df = pl.DataFrame(
+            {
+                "sequence": ["APC", "APC", "DEF", "GHI"],
+                "pH": [7.0, 7.0, 7.0, 7.0],
+                "T": [None, 30, 30, None],
+                "DMS Score": [None, 2.0, 2.0, None],
+                "Binding Affinity": [0.8, None, None, 0.9],
+            }
+        )
+        pl.testing.assert_frame_equal(
+            df, expected_df, check_dtypes=False, check_column_order=False
+        )
 
 
 def test_dataset_to_df_failed_assay_to_df() -> None:
