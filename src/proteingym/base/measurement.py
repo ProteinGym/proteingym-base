@@ -13,6 +13,7 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
 
@@ -84,6 +85,18 @@ class MeasurementsManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
+
+    @model_validator(mode="after")
+    def validate_field_names(self) -> "MeasurementsManifestSection":
+        """Validate whether field names are present in the `path` file."""
+        with self.path.open("r") as f:
+            header = f.readline()
+        for field in self.fields:
+            if field.name not in header:
+                raise ValueError(
+                    f"Field '{field.name}' not found in the file: {self.path}"
+                )
+        return self
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
