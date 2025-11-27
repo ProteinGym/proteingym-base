@@ -14,13 +14,35 @@ def test_subsets_iterate_over_empty(dataset_empty: Dataset) -> None:
         raise AssertionError("Should not iterate over empty collection of subsets")
 
 
+def test_subsets_iterate_over_strategies_raises_type_error(
+    dataset_empty: Dataset,
+) -> None:
+    """Iterating over a dictionary of subsets should raise a TypeError."""
+    subsets = Subsets(dataset=dataset_empty, slices={})
+    with pytest.raises(
+        TypeError, match="Cannot iterate over subsets when slices are not a list.*"
+    ):
+        list(subsets)
+
+
 @pytest.mark.parametrize(
     "slices, length",
-    [([], 0), ([True, False], 2)],
+    [
+        ([], 0),
+        (
+            [
+                DatasetSlice(assays=[[True, False]]),
+                DatasetSlice(assays=[[False, True]]),
+            ],
+            2,
+        ),
+    ],
 )
-def test_subsets_length(dataset_empty: Dataset, slices: list, length: int) -> None:
+def test_subsets_length(
+    dataset_with_assay: Dataset, slices: list[DatasetSlice], length: int
+) -> None:
     """Test subsets length equal to number of slices."""
-    subsets = Subsets(dataset=dataset_empty, slices=slices)
+    subsets = Subsets(dataset=dataset_with_assay, slices=slices)
     assert len(subsets) == length
 
 
@@ -98,6 +120,34 @@ def test_subsets_dump_creates_valid_archive(
     archive_path = subsets_fifty_fifty.dump(path=tmp_path)
     with ZipFile(archive_path, "r") as zip_:
         assert zip_.testzip() is None  # No corrupt files
+
+
+@pytest.fixture
+def subsets_with_data_distribution_scenarios(dataset_with_assay: Dataset) -> Subsets:
+    """Create a Subsets instance with skewed and balanced slices."""
+    slices_skewed = [
+        DatasetSlice(assays=[AssaySlice(records=[True, True])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+    ]
+    slices_balanced = [
+        DatasetSlice(assays=[AssaySlice(records=[True, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, True])]),
+    ]
+    subsets = Subsets(
+        dataset=dataset_with_assay,
+        slices={"balanced": slices_balanced, "skewed": slices_skewed},
+    )
+    return subsets
+
+
+def test_subsets_dump_from_path_is_unit_function_with_strategies(
+    tmp_path: Path,
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """Dumping and loading subsets is a unit function."""
+    archive_path = subsets_with_data_distribution_scenarios.dump(path=tmp_path)
+    subsets_recovered = Subsets.from_path(archive_path)
+    assert subsets_with_data_distribution_scenarios == subsets_recovered
     with ZipFile(archive_path, "r") as zip:
         assert zip.testzip() is None  # No corrupt files
 
@@ -112,3 +162,64 @@ def test_dataset_slice_with_columns_slices_assay_columns(
     subset = dataset_with_assay[slc]
 
     assert all(assay.columns == expected_columns for assay in subset.assays)
+
+
+def test_subsets_with_strategies_get_skewed(
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """The skewed subsets have different lengths."""
+    subsets_skewed = subsets_with_data_distribution_scenarios["skewed"]
+    left, right = tuple(subsets_skewed)
+    assert len(left.to_df()) != len(right.to_df())
+
+
+def test_subsets_with_strategies_get_balanced(
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """The balanced subsets have the same lengths."""
+    subsets_balanced = subsets_with_data_distribution_scenarios["balanced"]
+    left, right = tuple(subsets_balanced)
+    assert len(left.to_df()) == len(right.to_df())
+
+
+def test_subsets_update_contains_new_strategy(
+    dataset_with_assay: Dataset,
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """Updating subsets with a new strategy works."""
+    slices = [
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+    ]
+    subsets = Subsets(dataset=dataset_with_assay, slices=slices)
+    subsets_with_data_distribution_scenarios.update(no_data=subsets)
+    assert "no_data" in subsets_with_data_distribution_scenarios.slices
+
+
+def test_subsets_update_raises_type_error_when_slices_are_a_list(
+    dataset_with_assay: Dataset,
+) -> None:
+    """Updating a list of slices should raise a TypeError."""
+    slices = [
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+    ]
+    subsets = Subsets(dataset=dataset_with_assay, slices=slices)
+    match = "Cannot update subsets when slices are not a dictionary."
+    with pytest.raises(TypeError, match=match):
+        subsets.update(raises_type_error=subsets)
+
+
+def test_subsets_update_raises_value_error_when_updating_with_different_dataset(
+    dataset_empty: Dataset,
+    dataset_with_assay: Dataset,
+) -> None:
+    """Subsets should refer to the same dataset when updating."""
+    slices = [
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+    ]
+    subsets = Subsets(dataset=dataset_with_assay, slices={"no_data": slices})
+    match = "Cannot update subsets with different datasets.*"
+    with pytest.raises(ValueError, match=match):
+        subsets.update(raise_value_error=Subsets(dataset=dataset_empty, slices=slices))

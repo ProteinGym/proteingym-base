@@ -62,6 +62,24 @@ class DatasetSlice:
     """The list of assay slices. If None, all assays are included."""
 
     @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DatasetSlice":
+        """Create a dataset slice from a dictionary.
+
+        This method is useful when deserializing from JSON including the sub-objects.
+
+        Args:
+            data (dict[str, Any]): The dictionary to create the dataset slice from.
+
+        Returns:
+            The dataset slice created from the dictionary.
+        """
+        if data.get("assays") is None:
+            assays = None
+        else:
+            assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
+        return cls(assays=assays)
+
+    @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
         """Create a dataset slice from a JSON string.
 
@@ -72,11 +90,7 @@ class DatasetSlice:
             The dataset slice created from the JSON string.
         """
         data = json.loads(contents)
-        if data.get("assays") is None:
-            assays = None
-        else:
-            assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
-        return cls(assays=assays)
+        return cls.from_dict(data)
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
@@ -685,17 +699,15 @@ class Dataset(BaseModel):
 
         if duplicate_count > 0:
             warnings.warn(
-                (f"Found {duplicate_count} groups with duplicates. "
-                f"Aggregation applied: {', '.join(applied_methods)}"),
+                (
+                    f"Found {duplicate_count} groups with duplicates. "
+                    f"Aggregation applied: {', '.join(applied_methods)}"
+                ),
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
 
-        df = (
-            df.group_by(group_cols)
-            .agg(agg_exprs)
-            .sort(group_cols)
-        )
+        df = df.group_by(group_cols).agg(agg_exprs).sort(group_cols)
         return df
 
 
@@ -712,7 +724,7 @@ class SubsetsArchiveLayout:
     """The file containing the slices."""
 
 
-@dataclasses.dataclass(kw_only=True, frozen=True)
+@dataclasses.dataclass(kw_only=True)
 class Subsets:
     """A collection of dataset subsets (slices).
 
@@ -723,17 +735,87 @@ class Subsets:
     dataset: Dataset
     """The dataset that is sliced."""
 
-    slices: list[DatasetSlice] = dataclasses.field(default_factory=list)
-    """The slices that create the collection of subsets."""
+    slices: list[DatasetSlice] | dict[str | list[DatasetSlice]] = dataclasses.field(
+        default_factory=dict
+    )
+    """The slices that create the collection of subsets.
+
+    Slices can be stored either as a list, or as a dict where the key is an
+    arbitrary label associated with a list of slices. The latter is useful for
+    storing slices obtained from different ways to slice the dataset and when it
+    is of interest to compare these.
+    """
 
     def __len__(self) -> int:
         """The length of the subset collection."""
-        return len(self.slices)
+        return len(tuple(self.__iter__()))
+
+    def __getitem__(self, key: str) -> "Subsets":
+        """Get a subset by key.
+
+        Args:
+            key (str): The key of the subset to get.
+
+        Returns:
+            Subset: The subset corresponding to the key.
+
+        Raises:
+            TypeError: If the slices are not stored as a dictionary.
+            KeyError: If the key is not found in the slices.
+        """
+        if not isinstance(self.slices, dict):
+            raise TypeError("Subsets slices are not stored as a dictionary.")
+        if key not in self.slices:
+            raise KeyError(f"Key '{key}' not found in subsets slices.")
+        slices = self.slices[key]
+        return Subsets(dataset=self.dataset, slices=slices)
 
     def __iter__(self) -> Iterator[Dataset]:
         """Iterate over the slices in this subset collection."""
+        if not isinstance(self.slices, list):
+            raise TypeError(
+                "Cannot iterate over subsets when slices are not a list. "
+                "Use `for split in subsets[strategy_name]:` instead."
+            )
         for slc in self.slices:
             yield self.dataset[slc]
+
+    def update(self, **subsets: "Subsets") -> None:
+        """Update the subsets with other subsets.
+
+        Args:
+            **subsets (Subsets) : The subsets to update. The keys are used as
+                keys in the slices dictionary.
+        """
+        if not isinstance(self.slices, dict):
+            raise TypeError("Cannot update subsets when slices are not a dictionary.")
+        for subset in subsets.values():
+            if subset.dataset != self.dataset:
+                raise ValueError(
+                    "Cannot update subsets with different datasets. "
+                    f"Got {subset.dataset} while having {self.dataset}."
+                )
+        slices = {subset_name: subset.slices for subset_name, subset in subsets.items()}
+        self.slices = {**self.slices, **slices}
+
+    @staticmethod
+    def _loads_slices(
+        slices_str: str,
+    ) -> list[DatasetSlice] | dict[str, list[DatasetSlice]]:
+        """Load the slices from a JSON string.
+
+        Args:
+            slices_str (str): The JSON string representation of the slices.
+        """
+        data = json.loads(slices_str)
+        if isinstance(data, dict):
+            slices = {
+                key: [DatasetSlice.from_dict(slc) for slc in slc_list]
+                for key, slc_list in data.items()
+            }
+        else:
+            slices = [DatasetSlice.from_dict(slc) for slc in data]
+        return slices
 
     @classmethod
     def from_path(cls, path: Path) -> "Subsets":
@@ -760,9 +842,25 @@ class Subsets:
                 SubsetsArchiveLayout.DATASET_ARCHIVE, path=temp_dir
             )
             dataset = Dataset.from_path(dataset_archive)
-            slices_str = json.loads(zip.read(SubsetsArchiveLayout.SLICES_FILE))
-            slices = [DatasetSlice.from_json(slc) for slc in slices_str]
+            slices_str = zip.read(SubsetsArchiveLayout.SLICES_FILE)
+            slices = cls._loads_slices(slices_str)
         return cls(dataset=dataset, slices=slices)
+
+    def _dumps_slices(self) -> str:
+        """Dump the slices to a JSON string.
+
+        Returns:
+            str: The JSON string representation of the slices.
+        """
+        if isinstance(self.slices, dict):
+            data = {
+                key: [dataclasses.asdict(slc) for slc in slices]
+                for key, slices in self.slices.items()
+            }
+        else:
+            data = [dataclasses.asdict(slc) for slc in self.slices]
+        slices_str = json.dumps(data)
+        return slices_str
 
     def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the subsets.
@@ -785,6 +883,6 @@ class Subsets:
         with ZipFile(path, "w") as zip, TemporaryDirectory() as temp_dir:
             dataset_archive = self.dataset.dump(path=Path(temp_dir))
             zip.write(dataset_archive, arcname=SubsetsArchiveLayout.DATASET_ARCHIVE)
-            slices_str = json.dumps([slc.to_json() for slc in self.slices])
+            slices_str = self._dumps_slices()
             zip.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
         return path

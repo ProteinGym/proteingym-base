@@ -16,6 +16,21 @@ from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
 
 
+def test_dataset_slice_from_dict() -> None:
+    """Test that a dataset slice can be created from a JSON string."""
+    expected = DatasetSlice(
+        assays=[
+            AssaySlice(records=[True, False, True]),
+            AssaySlice(records=[False, True, False]),
+        ]
+    )
+    contents = {
+        "assays": [{"records": [True, False, True]}, {"records": [False, True, False]}]
+    }
+    slc = DatasetSlice.from_dict(contents)
+    assert slc == expected
+
+
 def test_dataset_slice_from_json_mask() -> None:
     """Test that a dataset slice can be created from a JSON string."""
     expected = DatasetSlice(
