@@ -72,3 +72,19 @@ class MeasurementsManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
+
+
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class Measurements:
+    """The measurements on which an assay is based."""
+
+    name: str
+    """The name of the measurement."""
+
+    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
+        default_factory=list
+    )
+    """The measurement records."""
+
+    columns: list[str] = dataclasses.field(default_factory=list)
+    """The measurement columns."""
