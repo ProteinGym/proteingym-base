@@ -724,7 +724,7 @@ class Subsets:
     """The dataset that is sliced."""
 
     slices: list[DatasetSlice] | dict[str | list[DatasetSlice]] = dataclasses.field(
-        default_factory=list
+        default_factory=dict
     )
     """The slices that create the collection of subsets.
 
