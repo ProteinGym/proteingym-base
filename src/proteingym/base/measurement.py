@@ -3,6 +3,7 @@
 import dataclasses
 from pathlib import Path
 
+import polars as pl
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -94,3 +95,27 @@ class Measurements:
 
     description: str | None = None
     """A brief description"""
+
+    @classmethod
+    def from_manifest_section(
+        cls,
+        section: MeasurementsManifestSection,
+    ) -> "Measurements":
+        """Creates Measurements from a manifest section.
+
+        Args:
+            section (MeasurementsManifestSection): The manifest section
+                describing the measurements.
+
+        Returns:
+            Measurements: The created Measurements object.
+        """
+        columns = [field.name for field in section.fields]
+        # Reusing polars as we already depend on it for assays
+        records = list(pl.read_csv(section.path, columns=columns).iter_rows())
+        return cls(
+            name=section.name,
+            records=records,
+            columns=columns,
+            description=section.description,
+        )
