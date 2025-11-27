@@ -14,6 +14,17 @@ def test_subsets_iterate_over_empty(dataset_empty: Dataset) -> None:
         raise AssertionError("Should not iterate over empty collection of subsets")
 
 
+def test_subsets_iterate_over_strategies_raises_type_error(
+    dataset_empty: Dataset,
+) -> None:
+    """Iterating over a dictionary of subsets should raise a TypeError."""
+    subsets = Subsets(dataset=dataset_empty, slices={})
+    with pytest.raises(
+        TypeError, match="Cannot iterate over subsets when slices are not a list.*"
+    ):
+        list(subsets)
+
+
 @pytest.mark.parametrize(
     "slices, length",
     [([], 0), ([True, False], 2)],

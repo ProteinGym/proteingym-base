@@ -757,11 +757,12 @@ class Subsets:
 
     def __iter__(self) -> Iterator[Dataset]:
         """Iterate over the slices in this subset collection."""
-        if isinstance(self.slices, dict):
-            slices = itertools.chain.from_iterable(self.slices.values())
-        else:
-            slices = self.slices
-        for slc in slices:
+        if not isinstance(self.slices, list):
+            raise TypeError(
+                "Cannot iterate over subsets when slices are not a list. "
+                "Use `for split in subsets[strategy_name]:` instead."
+            )
+        for slc in self.slices:
             yield self.dataset[slc]
 
     def update(self, **subsets: "Subsets") -> None:
