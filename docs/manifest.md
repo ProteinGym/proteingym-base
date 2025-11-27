@@ -189,10 +189,11 @@ created. Measurements represent observed or calculated values for specific
 targets. The measurements are optional, though, if present, they need to be
 linked to an assay.
 
-| **Field** | **Type** | **Required** | **Default** | **Description**                                                |
-| --------- | -------- | ------------ | ----------- | -------------------------------------------------------------- |
-| `name`    | `string` | Yes          | `None`      | The name of the assay the measurements belong to.              |
-| `path`    | `string` | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
+| **Field**     | **Type**         | **Required** | **Default** | **Description**                                                |
+| ------------- | ---------------- | ------------ | ----------- | -------------------------------------------------------------- |
+| `name`        | `string`         | Yes          | `None`      | The name of the assay the measurements belong to.              |
+| `path`        | `string`         | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
+| `description` | `string \| None` | No           | `None`      | A brief description.                                           |
 
 ### Measurement fields
 

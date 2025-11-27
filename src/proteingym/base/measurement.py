@@ -56,6 +56,9 @@ class MeasurementsManifestSection(BaseModel):
     path: FilePath
     """The path to the assay file, csv only."""
 
+    description: str | None = None
+    """A brief description"""
+
     fields: list[Field]
     """The list of fields in the measurement manifest."""
 
@@ -88,3 +91,6 @@ class Measurements:
 
     columns: list[str] = dataclasses.field(default_factory=list)
     """The measurement columns."""
+
+    description: str | None = None
+    """A brief description"""
