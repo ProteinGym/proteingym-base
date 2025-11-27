@@ -20,6 +20,7 @@ from pydantic import (
 
 from .assay import Assay, AssaySlice, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
+from .measurement import Measurements
 from .msa import MSA
 from .publication import Publication
 from .sequence import Sequence, SequenceAlphabet, SequenceType
@@ -37,6 +38,9 @@ class DatasetArchiveLayout:
 
     ASSAYS_DIRECTORY = Path("assays/")
     """The directory for assays."""
+
+    MEASUREMENTS_DIRECTORY = Path("measurements/")
+    """The directory for measurements."""
 
     SEQUENCES_DIRECTORY = Path("sequences/")
     """The directory for sequences."""
@@ -110,7 +114,8 @@ class Dataset(BaseModel):
     """A Protein Gym dataset.
 
     The dataset provides access to metadata and protein data such as assays,
-    sequences, structures, and multiple sequence alignments (MSAs).
+    measurements, sequences, structures, and multiple sequence alignments
+    (MSAs).
 
     In this BaseModel, we only use Pydantic validation feature only, not the
     (de)serialization feature because protein data is not persisted as mappings
@@ -140,6 +145,9 @@ class Dataset(BaseModel):
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
+
+    measurements: list[Measurements] = Field(default_factory=list)
+    """The measurements present in the dataset."""
 
     sequences: list[Sequence] = Field(default_factory=list)
     """The sequences included in the dataset."""
@@ -197,6 +205,7 @@ class Dataset(BaseModel):
             assay_variables=list_union(self.assay_variables, other.assay_variables),
             assay_targets=list_union(self.assay_targets, other.assay_targets),
             assays=list_union(self.assays, other.assays),
+            measurements=list_union(self.measurements, other.measurements),
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
             msas=list_union(self.msas, other.msas),
@@ -214,6 +223,9 @@ class Dataset(BaseModel):
             return sorted(values, key=lambda value: value.name)
 
         is_assay_match = sort_by_name(self.assays) == sort_by_name(item.assays)
+        is_measurement_match = sort_by_name(self.measurements) == sort_by_name(
+            item.measurements
+        )
         is_sequence_match = sort_by_name(self.sequences) == sort_by_name(item.sequences)
         is_structure_match = sort_by_name(self.structures) == sort_by_name(
             item.structures
@@ -222,8 +234,12 @@ class Dataset(BaseModel):
         is_publication_match = self.publication == item.publication
         return (
             is_assay_match
+           
+            and is_measurement_match
             and is_sequence_match
+           
             and is_structure_match
+           
             and is_msa_match
             and is_publication_match
         )
@@ -242,6 +258,9 @@ class Dataset(BaseModel):
                 for other_assay in other.assays
             )
         )
+        is_measurement_subset = len(other.measurements) == 0 or all(
+            measurement in self.measurements for measurement in other.measurements
+        )
         is_sequence_subset = len(other.sequences) == 0 or all(
             seq in self.sequences for seq in other.sequences
         )
@@ -259,6 +278,7 @@ class Dataset(BaseModel):
         )
         return (
             is_assay_subset
+            and is_measurement_subset
             and is_sequence_subset
             and is_structure_subset
             and is_msa_subset
@@ -298,6 +318,7 @@ class Dataset(BaseModel):
             lines.append("\tdescription: None,")
         lines.append("\tcontents:")
         lines.append(f"\t\tassays: {len(self.assays)},")
+        lines.append(f"\t\tmeasurements: {len(self.measurements)},")
         lines.append(f"\t\tsequences: {len(self.sequences)},")
         lines.append(f"\t\tstructures: {len(self.structures)},")
         lines.append(f"\t\tmsas: {len(self.msas)},")
@@ -332,6 +353,7 @@ class Dataset(BaseModel):
             Assay: self.assays,
             AssayVariable: self.assay_variables,
             AssayTarget: self.assay_targets,
+            Measurements: self.measurements,
             Sequence: self.sequences,
             Structure: self.structures,
             MSA: self.msas,
@@ -372,6 +394,25 @@ class Dataset(BaseModel):
                     f"MSA '{msa.name}' reference sequence "
                     f"'{msa.reference_sequence_name}' is not present in the dataset's "
                     "sequences."
+                )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_measurements_have_reference_assay(self) -> "Dataset":
+        """Ensure that each measurement has a reference assay.
+
+        Returns:
+            Dataset: The validated dataset instance.
+
+        Raises:
+            ValueError: If a reference assay is specified in a measurement but not found
+                in the dataset's assays.
+        """
+        assay_names = {assay.name for assay in self.assays}
+        for measurement in self.measurements:
+            if measurement.name not in assay_names:
+                raise ValueError(
+                    f"Measurement '{measurement.name}' misses a reference assay."
                 )
         return self
 
@@ -428,6 +469,9 @@ class Dataset(BaseModel):
             Dataset: The dataset created from the manifest.
         """
         assays = [Assay.from_manifest_section(a) for a in manifest.assays]
+        measurements = [
+            Measurements.from_manifest_section(m) for m in manifest.measurements
+        ]
         sequences = itertools.chain(
             *[Sequence.from_manifest_section(s) for s in manifest.sequences]
         )
@@ -441,6 +485,7 @@ class Dataset(BaseModel):
             assay_variables=manifest.assay_variables,
             assay_targets=manifest.assay_targets,
             assays=assays,
+            measurements=measurements,
             sequences=sequences,
             structures=structures,
             msas=msas,
@@ -489,6 +534,11 @@ class Dataset(BaseModel):
         data_paths = collections.defaultdict(list)
         for type_, subdirectory, objects in (
             (Assay, DatasetArchiveLayout.ASSAYS_DIRECTORY, self.assays),
+            (
+                Measurements,
+                DatasetArchiveLayout.MEASUREMENTS_DIRECTORY,
+                self.measurements,
+            ),
             (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
             (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
             (MSA, DatasetArchiveLayout.MSAS_DIRECTORY, self.msas),
@@ -520,6 +570,12 @@ class Dataset(BaseModel):
             assays=[
                 a.as_manifest_section(path=path)
                 for a, path in zip(self.assays, data_paths.get(Assay, []), strict=True)
+            ],
+            measurements=[
+                m.as_manifest_section(path=path)
+                for m, path in zip(
+                    self.measurements, data_paths.get(Measurements, []), strict=True
+                )
             ],
             sequences=[
                 s.as_manifest_section(path=path)
@@ -573,7 +629,12 @@ class Dataset(BaseModel):
                 arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip_,
+                zip,
+                *[measurement.path for measurement in manifest.measurements],
+                arcname_prefix=DatasetArchiveLayout.MEASUREMENTS_DIRECTORY,
+            )
+            self._write_paths_to_zip(
+                zip,
                 *[sequence.path for sequence in manifest.sequences],
                 arcname_prefix=DatasetArchiveLayout.SEQUENCES_DIRECTORY,
             )
