@@ -733,7 +733,7 @@ class Subsets:
 
     def __len__(self) -> int:
         """The length of the subset collection."""
-        return len(self.slices)
+        return len(tuple(self.__iter__()))
 
     def __getitem__(self, key: str) -> "Subsets":
         """Get a subset by key.
