@@ -3,7 +3,6 @@ from string import ascii_uppercase
 from zipfile import ZipFile
 
 import polars as pl
-import polars.testing
 import pytest
 from Bio.Seq import Seq
 from pydantic import ValidationError
