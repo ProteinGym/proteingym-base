@@ -126,12 +126,12 @@ def test_subsets_dump_creates_valid_archive(
 def subsets_with_data_distribution_scenarios(dataset_with_assay: Dataset) -> Subsets:
     """Create a Subsets instance with skewed and balanced slices."""
     slices_skewed = [
-        DatasetSlice(assays=[[True, True]]),
-        DatasetSlice(assays=[[False, False]]),
+        DatasetSlice(assays=[AssaySlice(records=[True, True])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
     ]
     slices_balanced = [
-        DatasetSlice(assays=[[True, False]]),
-        DatasetSlice(assays=[[False, True]]),
+        DatasetSlice(assays=[AssaySlice(records=[True, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, True])]),
     ]
     subsets = Subsets(
         dataset=dataset_with_assay,
@@ -188,8 +188,8 @@ def test_subsets_update_contains_new_strategy(
 ) -> None:
     """Updating subsets with a new strategy works."""
     slices = [
-        DatasetSlice(assays=[[False, False]]),
-        DatasetSlice(assays=[[False, False]]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
     ]
     subsets = Subsets(dataset=dataset_with_assay, slices=slices)
     subsets_with_data_distribution_scenarios.update(no_data=subsets)
@@ -201,8 +201,8 @@ def test_subsets_update_raises_type_error_when_slices_are_a_list(
 ) -> None:
     """Updating a list of slices should raise a TypeError."""
     slices = [
-        DatasetSlice(assays=[[False, False]]),
-        DatasetSlice(assays=[[False, False]]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
     ]
     subsets = Subsets(dataset=dataset_with_assay, slices=slices)
     match = "Cannot update subsets when slices are not a dictionary."
@@ -214,10 +214,10 @@ def test_subsets_update_raises_value_error_when_updating_with_different_dataset(
     dataset_empty: Dataset,
     dataset_with_assay: Dataset,
 ) -> None:
-    """Subsets should refer to the same dataeset when updating."""
+    """Subsets should refer to the same dataset when updating."""
     slices = [
-        DatasetSlice(assays=[[False, False]]),
-        DatasetSlice(assays=[[False, False]]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
+        DatasetSlice(assays=[AssaySlice(records=[False, False])]),
     ]
     subsets = Subsets(dataset=dataset_with_assay, slices={"no_data": slices})
     match = "Cannot update subsets with different datasets.*"
