@@ -1,6 +1,7 @@
 """The measurements on which the assays are based."""
 
 import dataclasses
+from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
@@ -13,6 +14,13 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+
+
+class MeasurementsFormat(StrEnum):
+    """Supported assay file formats."""
+
+    CSV = ".csv"
+    """A comma separated text file"""
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -136,3 +144,35 @@ class Measurements:
             description=self.description,
             fields=self.fields,
         )
+
+    def dump(
+        self,
+        *,
+        path: Path | None = None,
+        fmt: MeasurementsFormat = MeasurementsFormat.CSV,
+    ) -> Path:
+        """Dump the measurements to a file.
+
+        Args:
+            path (Path, optional): The output directory to dump the measurements
+                file in. If None, the current working directory is used.
+            fmt (MeasurementsFormat, optional): The file format. Defaults to
+                MeasurementsFormat.CSV.
+
+        Raises:
+            NotImplementedError if the file type is not supported.
+        """
+        path = path or Path.cwd()
+        if path.is_dir():
+            path = path / f"{self.name}{fmt.value}"
+
+        df = pl.DataFrame(
+            self.records,
+            schema=[field.name for field in self.fields],  # TODO: Use units
+        )
+        match format:
+            case MeasurementsFormat.CSV:
+                df.write_csv(path)
+            case _:
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
+        return path
