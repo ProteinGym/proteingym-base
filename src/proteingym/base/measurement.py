@@ -1,8 +1,17 @@
 """The measurements on which the assays are based."""
 
 import dataclasses
+from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, FilePath
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    FilePath,
+    SerializationInfo,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+)
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -49,3 +58,17 @@ class MeasurementsManifestSection(BaseModel):
 
     fields: list[Field]
     """The list of fields in the measurement manifest."""
+
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        return path
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
+        """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
+        return path.as_posix()
