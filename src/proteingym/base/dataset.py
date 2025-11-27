@@ -62,6 +62,24 @@ class DatasetSlice:
     """The list of assay slices. If None, all assays are included."""
 
     @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DatasetSlice":
+        """Create a dataset slice from a dictionary.
+
+        This method is useful when deserializing from JSON including the sub-objects.
+
+        Args:
+            data (dict[str, Any]): The dictionary to create the dataset slice from.
+
+        Returns:
+            The dataset slice created from the dictionary.
+        """
+        if data.get("assays") is None:
+            assays = None
+        else:
+            assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
+        return cls(assays=assays)
+
+    @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
         """Create a dataset slice from a JSON string.
 
@@ -72,11 +90,7 @@ class DatasetSlice:
             The dataset slice created from the JSON string.
         """
         data = json.loads(contents)
-        if data.get("assays") is None:
-            assays = None
-        else:
-            assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
-        return cls(assays=assays)
+        return cls.from_dict(data)
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
@@ -685,17 +699,15 @@ class Dataset(BaseModel):
 
         if duplicate_count > 0:
             warnings.warn(
-                (f"Found {duplicate_count} groups with duplicates. "
-                f"Aggregation applied: {', '.join(applied_methods)}"),
+                (
+                    f"Found {duplicate_count} groups with duplicates. "
+                    f"Aggregation applied: {', '.join(applied_methods)}"
+                ),
                 UserWarning,
-                stacklevel=2
+                stacklevel=2,
             )
 
-        df = (
-            df.group_by(group_cols)
-            .agg(agg_exprs)
-            .sort(group_cols)
-        )
+        df = df.group_by(group_cols).agg(agg_exprs).sort(group_cols)
         return df
 
 
@@ -795,11 +807,11 @@ class Subsets:
         data = json.loads(slices_str)
         if isinstance(data, dict):
             slices = {
-                key: [DatasetSlice(**slc) for slc in slc_list]
+                key: [DatasetSlice.from_dict(slc) for slc in slc_list]
                 for key, slc_list in data.items()
             }
         else:
-            slices = [DatasetSlice(**slc) for slc in data]
+            slices = [DatasetSlice.from_dict(slc) for slc in data]
         return slices
 
     @classmethod
