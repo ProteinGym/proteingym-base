@@ -85,16 +85,16 @@ class Measurements:
     name: str
     """The name of the measurement."""
 
-    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
-        default_factory=list
-    )
-    """The measurement records."""
+    description: str | None = None
+    """A brief description"""
 
     fields: list[Field] = dataclasses.field(default_factory=list)
     """The measurement fields."""
 
-    description: str | None = None
-    """A brief description"""
+    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
+        default_factory=list
+    )
+    """The measurement records."""
 
     @classmethod
     def from_manifest_section(
