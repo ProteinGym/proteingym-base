@@ -119,3 +119,21 @@ class Measurements:
             columns=columns,
             description=section.description,
         )
+
+    def as_manifest_section(self, *, path: Path) -> MeasurementsManifestSection:
+        """Converts the Measurements to a manifest section.
+
+        Args:
+            path (Path): The path to the measurements file.
+
+        Returns:
+            MeasurementsManifestSection: The manifest section representing
+            the measurements.
+        """
+        fields = [Field(name=column) for column in self.columns]
+        return MeasurementsManifestSection(
+            name=self.name,
+            path=path,
+            description=self.description,
+            fields=fields,
+        )
