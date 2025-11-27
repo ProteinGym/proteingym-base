@@ -182,3 +182,17 @@ def test_subsets_update_contains_new_strategy(
     subsets = Subsets(dataset=dataset_with_assay, slices=slices)
     subsets_with_data_distribution_scenarios.update(no_data=subsets)
     assert "no_data" in subsets_with_data_distribution_scenarios.slices
+
+
+def test_subsets_update_raises_type_error_when_slices_are_a_list(
+    dataset_with_assay,
+) -> None:
+    """Updating a list of slices should raise a TypeError."""
+    slices = [
+        DatasetSlice(assays=[[False, False]]),
+        DatasetSlice(assays=[[False, False]]),
+    ]
+    subsets = Subsets(dataset=dataset_with_assay, slices=slices)
+    match = "Cannot update subsets when slices are not a dictionary."
+    with pytest.raises(TypeError, match=match):
+        subsets.update(raises_type_error=subsets)
