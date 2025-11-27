@@ -3,7 +3,6 @@ from string import ascii_uppercase
 from zipfile import ZipFile
 
 import polars as pl
-import polars.testing
 import pytest
 from Bio.Seq import Seq
 from pydantic import ValidationError
@@ -561,6 +560,7 @@ def test_dataset_to_df_no_target(assay1: Assay, assay2: Assay) -> None:
         ],
         assays=[assay1, assay2],
     )
+
     try:
         df = dataset.to_df()
     except ValueError as e:
@@ -606,6 +606,7 @@ def test_dataset_to_df_string_target(assay1: Assay, assay2: Assay) -> None:
         ],
         assays=[assay1, assay2],
     )
+
     try:
         df = dataset.to_df(target_names="DMS Score")
     except ValueError as e:
