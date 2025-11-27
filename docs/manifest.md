@@ -84,6 +84,15 @@ sequence_alphabet = "AA"
 [ assays.variables ]
 PH = "7"
 
+[[ measurements ]]
+name = "assay"
+path = "measurements.csv"
+
+[[ measurements.fields ]]
+name = "OD"
+unit = "log10(l0 / l)"
+description = "Optical density measurement at 600nm"
+
 [[ sequences ]]
 type = "wild_type"
 alphabet = "DNA"
@@ -172,6 +181,29 @@ path = "path/to/assay.csv"
 target = "DMS_score"
 sequence = "mutated_sequence"
 ```
+
+### Measurements
+
+The measurements section contains a list of measurements from which the assay is
+created. Measurements represent observed or calculated values for specific
+targets. The measurements are optional, though, if present, they need to be
+linked to an assay.
+
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                |
+| --------- | -------- | ------------ | ----------- | -------------------------------------------------------------- |
+| `name`    | `string` | Yes          | `None`      | The name of the assay the measurements belong to.              |
+| `path`    | `string` | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
+
+### Measurement fields
+
+The fields section defines the fields in the measurements file.
+
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
+| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------- |
+| `name`        | `string`                              | Yes          | N/A         | The field name             |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.       |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the variable. |
 
 ### Sequences
 
