@@ -27,11 +27,22 @@ def test_subsets_iterate_over_strategies_raises_type_error(
 
 @pytest.mark.parametrize(
     "slices, length",
-    [([], 0), ([True, False], 2)],
+    [
+        ([], 0),
+        (
+            [
+                DatasetSlice(assays=[[True, False]]),
+                DatasetSlice(assays=[[False, True]]),
+            ],
+            2,
+        ),
+    ],
 )
-def test_subsets_length(dataset_empty: Dataset, slices: list, length: int) -> None:
+def test_subsets_length(
+    dataset_with_assay: Dataset, slices: list[DatasetSlice], length: int
+) -> None:
     """Test subsets length equal to number of slices."""
-    subsets = Subsets(dataset=dataset_empty, slices=slices)
+    subsets = Subsets(dataset=dataset_with_assay, slices=slices)
     assert len(subsets) == length
 
 
