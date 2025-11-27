@@ -163,7 +163,7 @@ class RandomSplitter:
 
             assay_slices = []
             for mask, assay in zip(masks, dataset.assays, strict=True):
-                if targets:
+                if targets is not None:
                     if not any(target in assay.columns for target in targets):
                         # Skipping the assay if none of the targets are present
                         columns = []
@@ -248,7 +248,7 @@ class KFoldSplitter:
 
             assay_slices = []
             for mask, assay in zip(masks, dataset.assays, strict=True):
-                if targets:
+                if targets is not None:
                     if not any(target in assay.columns for target in targets):
                         # Skipping the assay if none of the targets are present
                         columns = []
