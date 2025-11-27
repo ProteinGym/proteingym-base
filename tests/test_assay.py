@@ -13,6 +13,7 @@ from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
+    AssaySlice,
     AssayTarget,
     AssayVariable,
 )
@@ -106,6 +107,44 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
+
+
+def test_assay_slice_from_json_columns_and_records() -> None:
+    """Test that a assay slice can be created from a JSON string."""
+    expected = AssaySlice(
+        columns=["sequence", "DMS Score"], records=[True, False, True]
+    )
+    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
+@pytest.mark.parametrize(
+    "contents",
+    [
+        '{"columns": null, "records": [true, false, true]}',
+        '{"records": [true, false, true]}',
+    ],
+)
+def test_assay_slice_from_json_mask_records_only(contents: str) -> None:
+    """Test that a assay slice can be created from a JSON string with just records."""
+    expected = AssaySlice(records=[True, False, True])
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
+def test_assay_slice_to_json_columns_and_records() -> None:
+    """Test that a assay slice is correctly dumped to JSON."""
+    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
+    slc = AssaySlice(columns=["sequence", "DMS Score"], records=[True, False, True])
+    assert slc.to_json() == contents
+
+
+def test_assay_slice_to_json_with_columns_only() -> None:
+    """Test that a assay slice with columns only is correctly dumped to JSON."""
+    contents = '{"columns": ["sequence", "DMS Score"], "records": null}'
+    slc = AssaySlice(columns=["sequence", "DMS Score"])
+    assert slc.to_json() == contents
 
 
 def test_assay() -> None:

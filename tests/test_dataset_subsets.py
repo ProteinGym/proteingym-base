@@ -3,6 +3,7 @@ from zipfile import ZipFile
 
 import pytest
 
+from proteingym.base.assay import AssaySlice
 from proteingym.base.dataset import Dataset, DatasetSlice, Subsets
 
 
@@ -39,7 +40,9 @@ ALL_DATASET_NAMES = [
 @pytest.mark.parametrize("dataset", ALL_DATASET_NAMES, indirect=True)
 def test_subsets_iterate_over_single_full_slice(dataset: Dataset) -> None:
     """Iterating over subsets with a single full slice yields the entire dataset."""
-    slc = DatasetSlice(assays=[[True] * len(assay) for assay in dataset.assays])
+    slc = DatasetSlice(
+        assays=[AssaySlice(records=[True] * len(assay)) for assay in dataset.assays]
+    )
     subsets = Subsets(dataset=dataset, slices=[slc])
     assert list(subsets) == [dataset]
 
@@ -47,8 +50,8 @@ def test_subsets_iterate_over_single_full_slice(dataset: Dataset) -> None:
 @pytest.fixture
 def subsets_fifty_fifty(dataset_with_assay: Dataset) -> Subsets:
     """Subsets that cut a dataset with two assay records in halfs."""
-    slc1 = DatasetSlice(assays=[[True, False]])
-    slc2 = DatasetSlice(assays=[[False, True]])
+    slc1 = DatasetSlice(assays=[AssaySlice(records=[True, False])])
+    slc2 = DatasetSlice(assays=[AssaySlice(records=[False, True])])
     subsets = Subsets(dataset=dataset_with_assay, slices=[slc1, slc2])
     return subsets
 
@@ -95,3 +98,17 @@ def test_subsets_dump_creates_valid_archive(
     archive_path = subsets_fifty_fifty.dump(path=tmp_path)
     with ZipFile(archive_path, "r") as zip_:
         assert zip_.testzip() is None  # No corrupt files
+    with ZipFile(archive_path, "r") as zip:
+        assert zip.testzip() is None  # No corrupt files
+
+
+def test_dataset_slice_with_columns_slices_assay_columns(
+    dataset_with_assay: Dataset,
+) -> None:
+    """Slicing a dataset with columns should slice the assay columns."""
+    expected_columns = ["DMS Score"]
+    slc = DatasetSlice(assays=[AssaySlice(columns=["DMS Score"])])
+
+    subset = dataset_with_assay[slc]
+
+    assert all(assay.columns == expected_columns for assay in subset.assays)

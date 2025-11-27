@@ -163,3 +163,40 @@ def test_kfold_splitter_splits_contain_all_records(
         check_dtypes=False,
         check_column_order=False,
     )
+
+
+@pytest.mark.parametrize(
+    "splitter",
+    [
+        RandomSplitter(fractions=[0.5, 0.5]),
+        KFoldSplitter(n_splits=2),
+    ],
+)
+def test_splitter_splits_with_targets_columns(
+    dataset_with_assay: Dataset,
+    splitter: RandomSplitter | KFoldSplitter,
+) -> None:
+    """A split with targets should contain the target and sequence columns."""
+    expected_columns = ["sequence", "DMS Score"]
+    splits = splitter.split(dataset_with_assay, targets=["DMS Score"])
+    assays = [assay for split in splits for assay in split.assays]
+    assert all(expected_columns == assay.columns for assay in assays)
+
+
+@pytest.mark.parametrize(
+    "splitter",
+    [
+        RandomSplitter(fractions=[0.5, 0.5]),
+        KFoldSplitter(n_splits=2),
+    ],
+)
+def test_splitter_splits_with_target_not_in_all_assays(
+    dataset_with_assays: Dataset,
+    splitter: RandomSplitter | KFoldSplitter,
+) -> None:
+    """If a target is not in all assays, the assays without the targets are empty."""
+    splits = splitter.split(dataset_with_assays, targets=["stability"])
+    assays = [assay for split in splits for assay in split.assays]
+    assert all(assay.is_empty() for assay in assays if "stability" not in assay.columns)
+    # Make sure we do not lose all data
+    assert any(not split.to_df().is_empty() for split in splits)

@@ -65,16 +65,19 @@ def dataset_with_assay() -> Dataset:
     assay = Assay(
         name="assay1",
         records=[
-            (sequence1, 1.0),
-            (sequence2, 2.0),
+            (sequence1, 1.0, 1.5),
+            (sequence2, 2.0, 2.5),
         ],
-        columns=["sequence", "DMS Score"],
+        columns=["sequence", "DMS Score", "stability"],
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
         assay_variables=[AssayVariable(name="var1", description="A test variable")],
-        assay_targets=[AssayTarget(name="DMS Score", description="The DMS score")],
+        assay_targets=[
+            AssayTarget(name="DMS Score", description="The DMS score"),
+            AssayTarget(name="stability", description="The resistance to temperature"),
+        ],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -101,9 +104,9 @@ def dataset_with_assays() -> Dataset:
     assay1 = Assay(
         name="assay2",
         records=[
-            (sequence1, 1.0),
+            (sequence1, 1.0, 1.5),
         ],
-        columns=["sequence", "DMS Score"],
+        columns=["sequence", "DMS Score", "stability"],
     )
     assay2 = Assay(
         name="assay3",
@@ -116,7 +119,10 @@ def dataset_with_assays() -> Dataset:
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
         assay_variables=[AssayVariable(name="var1", description="A test variable")],
-        assay_targets=[AssayTarget(name="DMS Score", description="The DMS score")],
+        assay_targets=[
+            AssayTarget(name="DMS Score", description="The DMS score"),
+            AssayTarget(name="stability", description="The resistance to temperature"),
+        ],
         assays=[assay1, assay2],
         sequences=[],
         structures=[],
