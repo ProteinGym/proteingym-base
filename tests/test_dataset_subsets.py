@@ -168,3 +168,17 @@ def test_subsets_with_strategies_loop_over_all(
     Note that this is unlikely to be used in practice, but we test it for completeness.
     """
     assert len(subsets_with_data_distribution_scenarios) == 4
+
+
+def test_subsets_update_contains_new_strategy(
+    dataset_with_assay,
+    subsets_with_data_distribution_scenarios: Subsets,
+) -> None:
+    """Updating subsets with a new strategy works."""
+    slices = [
+        DatasetSlice(assays=[[False, False]]),
+        DatasetSlice(assays=[[False, False]]),
+    ]
+    subsets = Subsets(dataset=dataset_with_assay, slices=slices)
+    subsets_with_data_distribution_scenarios.update(no_data=subsets)
+    assert "no_data" in subsets_with_data_distribution_scenarios.slices

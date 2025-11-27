@@ -712,7 +712,7 @@ class SubsetsArchiveLayout:
     """The file containing the slices."""
 
 
-@dataclasses.dataclass(kw_only=True, frozen=True)
+@dataclasses.dataclass(kw_only=True)
 class Subsets:
     """A collection of dataset subsets (slices).
 
@@ -763,6 +763,24 @@ class Subsets:
             slices = self.slices
         for slc in slices:
             yield self.dataset[slc]
+
+    def update(self, **subsets: "Subsets") -> None:
+        """Update the subsets with other subsets.
+
+        Args:
+            **subsets (Subsets) : The subsets to update. The keys are used as
+                keys in the slices dictionary.
+        """
+        if not isinstance(self.slices, dict):
+            raise TypeError("Cannot update subsets when slices are not a dictionary.")
+        for subset in subsets.values():
+            if subset.dataset != self.dataset:
+                raise ValueError(
+                    "Cannot update subsets with different datasets."
+                    f"Got {subset.dataset} while having {self.dataset}."
+                )
+        slices = {subset_name: subset.slices for subset_name, subset in subsets.items()}
+        self.slices = {**self.slices, **slices}
 
     @staticmethod
     def _loads_slices(
