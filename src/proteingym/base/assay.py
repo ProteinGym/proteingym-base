@@ -306,7 +306,7 @@ class Assay:
             # ambiguous with the slicing operation.
             raise NotImplementedError("Getting a single record is not supported.")
         if isinstance(slc, str):
-            # This would return a vector, but we sticking with a matrix-like
+            # This would return a vector, but we are sticking with a matrix-like
             # structure.
             raise NotImplementedError(
                 "Getting a single column is not supported. "
