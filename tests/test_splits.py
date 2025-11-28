@@ -190,6 +190,24 @@ def test_splitter_splits_with_targets_columns(
         KFoldSplitter(n_splits=2),
     ],
 )
+def test_splitter_splits_share_no_sequences(
+    dataset_with_assays: Dataset,
+    splitter: RandomSplitter | KFoldSplitter,
+) -> None:
+    """Different splits must never contain the same sequences."""
+    train, valid = splitter.split(dataset_with_assays, targets=["DMS Score"])
+    train_seq = {record[0].value for assay in train.assays for record in assay.records}
+    valid_seq = {record[0].value for assay in valid.assays for record in assay.records}
+    assert train_seq.intersection(valid_seq) == set()
+
+
+@pytest.mark.parametrize(
+    "splitter",
+    [
+        RandomSplitter(fractions=[0.5, 0.5]),
+        KFoldSplitter(n_splits=2),
+    ],
+)
 def test_splitter_splits_with_target_not_in_all_assays(
     dataset_with_assays: Dataset,
     splitter: RandomSplitter | KFoldSplitter,
