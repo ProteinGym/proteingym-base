@@ -19,7 +19,7 @@ from pydantic import (
 from .assay import Assay, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
-from .references import XrefCollection
+from .publication import Publication
 from .sequence import Sequence
 from .structure import Structure
 
@@ -126,8 +126,8 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
-    crossreferences: XrefCollection = Field(default_factory=XrefCollection)
-    """External cross-references for the dataset."""
+    publication: Publication | None = None
+    """Publication information for the dataset."""
 
 
     def __or__(self, other: "Dataset") -> "Dataset":
@@ -172,9 +172,7 @@ class Dataset(BaseModel):
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
             msas=list_union(self.msas, other.msas),
-            crossreferences=XrefCollection(
-                list_union(self.crossreferences, other.crossreferences)
-            ),
+            publication=list_union(self.publication, other.publication),
         )
 
     def __eq__(self, item: Any) -> bool:
@@ -194,10 +192,10 @@ class Dataset(BaseModel):
             item.structures
         )
         is_msa_match = sort_by_name(self.msas) == sort_by_name(item.msas)
-        is_crossreferences_match = self.crossreferences == item.crossreferences
+        is_publication_match = self.publication == item.publication
         return (
             is_assay_match and is_sequence_match and is_structure_match
-            and is_msa_match and is_crossreferences_match
+            and is_msa_match and is_publication_match
         )
 
     def __contains__(self, other: Any) -> bool:
@@ -223,15 +221,15 @@ class Dataset(BaseModel):
         is_msa_subset = len(other.msas) == 0 or all(
             msa in self.msas for msa in other.msas
         )
-        is_crossreferences_subset = len(other.crossreferences) == 0 or all(
-            xref in self.crossreferences for xref in other.crossreferences
+        is_publication_subset = (
+            other.publication is None or other.publication == self.publication
         )
         return (
             is_assay_subset
             and is_sequence_subset
             and is_structure_subset
             and is_msa_subset
-            and is_crossreferences_subset
+            and is_publication_subset
         )
 
     def __getitem__(self, item: DatasetSlice) -> "Dataset":
@@ -271,7 +269,15 @@ class Dataset(BaseModel):
         lines.append(f"\t\tstructures: {len(self.structures)},")
         lines.append(f"\t\tmsas: {len(self.msas)},")
         lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
-        lines.append(f"\t\tcrossreferences: {len(self.crossreferences)},")
+        if self.publication:
+            pub_desc = (
+                self.publication.title[:60] + "..."
+                if len(self.publication.title) > 60
+                else self.publication.title
+            )
+            lines.append(f"\t\tpublication: {pub_desc},")
+        else:
+            lines.append("\t\tpublication: None,")
         lines.append(")")
         return "\n".join(lines)
 
@@ -371,6 +377,13 @@ class Dataset(BaseModel):
         )
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
+        publication = (
+            Publication.from_manifest_section(manifest.publication)
+            if manifest.publication else None
+        )
+
+
+
         return cls(
             name=manifest.name,
             description=manifest.description,
@@ -380,7 +393,7 @@ class Dataset(BaseModel):
             sequences=sequences,
             structures=structures,
             msas=msas,
-            crossreferences=XrefCollection(manifest.crossreferences),
+            publication=publication,
         )
 
     @classmethod
@@ -473,7 +486,7 @@ class Dataset(BaseModel):
                 m.as_manifest_section(path=path)
                 for m, path in zip(self.msas, data_paths.get(MSA, []), strict=True)
             ],
-            crossreferences=self.crossreferences,
+            publication=self.publication.as_manifest_section() if self.publication else None,
         )
         return manifest
 

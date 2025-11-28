@@ -2,7 +2,9 @@ import dataclasses
 from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
+from typing import Optional
 
+import requests
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -86,6 +88,18 @@ class SequenceManifestSection(BaseModel):
     path: FilePath
     """The path to the sequence file."""
 
+    uniprot_id: Optional[str] = None
+    """The UniProt identifier for this sequence."""
+
+    taxon: Optional[str] = None
+    """The taxonomic information."""
+
+    molecule_name: Optional[str] = None
+    """The molecule name."""
+
+    organism: Optional[str] = None
+    """The organism information."""
+
     @field_validator("path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
@@ -128,6 +142,50 @@ class Sequence:
     description: str | None = None
     """The description of the sequence."""
 
+    uniprot_id: Optional[str] = None
+    """The UniProt identifier for this sequence."""
+
+    taxon: Optional[str] = None
+    """The taxonomic information."""
+
+    molecule_name: Optional[str] = None
+    """The molecule name."""
+
+    organism: Optional[str] = None
+    """The organism information."""
+
+    @property
+    def uniprot_data(self) -> dict:
+        """Get UniProt data if uniprot_id is available and other fields are empty."""
+        if (self.uniprot_id and
+            not (self.taxon or self.molecule_name or self.organism)):
+            try:
+                response = requests.get(
+                    f"https://rest.uniprot.org/uniprotkb/{self.uniprot_id}",
+                    headers={"Accept": "application/json"},
+                    timeout=10
+                )
+                response.raise_for_status()
+                data = response.json()
+                taxon_id = data.get("organism", {}).get("taxonId")
+                return {
+                    "taxon": str(taxon_id) if taxon_id is not None else None,
+                    "molecule_name": (
+                        data.get("proteinDescription", {})
+                            .get("recommendedName", {})
+                            .get("fullName", {})
+                            .get("value")
+                    ),
+                    "organism": data.get("organism", {}).get("scientificName")
+                }
+            except Exception:
+                return {}
+        return {
+            "taxon": self.taxon,
+            "molecule_name": self.molecule_name,
+            "organism": self.organism
+        }
+
     def __eq__(self, item: "Sequence") -> bool:
         """Implements the equality (==) operator for Sequence.
 
@@ -152,6 +210,16 @@ class Sequence:
 
         lines.append(f"\ttype: {self.type},")
         lines.append(f"\talphabet: {self.alphabet},")
+
+        if self.uniprot_id:
+            lines.append(f"\tuniprot_id: {self.uniprot_id},")
+        if self.taxon:
+            lines.append(f"\ttaxon: {self.taxon},")
+        if self.molecule_name:
+            lines.append(f"\tmolecule_name: {self.molecule_name},")
+        if self.organism:
+            lines.append(f"\torganism: {self.organism},")
+
         value_str = str(self.value)
         if len(value_str) > 60:
             value_str = value_str[:60] + "..."
@@ -174,13 +242,26 @@ class Sequence:
         """
         sequences = SeqIO.parse(section.path, format=section.path.suffix[1:].lower())
         for i, seq in enumerate(sequences):
-            yield cls(
+            sequence = cls(
                 name=seq.name if seq.name else f"{section.path.stem}_{i}",
                 value=seq.seq,
                 description=seq.description,
                 type=section.type,
                 alphabet=section.alphabet,
+                uniprot_id=section.uniprot_id,
+                taxon=section.taxon,
+                molecule_name=section.molecule_name,
+                organism=section.organism,
             )
+
+            if (section.uniprot_id and
+                not (section.taxon or section.molecule_name or section.organism)):
+                uniprot_data = sequence.uniprot_data
+                sequence.taxon = uniprot_data.get("taxon")
+                sequence.molecule_name = uniprot_data.get("molecule_name")
+                sequence.organism = uniprot_data.get("organism")
+
+            yield sequence
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
         """Convert the sequence to a manifest section.
@@ -192,8 +273,15 @@ class Sequence:
         Returns:
             SequenceManifestSection: The manifest section for the sequence.
         """
+        current_data = self.uniprot_data
         return SequenceManifestSection(
-            path=path, alphabet=self.alphabet, type=self.type
+            path=path,
+            alphabet=self.alphabet,
+            type=self.type,
+            uniprot_id=self.uniprot_id,
+            taxon=current_data.get("taxon") or self.taxon,
+            molecule_name=current_data.get("molecule_name") or self.molecule_name,
+            organism=current_data.get("organism") or self.organism,
         )
 
     def dump(
