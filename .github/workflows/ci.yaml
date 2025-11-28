@@ -111,3 +111,21 @@ jobs:
           prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'rc') ||  contains(steps.get_version.outputs.VERSION, 'b') }}
           token: ${{ secrets.GITHUB_TOKEN }}
           generate_release_notes: true
+
+  pypi-release:
+    runs-on: ubuntu-latest
+    needs: test-release
+    environment:
+      name: pypi
+      url: https://pypi.org/p/proteingym-base
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    steps:
+      - name: Download the diststributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Create PyPI Release
+        uses: pypa/gh-action-pypi-publish@release/v1
