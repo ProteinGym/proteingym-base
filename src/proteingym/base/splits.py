@@ -13,6 +13,7 @@ import logging
 import numbers
 
 import numpy as np
+from Bio.Seq import Seq
 
 from .assay import AssaySlice
 from .dataset import Dataset, DatasetSlice, Subsets
@@ -75,6 +76,26 @@ def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
     mask = [False] * length
     for index in indices:
         mask[index] = True
+    return mask
+
+
+def _sequences_to_mask(selection: list[Seq], *, all_sequences: list[Seq]) -> list[bool]:
+    """Cast a list of indices to a boolean mask.
+
+    The indices in the input list are set to True in the output mask, while all other
+    positions are set to False.
+
+    Args:
+        selection: List of sequences for which the mask shall be True
+        all_sequences: List of sequences at each position of mask
+
+    Returns:
+        list[bool]: Boolean mask with True at the specified indices.
+    """
+    mask = [False] * len(all_sequences)
+    for index, seq in enumerate(all_sequences):
+        if seq in selection:
+            mask[index] = True
     return mask
 
 
@@ -145,20 +166,25 @@ class RandomSplitter:
         Returns:
             Subsets: The subsets containing the splits.
         """
+        sequences = [
+            record[0].value for assay in dataset.assays for record in assay.records
+        ]
+        unique_sequences = list(set(sequences))
+        self.random_state.shuffle(unique_sequences)
+
         records_shape = tuple(len(assay) for assay in dataset.assays)
-        indices = list(range(sum(records_shape)))
-        self.random_state.shuffle(indices)
 
         # Ensure all items are used due to rounding errors by treating the last
         # fraction separately
-        sizes = [int(round(f * len(indices))) for f in self.fractions[:-1]]
-        sizes.append(len(indices) - sum(sizes))
+        sizes = [int(round(f * len(unique_sequences))) for f in self.fractions[:-1]]
+        sizes.append(len(unique_sequences) - sum(sizes))
 
         slices, offset = [], 0
         for size in sizes:
-            index_slice = indices[offset : offset + size]
+            sequence_slice = unique_sequences[offset : offset + size]
             masks = _reshape_list(
-                _cast_indices_to_mask(index_slice, length=len(indices)), records_shape
+                _sequences_to_mask(sequence_slice, all_sequences=sequences),
+                records_shape,
             )
 
             assay_slices = []
