@@ -11,6 +11,10 @@ repos:
   rev: v5.0.0
   hooks:
     - id: check-merge-conflict
+
+- repo: https://github.com/markdownlint/markdownlint
+  rev: v0.15.0
+  hooks:
     - id: markdownlint/markdownlint
 
 - repo: https://github.com/abravalheri/validate-pyproject
