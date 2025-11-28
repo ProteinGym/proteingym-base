@@ -138,29 +138,46 @@ def dataset_with_assay_raw() -> Dataset:
 @pytest.fixture
 def dataset_with_assays() -> Dataset:
     """A dataset containing multiple assays."""
-    sequence1 = Sequence(
-        name="seq1",
-        value=Seq("ACDEFG"),
-        type=SequenceType.WILD_TYPE,
-        alphabet=SequenceAlphabet.AA,
-    )
-    sequence2 = Sequence(
-        name="seq2",
-        value=Seq("GFEDCA"),
-        type=SequenceType.WILD_TYPE,
-        alphabet=SequenceAlphabet.AA,
-    )
+    sequences = [
+        Sequence(
+            name=f"seq{i}",
+            value=Seq(s),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        )
+        for i, s in enumerate(
+            ["AA", "CC", "DD", "EE", "FF", "GG", "HH", "II", "JJ", "KK"]
+        )
+    ]
     assay1 = Assay(
         name="assay2",
         records=[
-            (sequence1, 1.0, 1.5),
+            (sequences[0], 1.1, 1.5),
+            (sequences[1], 1.1, 1.5),
+            (sequences[2], 1.1, 1.5),
+            (sequences[3], 1.1, 1.5),
+            (sequences[4], 1.1, 1.5),
+            (sequences[5], 1.1, 1.5),
+            (sequences[6], 1.1, 1.5),
+            (sequences[7], 1.1, 1.5),
+            (sequences[8], 1.1, 1.5),
+            (sequences[9], 1.1, 1.5),
         ],
         columns=["sequence", "DMS Score", "stability"],
     )
     assay2 = Assay(
         name="assay3",
         records=[
-            (sequence2, 2.0),
+            (sequences[0], 1.0),
+            (sequences[1], 1.0),
+            (sequences[2], 1.0),
+            (sequences[3], 1.0),
+            (sequences[4], 1.0),
+            (sequences[5], 1.0),
+            (sequences[6], 1.0),
+            (sequences[7], 1.0),
+            (sequences[8], 1.0),
+            (sequences[9], 1.0),
         ],
         columns=["sequence", "DMS Score"],
     )
