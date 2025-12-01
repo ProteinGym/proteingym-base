@@ -91,8 +91,12 @@ class SequenceManifestSection(BaseModel):
     uniprot_id: Optional[str] = None
     """The UniProt identifier for this sequence."""
 
-    taxon: Optional[str] = None
-    """The taxonomic information."""
+    taxon_id: Optional[str] = None
+    """The taxonomic ID. For precise lookup"""
+
+    taxon_lineage: Optional[str] = None
+    """The root of taxonomic lineage information.
+    For grouping datasets into main taxons"""
 
     molecule_name: Optional[str] = None
     """The molecule name."""
@@ -145,8 +149,12 @@ class Sequence:
     uniprot_id: Optional[str] = None
     """The UniProt identifier for this sequence."""
 
-    taxon: Optional[str] = None
-    """The taxonomic information."""
+    taxon_id: Optional[str] = None
+    """The taxonomic ID. For precise lookup"""
+
+    taxon_lineage: Optional[str] = None
+    """The root of taxonomic lineage information.
+    For grouping datasets into main taxons"""
 
     molecule_name: Optional[str] = None
     """The molecule name."""
@@ -158,7 +166,8 @@ class Sequence:
     def uniprot_data(self) -> dict:
         """Get UniProt data if uniprot_id is available and other fields are empty."""
         if (self.uniprot_id and
-            not (self.taxon or self.molecule_name or self.organism)):
+            not (self.taxon_id or self.taxon_lineage
+                 or self.molecule_name or self.organism)):
             try:
                 response = requests.get(
                     f"https://rest.uniprot.org/uniprotkb/{self.uniprot_id}",
@@ -168,8 +177,13 @@ class Sequence:
                 response.raise_for_status()
                 data = response.json()
                 taxon_id = data.get("organism", {}).get("taxonId")
+                lineage_list = data.get("organism", {}).get("lineage", [])
+                taxon_lineage = lineage_list[0] if lineage_list else None
                 return {
-                    "taxon": str(taxon_id) if taxon_id is not None else None,
+                    "taxon_id": str(taxon_id) if taxon_id is not None else None,
+                    "taxon_lineage": (
+                        str(taxon_lineage) if taxon_lineage is not None else None
+                    ),
                     "molecule_name": (
                         data.get("proteinDescription", {})
                             .get("recommendedName", {})
@@ -181,7 +195,8 @@ class Sequence:
             except Exception:
                 return {}
         return {
-            "taxon": self.taxon,
+            "taxon_id": self.taxon_id,
+            "taxon_lineage": self.taxon_lineage,
             "molecule_name": self.molecule_name,
             "organism": self.organism
         }
@@ -213,8 +228,10 @@ class Sequence:
 
         if self.uniprot_id:
             lines.append(f"\tuniprot_id: {self.uniprot_id},")
-        if self.taxon:
-            lines.append(f"\ttaxon: {self.taxon},")
+        if self.taxon_id:
+            lines.append(f"\ttaxon_id: {self.taxon_id},")
+        if self.taxon_lineage:
+            lines.append(f"\ttaxon_lineage: {self.taxon_lineage},")
         if self.molecule_name:
             lines.append(f"\tmolecule_name: {self.molecule_name},")
         if self.organism:
@@ -249,15 +266,18 @@ class Sequence:
                 type=section.type,
                 alphabet=section.alphabet,
                 uniprot_id=section.uniprot_id,
-                taxon=section.taxon,
+                taxon_id=section.taxon_id,
+                taxon_lineage=section.taxon_lineage,
                 molecule_name=section.molecule_name,
                 organism=section.organism,
             )
 
             if (section.uniprot_id and
-                not (section.taxon or section.molecule_name or section.organism)):
+                not (section.taxon_id or section.taxon_lineage or
+                     section.molecule_name or section.organism)):
                 uniprot_data = sequence.uniprot_data
-                sequence.taxon = uniprot_data.get("taxon")
+                sequence.taxon_id = uniprot_data.get("taxon_id")
+                sequence.taxon_lineage = uniprot_data.get("taxon_lineage")
                 sequence.molecule_name = uniprot_data.get("molecule_name")
                 sequence.organism = uniprot_data.get("organism")
 
@@ -279,7 +299,8 @@ class Sequence:
             alphabet=self.alphabet,
             type=self.type,
             uniprot_id=self.uniprot_id,
-            taxon=current_data.get("taxon") or self.taxon,
+            taxon_id=current_data.get("taxon_id") or self.taxon_id,
+            taxon_lineage=current_data.get("taxon_lineage") or self.taxon_lineage,
             molecule_name=current_data.get("molecule_name") or self.molecule_name,
             organism=current_data.get("organism") or self.organism,
         )

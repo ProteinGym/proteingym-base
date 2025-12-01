@@ -57,6 +57,7 @@ class PublicationManifestSection(BaseModel):
                     timeout=10
                 )
                 response.raise_for_status()
+                response.encoding = 'utf-8'
                 fields = re.findall(r'(\w+)=\{([^}]+)\}', response.text)
                 queried_data = dict(fields)
 
@@ -149,3 +150,17 @@ class Publication(BaseModel):
         cls, section: PublicationManifestSection) -> Self:
         """Create a Publication instance from a manifest section."""
         return cls(**section.model_dump(exclude_none=True))
+
+    def __repr__(self) -> str:
+        """Return a string representation of the Publication object."""
+        def _truncate(value: Optional[str]) -> str:
+            return value[:60] + "..." if value and len(value) > 60 else value
+
+        fields = [
+            'title', 'authors', 'doi', 'journal',
+            'volume', 'number', 'year', 'pages']
+        lines = ["Publication("] + [
+            f"\t{field}: {_truncate(getattr(self, field)) or 'None'}, "
+            for field in fields
+        ]
+        return "\n".join(lines) + "\n)"
