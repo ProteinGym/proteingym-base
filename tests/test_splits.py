@@ -168,7 +168,7 @@ def test_kfold_splitter_splits_contain_all_records(
     # folds will have the records spread over multiple assays
     pl.testing.assert_frame_equal(
         dataset_with_assays.to_df(),
-        dataset_with_all_splits.to_df(),
+        dataset_with_all_splits.to_df(),  # noqa
         check_dtypes=False,
         check_column_order=False,
     )
