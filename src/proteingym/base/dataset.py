@@ -160,6 +160,10 @@ class Dataset(BaseModel):
 
             return union_with_unique_names
 
+        # We expect only single publication,
+        # and to be the same between dataset splits
+        publication = self.publication or other.publication
+
         return Dataset(
             name=f"{self.name}_union_{other.name}",
             description=(
@@ -172,7 +176,7 @@ class Dataset(BaseModel):
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
             msas=list_union(self.msas, other.msas),
-            publication=list_union(self.publication, other.publication),
+            publication=publication,
         )
 
     def __eq__(self, item: Any) -> bool:
@@ -221,6 +225,9 @@ class Dataset(BaseModel):
         is_msa_subset = len(other.msas) == 0 or all(
             msa in self.msas for msa in other.msas
         )
+        # If none its always a subset of any set
+        # If other.pub == self.pub, other is a subset
+        # Other is not a subset when other != self
         is_publication_subset = (
             other.publication is None or other.publication == self.publication
         )
@@ -486,7 +493,10 @@ class Dataset(BaseModel):
                 m.as_manifest_section(path=path)
                 for m, path in zip(self.msas, data_paths.get(MSA, []), strict=True)
             ],
-            publication=self.publication.as_manifest_section() if self.publication else None,
+            publication=(
+                self.publication.as_manifest_section() if
+                self.publication else None
+            ),
         )
         return manifest
 

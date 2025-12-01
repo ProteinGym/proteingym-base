@@ -7,6 +7,7 @@ from Bio.SeqRecord import SeqRecord
 from proteingym.base.assay import Assay, AssayTarget, AssayVariable
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
+from proteingym.base.publication import Publication
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
 
@@ -277,6 +278,29 @@ def dataset_with_msas() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_publication() -> Dataset:
+    """A dataset containing publication information."""
+    publication = Publication(
+        title="Test Publication",
+        authors="Test Author",
+        journal="Test Journal",
+        year="2023",
+        doi="10.1000/test",
+    )
+    dataset = Dataset(
+        name="dataset_with_publication",
+        description="A dataset containing publication information.",
+        assay_variables=[],
+        assays=[],
+        sequences=[],
+        structures=[],
+        msas=[],
+        publication=publication,
+    )
+    return dataset
+
+
+@pytest.fixture
 def dataset_with_everything(
     dataset_with_assays: Dataset,
     dataset_with_sequences: Dataset,
@@ -306,6 +330,7 @@ def datasets(
     dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
     dataset_with_msas: Dataset,
+    dataset_with_publication: Dataset,
     dataset_with_everything: Dataset,
 ) -> list[Dataset]:
     """All test datasets."""
@@ -320,6 +345,7 @@ def datasets(
         dataset_with_structures,
         dataset_with_msa,
         dataset_with_msas,
+        dataset_with_publication,
         dataset_with_everything,
     ]
 
