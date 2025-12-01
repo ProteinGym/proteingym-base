@@ -8,8 +8,9 @@ from proteingym.base.dataset import Dataset, Subsets
 from proteingym.base.splits import (
     KFoldSplitter,
     RandomSplitter,
-    _cast_indices_to_mask,
-    _reshape_list,
+    _cast_indices_to_mask,  # noqa
+    _reshape_list,  # noqa
+    _unique_sequences_for_targets,  # noqa
 )
 
 
@@ -61,6 +62,14 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
     splitter = RandomSplitter(fractions)
     subsets = splitter.split(dataset_empty)
     assert len(subsets) == len(fractions)
+
+
+def test_unique_sequences_for_targets(dataset_with_assay):
+    result = _unique_sequences_for_targets(dataset_with_assay, ["stability"])
+    expected = [r[0].value for r in dataset_with_assay.assays[0].records]
+    assert sorted(result) == sorted(expected)
+    result = _unique_sequences_for_targets(dataset_with_assay, ["foo"])
+    assert not result
 
 
 @pytest.mark.parametrize(
@@ -189,6 +198,7 @@ def test_splitter_splits_with_targets_columns(
         RandomSplitter(fractions=[0.5, 0.5]),
         KFoldSplitter(n_splits=2),
     ],
+    ids=lambda splitter: splitter.__class__.__name__,
 )
 def test_splitter_splits_share_no_sequences(
     dataset_with_assays: Dataset,
