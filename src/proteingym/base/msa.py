@@ -222,7 +222,7 @@ class MSA:
 
     @classmethod
     def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
-        """Create a MSA instance from a manifest section.
+        """Create an MSA instance from a manifest section.
 
         Raises :
             NotImplementedError if the file type is not supported.

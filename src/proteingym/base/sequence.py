@@ -59,7 +59,7 @@ class SequenceAlphabet(StrEnum):
     """RNA sequence containing ACGU nucleotides"""
 
     AA = "AA"
-    """Amino acid sequence containing the twenty natural occuring nucleotides"""
+    """Amino acid sequence containing the twenty natural occurring nucleotides"""
 
 
 class SequenceManifestSection(BaseModel):

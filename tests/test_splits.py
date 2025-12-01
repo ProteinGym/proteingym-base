@@ -155,7 +155,7 @@ def test_kfold_splitter_splits_contain_all_records(
     splitter = KFoldSplitter(n_splits=n_splits)
     subsets = splitter.split(dataset_with_assays)
     dataset_with_all_splits = functools.reduce(lambda d1, d2: d1 | d2, subsets)
-    # Using a dataframe comparision here as the dataset reconstructed from the
+    # Using a dataframe comparison here as the dataset reconstructed from the
     # folds will have the records spread over multiple assays
     pl.testing.assert_frame_equal(
         dataset_with_assays.to_df(),

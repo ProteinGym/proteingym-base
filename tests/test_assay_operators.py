@@ -117,7 +117,7 @@ def test_assay_empty_in_assay_with_record() -> None:
 
 
 def test_assay_contains_subset() -> None:
-    """An subset should be part of the assay."""
+    """A subset should be part of the assay."""
     assay = Assay(
         name="Test Assay",
         records=[

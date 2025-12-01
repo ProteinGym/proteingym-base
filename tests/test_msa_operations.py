@@ -10,7 +10,7 @@ from proteingym.base.msa import MSA
 
 
 def test_msa_not_equals_integer():
-    """A MSA should not equal an integer."""
+    """An MSA should not equal an integer."""
     alignment = MultipleSeqAlignment(
         [
             SeqRecord(Seq("ACDEFG"), id="seq1"),

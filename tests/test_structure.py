@@ -228,7 +228,7 @@ def test_structure_dump_to_cif(tmp_path: Path, bio_structure: BioStructure) -> N
 
     # There is an inconsistency in biopython that loads the full name of an Atom
     # differently for a PDB and CIF file - the full name is trimmed for the
-    # later. Hence, we overwrite the fullname here before the assertion.
+    # latter. Hence, we overwrite the fullname here before the assertion.
     list(bio_structure.get_atoms())[0].fullname = "CA"
     loaded_structure = MMCIFParser().get_structure("test", path)
     assert loaded_structure.strictly_equals(bio_structure)
@@ -327,7 +327,7 @@ def test_dataset_with_structure_dump_from_path_unit(
         assert loaded_structure.value == structure.value
 
 
-def test_dataset_failes_with_duplicate_structure_names() -> None:
+def test_dataset_fails_with_duplicate_structure_names() -> None:
     """A dataset fails if there are duplicate structure names."""
     duplicate_names = ["duplicate1", "duplicate2"]
     structure1 = Structure(name=duplicate_names[0], value=BioStructure("test"))
