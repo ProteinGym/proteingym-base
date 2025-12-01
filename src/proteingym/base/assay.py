@@ -489,7 +489,7 @@ class Assay:
 
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}{fmt.value}"
+            path /= f"{self.name}{fmt.value}"
 
         df = pl.DataFrame(
             self.records,

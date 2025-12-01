@@ -876,7 +876,7 @@ class Subsets:
             path = Path(path)
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.dataset.name}{SubsetsArchiveLayout.SUFFIX}"
+            path /= f"{self.dataset.name}{SubsetsArchiveLayout.SUFFIX}"
         # While a SE practice is to avoid IO to disk where possible,
         # we use a temporary directory here as long as dataset dump requires
         # it.

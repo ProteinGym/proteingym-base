@@ -218,7 +218,7 @@ class Sequence:
             raise ValueError(f"Unsupported sequence format: {fmt}")
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}.{fmt.value}"
+            path /= f"{self.name}.{fmt.value}"
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )
