@@ -238,7 +238,7 @@ def test_as_manifest_section(tmp_path: Path) -> None:
         ],
         columns=["sequence", "DMS Score"],
     )
-    path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
     assert "DMS Score" in manifest.path.read_text()
     assert "sequence" in manifest.path.read_text()
@@ -367,7 +367,7 @@ def test_as_manifest_section_with_no_records(tmp_path: Path) -> None:
         name="assay",
         records=[],
     )
-    path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
     assert manifest.name == "assay"
     assert manifest.sequence_alphabet is None
@@ -399,7 +399,7 @@ def test_assay_dump(tmp_path: Path) -> None:
         ],
         columns=["sequence", "DMS Score"],
     )
-    dumped_path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    dumped_path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     assert dumped_path == tmp_path / "assay.csv"
     assert (tmp_path / "assay.csv").exists()
     content = dumped_path.read_text()

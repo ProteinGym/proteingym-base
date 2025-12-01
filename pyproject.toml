@@ -60,4 +60,5 @@ select = [
     "I", # isort
     # "C", # flake8-comprehensions
     "B", # flake8-bugbear
+    "A", # flake8-builtins
 ]

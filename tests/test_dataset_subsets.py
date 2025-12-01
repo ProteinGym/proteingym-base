@@ -148,8 +148,8 @@ def test_subsets_dump_from_path_is_unit_function_with_strategies(
     archive_path = subsets_with_data_distribution_scenarios.dump(path=tmp_path)
     subsets_recovered = Subsets.from_path(archive_path)
     assert subsets_with_data_distribution_scenarios == subsets_recovered
-    with ZipFile(archive_path, "r") as zip:
-        assert zip.testzip() is None  # No corrupt files
+    with ZipFile(archive_path, "r") as zip_:
+        assert zip_.testzip() is None  # No corrupt files
 
 
 def test_dataset_slice_with_columns_slices_assay_columns(

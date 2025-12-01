@@ -91,9 +91,9 @@ class SequenceManifestSection(BaseModel):
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
-        format = path.suffix[1:].lower()
-        if format not in SequenceFormat:
-            raise ValueError(f"Unsupported sequence format: {format}")
+        fmt = path.suffix[1:].lower()
+        if fmt not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {fmt}")
         return path
 
     @field_serializer("path", check_fields=True)
@@ -197,7 +197,7 @@ class Sequence:
         )
 
     def dump(
-        self, *, path: Path | None = None, format: SequenceFormat = SequenceFormat.FASTA
+        self, *, path: Path | None = None, fmt: SequenceFormat = SequenceFormat.FASTA
     ) -> Path:
         """Dump the sequence to a file in `path` directory.
 
@@ -209,18 +209,18 @@ class Sequence:
         Args:
             path (Path): The output directory path to dump the sequence to. If
                 None, the current working directory is used.
-            format (SequenceFormat): The format to dump the sequence in.
+            fmt (SequenceFormat): The format to dump the sequence in.
 
         Raises:
             ValueError: If the path does not have a valid sequence file extension.
         """
-        if format not in SequenceFormat:
-            raise ValueError(f"Unsupported sequence format: {format}")
+        if fmt not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {fmt}")
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}.{format.value}"
+            path = path / f"{self.name}.{fmt.value}"
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )
-        SeqIO.write(record, path, format.value)
+        SeqIO.write(record, path, fmt.value)
         return path
