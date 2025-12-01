@@ -104,6 +104,7 @@ def dataset_with_assays() -> Dataset:
         name="assay2",
         records=[
             (sequences[0], 1.1, 1.5),
+            (sequences[0], 1.2, 1.4),  # duplicate sequence to handle that
             (sequences[1], 1.1, 1.5),
             (sequences[2], 1.1, 1.5),
             (sequences[3], 1.1, 1.5),
