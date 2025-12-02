@@ -42,7 +42,7 @@ path = "src/proteingym/base/__about__.py"
 packages = ["src/proteingym/"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "README.md"]
+testpaths = ["tests", "README.md", "src"]
 addopts = "--doctest-modules --doctest-glob='*.md' --cov=proteingym.base --cov-branch --cov-report xml --cov-fail-under=80"
 filterwarnings = [
     'ignore:.*Aggregation applied.*:UserWarning',
