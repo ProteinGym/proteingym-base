@@ -337,6 +337,7 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
     Args:
         request (pytest.FixtureRequest): The pytest request object.
             Expecting to contain the dataset name in `request.param`.
+        datasets: a list of named datasets.
 
     Returns:
         Dataset: The dataset with the requested name.

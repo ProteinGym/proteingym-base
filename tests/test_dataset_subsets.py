@@ -71,7 +71,7 @@ def test_subsets_iterate_over_single_full_slice(dataset: Dataset) -> None:
 
 @pytest.fixture
 def subsets_fifty_fifty(dataset_with_assay: Dataset) -> Subsets:
-    """Subsets that cut a dataset with two assay records in halfs."""
+    """Subsets that cut a dataset with two assay records in halves."""
     slc1 = DatasetSlice(assays=[AssaySlice(records=[True, False])])
     slc2 = DatasetSlice(assays=[AssaySlice(records=[False, True])])
     subsets = Subsets(dataset=dataset_with_assay, slices=[slc1, slc2])
@@ -81,7 +81,7 @@ def subsets_fifty_fifty(dataset_with_assay: Dataset) -> Subsets:
 def test_subsets_iterate_over_dataset_cut_in_half(
     subsets_fifty_fifty: Subsets,
 ) -> None:
-    """Iterating over subsets which cuts the dataset in halfs yields two datasets."""
+    """Iterating over subsets which cuts the dataset in halves yields two datasets."""
     datasets = list(subsets_fifty_fifty)
     assert len(datasets) == 2
     assert datasets[0] != datasets[1]

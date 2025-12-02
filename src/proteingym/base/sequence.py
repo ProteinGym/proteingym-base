@@ -59,7 +59,7 @@ class SequenceAlphabet(StrEnum):
     """RNA sequence containing ACGU nucleotides"""
 
     AA = "AA"
-    """Amino acid sequence containing the twenty natural occuring nucleotides"""
+    """Amino acid sequence containing the twenty natural occurring nucleotides"""
 
 
 class SequenceManifestSection(BaseModel):
@@ -87,6 +87,7 @@ class SequenceManifestSection(BaseModel):
     """The path to the sequence file."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
@@ -218,7 +219,7 @@ class Sequence:
             raise ValueError(f"Unsupported sequence format: {fmt}")
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}.{fmt.value}"
+            path /= f"{self.name}.{fmt.value}"
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )

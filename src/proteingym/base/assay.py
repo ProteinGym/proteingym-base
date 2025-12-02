@@ -112,6 +112,7 @@ class AssayManifestSection(BaseModel):
     """The path to the assay file, csv only."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
@@ -489,7 +490,7 @@ class Assay:
 
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}{fmt.value}"
+            path /= f"{self.name}{fmt.value}"
 
         df = pl.DataFrame(
             self.records,

@@ -28,7 +28,7 @@ def setup_logger(*, level: int = logging.CRITICAL) -> None:
     """Set up the logger for the application.
 
     Args:
-        log_level (int): The logging level to set. Defaults to
+        level (int): The logging level to set. Defaults to
            `logging.CRITICAL`.
     """
     logger = logging.getLogger("proteingym.base")

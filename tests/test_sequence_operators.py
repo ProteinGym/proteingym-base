@@ -44,7 +44,7 @@ def test_sequence_with_data_equals_itself() -> None:
     assert sequence == sequence
 
 
-def test_sequence_with_diffent_value_not_equals() -> None:
+def test_sequence_with_different_value_not_equals() -> None:
     """A sequence with different value should not equal."""
     sequence1 = Sequence(
         name="Test Sequence",

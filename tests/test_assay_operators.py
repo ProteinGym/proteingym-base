@@ -117,7 +117,7 @@ def test_assay_empty_in_assay_with_record() -> None:
 
 
 def test_assay_contains_subset() -> None:
-    """An subset should be part of the assay."""
+    """A subset should be part of the assay."""
     assay = Assay(
         name="Test Assay",
         records=[
@@ -667,7 +667,7 @@ def seq1() -> Sequence:
     """A test sequence 1."""
     seq1 = Sequence(
         name="seq1",
-        value="APC",
+        value=Seq("APC"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
@@ -679,7 +679,7 @@ def seq2() -> Sequence:
     """A test sequence 2."""
     seq2 = Sequence(
         name="seq2",
-        value="GTC",
+        value=Seq("GTC"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
@@ -713,7 +713,7 @@ def test_assay_slice_column_string_raises_not_implemented_error(
     with pytest.raises(
         NotImplementedError, match="Getting a single column is not supported."
     ):
-        assay["stability"]
+        assay["stability"] # noqa
 
 
 def test_assay_slice_column_string_raises_key_error_for_unknown_column(
@@ -727,7 +727,7 @@ def test_assay_slice_column_string_raises_key_error_for_unknown_column(
     )
 
     with pytest.raises(KeyError, match=r"Undefined columns: {'unknown'}"):
-        assay[["sequence", "unknown"]]
+        assay[["sequence", "unknown"]] # noqa
 
 
 def test_assay_slice_column(seq1: Sequence, seq2: Sequence) -> None:

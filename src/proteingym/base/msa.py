@@ -101,6 +101,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
     """Additional metadata for the multiple sequence alignment."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Extend the path with the `relative_to_path` from the context."""
 
@@ -109,6 +110,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
         return path
 
     @field_validator("weights_path", mode="before", check_fields=True)
+    @classmethod
     def validate_weights_path(
         cls, weights_path: Path | None, info: ValidationInfo
     ) -> Path | None:
@@ -127,9 +129,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
         return weights_path
 
     @model_validator(mode="after")
-    def check_weights_and_weights_path(
-        self, info: ValidationInfo
-    ) -> "MSAManifestSection":
+    def check_weights_and_weights_path(self) -> "MSAManifestSection":
         """Ensure that both weights and weights_path are not provided together."""
 
         if self.weights and self.weights_path:
@@ -222,7 +222,7 @@ class MSA:
 
     @classmethod
     def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
-        """Create a MSA instance from a manifest section.
+        """Create an MSA instance from a manifest section.
 
         Raises :
             NotImplementedError if the file type is not supported.

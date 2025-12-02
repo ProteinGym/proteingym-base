@@ -186,7 +186,7 @@ def a3m_file(tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment) 
 
 
 def test_msa_from_manifest_section_with_a3m(a3m_file: Path) -> None:
-    """A MSA can be created from a manifest section with A3M file."""
+    """An MSA can be created from a manifest section with A3M file."""
     section = MSAManifestSection(path=a3m_file, format="fasta")  # noqa
 
     msa = MSA.from_manifest_section(section)
@@ -207,7 +207,7 @@ def weights_file(tmp_path: Path) -> Path:
 def test_msa_from_manifest_section_with_weights_path(
     fasta_file: Path, weights_file: Path
 ) -> None:
-    """A MSA can be created from a manifest section with weights_path."""
+    """An MSA can be created from a manifest section with weights_path."""
     section = MSAManifestSection(
         path=fasta_file,
         weights_path=weights_file,
@@ -238,7 +238,7 @@ def test_msa_manifest_section_raises_error_with_both_weights_and_weights_path(
 def test_msa_from_manifest_section_with_weights(
     fasta_file: Path,
 ) -> None:
-    """A MSA can be created from a manifest section with weights."""
+    """An MSA can be created from a manifest section with weights."""
     arr = [0.1, 0.5, 0.4]
 
     section = MSAManifestSection(
@@ -251,7 +251,7 @@ def test_msa_from_manifest_section_with_weights(
 
 
 def test_msa_as_manifest_section(fasta_file: Path) -> None:
-    """A MSA can be converted to a manifest section."""
+    """An MSA can be converted to a manifest section."""
     expected = MSAManifestSection(
         path=fasta_file,
         name="test_msa",
