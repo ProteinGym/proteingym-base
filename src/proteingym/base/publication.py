@@ -47,12 +47,28 @@ class Publication:
             queried_data = dict(fields)
             # DOI returns more, e.g. ISSNs, editors, types
             # Accepted keys follows APA entries
-            accepted_keys = ['title', 'author', 'journal', 'volume', 'number', 'year', 'pages']
+            accepted_keys = [
+                "title",
+                "author",
+                "journal",
+                "volume",
+                "number",
+                "year",
+                "pages",
+            ]
 
             if overwrite:
-                data.update(**{k: v for k, v in queried_data.items() if k in accepted_keys})
+                data.update(
+                    **{k: v for k, v in queried_data.items() if k in accepted_keys}
+                )
             else:
-                data.update(**{k: v for k, v in queried_data.items() if k in accepted_keys and data.get(k) is None})
+                data.update(
+                    **{
+                        k: v
+                        for k, v in queried_data.items()
+                        if k in accepted_keys and data.get(k) is None
+                    }
+                )
 
         return self.__class__(**data)
 

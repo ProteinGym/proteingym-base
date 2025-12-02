@@ -182,13 +182,19 @@ class Sequence:
             queried_data = {
                 "taxon_root": taxon_root,
                 "molecule_name": molecule_name,
-                "organism": organism
+                "organism": organism,
             }
-            
+
             if overwrite:
                 data.update(**{k: v for k, v in queried_data.items() if v is not None})
             else:
-                data.update(**{k: v for k, v in queried_data.items() if v is not None and data.get(k) is None})
+                data.update(
+                    **{
+                        k: v
+                        for k, v in queried_data.items()
+                        if v is not None and data.get(k) is None
+                    }
+                )
 
         return self.__class__(**data)
 
