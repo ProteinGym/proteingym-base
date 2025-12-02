@@ -2,7 +2,6 @@ import dataclasses
 from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
-from typing import Optional
 
 import requests
 from Bio import SeqIO
@@ -88,20 +87,21 @@ class SequenceManifestSection(BaseModel):
     path: FilePath
     """The path to the sequence file."""
 
-    uniprot_id: Optional[str] = None
+    uniprot_id: str | None = None
     """The UniProt identifier for this sequence."""
 
-    taxon_root: Optional[str] = None
+    taxon_root: str | None = None
     """The root of taxonomic lineage information.
     For grouping datasets into main taxons"""
 
-    molecule_name: Optional[str] = None
+    molecule_name: str | None = None
     """The molecule name."""
 
-    organism: Optional[str] = None
+    organism: str | None = None
     """The organism information."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
@@ -143,54 +143,54 @@ class Sequence:
     description: str | None = None
     """The description of the sequence."""
 
-    uniprot_id: Optional[str] = None
+    uniprot_id: str | None = None
     """The UniProt identifier for this sequence."""
 
-    taxon_root: Optional[str] = None
+    taxon_root: str | None = None
     """The root of taxonomic lineage information.
     For grouping datasets into main taxons"""
 
-    molecule_name: Optional[str] = None
+    molecule_name: str | None = None
     """The molecule name."""
 
-    organism: Optional[str] = None
+    organism: str | None = None
     """The organism information."""
 
-    def fill_from_database(self) -> "Sequence":
+    def fill_from_database(self, overwrite: bool = False) -> "Sequence":
         """Get UniProt data if uniprot_id is available and other fields are empty."""
-        if (self.uniprot_id and
-            not (self.taxon_root or self.molecule_name or self.organism)):
-            try:
-                response = requests.get(
-                    f"https://rest.uniprot.org/uniprotkb/{self.uniprot_id}",
-                    headers={"Accept": "application/json"},
-                    timeout=10
-                )
-                response.raise_for_status()
-                data = response.json()
+        data = dataclasses.asdict(self)
 
-                lineage_list = data.get("organism", {}).get("lineage", [])
-                taxon_root = lineage_list[0] if lineage_list else None
-                molecule_name = (
-                    data.get("proteinDescription", {})
-                    .get("recommendedName", {})
-                    .get("fullName", {})
-                    .get("value")
-                )
-                organism = data.get("organism", {}).get("scientificName")
+        if self.uniprot_id:
+            response = requests.get(
+                f"https://rest.uniprot.org/uniprotkb/{self.uniprot_id}",
+                headers={"Accept": "application/json"},
+                timeout=10,
+            )
+            response.raise_for_status()
+            api_data = response.json()
 
-                if not self.taxon_root and taxon_root:
-                    self.taxon_root = taxon_root
-                if not self.molecule_name and molecule_name:
-                    self.molecule_name = molecule_name
-                if not self.organism and organism:
-                    self.organism = organism
+            lineage_list = api_data.get("organism", {}).get("lineage", [])
+            taxon_root = lineage_list[0] if lineage_list else None
+            molecule_name = (
+                api_data.get("proteinDescription", {})
+                .get("recommendedName", {})
+                .get("fullName", {})
+                .get("value")
+            )
+            organism = api_data.get("organism", {}).get("scientificName")
 
-            # Do we actual raise the error
-            # if we fill_from_db() manually?
-            except Exception:
-                pass
-        return self
+            queried_data = {
+                "taxon_root": taxon_root,
+                "molecule_name": molecule_name,
+                "organism": organism
+            }
+            
+            if overwrite:
+                data.update(**{k: v for k, v in queried_data.items() if v is not None})
+            else:
+                data.update(**{k: v for k, v in queried_data.items() if v is not None and data.get(k) is None})
+
+        return self.__class__(**data)
 
     def __eq__(self, item: "Sequence") -> bool:
         """Implements the equality (==) operator for Sequence.

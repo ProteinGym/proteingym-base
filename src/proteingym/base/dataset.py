@@ -129,7 +129,6 @@ class Dataset(BaseModel):
     publication: Publication | None = Field(default=None)
     """Publication information for the dataset."""
 
-
     def __or__(self, other: "Dataset") -> "Dataset":
         """Implements the union operator (|) for Dataset.
 
@@ -198,8 +197,11 @@ class Dataset(BaseModel):
         is_msa_match = sort_by_name(self.msas) == sort_by_name(item.msas)
         is_publication_match = self.publication == item.publication
         return (
-            is_assay_match and is_sequence_match and is_structure_match
-            and is_msa_match and is_publication_match
+            is_assay_match
+            and is_sequence_match
+            and is_structure_match
+            and is_msa_match
+            and is_publication_match
         )
 
     def __contains__(self, other: Any) -> bool:
@@ -277,29 +279,7 @@ class Dataset(BaseModel):
         lines.append(f"\t\tmsas: {len(self.msas)},")
         lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
         if self.publication:
-            # should we do maybe either title or authorship as repr
-            if self.publication.title:
-                pub_desc = (
-                    self.publication.title[:60] + "..."
-                    if len(self.publication.title) > 60
-                    else self.publication.title
-                )
-                lines.append(f"\t\tpublication: {pub_desc},")
-            elif self.publication.doi:
-                pub_desc = (
-                    "DOI found, but no information found\n"
-                    "\t\tHint: run `dataset.publication.fill_from_db()` "
-                    "to populate authorship"
-                )
-                lines.append(f"\t\tpublication: {pub_desc},")
-            else:
-                raise ValueError(
-                    "The authorship information either lacks a title or DOI.\n"
-                    "Are you sure the manifest is configured correctly? \n"
-                    "Hint: configure your DOI and run "
-                    "`dataset.publication.fill_from_db()`"
-                    " to populate authorship"
-                )
+            lines.append(f"\t\tpublication: {repr(self.publication)},")
         else:
             lines.append("\t\tpublication: None,")
         lines.append(")")
@@ -367,16 +347,20 @@ class Dataset(BaseModel):
                 )
         return self
 
-    def fill_from_database(self) -> "Dataset":
+    def fill_from_database(self, overwrite: bool = False) -> "Dataset":
         """Fill metadata from database for all available databases.
         Currently supports UniProt (in sequence) and DOI (in publication) identifiers.
+
+        Args:
+            overwrite (bool): If True, overwrite existing values. If False, only fill empty fields.
 
         Returns:
             Dataset: A new Dataset instance with updated metadata.
         """
-        updated_sequences = [seq.fill_from_database() for seq in self.sequences]
-        updated_publication = (self.publication.fill_from_database() if
-                               self.publication else None)
+        updated_sequences = [seq.fill_from_database(overwrite=overwrite) for seq in self.sequences]
+        updated_publication = (
+            self.publication.fill_from_database(overwrite=overwrite) if self.publication else None
+        )
 
         return self.model_copy(
             update={"sequences": updated_sequences, "publication": updated_publication}

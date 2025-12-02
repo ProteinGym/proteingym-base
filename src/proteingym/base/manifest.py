@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import IO, Annotated, Any, Callable, Optional
+from typing import IO, Annotated, Any, Callable
 
 import toml
 from pydantic import (
@@ -122,7 +122,7 @@ class Manifest(BaseModel):
     msas: list[MSAManifestSection] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
-    publication: Optional[Publication] = Field(default=None)
+    publication: Publication | None = Field(default=None)
     """Publication information for the dataset."""
 
     @model_validator(mode="after")

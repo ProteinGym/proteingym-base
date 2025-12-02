@@ -282,7 +282,7 @@ def dataset_with_publication() -> Dataset:
     """A dataset containing publication information."""
     publication = Publication(
         title="Test Publication",
-        authors="Test Author",
+        author="Test Author",
         journal="Test Journal",
         year="2023",
         doi="10.1000/test",

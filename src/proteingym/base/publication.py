@@ -5,12 +5,13 @@ import requests
 
 
 @dataclasses.dataclass(kw_only=True, frozen=False)
-class Publication():
+class Publication:
     title: str | None = None
     """The title of the publication."""
 
-    authors: str | None = None
+    author: str | None = None
     """The authors of the publication."""
+    # singular since DOI returns author key
 
     journal: str | None = None
     """The journal of the publication."""
@@ -30,50 +31,47 @@ class Publication():
     doi: str | None = None
     """The DOI of the publication."""
 
-    def fill_from_database(self) -> "Publication":
+    def fill_from_database(self, overwrite: bool = False) -> "Publication":
         """Fill missing fields from DOI if available."""
+        data = dataclasses.asdict(self)
         if self.doi:
-            try:
-                response = requests.get(
-                    f"https://dx.doi.org/{self.doi}",
-                    headers={"Accept": "text/bibliography; style=bibtex"},
-                    allow_redirects=True,
-                    timeout=10
-                )
-                response.raise_for_status()
-                response.encoding = 'utf-8'
-                fields = re.findall(r'(\w+)=\{([^}]+)\}', response.text)
-                queried_data = dict(fields)
+            response = requests.get(
+                f"https://dx.doi.org/{self.doi}",
+                headers={"Accept": "text/bibliography; style=bibtex"},
+                allow_redirects=True,
+                timeout=10,
+            )
+            response.raise_for_status()
+            response.encoding = "utf-8"
+            fields = re.findall(r"(\w+)=\{([^}]+)\}", response.text)
+            queried_data = dict(fields)
+            # DOI returns more, e.g. ISSNs, editors, types
+            # Accepted keys follows APA entries
+            accepted_keys = ['title', 'author', 'journal', 'volume', 'number', 'year', 'pages']
 
-                if not self.title and "title" in queried_data:
-                    self.title = queried_data["title"]
-                if not self.authors and "author" in queried_data:
-                    self.authors = queried_data["author"]
-                if not self.journal and "journal" in queried_data:
-                    self.journal = queried_data["journal"]
-                if not self.volume and "volume" in queried_data:
-                    self.volume = queried_data["volume"]
-                if not self.number and "number" in queried_data:
-                    self.number = queried_data["number"]
-                if not self.year and "year" in queried_data:
-                    self.year = queried_data["year"]
-                if not self.pages and "pages" in queried_data:
-                    self.pages = queried_data["pages"]
+            if overwrite:
+                data.update(**{k: v for k, v in queried_data.items() if k in accepted_keys})
+            else:
+                data.update(**{k: v for k, v in queried_data.items() if k in accepted_keys and data.get(k) is None})
 
-            # Do we actual raise the error
-            # if we fill_from_db() manually?
-            except Exception:
-                pass
-        return self
+        return self.__class__(**data)
 
     def __repr__(self) -> str:
         """Return a string representation of the Publication object."""
+
         def _truncate(value: str | None) -> str:
             return value[:60] + "..." if value and len(value) > 60 else value
 
         fields = [
-            'title', 'authors', 'doi', 'journal',
-            'volume', 'number', 'year', 'pages']
+            "title",
+            "author",
+            "journal",
+            "volume",
+            "number",
+            "year",
+            "pages",
+            "doi",
+        ]
         lines = ["Publication("] + [
             f"\t{field}: {_truncate(getattr(self, field)) or 'None'}, "
             for field in fields
