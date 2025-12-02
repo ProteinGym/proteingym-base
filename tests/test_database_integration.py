@@ -16,6 +16,7 @@ def test_publication_doi_retrieves_correct_metadata() -> None:
     assert filled.year == "2021"
     assert "AlphaFold" in filled.title
 
+
 def test_uniprot_retrieves_correct_organism_data() -> None:
     """Test that UniProt lookup returns expected organism metadata."""
     # human insulin, well-known protein
@@ -33,6 +34,7 @@ def test_uniprot_retrieves_correct_organism_data() -> None:
     assert filled.organism == "Homo sapiens"
     assert filled.taxon_root == "Eukaryota"
     assert "insulin" in filled.molecule_name.lower()
+
 
 def test_dataset_fills_all_components() -> None:
     """Test that dataset fill_from_database works on all components."""
@@ -56,6 +58,7 @@ def test_dataset_fills_all_components() -> None:
     assert filled_dataset.sequences[0].organism is not None
     assert filled_dataset.sequences[0].taxon_root is not None
 
+
 def test_overwrite_behavior_consistency() -> None:
     """Test that overwrite behavior works consistently across components."""
     pub = Publication(
@@ -71,6 +74,7 @@ def test_overwrite_behavior_consistency() -> None:
     filled_overwrite = pub.fill_from_database(overwrite=True)
     assert filled_overwrite.title != "Wrong Title"
     assert filled_overwrite.journal == "Nature"
+
 
 def test_api_error_behavior() -> None:
     """Test that system crashes appropriately on API errors."""
