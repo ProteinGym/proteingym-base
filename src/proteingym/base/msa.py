@@ -110,6 +110,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
         return path
 
     @field_validator("weights_path", mode="before", check_fields=True)
+    @classmethod
     def validate_weights_path(
         cls, weights_path: Path | None, info: ValidationInfo
     ) -> Path | None:

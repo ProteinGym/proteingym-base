@@ -84,8 +84,9 @@ class ModelProject(BaseModel):
 
         return entry_points
 
+    @staticmethod
     def _filter_entry_points(
-        self, *entry_points: metadata.EntryPoint
+        *entry_points: metadata.EntryPoint,
     ) -> Generator[EntryPoint, None, None]:
         """Filter and extract entry points from metadata entry points."""
         for ep in entry_points:
