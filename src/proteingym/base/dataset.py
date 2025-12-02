@@ -10,6 +10,7 @@ from typing import Any, Iterator
 from zipfile import ZipFile
 
 import polars as pl
+from Bio.Seq import Seq
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -21,7 +22,7 @@ from .assay import Assay, AssaySlice, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
-from .sequence import Sequence
+from .sequence import Sequence, SequenceAlphabet, SequenceType
 from .structure import Structure
 
 
@@ -652,20 +653,34 @@ class Dataset(BaseModel):
 
         Examples:
             >>> # Use median for all numeric targets
-            >>> df = dataset.to_df(
+            >>> dataset = dummy_dataset()
+            >>> dataset.to_df(
             ...     agg=lambda col, dtype: col.median() if dtype.is_numeric()
             ...     else col.first()
-            ... )
-            >>> isinstance(df, pl.DataFrame)
-            True
-
+            ... )[["sequence", "var1", "numerical", "categorical"]]
+            shape: (2, 4)
+            ┌──────────┬──────┬───────────┬─────────────┐
+            │ sequence ┆ var1 ┆ numerical ┆ categorical │
+            │ ---      ┆ ---  ┆ ---       ┆ ---         │
+            │ str      ┆ i32  ┆ f64       ┆ str         │
+            ╞══════════╪══════╪═══════════╪═════════════╡
+            │ ACDEFG   ┆ 2    ┆ 1.25      ┆ foo         │
+            │ GFEDCA   ┆ 2    ┆ 2.25      ┆ bar         │
+            └──────────┴──────┴───────────┴─────────────┘
             >>> # Custom per-target aggregation
-            >>> df = dataset.to_df(agg={
-            ...     "score": lambda col, dtype: col.max(),
-            ...     "category": lambda col, dtype: col.mode().first()
-            ... })
-            >>> isinstance(df, pl.DataFrame)
-            True
+            >>> dataset.to_df(agg={
+            ...     "numerical": lambda col, dtype: col.max(),
+            ...     "categorical": lambda col, dtype: col.mode().sort().first()
+            ... })[["sequence", "var1", "categorical", "numerical"]]
+            shape: (2, 4)
+            ┌──────────┬──────┬─────────────┬───────────┐
+            │ sequence ┆ var1 ┆ categorical ┆ numerical │
+            │ ---      ┆ ---  ┆ ---         ┆ ---       │
+            │ str      ┆ i32  ┆ str         ┆ f64       │
+            ╞══════════╪══════╪═════════════╪═══════════╡
+            │ ACDEFG   ┆ 2    ┆ bar         ┆ 1.5       │
+            │ GFEDCA   ┆ 2    ┆ bar         ┆ 2.5       │
+            └──────────┴──────┴─────────────┴───────────┘
         """
         if isinstance(target_names, str):
             target_names = {target_names}
@@ -761,6 +776,47 @@ class Dataset(BaseModel):
 
         df = df.group_by(group_cols).agg(agg_exprs).sort(group_cols)
         return df
+
+
+def dummy_dataset() -> Dataset:
+    """Create a trivial dataset for illustrative purposes."""
+    sequence1 = Sequence(
+        name="seq1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    sequence2 = Sequence(
+        name="seq2",
+        value=Seq("GFEDCA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay = Assay(
+        name="assay1",
+        records=[
+            (sequence1, 1.0, "foo"),
+            (sequence1, 1.5, "bar"),
+            (sequence2, 2.0, "bar"),
+            (sequence2, 2.5, "bar"),
+        ],
+        variables={"var1": 2},
+        columns=["sequence", "numerical", "categorical"],
+    )
+    dataset = Dataset(
+        name="dataset_with_single_assay",
+        description="A dataset containing a single assay.",
+        assay_variables=[AssayVariable(name="var1", description="")],
+        assay_targets=[
+            AssayTarget(name="numerical", description=""),
+            AssayTarget(name="categorical", description=""),
+        ],
+        assays=[assay],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
 
 
 class SubsetsArchiveLayout:

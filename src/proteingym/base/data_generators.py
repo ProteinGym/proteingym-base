@@ -145,10 +145,9 @@ def adjust_target_with_two_dummy_features(
         ValueError: If feature_names doesn't contain exactly 2 names.
 
     Examples:
-    >>> import polars as pl
     >>> df = pl.DataFrame({'target': [10, 20, 30]})
     >>> result = adjust_target_with_two_dummy_features(df, 'target')
-    >>> result.columns.tolist()
+    >>> result.columns
     ['target', 'foo', 'bar']
     """
     feature_names = feature_names or ("foo", "bar")
