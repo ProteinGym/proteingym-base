@@ -3,6 +3,10 @@ The splits module provides functionality for splitting datasets.
 
 For example, split dataset for machine learning into training, validation, and
 test sets.
+
+TODO
+----
+- Introduce parent Splitter class when splitter patterns emerge.
 """
 
 import logging
@@ -10,6 +14,7 @@ import numbers
 
 import numpy as np
 
+from .assay import AssaySlice
 from .dataset import Dataset, DatasetSlice, Subsets
 
 logger = logging.getLogger(__name__)
@@ -26,7 +31,7 @@ def _check_random_state(
         If seed is None, return the RandomState singleton used by np.random.
         If seed is an int, return a new RandomState instance seeded with seed.
         If seed is already a RandomState instance, return it.
-        Otherwise raise ValueError.
+        Otherwise, raise ValueError.
 
     Returns
     -------
@@ -123,7 +128,7 @@ class RandomSplitter:
         self.fractions = fractions
         self.random_state = _check_random_state(random_state)
 
-    def split(self, dataset: Dataset) -> Subsets:
+    def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
         """Splits the dataset into a subsets.
 
         The dataset is split into subsets with randomized splits according to
@@ -134,6 +139,8 @@ class RandomSplitter:
 
         Args:
             dataset (Dataset): The dataset to split.
+            targets (list[str] | None): List of target column names to include in the
+                splits. If None, all columns are included.
 
         Returns:
             Subsets: The subsets containing the splits.
@@ -149,10 +156,27 @@ class RandomSplitter:
 
         slices, offset = [], 0
         for size in sizes:
-            mask = _cast_indices_to_mask(
-                indices[offset : offset + size], length=len(indices)
+            index_slice = indices[offset : offset + size]
+            masks = _reshape_list(
+                _cast_indices_to_mask(index_slice, length=len(indices)), records_shape
             )
-            dataset_slice = DatasetSlice(assays=_reshape_list(mask, records_shape))
+
+            assay_slices = []
+            for mask, assay in zip(masks, dataset.assays, strict=True):
+                if targets is not None:
+                    if not any(target in assay.columns for target in targets):
+                        # Skipping the assay if none of the targets are present
+                        columns = []
+                    else:
+                        columns = [assay.sequence_feature_name] + list(
+                            set(targets) & set(assay.columns)
+                        )
+                else:
+                    columns = None
+                assay_slice = AssaySlice(records=mask, columns=columns)
+                assay_slices.append(assay_slice)
+
+            dataset_slice = DatasetSlice(assays=assay_slices)
             slices.append(dataset_slice)
             offset += size
 
@@ -186,7 +210,7 @@ class KFoldSplitter:
         self.shuffle = shuffle
         self.random_state = _check_random_state(random_state)
 
-    def split(self, dataset: Dataset) -> list[Subsets]:
+    def split(self, dataset: Dataset, targets: list[str] | None = None) -> Subsets:
         """Splits the dataset into k folds for cross-validation.
 
         The dataset is split into k folds with approximately equal sizes. Each
@@ -195,6 +219,8 @@ class KFoldSplitter:
 
         Args:
             dataset (Dataset): The dataset to split.
+            targets (list[str] | None): List of target column names to include in the
+                splits. If None, all columns are included.
 
         Returns:
             list[Subsets]: A list of Subsets, where each Subset contains a training set
@@ -213,10 +239,27 @@ class KFoldSplitter:
 
         slices, offset = [], 0
         for size in sizes:
-            mask = _cast_indices_to_mask(
-                indices[offset : offset + size], length=len(indices)
+            index_slice = indices[offset : offset + size]
+            masks = _reshape_list(
+                _cast_indices_to_mask(index_slice, length=len(indices)), records_shape
             )
-            dataset_slice = DatasetSlice(assays=_reshape_list(mask, records_shape))
+
+            assay_slices = []
+            for mask, assay in zip(masks, dataset.assays, strict=True):
+                if targets is not None:
+                    if not any(target in assay.columns for target in targets):
+                        # Skipping the assay if none of the targets are present
+                        columns = []
+                    else:
+                        columns = [assay.sequence_feature_name] + list(
+                            set(targets) & set(assay.columns)
+                        )
+                else:
+                    columns = None
+                assay_slice = AssaySlice(records=mask, columns=columns)
+                assay_slices.append(assay_slice)
+
+            dataset_slice = DatasetSlice(assays=assay_slices)
             slices.append(dataset_slice)
             offset += size
 

@@ -3,7 +3,6 @@ from string import ascii_uppercase
 from zipfile import ZipFile
 
 import polars as pl
-import polars.testing
 import pytest
 from Bio.Seq import Seq
 from pydantic import ValidationError
@@ -14,6 +13,7 @@ from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
+    AssaySlice,
     AssayTarget,
     AssayVariable,
 )
@@ -109,6 +109,44 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
         )
 
 
+def test_assay_slice_from_json_columns_and_records() -> None:
+    """Test that an assay slice can be created from a JSON string."""
+    expected = AssaySlice(
+        columns=["sequence", "DMS Score"], records=[True, False, True]
+    )
+    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
+@pytest.mark.parametrize(
+    "contents",
+    [
+        '{"columns": null, "records": [true, false, true]}',
+        '{"records": [true, false, true]}',
+    ],
+)
+def test_assay_slice_from_json_mask_records_only(contents: str) -> None:
+    """Test that an assay slice can be created from a JSON string with just records."""
+    expected = AssaySlice(records=[True, False, True])
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
+def test_assay_slice_to_json_columns_and_records() -> None:
+    """Test that an assay slice is correctly dumped to JSON."""
+    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
+    slc = AssaySlice(columns=["sequence", "DMS Score"], records=[True, False, True])
+    assert slc.to_json() == contents
+
+
+def test_assay_slice_to_json_with_columns_only() -> None:
+    """Test that an assay slice with columns only is correctly dumped to JSON."""
+    contents = '{"columns": ["sequence", "DMS Score"], "records": null}'
+    slc = AssaySlice(columns=["sequence", "DMS Score"])
+    assert slc.to_json() == contents
+
+
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [
@@ -200,7 +238,7 @@ def test_as_manifest_section(tmp_path: Path) -> None:
         ],
         columns=["sequence", "DMS Score"],
     )
-    path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
     assert "DMS Score" in manifest.path.read_text()
     assert "sequence" in manifest.path.read_text()
@@ -329,7 +367,7 @@ def test_as_manifest_section_with_no_records(tmp_path: Path) -> None:
         name="assay",
         records=[],
     )
-    path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
     assert manifest.name == "assay"
     assert manifest.sequence_alphabet is None
@@ -361,7 +399,7 @@ def test_assay_dump(tmp_path: Path) -> None:
         ],
         columns=["sequence", "DMS Score"],
     )
-    dumped_path = assay.dump(path=tmp_path, format=AssayFormat.CSV)
+    dumped_path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     assert dumped_path == tmp_path / "assay.csv"
     assert (tmp_path / "assay.csv").exists()
     content = dumped_path.read_text()
@@ -561,6 +599,7 @@ def test_dataset_to_df_no_target(assay1: Assay, assay2: Assay) -> None:
         ],
         assays=[assay1, assay2],
     )
+
     try:
         df = dataset.to_df()
     except ValueError as e:
@@ -606,6 +645,7 @@ def test_dataset_to_df_string_target(assay1: Assay, assay2: Assay) -> None:
         ],
         assays=[assay1, assay2],
     )
+
     try:
         df = dataset.to_df(target_names="DMS Score")
     except ValueError as e:

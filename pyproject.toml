@@ -2,14 +2,9 @@
 name = "proteingym-base"
 description = "Infrastructure for protein variant effect prediction. Dataset class and tools to facilitate benchmarking."
 readme = "README.md"
-authors = [
-    { name = "Pascal Notin", email = "pascal.notin@gmail.com"},
-    { name = "Henning Redestig", email = "henning.redestig@iff.com"},
-    { name = "Karel van der Weg", email = "karel.weg@iff.com"},
-    { name = "Shu Zhao", email = "shu.zhao@xebia.com"},
-    { name = "Prashant Srivastava", email = "Prashant.Srivastava@xebia.com"},
-    { name = "Cor Zuurmond", email = "cor.zuurmond@xebia.com"},
-]
+authors = [  
+    { name = "ProteinGym team", email = "proteingym@googlegroups.com" }  
+]  
 dynamic = ["version"]  # Dynamically set hatch version using git tags
 classifiers = ["Private :: Do Not Upload"]  # Do not upload to public PYPI (by accident)
 requires-python = ">=3.12"
@@ -49,7 +44,9 @@ packages = ["src/proteingym/"]
 [tool.pytest.ini_options]
 testpaths = ["tests", "README.md"]
 addopts = "--doctest-modules --doctest-glob='*.md' --cov=proteingym.base --cov-branch --cov-report xml --cov-fail-under=80"
-
+filterwarnings = [
+    'ignore:.*Aggregation applied.*:UserWarning',
+]
 [tool.ruff]
 line-length = 88
 
@@ -63,4 +60,5 @@ select = [
     "I", # isort
     # "C", # flake8-comprehensions
     "B", # flake8-bugbear
+    "A", # flake8-builtins
 ]

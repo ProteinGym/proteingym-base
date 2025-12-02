@@ -2,7 +2,8 @@ import collections
 import dataclasses
 import itertools
 import json
-from collections.abc import Collection
+import warnings
+from collections.abc import Callable, Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Iterator
@@ -16,7 +17,7 @@ from pydantic import (
     model_validator,
 )
 
-from .assay import Assay, AssayTarget, AssayVariable
+from .assay import Assay, AssaySlice, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
@@ -58,8 +59,26 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[list[bool]] = dataclasses.field(default_factory=list)
-    """The list of assay slices as boolean masks."""
+    assays: list[AssaySlice | list[bool | str]] | None = None
+    """The list of assay slices. If None, all assays are included."""
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DatasetSlice":
+        """Create a dataset slice from a dictionary.
+
+        This method is useful when deserializing from JSON including the sub-objects.
+
+        Args:
+            data (dict[str, Any]): The dictionary to create the dataset slice from.
+
+        Returns:
+            The dataset slice created from the dictionary.
+        """
+        if data.get("assays") is None:
+            assays = None
+        else:
+            assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
+        return cls(assays=assays)
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
@@ -71,7 +90,8 @@ class DatasetSlice:
         Returns:
             The dataset slice created from the JSON string.
         """
-        return cls(**json.loads(contents))
+        data = json.loads(contents)
+        return cls.from_dict(data)
 
     def to_json(self) -> str:
         """Convert the dataset slice to a JSON string.
@@ -79,7 +99,10 @@ class DatasetSlice:
         Returns:
             A JSON string representation of the dataset slice.
         """
-        return json.dumps(dataclasses.asdict(self))
+        data = {}
+        if self.assays is not None:
+            data["assays"] = [dataclasses.asdict(slc) for slc in self.assays]
+        return json.dumps(data)
 
 
 class Dataset(BaseModel):
@@ -299,7 +322,7 @@ class Dataset(BaseModel):
             ValueError: If duplicate names are found in any of the data types.
         """
 
-        def _get_duplicate_names(items: list[BaseModel]) -> list[str]:
+        def _get_duplicate_names(items) -> list[str]:
             """Get duplicate names from a list of items."""
             name_counts = collections.Counter(item.name for item in items if item.name)
             return [name for name, count in name_counts.items() if count > 1]
@@ -377,7 +400,7 @@ class Dataset(BaseModel):
         Biopython objects: Seq, Structure, MultipleSeqAlignment,
         don't have custom JSONEncoder, thus we rely on their __str__ method
         to return a string representation in order for
-        Bio objects to be sereializable.
+        Bio objects to be serializable.
 
         See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
         """
@@ -512,9 +535,9 @@ class Dataset(BaseModel):
         )
         return manifest
 
+    @staticmethod
     def _write_paths_to_zip(
-        self,
-        zip: ZipFile,
+        zip_: ZipFile,
         *paths: Path,
         arcname: Path | None = None,
         arcname_prefix: Path = Path(),
@@ -525,7 +548,7 @@ class Dataset(BaseModel):
             "because it creates a name collision"
         )
         for path in paths:
-            zip.write(path, arcname=arcname_prefix / (arcname or path.name))
+            zip_.write(path, arcname=arcname_prefix / (arcname or path.name))
 
     def _create_archive(self, path: Path, *, temporary_directory: Path) -> Path:
         """Create a ZIP archive of the dataset."""
@@ -535,27 +558,27 @@ class Dataset(BaseModel):
         data_paths = self._dump_data(temporary_directory)
         manifest = self._create_manifest(data_paths)
         manifest_path = manifest.dump(path=temporary_directory)
-        with ZipFile(archive_path, "w") as zip:
+        with ZipFile(archive_path, "w") as zip_:
             self._write_paths_to_zip(
-                zip, manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE
+                zip_, manifest_path, arcname=DatasetArchiveLayout.MANIFEST_FILE
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[assay.path for assay in manifest.assays],
                 arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[sequence.path for sequence in manifest.sequences],
                 arcname_prefix=DatasetArchiveLayout.SEQUENCES_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[structure.path for structure in manifest.structures],
                 arcname_prefix=DatasetArchiveLayout.STRUCTURES_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[msa.path for msa in manifest.msas],
                 arcname_prefix=DatasetArchiveLayout.MSAS_DIRECTORY,
             )
@@ -584,21 +607,66 @@ class Dataset(BaseModel):
             )
         return archive_path
 
+    @staticmethod
+    def _default_aggregation_fn(col: pl.Expr, dtype: pl.DataType) -> pl.Expr:
+        """Default aggregation function that adapts to data type.
+
+        Example custom aggregation functions:
+        - lambda col, dtype: col.median()  # Use median for all
+        - lambda col, dtype: col.first()   # Use first for all
+        - lambda col, dtype: col.max() if dtype.is_numeric() else col.mode().first()
+            # Max for numeric, mode for categorical
+        """
+        if dtype.is_numeric():
+            return col.mean()
+        else:
+            return col.first()
+
     def to_df(
         self,
         *,
         target_names: Collection[str] | str | None = None,
+        agg: (
+            Callable[[pl.Expr, pl.DataType], pl.Expr]
+            | dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]]
+            | None
+        ) = None,
     ) -> pl.DataFrame:
         """Returns the dataset assay records as a Polars DataFrame.
 
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
+            agg (
+                Callable[[pl.Expr, pl.DataType], pl.Expr]
+                | dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]]
+                | None
+            ):
+                Aggregation function or mapping. Can be:
+                - Function: Applied to all targets
+                - Dict: Maps target names to specific functions
+                - None: Uses default (mean for numeric, first for categorical)
 
         Returns:
             pl.DataFrame: The DataFrame containing all records from all assays.
-        """
 
+        Examples:
+            >>> # Use median for all numeric targets
+            >>> df = dataset.to_df(
+            ...     agg=lambda col, dtype: col.median() if dtype.is_numeric()
+            ...     else col.first()
+            ... )
+            >>> isinstance(df, pl.DataFrame)
+            True
+
+            >>> # Custom per-target aggregation
+            >>> df = dataset.to_df(agg={
+            ...     "score": lambda col, dtype: col.max(),
+            ...     "category": lambda col, dtype: col.mode().first()
+            ... })
+            >>> isinstance(df, pl.DataFrame)
+            True
+        """
         if isinstance(target_names, str):
             target_names = {target_names}
         if target_names:
@@ -640,13 +708,58 @@ class Dataset(BaseModel):
             ~pl.all_horizontal([pl.col(t).is_null() for t in target_names])
         )
 
-        # Group by sequence and variables, and aggregate the target by mean
-        df = (
-            df.group_by(["sequence"] + variable_names)
-            .agg([pl.col(t).mean().alias(t) for t in target_names])
-            .sort(["sequence"] + variable_names)
-        )
+        # If no duplication no need for aggregation
+        group_cols = ["sequence"] + variable_names
+        duplicate_count = df.group_by(group_cols).len().filter(pl.col("len") > 1).height
+        if duplicate_count == 0:
+            return df.sort(group_cols)
 
+        if callable(agg):
+            agg_fn = agg
+            custom_agg = None
+        elif isinstance(agg, dict):
+            agg_fn = self._default_aggregation_fn
+            custom_agg = agg
+        else:
+            agg_fn = self._default_aggregation_fn
+            custom_agg = None
+
+        agg_exprs = []
+        applied_methods = []
+
+        for t in target_names:
+            dtype = df[t].dtype
+
+            if custom_agg and t in custom_agg:
+                try:
+                    agg_expr = custom_agg[t](pl.col(t), dtype).alias(t)
+                    agg_exprs.append(agg_expr)
+                    applied_methods.append(f"{t}: custom")
+                except Exception as e:
+                    raise ValueError(f"Custom aggregation failed for '{t}': {e}") from e
+            else:
+                try:
+                    agg_expr = agg_fn(pl.col(t), dtype).alias(t)
+                    agg_exprs.append(agg_expr)
+                    if agg_fn == self._default_aggregation_fn:
+                        method = "mean" if dtype.is_numeric() else "first"
+                    else:
+                        method = "custom"
+                    applied_methods.append(f"{t}: {method}")
+                except Exception as e:
+                    raise ValueError(f"Aggregation failed for '{t}': {e}") from e
+
+        if duplicate_count > 0:
+            warnings.warn(
+                (
+                    f"Found {duplicate_count} groups with duplicates. "
+                    f"Aggregation applied: {', '.join(applied_methods)}"
+                ),
+                UserWarning,
+                stacklevel=2,
+            )
+
+        df = df.group_by(group_cols).agg(agg_exprs).sort(group_cols)
         return df
 
 
@@ -663,7 +776,7 @@ class SubsetsArchiveLayout:
     """The file containing the slices."""
 
 
-@dataclasses.dataclass(kw_only=True, frozen=True)
+@dataclasses.dataclass(kw_only=True)
 class Subsets:
     """A collection of dataset subsets (slices).
 
@@ -674,17 +787,87 @@ class Subsets:
     dataset: Dataset
     """The dataset that is sliced."""
 
-    slices: list[DatasetSlice] = dataclasses.field(default_factory=list)
-    """The slices that create the collection of subsets."""
+    slices: list[DatasetSlice] | dict[str, list[DatasetSlice]] = dataclasses.field(
+        default_factory=dict
+    )
+    """The slices that create the collection of subsets.
+
+    Slices can be stored either as a list, or as a dict where the key is an
+    arbitrary label associated with a list of slices. The latter is useful for
+    storing slices obtained from different ways to slice the dataset and when it
+    is of interest to compare these.
+    """
 
     def __len__(self) -> int:
         """The length of the subset collection."""
-        return len(self.slices)
+        return len(tuple(self.__iter__()))
+
+    def __getitem__(self, key: str) -> "Subsets":
+        """Get a subset by key.
+
+        Args:
+            key (str): The key of the subset to get.
+
+        Returns:
+            Subset: The subset corresponding to the key.
+
+        Raises:
+            TypeError: If the slices are not stored as a dictionary.
+            KeyError: If the key is not found in the slices.
+        """
+        if not isinstance(self.slices, dict):
+            raise TypeError("Subsets slices are not stored as a dictionary.")
+        if key not in self.slices:
+            raise KeyError(f"Key '{key}' not found in subsets slices.")
+        slices = self.slices[key]
+        return Subsets(dataset=self.dataset, slices=slices)
 
     def __iter__(self) -> Iterator[Dataset]:
         """Iterate over the slices in this subset collection."""
+        if not isinstance(self.slices, list):
+            raise TypeError(
+                "Cannot iterate over subsets when slices are not a list. "
+                "Use `for split in subsets[strategy_name]:` instead."
+            )
         for slc in self.slices:
             yield self.dataset[slc]
+
+    def update(self, **subsets: "Subsets") -> None:
+        """Update the subsets with other subsets.
+
+        Args:
+            **subsets (Subsets) : The subsets to update. The keys are used as
+                keys in the slices dictionary.
+        """
+        if not isinstance(self.slices, dict):
+            raise TypeError("Cannot update subsets when slices are not a dictionary.")
+        for subset in subsets.values():
+            if subset.dataset != self.dataset:
+                raise ValueError(
+                    "Cannot update subsets with different datasets. "
+                    f"Got {subset.dataset} while having {self.dataset}."
+                )
+        slices = {subset_name: subset.slices for subset_name, subset in subsets.items()}
+        self.slices = {**self.slices, **slices}
+
+    @staticmethod
+    def _loads_slices(
+        slices_str: str,
+    ) -> list[DatasetSlice] | dict[str, list[DatasetSlice]]:
+        """Load the slices from a JSON string.
+
+        Args:
+            slices_str (str): The JSON string representation of the slices.
+        """
+        data = json.loads(slices_str)
+        if isinstance(data, dict):
+            slices = {
+                key: [DatasetSlice.from_dict(slc) for slc in slc_list]
+                for key, slc_list in data.items()
+            }
+        else:
+            slices = [DatasetSlice.from_dict(slc) for slc in data]
+        return slices
 
     @classmethod
     def from_path(cls, path: Path) -> "Subsets":
@@ -706,14 +889,30 @@ class Subsets:
         # While a SE practice is to avoid IO to disk where possible,
         # we use a temporary directory here as long as dataset dump requires
         # it.
-        with ZipFile(path, "r") as zip, TemporaryDirectory() as temp_dir:
-            dataset_archive = zip.extract(
+        with ZipFile(path, "r") as zip_, TemporaryDirectory() as temp_dir:
+            dataset_archive = zip_.extract(
                 SubsetsArchiveLayout.DATASET_ARCHIVE, path=temp_dir
             )
-            dataset = Dataset.from_path(dataset_archive)
-            slices_str = json.loads(zip.read(SubsetsArchiveLayout.SLICES_FILE))
-            slices = [DatasetSlice.from_json(slc) for slc in slices_str]
+            dataset = Dataset.from_path(Path(dataset_archive))
+            slices_str = zip_.read(SubsetsArchiveLayout.SLICES_FILE)
+            slices = cls._loads_slices(slices_str.decode())
         return cls(dataset=dataset, slices=slices)
+
+    def _dumps_slices(self) -> str:
+        """Dump the slices to a JSON string.
+
+        Returns:
+            str: The JSON string representation of the slices.
+        """
+        if isinstance(self.slices, dict):
+            data = {
+                key: [dataclasses.asdict(slc) for slc in slices]
+                for key, slices in self.slices.items()
+            }
+        else:
+            data = [dataclasses.asdict(slc) for slc in self.slices]
+        slices_str = json.dumps(data)
+        return slices_str
 
     def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the subsets.
@@ -729,13 +928,13 @@ class Subsets:
             path = Path(path)
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.dataset.name}{SubsetsArchiveLayout.SUFFIX}"
+            path /= f"{self.dataset.name}{SubsetsArchiveLayout.SUFFIX}"
         # While a SE practice is to avoid IO to disk where possible,
         # we use a temporary directory here as long as dataset dump requires
         # it.
-        with ZipFile(path, "w") as zip, TemporaryDirectory() as temp_dir:
+        with ZipFile(path, "w") as zip_, TemporaryDirectory() as temp_dir:
             dataset_archive = self.dataset.dump(path=Path(temp_dir))
-            zip.write(dataset_archive, arcname=SubsetsArchiveLayout.DATASET_ARCHIVE)
-            slices_str = json.dumps([slc.to_json() for slc in self.slices])
-            zip.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
+            zip_.write(dataset_archive, arcname=SubsetsArchiveLayout.DATASET_ARCHIVE)
+            slices_str = self._dumps_slices()
+            zip_.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
         return path

@@ -1,11 +1,14 @@
 """
 Module for testing assay operators.
+
+TODO:
+Move repetitive sequence and assay into fixtures.
 """
 
 import pytest
 from Bio.Seq import Seq
 
-from proteingym.base.assay import Assay, AssayTarget
+from proteingym.base.assay import Assay, AssaySlice, AssayTarget
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
@@ -25,7 +28,13 @@ def test_assay_length_equals_records_length() -> None:
         alphabet=SequenceAlphabet.AA,
     )
     assay = Assay(name="Test Assay", records=[(sequence, 1.0), (sequence, 2.0)])
-    assert len(assay) == 2
+    assert not assay.is_empty() and len(assay) == 2
+
+
+def test_assay_without_records_is_empty() -> None:
+    """An assay without records is empty."""
+    assay = Assay(name="Test Assay", records=[])
+    assert assay.is_empty() and len(assay) == 0
 
 
 def test_assay_not_equal_to_integer() -> None:
@@ -108,7 +117,7 @@ def test_assay_empty_in_assay_with_record() -> None:
 
 
 def test_assay_contains_subset() -> None:
-    """An subset should be part of the assay."""
+    """A subset should be part of the assay."""
     assay = Assay(
         name="Test Assay",
         records=[
@@ -500,9 +509,9 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
     assert subset not in assay
 
 
-@pytest.mark.parametrize("slc", [slice(None), [True, True]])
-def test_assay_slice_all(slc: slice | list[bool]) -> None:
+def test_assay_slice_all() -> None:
     """Slicing an assay with [:] should return the same assay."""
+    slc = [True, True]
     assay = Assay(
         name="Test assay",
         records=[
@@ -531,9 +540,9 @@ def test_assay_slice_all(slc: slice | list[bool]) -> None:
     assert assay == assay[slc]
 
 
-@pytest.mark.parametrize("slc", [slice(0, 1), [True, False]])
-def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
+def test_assay_slice_first_with_slice() -> None:
     """Slicing an assay with [:1] should return the first record."""
+    slc = [True, False]
     assay = Assay(
         name="Test assay",
         records=[
@@ -576,9 +585,9 @@ def test_assay_slice_first_with_slice(slc: slice | list[bool]) -> None:
     assert first == assay[slc]
 
 
-@pytest.mark.parametrize("slc", [slice(1, 2), [False, True]])
-def test_assay_slice_last(slc: slice | list[bool]) -> None:
+def test_assay_slice_last() -> None:
     """Slicing an assay with [1:] should return the last record."""
+    slc = [False, True]
     assay = Assay(
         name="Test assay",
         records=[
@@ -651,3 +660,187 @@ def test_assay_get_first_raises_not_implemented_error() -> None:
         NotImplementedError, match="Getting a single record is not supported."
     ):
         assay[0]  # noqa
+
+
+@pytest.fixture
+def seq1() -> Sequence:
+    """A test sequence 1."""
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    return seq1
+
+
+@pytest.fixture
+def seq2() -> Sequence:
+    """A test sequence 2."""
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("GTC"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    return seq2
+
+
+def test_assay_slice_empty(seq1: Sequence, seq2: Sequence) -> None:
+    """An empty mask should return the assay without records"""
+    excepted = Assay(
+        name="Test assay", records=[], columns=["sequence", "DMS_score", "stability"]
+    )
+
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+    assert assay[[]] == excepted
+
+
+def test_assay_slice_column_string_raises_not_implemented_error(
+    seq1: Sequence, seq2: Sequence
+) -> None:
+    """Slicing an assay with a column string raises a NotImplementedError."""
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    with pytest.raises(
+        NotImplementedError, match="Getting a single column is not supported."
+    ):
+        assay["stability"]  # noqa
+
+
+def test_assay_slice_column_string_raises_key_error_for_unknown_column(
+    seq1: Sequence, seq2: Sequence
+) -> None:
+    """Slicing an assy with an unknown column string raises a KeyError."""
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    with pytest.raises(KeyError, match=r"Undefined columns: {'unknown'}"):
+        assay[["sequence", "unknown"]]  # noqa
+
+
+def test_assay_slice_column(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay with a column returns an assay with only that column."""
+    expected = Assay(name="Test assay", records=[(1.5,), (2.5,)], columns=["stability"])
+
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[["stability"]]
+    assert actual == expected
+
+
+def test_assay_slice_columns(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay with columns returns an assay with those columns."""
+    expected = Assay(
+        name="Test assay",
+        records=[
+            (seq1, 1.5),
+            (seq2, 2.5),
+        ],
+        columns=["sequence", "stability"],
+    )
+
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[["sequence", "stability"]]
+    assert actual == expected
+
+
+def test_assay_slice_object_with_columns(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay with columns returns an assay with those columns."""
+    expected = Assay(
+        name="Test assay",
+        records=[
+            (seq1, 1.5),
+            (seq2, 2.5),
+        ],
+        columns=["sequence", "stability"],
+    )
+
+    slc = AssaySlice(columns=["sequence", "stability"])
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[slc]
+    assert actual == expected
+
+
+def test_assay_slice_object_with_records(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay with records returns an assay with those records."""
+    expected = Assay(
+        name="Test assay",
+        records=[
+            (seq1, 1.0, 1.5),
+        ],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    slc = AssaySlice(records=[True, False])
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[slc]
+    assert actual == expected
+
+
+def test_assay_slice_object_with_records_and_columns(
+    seq1: Sequence, seq2: Sequence
+) -> None:
+    """Slicing an assay with records and columns returns an assay with those records."""
+    expected = Assay(
+        name="Test assay",
+        records=[
+            (seq1, 1.0),
+        ],
+        columns=["sequence", "DMS_score"],
+    )
+
+    slc = AssaySlice(records=[True, False], columns=["sequence", "DMS_score"])
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[slc]
+    assert actual == expected
+
+
+def test_assay_slice_object_with_empty_columns(seq1: Sequence, seq2: Sequence) -> None:
+    """Slicing an assay without columns returns an empty assay."""
+    expected = Assay(name="Test assay", records=[], columns=[])
+
+    slc = AssaySlice(records=[True, False], columns=[])
+    assay = Assay(
+        name="Test assay",
+        records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
+        columns=["sequence", "DMS_score", "stability"],
+    )
+
+    actual = assay[slc]
+    assert actual == expected

@@ -28,7 +28,7 @@ def setup_logger(*, level: int = logging.CRITICAL) -> None:
     """Set up the logger for the application.
 
     Args:
-        log_level (int): The logging level to set. Defaults to
+        level (int): The logging level to set. Defaults to
            `logging.CRITICAL`.
     """
     logger = logging.getLogger("proteingym.base")
@@ -255,7 +255,7 @@ def generate_data(
     sequence_length: Annotated[
         int, typer.Option(help="Length of sequence for the sequence column")
     ] = 100,
-    format: Annotated[
+    fmt: Annotated[
         str,
         typer.Option(
             help="Output format",
@@ -274,7 +274,7 @@ def generate_data(
         feature2: Name of the second dummy feature. Defaults to "bar".
         n_rows: Number of rows to generate in the data frame. Defaults to 500.
         sequence_length: Length of sequence for the sequence column. Defaults to 100.
-        format: Output format. Currently only supports "csv". Defaults to "csv".
+        fmt: Output format. Currently only supports "csv". Defaults to "csv".
 
     Outputs:
         Prints the generated CSV data to stdout.
@@ -287,7 +287,7 @@ def generate_data(
         feature_names=[feature1, feature2],
     )
 
-    if format.lower() == "csv":
+    if fmt.lower() == "csv":
         typer.echo(output.write_csv(), nl=False)
 
 

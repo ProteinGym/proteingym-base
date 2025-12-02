@@ -187,7 +187,7 @@ class Manifest(BaseModel):
             path = Path(path)
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}.toml"
+            path /= f"{self.name}.toml"
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
         include = {key for key, value in self.model_dump().items() if value}

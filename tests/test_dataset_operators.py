@@ -59,7 +59,7 @@ def test_dataset_always_contains_dataset_empty(
     ["dataset_with_single_assay", "dataset_with_multiple_assays"],
     indirect=True,
 )
-def test_dataset_with_empty_assay_always_in_datast_with_assay(
+def test_dataset_with_empty_assay_always_in_dataset_with_assay(
     dataset_with_assay_empty: Dataset, dataset: Dataset
 ) -> None:
     """An empty assay should be contained in any dataset with assays."""

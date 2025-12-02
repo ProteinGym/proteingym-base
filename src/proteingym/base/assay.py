@@ -1,5 +1,6 @@
 import dataclasses
 import itertools
+import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
@@ -111,6 +112,7 @@ class AssayManifestSection(BaseModel):
     """The path to the assay file, csv only."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
@@ -138,6 +140,43 @@ class AssayManifestSection(BaseModel):
     def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
         """Serialize the sequence alphabet as a string."""
         return sequence_alphabet.value
+
+
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssaySlice:
+    """A slice of an assay.
+
+    Python builtin slices are also supported for slicing assays. However, if
+    both columns and records need to be sliced, this class can be used.
+
+    See :func:Assay.__getitem__ for more information.
+    """
+
+    columns: list[str] | None = None
+    """The list of column names to get. If None, all columns are included."""
+
+    records: list[bool] | None = None
+    """The boolean mask for the records. If None, all records are included."""
+
+    @classmethod
+    def from_json(cls, contents: str) -> "AssaySlice":
+        """Create an assay slice from a JSON string.
+
+        Args:
+            contents (str): The JSON string to create the assay slice from.
+
+        Returns:
+            The assay slice created from the JSON string.
+        """
+        return cls(**json.loads(contents))
+
+    def to_json(self) -> str:
+        """Convert the assay slice to a JSON string.
+
+        Returns:
+            A JSON string representation of the assay slice.
+        """
+        return json.dumps(dataclasses.asdict(self))
 
 
 @dataclasses.dataclass
@@ -177,6 +216,10 @@ class Assay:
         """The length of the assay, i.e. the number of records."""
         return len(self.records)
 
+    def is_empty(self) -> bool:
+        """Returns True if the assay has no records."""
+        return len(self) == 0
+
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
 
@@ -200,12 +243,63 @@ class Assay:
             and self.columns == item.columns
         )
 
-    def __getitem__(self, slc: slice | list[int | bool]) -> "Assay":
-        """Slice the assay to get a subset of records.
+    @staticmethod
+    def _slice_columns(assay: "Assay", slc: list[str] | None) -> "Assay":
+        """Slice the assay columns given a list of column names."""
+        is_columns_slice = (
+            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str))
+            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
+        )
+        if not is_columns_slice or slc is None:
+            return assay
+
+        undefined_columns = set(slc) - set(assay.columns)
+        if undefined_columns:
+            raise KeyError(f"Undefined columns: {undefined_columns}")
+
+        columns = list(slc)
+        if len(slc) == 0:
+            records = []
+        else:
+            column_indices = [assay.columns.index(column) for column in columns]
+            records = [
+                tuple(record[column_index] for column_index in column_indices)
+                for record in assay.records
+            ]
+        return dataclasses.replace(assay, records=records, columns=columns)
+
+    @staticmethod
+    def _slice_records(assay: "Assay", slc: list[bool] | None) -> "Assay":
+        """Slice the assay records given a slice or a boolean masks."""
+        is_records_slice = (
+            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool))
+            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
+        )
+        if not is_records_slice or slc is None:
+            return assay
+
+        if len(slc) == 0:
+            records = []
+        else:
+            records = list(itertools.compress(assay.records, slc))
+        return dataclasses.replace(assay, records=records)
+
+    def __getitem__(self, slc: AssaySlice | list[bool | str]) -> "Assay":
+        """Slice the assay to get a subset.
 
         Args:
-            slc (slice | list[int | bool]): The slice or list of indices to get
-                If a list of bool is given, it is treated as a mask.
+            slc (AssaySlice | list[bool | str]):
+                1. If an AssaySlice is given, it can contain both column names and
+                    a boolean mask for the records.
+                2. If a list of strings is given, it is treated as a list of
+                    column names.
+                3. If a list of booleans, it is treated as a boolean mask for
+                    the records.
+
+        Note:
+        An empty list returns an assay WITHOUT records and WITH the columns. If
+        you want to slice to have no columns, use `AssaySlice(columns=[])`
+        instead.
         """
         if isinstance(slc, int):
             # The Assay is a container with more than records, getting a single record
@@ -213,11 +307,23 @@ class Assay:
             # a list of one record. The former is not desired and the latter is
             # ambiguous with the slicing operation.
             raise NotImplementedError("Getting a single record is not supported.")
-        if isinstance(slc, list):
-            records_slice = list(itertools.compress(self.records, slc))
-        else:
-            records_slice = self.records[slc]
-        return dataclasses.replace(self, records=records_slice)
+        if isinstance(slc, str):
+            # This would return a vector, but we are sticking with a matrix-like
+            # structure.
+            raise NotImplementedError(
+                "Getting a single column is not supported. "
+                f"Use a list with one element instead: [{slc}]"
+            )
+
+        assay = self
+        is_assay_slice = isinstance(slc, AssaySlice)
+        if is_assay_slice or len(slc) > 0:
+            # An empty list is treated as an empty records slice. If you want to
+            # have an empty column slice use `AssaySlice(columns=[])`
+            assay = self._slice_columns(assay, slc.columns if is_assay_slice else slc)
+        assay = self._slice_records(assay, slc.records if is_assay_slice else slc)
+
+        return assay
 
     def __repr__(self) -> str:
         """Return a string representation of the Assay object."""
@@ -366,7 +472,7 @@ class Assay:
         return df
 
     def dump(
-        self, *, path: Path | None = None, format: AssayFormat = AssayFormat.CSV
+        self, *, path: Path | None = None, fmt: AssayFormat = AssayFormat.CSV
     ) -> Path:
         """Dump the assay data to a file.
 
@@ -376,7 +482,7 @@ class Assay:
         Args:
             path (Path): The output directory to dump the assay file in. If
                 None, the current working directory is used.
-            format (AssayFormat): The file format
+            fmt (AssayFormat): The file format
 
         Raises:
             NotImplementedError if the file type is not supported.
@@ -384,7 +490,7 @@ class Assay:
 
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}{format.value}"
+            path /= f"{self.name}{fmt.value}"
 
         df = pl.DataFrame(
             self.records,
@@ -396,9 +502,9 @@ class Assay:
                 lambda seq: str(seq.value), return_dtype=pl.Utf8
             )
         )
-        match format:
+        match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)
             case _:
-                raise NotImplementedError(f"Unsupported file type: {format.value}")
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
         return path
