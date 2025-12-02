@@ -43,7 +43,7 @@ class Publication:
             )
             response.raise_for_status()
             response.encoding = "utf-8"
-            fields = re.findall(r"(\w+)=\{([^}]+)\}", response.text)
+            fields = re.findall(r"(\w+)={([^}]+)}", response.text)
             queried_data = dict(fields)
             # DOI returns more, e.g. ISSNs, editors, types
             # Accepted keys follows APA entries
