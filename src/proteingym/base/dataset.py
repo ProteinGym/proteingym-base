@@ -126,7 +126,7 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
-    publication: Publication | None = None
+    publication: Publication | None = Field(default=None)
     """Publication information for the dataset."""
 
 
@@ -170,13 +170,13 @@ class Dataset(BaseModel):
                 f"Union of {self.name} and {other.name} datasets."
                 f"\n{self.description}\n{other.description}"
             ),
+            publication=publication,
             assay_variables=list_union(self.assay_variables, other.assay_variables),
             assay_targets=list_union(self.assay_targets, other.assay_targets),
             assays=list_union(self.assays, other.assays),
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
             msas=list_union(self.msas, other.msas),
-            publication=publication,
         )
 
     def __eq__(self, item: Any) -> bool:
@@ -277,12 +277,29 @@ class Dataset(BaseModel):
         lines.append(f"\t\tmsas: {len(self.msas)},")
         lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
         if self.publication:
-            pub_desc = (
-                self.publication.title[:60] + "..."
-                if len(self.publication.title) > 60
-                else self.publication.title
-            )
-            lines.append(f"\t\tpublication: {pub_desc},")
+            # should we do maybe either title or authorship as repr
+            if self.publication.title:
+                pub_desc = (
+                    self.publication.title[:60] + "..."
+                    if len(self.publication.title) > 60
+                    else self.publication.title
+                )
+                lines.append(f"\t\tpublication: {pub_desc},")
+            elif self.publication.doi:
+                pub_desc = (
+                    "DOI found, but no information found\n"
+                    "\t\tHint: run `dataset.publication.fill_from_db()` "
+                    "to populate authorship"
+                )
+                lines.append(f"\t\tpublication: {pub_desc},")
+            else:
+                raise ValueError(
+                    "The authorship information either lacks a title or DOI.\n"
+                    "Are you sure the manifest is configured correctly? \n"
+                    "Hint: configure your DOI and run "
+                    "`dataset.publication.fill_from_db()`"
+                    " to populate authorship"
+                )
         else:
             lines.append("\t\tpublication: None,")
         lines.append(")")
@@ -350,6 +367,21 @@ class Dataset(BaseModel):
                 )
         return self
 
+    def fill_from_database(self) -> "Dataset":
+        """Fill metadata from database for all available databases.
+        Currently supports UniProt (in sequence) and DOI (in publication) identifiers.
+
+        Returns:
+            Dataset: A new Dataset instance with updated metadata.
+        """
+        updated_sequences = [seq.fill_from_database() for seq in self.sequences]
+        updated_publication = (self.publication.fill_from_database() if
+                               self.publication else None)
+
+        return self.model_copy(
+            update={"sequences": updated_sequences, "publication": updated_publication}
+        )
+
     def model_dump_json(self, **kwargs) -> str:
         """Override to ensure JSON serialization works with Bio objects.
 
@@ -384,23 +416,17 @@ class Dataset(BaseModel):
         )
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
-        publication = (
-            Publication.from_manifest_section(manifest.publication)
-            if manifest.publication else None
-        )
-
-
 
         return cls(
             name=manifest.name,
             description=manifest.description,
+            publication=manifest.publication,
             assay_variables=manifest.assay_variables,
             assay_targets=manifest.assay_targets,
             assays=assays,
             sequences=sequences,
             structures=structures,
             msas=msas,
-            publication=publication,
         )
 
     @classmethod
@@ -471,6 +497,7 @@ class Dataset(BaseModel):
             version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
+            publication=self.publication,
             assay_targets=self.assay_targets,
             assay_variables=self.assay_variables,
             assays=[
@@ -493,10 +520,6 @@ class Dataset(BaseModel):
                 m.as_manifest_section(path=path)
                 for m, path in zip(self.msas, data_paths.get(MSA, []), strict=True)
             ],
-            publication=(
-                self.publication.as_manifest_section() if
-                self.publication else None
-            ),
         )
         return manifest
 

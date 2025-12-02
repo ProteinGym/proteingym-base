@@ -1,52 +1,36 @@
+import dataclasses
 import re
-from typing import Optional, Self
 
 import requests
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 
-class PublicationManifestSection(BaseModel):
-    """Manifest section for publication information."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=False,
-        use_attribute_docstrings=True,
-    )
-
-    doi: Optional[str] = None
-    """The DOI of the publication."""
-
-    title: Optional[str] = None
+@dataclasses.dataclass(kw_only=True, frozen=False)
+class Publication():
+    title: str | None = None
     """The title of the publication."""
 
-    authors: Optional[str] = None
+    authors: str | None = None
     """The authors of the publication."""
 
-    journal: Optional[str] = None
+    journal: str | None = None
     """The journal of the publication."""
 
-    volume: Optional[str] = None
+    volume: str | None = None
     """The volume of the publication."""
 
-    number: Optional[str] = None
+    number: str | None = None
     """The number of the publication issue."""
 
-    year: Optional[str] = None
+    year: str | None = None
     """The year of publication."""
 
-    pages: Optional[str] = None
+    pages: str | None = None
     """The pages of the publication."""
 
-    @field_validator("doi")
-    @classmethod
-    def _validate_doi(cls, v: Optional[str]) -> Optional[str]:
-        if v and not v.startswith("10."):
-            raise ValueError("DOI must start with '10.'")
-        return v
+    doi: str | None = None
+    """The DOI of the publication."""
 
-    @model_validator(mode="after")
-    def _fill_from_doi(self) -> "PublicationManifestSection":
+    def fill_from_database(self) -> "Publication":
         """Fill missing fields from DOI if available."""
         if self.doi:
             try:
@@ -76,84 +60,15 @@ class PublicationManifestSection(BaseModel):
                 if not self.pages and "pages" in queried_data:
                     self.pages = queried_data["pages"]
 
-            # if we get no 200 response,
-            # we still make the dataset
+            # Do we actual raise the error
+            # if we fill_from_db() manually?
             except Exception:
                 pass
         return self
 
-
-class Publication(BaseModel):
-    """Publication information for a dataset."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=True,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-
-    title: Optional[str] = None
-    """The title of the publication."""
-
-    authors: Optional[str] = None
-    """The authors of the publication."""
-
-    journal: Optional[str] = None
-    """The journal of the publication."""
-
-    volume: Optional[str] = None
-    """The volume of the publication."""
-
-    number: Optional[str] = None
-    """The number of the publication issue."""
-
-    year: Optional[str] = None
-    """The year of publication."""
-
-    pages: Optional[str] = None
-    """The pages of the publication."""
-
-    doi: Optional[str] = None
-    """The DOI of the publication."""
-
-    @field_validator("doi")
-    @classmethod
-    def _validate_doi(cls, v: Optional[str]) -> Optional[str]:
-        if v and not v.startswith("10."):
-            raise ValueError("DOI must start with '10.'")
-        return v
-
-    def as_manifest_section(self) -> PublicationManifestSection:
-        """Convert the publication information to a manifest section.
-
-        Args:
-            path (Path): The path to the publication file (as created by
-                `method:dump`).
-
-        Returns:
-            PublicationManifestSection: The manifest section for the publication.
-        """
-        return PublicationManifestSection(
-            doi=self.doi,
-            title=self.title,
-            authors=self.authors,
-            journal=self.journal,
-            volume=self.volume,
-            number=self.number,
-            year=self.year,
-            pages=self.pages,
-        )
-
-    @classmethod
-    def from_manifest_section(
-        cls, section: PublicationManifestSection) -> Self:
-        """Create a Publication instance from a manifest section."""
-        return cls(**section.model_dump(exclude_none=True))
-
     def __repr__(self) -> str:
         """Return a string representation of the Publication object."""
-        def _truncate(value: Optional[str]) -> str:
+        def _truncate(value: str | None) -> str:
             return value[:60] + "..." if value and len(value) > 60 else value
 
         fields = [
