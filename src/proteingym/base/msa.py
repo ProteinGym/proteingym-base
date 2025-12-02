@@ -101,6 +101,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
     """Additional metadata for the multiple sequence alignment."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Extend the path with the `relative_to_path` from the context."""
 

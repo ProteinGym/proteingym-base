@@ -87,6 +87,7 @@ class SequenceManifestSection(BaseModel):
     """The path to the sequence file."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
