@@ -67,7 +67,7 @@ def test_structure_manifest_section_missing_path() -> None:
         "Path does not point to a file"
     )
     with pytest.raises(ValidationError, match=match):
-        StructureManifestSection(path="non_existent.pdb") # noqa
+        StructureManifestSection(path="non_existent.pdb")  # noqa
 
 
 @pytest.mark.parametrize("field", ["name", "description"])

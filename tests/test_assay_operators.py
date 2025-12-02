@@ -713,7 +713,7 @@ def test_assay_slice_column_string_raises_not_implemented_error(
     with pytest.raises(
         NotImplementedError, match="Getting a single column is not supported."
     ):
-        assay["stability"] # noqa
+        assay["stability"]  # noqa
 
 
 def test_assay_slice_column_string_raises_key_error_for_unknown_column(
@@ -727,7 +727,7 @@ def test_assay_slice_column_string_raises_key_error_for_unknown_column(
     )
 
     with pytest.raises(KeyError, match=r"Undefined columns: {'unknown'}"):
-        assay[["sequence", "unknown"]] # noqa
+        assay[["sequence", "unknown"]]  # noqa
 
 
 def test_assay_slice_column(seq1: Sequence, seq2: Sequence) -> None:
