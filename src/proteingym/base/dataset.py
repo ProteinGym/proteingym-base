@@ -58,7 +58,7 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[AssaySlice] | None = None
+    assays: list[AssaySlice | list[bool | str]] | None = None
     """The list of assay slices. If None, all assays are included."""
 
     @classmethod
@@ -297,7 +297,7 @@ class Dataset(BaseModel):
             ValueError: If duplicate names are found in any of the data types.
         """
 
-        def _get_duplicate_names(items: list[BaseModel]) -> list[str]:
+        def _get_duplicate_names(items) -> list[str]:
             """Get duplicate names from a list of items."""
             name_counts = collections.Counter(item.name for item in items if item.name)
             return [name for name, count in name_counts.items() if count > 1]
@@ -351,7 +351,7 @@ class Dataset(BaseModel):
         Biopython objects: Seq, Structure, MultipleSeqAlignment,
         don't have custom JSONEncoder, thus we rely on their __str__ method
         to return a string representation in order for
-        Bio objects to be sereializable.
+        Bio objects to be serializable.
 
         See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
         """
@@ -483,8 +483,8 @@ class Dataset(BaseModel):
         )
         return manifest
 
+    @staticmethod
     def _write_paths_to_zip(
-        self,
         zip_: ZipFile,
         *paths: Path,
         arcname: Path | None = None,
@@ -735,7 +735,7 @@ class Subsets:
     dataset: Dataset
     """The dataset that is sliced."""
 
-    slices: list[DatasetSlice] | dict[str | list[DatasetSlice]] = dataclasses.field(
+    slices: list[DatasetSlice] | dict[str, list[DatasetSlice]] = dataclasses.field(
         default_factory=dict
     )
     """The slices that create the collection of subsets.
@@ -841,9 +841,9 @@ class Subsets:
             dataset_archive = zip_.extract(
                 SubsetsArchiveLayout.DATASET_ARCHIVE, path=temp_dir
             )
-            dataset = Dataset.from_path(dataset_archive)
+            dataset = Dataset.from_path(Path(dataset_archive))
             slices_str = zip_.read(SubsetsArchiveLayout.SLICES_FILE)
-            slices = cls._loads_slices(slices_str)
+            slices = cls._loads_slices(slices_str.decode())
         return cls(dataset=dataset, slices=slices)
 
     def _dumps_slices(self) -> str:

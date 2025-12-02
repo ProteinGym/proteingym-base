@@ -210,9 +210,7 @@ class KFoldSplitter:
         self.shuffle = shuffle
         self.random_state = _check_random_state(random_state)
 
-    def split(
-        self, dataset: Dataset, targets: list[str] | None = None
-    ) -> list[Subsets]:
+    def split(self, dataset: Dataset, targets: list[str] | None = None) -> Subsets:
         """Splits the dataset into k folds for cross-validation.
 
         The dataset is split into k folds with approximately equal sizes. Each
