@@ -667,7 +667,7 @@ def seq1() -> Sequence:
     """A test sequence 1."""
     seq1 = Sequence(
         name="seq1",
-        value="APC",
+        value=Seq("APC"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
@@ -679,7 +679,7 @@ def seq2() -> Sequence:
     """A test sequence 2."""
     seq2 = Sequence(
         name="seq2",
-        value="GTC",
+        value=Seq("GTC"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
