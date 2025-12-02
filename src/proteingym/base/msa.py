@@ -129,9 +129,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
         return weights_path
 
     @model_validator(mode="after")
-    def check_weights_and_weights_path(
-        self, info: ValidationInfo
-    ) -> "MSAManifestSection":
+    def check_weights_and_weights_path(self) -> "MSAManifestSection":
         """Ensure that both weights and weights_path are not provided together."""
 
         if self.weights and self.weights_path:
