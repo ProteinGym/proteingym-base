@@ -299,7 +299,9 @@ def test_msa_reference_sequence_present_in_dataset(
         alphabet=SequenceAlphabet.DNA,
     )
     msa = MSA(
-        name="test", value=multiple_sequence_alignment, reference_sequence="ref_seq"
+        name="test",
+        value=multiple_sequence_alignment,
+        reference_sequence_name="ref_seq",
     )
 
     try:
@@ -309,7 +311,7 @@ def test_msa_reference_sequence_present_in_dataset(
             "Could not create Dataset with MSA and reference sequence"
         ) from e
     else:
-        assert msa.reference_sequence in [seq.name for seq in dataset.sequences], (
+        assert msa.reference_sequence_name in [seq.name for seq in dataset.sequences], (
             "Reference sequence not found in dataset sequences."
         )
 
@@ -319,7 +321,9 @@ def test_msa_reference_sequence_not_present_in_dataset(
 ) -> None:
     """A ValueError is raised if the reference sequence is not in the MSA."""
     msa = MSA(
-        name="test", value=multiple_sequence_alignment, reference_sequence="ref_seq"
+        name="test",
+        value=multiple_sequence_alignment,
+        reference_sequence_name="ref_seq",
     )
 
     with pytest.raises(

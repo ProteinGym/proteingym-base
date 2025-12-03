@@ -98,7 +98,7 @@ format = "fasta"
 num_significant = 10
 bit_score = 0.5
 theta = 0.8
-reference_sequence = "abc"
+reference_sequence_name = "abc"
 sequence_start = 1
 sequence_end = 10
 weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
@@ -207,3 +207,5 @@ The MSAs section contains a list of multiple sequence alignments included in the
 | `sequence_end`       | `int` \| None         | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
 | `weights`            | `list[float]` \| None | No           | `None`      | The weights for the MSA.                                                                                                                                   |
 | `weights_path`       | `string` \| None      | No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`.                                                                                    |
+| `reference_sequence_name` | `string` \| None      | No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
+| `sequence_start`         | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |

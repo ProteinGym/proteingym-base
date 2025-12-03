@@ -55,7 +55,7 @@ class MSAMetadataManifestSection(BaseModel):
     theta: float | None = None
     """Hamming distance cutoff for sequence re-weighting."""
 
-    reference_sequence: str | None = None
+    reference_sequence_name: str | None = None
     """The name of the reference sequence of MSA present in Dataset."""
 
     sequence_start: int | None = None
@@ -177,7 +177,7 @@ class MSA:
     theta: float | None = None
     """Hamming distance cutoff for sequence re-weighting."""
 
-    reference_sequence: str | None = None
+    reference_sequence_name: str | None = None
     """The name of the reference sequence of MSA present in Dataset."""
 
     sequence_start: int | None = None
@@ -243,7 +243,7 @@ class MSA:
             num_significant=section.num_significant,
             bit_score=section.bit_score,
             theta=section.theta,
-            reference_sequence=section.reference_sequence,
+            reference_sequence_name=section.reference_sequence_name,
             sequence_start=section.sequence_start,
             sequence_end=section.sequence_end,
             weights=weights,
@@ -265,7 +265,7 @@ class MSA:
             num_significant=self.num_significant,
             bit_score=self.bit_score,
             theta=self.theta,
-            reference_sequence=self.reference_sequence,
+            reference_sequence_name=self.reference_sequence_name,
             sequence_start=self.sequence_start,
             sequence_end=self.sequence_end,
             weights=self.weights,
