@@ -132,6 +132,13 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
+    reference_sequence_name: str | None = None
+    """Name of the sequence that is to be considered the reference for this dataset.
+
+    Useful for e.g. zero-shot models that compare likelihood for a token from a
+    reference with the token for a variant.
+    """
+
     assay_variables: list[AssayVariable] = Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
 
@@ -251,7 +258,7 @@ class Dataset(BaseModel):
         is_msa_subset = len(other.msas) == 0 or all(
             msa in self.msas for msa in other.msas
         )
-        # If none its always a subset of any set
+        # If none it's always a subset of any set
         # If other.pub == self.pub, other is a subset
         # Other is not a subset when other != self
         is_publication_subset = (
@@ -351,6 +358,32 @@ class Dataset(BaseModel):
             raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
         return self
 
+    @property
+    def reference_sequence(self) -> Sequence:
+        """Get the named reference sequence."""
+        return next(s for s in self.sequences if s.name == self.reference_sequence_name)
+
+    @model_validator(mode="after")
+    def _validate_reference_sequence(self) -> "Dataset":
+        """Ensure that the named reference sequence is present among the sequences.
+
+        Returns:
+            Dataset: The validated dataset instance.
+
+        Raises:
+            ValueError: If the reference sequence is specified but not among the
+                provided sequences.
+        """
+        if self.reference_sequence_name is not None:
+            try:
+                _ = self.reference_sequence
+            except StopIteration as e:
+                raise ValueError(
+                    f"'{self.reference_sequence_name}' is not present among the "
+                    "dataset's sequences."
+                ) from e
+        return self
+
     @model_validator(mode="after")
     def _validate_msa_reference_sequences(self) -> "Dataset":
         """Ensure that MSA reference sequences are present in the sequences.
@@ -437,6 +470,7 @@ class Dataset(BaseModel):
         return cls(
             name=manifest.name,
             description=manifest.description,
+            reference_sequence_name=manifest.reference_sequence_name,
             publication=manifest.publication,
             assay_variables=manifest.assay_variables,
             assay_targets=manifest.assay_targets,

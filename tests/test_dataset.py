@@ -240,3 +240,25 @@ def test_dataset_repr() -> None:
     repr_str = repr(dataset)
     # Should be truncated to 60 chars + '...'
     assert f"\tdescription: {long_desc[:60]}..." in repr_str
+
+
+def test_reference_sequence_present_in_dataset() -> None:
+    seq = Sequence(
+        name="ref_seq",
+        value=Seq("TTTTTTT"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    dataset = Dataset(name="test", reference_sequence_name="ref_seq", sequences=[seq])
+    assert dataset.reference_sequence == seq
+
+
+def test_reference_sequence_not_present_errors() -> None:
+    seq = Sequence(
+        name="ref_seq",
+        value=Seq("TTTTTTT"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    with pytest.raises(ValueError, match="not present among the dataset's sequences"):
+        Dataset(name="test", reference_sequence_name="foo", sequences=[seq])

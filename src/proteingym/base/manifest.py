@@ -104,6 +104,13 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
+    reference_sequence_name: str | None = None
+    """Name of the sequence that is to be considered the reference for this dataset.
+
+    Useful for e.g. zero-shot models that compare likelihood for a token from a
+    reference with the token for a variant.
+    """
+
     assay_variables: list[AssayVariable] = Field(default_factory=list)
     """The variables for the assays defined in the dataset."""
 
