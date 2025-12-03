@@ -363,10 +363,14 @@ class Dataset(BaseModel):
         """
         sequence_names = {seq.name for seq in self.sequences}
         for msa in self.msas:
-            if msa.reference_sequence and msa.reference_sequence not in sequence_names:
+            if (
+                msa.reference_sequence_name
+                and msa.reference_sequence_name not in sequence_names
+            ):
                 raise ValueError(
-                    f"MSA '{msa.name}' reference sequence '{msa.reference_sequence}'"
-                    " is not present in the dataset's sequences."
+                    f"MSA '{msa.name}' reference sequence "
+                    f"'{msa.reference_sequence_name}' is not present in the dataset's "
+                    "sequences."
                 )
         return self
 
