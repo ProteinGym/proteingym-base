@@ -33,6 +33,7 @@ dev = [
     "pytest>=8.3.5",
     "pytest-cov>=6.2.1",
     "ruff>=0.11.7",
+    "scikit-learn>=1.7.2",
 ]
 
 [tool.hatch.version]
@@ -42,7 +43,7 @@ path = "src/proteingym/base/__about__.py"
 packages = ["src/proteingym/"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "README.md"]
+testpaths = ["tests", "README.md", "src"]
 addopts = "--doctest-modules --doctest-glob='*.md' --cov=proteingym.base --cov-branch --cov-report xml --cov-fail-under=80"
 filterwarnings = [
     'ignore:.*Aggregation applied.*:UserWarning',
