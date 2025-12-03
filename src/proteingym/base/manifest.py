@@ -16,6 +16,7 @@ from semver import Version
 
 from .assay import AssayManifestSection, AssayTarget, AssayVariable
 from .msa import MSAManifestSection
+from .publication import Publication
 from .sequence import SequenceManifestSection
 from .structure import StructureManifestSection
 
@@ -120,6 +121,9 @@ class Manifest(BaseModel):
 
     msas: list[MSAManifestSection] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
+
+    publication: Publication | None = Field(default=None)
+    """Publication information for the dataset."""
 
     @model_validator(mode="after")
     def _validate_assay_variables(self) -> "Manifest":

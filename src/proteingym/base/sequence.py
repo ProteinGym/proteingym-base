@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
 
+import requests
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -86,6 +87,19 @@ class SequenceManifestSection(BaseModel):
     path: FilePath
     """The path to the sequence file."""
 
+    uniprot_id: str | None = None
+    """The UniProt identifier for this sequence."""
+
+    taxon_root: str | None = None
+    """The root of taxonomic lineage information.
+    For grouping datasets into main taxons"""
+
+    molecule_name: str | None = None
+    """The molecule name."""
+
+    organism: str | None = None
+    """The organism information."""
+
     @field_validator("path", mode="before", check_fields=True)
     @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
@@ -129,6 +143,61 @@ class Sequence:
     description: str | None = None
     """The description of the sequence."""
 
+    uniprot_id: str | None = None
+    """The UniProt identifier for this sequence."""
+
+    taxon_root: str | None = None
+    """The root of taxonomic lineage information.
+    For grouping datasets into main taxons"""
+
+    molecule_name: str | None = None
+    """The molecule name."""
+
+    organism: str | None = None
+    """The organism information."""
+
+    def fill_from_database(self, overwrite: bool = False) -> "Sequence":
+        """Get UniProt data if uniprot_id is available and other fields are empty."""
+        data = dataclasses.asdict(self)
+
+        if self.uniprot_id:
+            response = requests.get(
+                f"https://rest.uniprot.org/uniprotkb/{self.uniprot_id}",
+                headers={"Accept": "application/json"},
+                timeout=10,
+            )
+            response.raise_for_status()
+            api_data = response.json()
+
+            lineage_list = api_data.get("organism", {}).get("lineage", [])
+            taxon_root = lineage_list[0] if lineage_list else None
+            molecule_name = (
+                api_data.get("proteinDescription", {})
+                .get("recommendedName", {})
+                .get("fullName", {})
+                .get("value")
+            )
+            organism = api_data.get("organism", {}).get("scientificName")
+
+            queried_data = {
+                "taxon_root": taxon_root,
+                "molecule_name": molecule_name,
+                "organism": organism,
+            }
+
+            if overwrite:
+                data.update(**{k: v for k, v in queried_data.items() if v is not None})
+            else:
+                data.update(
+                    **{
+                        k: v
+                        for k, v in queried_data.items()
+                        if v is not None and data.get(k) is None
+                    }
+                )
+
+        return self.__class__(**data)
+
     def __eq__(self, item: "Sequence") -> bool:
         """Implements the equality (==) operator for Sequence.
 
@@ -153,6 +222,16 @@ class Sequence:
 
         lines.append(f"\ttype: {self.type},")
         lines.append(f"\talphabet: {self.alphabet},")
+
+        if self.uniprot_id:
+            lines.append(f"\tuniprot_id: {self.uniprot_id},")
+        if self.taxon_root:
+            lines.append(f"\ttaxon_lineage: {self.taxon_root},")
+        if self.molecule_name:
+            lines.append(f"\tmolecule_name: {self.molecule_name},")
+        if self.organism:
+            lines.append(f"\torganism: {self.organism},")
+
         value_str = str(self.value)
         if len(value_str) > 60:
             value_str = value_str[:60] + "..."
@@ -181,6 +260,10 @@ class Sequence:
                 description=seq.description,
                 type=section.type,
                 alphabet=section.alphabet,
+                uniprot_id=section.uniprot_id,
+                taxon_root=section.taxon_root,
+                molecule_name=section.molecule_name,
+                organism=section.organism,
             )
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
@@ -194,7 +277,13 @@ class Sequence:
             SequenceManifestSection: The manifest section for the sequence.
         """
         return SequenceManifestSection(
-            path=path, alphabet=self.alphabet, type=self.type
+            path=path,
+            alphabet=self.alphabet,
+            type=self.type,
+            uniprot_id=self.uniprot_id,
+            taxon_root=self.taxon_root,
+            molecule_name=self.molecule_name,
+            organism=self.organism,
         )
 
     def dump(

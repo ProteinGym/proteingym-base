@@ -56,6 +56,7 @@ ALL_DATASET_NAMES = [
     "dataset_with_multiple_structures",
     "dataset_with_single_msa",
     "dataset_with_multiple_msas",
+    "dataset_with_publication",
 ]
 
 

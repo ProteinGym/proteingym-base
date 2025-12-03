@@ -20,6 +20,7 @@ from pydantic import (
 from .assay import Assay, AssaySlice, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
+from .publication import Publication
 from .sequence import Sequence
 from .structure import Structure
 
@@ -148,6 +149,9 @@ class Dataset(BaseModel):
     msas: list[MSA] = Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
+    publication: Publication | None = Field(default=None)
+    """Publication information for the dataset."""
+
     def __or__(self, other: "Dataset") -> "Dataset":
         """Implements the union operator (|) for Dataset.
 
@@ -178,12 +182,17 @@ class Dataset(BaseModel):
 
             return union_with_unique_names
 
+        # We expect only single publication,
+        # and to be the same between dataset splits
+        publication = self.publication or other.publication
+
         return Dataset(
             name=f"{self.name}_union_{other.name}",
             description=(
                 f"Union of {self.name} and {other.name} datasets."
                 f"\n{self.description}\n{other.description}"
             ),
+            publication=publication,
             assay_variables=list_union(self.assay_variables, other.assay_variables),
             assay_targets=list_union(self.assay_targets, other.assay_targets),
             assays=list_union(self.assays, other.assays),
@@ -209,8 +218,13 @@ class Dataset(BaseModel):
             item.structures
         )
         is_msa_match = sort_by_name(self.msas) == sort_by_name(item.msas)
+        is_publication_match = self.publication == item.publication
         return (
-            is_assay_match and is_sequence_match and is_structure_match and is_msa_match
+            is_assay_match
+            and is_sequence_match
+            and is_structure_match
+            and is_msa_match
+            and is_publication_match
         )
 
     def __contains__(self, other: Any) -> bool:
@@ -236,11 +250,18 @@ class Dataset(BaseModel):
         is_msa_subset = len(other.msas) == 0 or all(
             msa in self.msas for msa in other.msas
         )
+        # If none its always a subset of any set
+        # If other.pub == self.pub, other is a subset
+        # Other is not a subset when other != self
+        is_publication_subset = (
+            other.publication is None or other.publication == self.publication
+        )
         return (
             is_assay_subset
             and is_sequence_subset
             and is_structure_subset
             and is_msa_subset
+            and is_publication_subset
         )
 
     def __getitem__(self, item: DatasetSlice) -> "Dataset":
@@ -280,6 +301,10 @@ class Dataset(BaseModel):
         lines.append(f"\t\tstructures: {len(self.structures)},")
         lines.append(f"\t\tmsas: {len(self.msas)},")
         lines.append(f"\t\tassay_variables: {len(self.assay_variables)},")
+        if self.publication:
+            lines.append(f"\t\tpublication: {repr(self.publication)},")
+        else:
+            lines.append("\t\tpublication: None,")
         lines.append(")")
         return "\n".join(lines)
 
@@ -345,6 +370,30 @@ class Dataset(BaseModel):
                 )
         return self
 
+    def fill_from_database(self, overwrite: bool = False) -> "Dataset":
+        """Fill metadata from database for all available databases.
+        Currently supports UniProt (in sequence) and DOI (in publication) identifiers.
+
+        Args:
+            overwrite (bool): If True, overwrite existing values.
+            If False, only fill empty fields.
+
+        Returns:
+            Dataset: A new Dataset instance with updated metadata.
+        """
+        updated_sequences = [
+            seq.fill_from_database(overwrite=overwrite) for seq in self.sequences
+        ]
+        updated_publication = (
+            self.publication.fill_from_database(overwrite=overwrite)
+            if self.publication
+            else None
+        )
+
+        return self.model_copy(
+            update={"sequences": updated_sequences, "publication": updated_publication}
+        )
+
     def model_dump_json(self, **kwargs) -> str:
         """Override to ensure JSON serialization works with Bio objects.
 
@@ -379,9 +428,11 @@ class Dataset(BaseModel):
         )
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
         msas = [MSA.from_manifest_section(m) for m in manifest.msas]
+
         return cls(
             name=manifest.name,
             description=manifest.description,
+            publication=manifest.publication,
             assay_variables=manifest.assay_variables,
             assay_targets=manifest.assay_targets,
             assays=assays,
@@ -458,6 +509,7 @@ class Dataset(BaseModel):
             version=MANIFEST_LATEST_VERSION,
             name=self.name,
             description=self.description,
+            publication=self.publication,
             assay_targets=self.assay_targets,
             assay_variables=self.assay_variables,
             assays=[
