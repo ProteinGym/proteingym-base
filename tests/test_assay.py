@@ -36,6 +36,36 @@ F1L,0.6,0.4""".lstrip()
     return path
 
 
+@pytest.fixture
+def seq1() -> Sequence:
+    return Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+
+@pytest.fixture
+def seq2() -> Sequence:
+    return Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+
+@pytest.fixture
+def seq3() -> Sequence:
+    return Sequence(
+        name="seq3",
+        value=Seq("GHI"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     # This should not raise an error
@@ -162,6 +192,12 @@ def test_assay_raw_empty_records() -> None:
     """Test flag for empty assay."""
     assay_raw = AssayRaw(name="assay", records=[])
     assert assay_raw.is_empty() and len(assay_raw.records) == 0
+
+
+def test_assay_raw_non_empty_records(seq1: Sequence) -> None:
+    """Test flag for non empty assay."""
+    assay_raw = AssayRaw(name="assay", records=[(seq1, 1.56)])
+    assert not assay_raw.is_empty() and len(assay_raw.records) > 0
 
 
 def test_assay() -> None:
@@ -526,36 +562,6 @@ def test_dataset_to_df_no_assays() -> None:
         raise AssertionError(f"Should return empty DataFrame: {e}") from e
     else:
         assert df.is_empty()
-
-
-@pytest.fixture
-def seq1() -> Sequence:
-    return Sequence(
-        name="seq1",
-        value=Seq("APC"),
-        type=SequenceType.STANDARD,
-        alphabet=SequenceAlphabet.DNA,
-    )
-
-
-@pytest.fixture
-def seq2() -> Sequence:
-    return Sequence(
-        name="seq2",
-        value=Seq("DEF"),
-        type=SequenceType.STANDARD,
-        alphabet=SequenceAlphabet.DNA,
-    )
-
-
-@pytest.fixture
-def seq3() -> Sequence:
-    return Sequence(
-        name="seq3",
-        value=Seq("GHI"),
-        type=SequenceType.STANDARD,
-        alphabet=SequenceAlphabet.DNA,
-    )
 
 
 @pytest.fixture
