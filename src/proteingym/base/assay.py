@@ -592,7 +592,7 @@ class Assay(AssayRaw):
         """
 
         # Get the sequence alphabet from the first record
-        if not self.records:
+        if self.is_empty():
             sequence_alphabet = None
         else:
             sequence_alphabet = self.records[0][0].alphabet
@@ -620,7 +620,7 @@ class Assay(AssayRaw):
         Returns:
             pl.DataFrame: The DataFrame containing all records from the assay.
         """
-        if not self.records:
+        if self.is_empty():
             # If no records are present, return empty DataFrame
             return pl.DataFrame(schema=["sequence"])
         if target_names:
