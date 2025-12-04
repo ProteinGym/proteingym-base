@@ -68,7 +68,7 @@ class Field:
             case str():
                 return pl.Utf8
             case None:
-                return pl.Null
+                return pl.Unknown
             case _:
                 raise ValueError(f"Unsupported field type: {type(self.value)}")
 
@@ -347,7 +347,7 @@ class AssayRaw:
         schema = {
             field.name: field.polars_type
             for field in section.fields
-            if field.polars_type != pl.Null  # Polars complains about Null types
+            if field.polars_type != pl.Unknown  # Let polars infer Unknown types
         }
         # Reusing polars as we already depend on it for assays
         records = list(pl.read_csv(section.path, schema_overrides=schema).iter_rows())
@@ -399,7 +399,7 @@ class AssayRaw:
         schema = {
             field.name: field.polars_type
             for field in self.fields
-            if field.polars_type != pl.Null  # Polars complains about Null types
+            if field.polars_type != pl.Unknown  # Let polars infer Unknown types
         }
         df = pl.DataFrame(self.records, schema_overrides=schema, strict=True)
         match fmt:

@@ -118,7 +118,7 @@ def test_field_complete() -> None:
         (42, pl.Int64),
         (3.14, pl.Float64),
         ("test", pl.Utf8),
-        (None, pl.Null),
+        (None, pl.Unknown),
     ],
 )
 def test_field_polars_type(
