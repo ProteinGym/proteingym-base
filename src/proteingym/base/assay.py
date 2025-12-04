@@ -416,7 +416,7 @@ class AssayRaw:
             {f.name: r[i] for i, f in enumerate(self.fields) if f in fields}
             for r in self.records
         ]
-        schema = {f.name: f.polars_type for f in self.fields}
+        schema = {f.name: f.polars_type for f in self.fields if f in fields}
         return pl.DataFrame(data, schema=schema, strict=True)
 
 
