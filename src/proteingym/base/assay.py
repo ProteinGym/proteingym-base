@@ -238,21 +238,6 @@ class AssayManifestSection(_ManifestSection):
     path: FilePath
     """The path to the assay file, csv only."""
 
-    @field_validator("path", mode="before", check_fields=True)
-    @classmethod
-    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
-        """Optionally, extend the path with the `relative_to_path` from the context."""
-        if info.context and info.context.get("relative_to_path"):
-            path = info.context["relative_to_path"] / path
-        return path
-
-    @field_serializer("path", check_fields=True)
-    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
-        """Serialize the path as a Posix path."""
-        if info.context and info.context.get("relative_to_path"):
-            path = path.relative_to(info.context["relative_to_path"])
-        return path.as_posix()
-
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
