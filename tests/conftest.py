@@ -4,7 +4,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay, AssayTarget, AssayVariable
+from proteingym.base.assay import Assay, AssayRaw, AssayTarget, AssayVariable, Field
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.publication import Publication
@@ -80,6 +80,54 @@ def dataset_with_assay() -> Dataset:
             AssayTarget(name="stability", description="The resistance to temperature"),
         ],
         assays=[assay],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
+def dataset_with_assay_raw() -> Dataset:
+    """A dataset containing a single assay and its raw assay."""
+    sequence1 = Sequence(
+        name="seq1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    sequence2 = Sequence(
+        name="seq2",
+        value=Seq("GFEDCA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay = Assay(
+        name="assay1",
+        records=[
+            (sequence1, 1.0, 1.5),
+            (sequence2, 2.0, 2.5),
+        ],
+        columns=["sequence", "DMS Score", "stability"],
+    )
+    assay_raw = AssayRaw(
+        name="assay1",
+        records=[
+            (0.3,),
+            (0.9,),
+        ],
+        fields=[Field(name="OD", description="Optical Density at 600nm")],
+    )
+    dataset = Dataset(
+        name="dataset_with_single_raw_assay",
+        description="A dataset containing a single assay and its raw assay.",
+        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_targets=[
+            AssayTarget(name="DMS Score", description="The DMS score"),
+            AssayTarget(name="stability", description="The resistance to temperature"),
+        ],
+        assays=[assay],
+        assays_raw=[assay_raw],
         sequences=[],
         structures=[],
         msas=[],
@@ -329,6 +377,7 @@ def datasets(
     dataset_empty: Dataset,
     dataset_with_assay_empty: Dataset,
     dataset_with_assay: Dataset,
+    dataset_with_assay_raw: Dataset,
     dataset_with_assays: Dataset,
     dataset_with_sequence: Dataset,
     dataset_with_sequences: Dataset,
@@ -344,6 +393,7 @@ def datasets(
         dataset_empty,
         dataset_with_assay_empty,
         dataset_with_assay,
+        dataset_with_assay_raw,
         dataset_with_assays,
         dataset_with_sequence,
         dataset_with_sequences,
