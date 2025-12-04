@@ -1203,6 +1203,22 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
 
 
+def test_dataset_raises_error_when_raw_assay_has_no_match() -> None:
+    """A dataset fails if a raw assay has no matching assay in the dataset."""
+    raw_assay = AssayRaw(
+        name="assay",
+        records=[
+            (0.3,),
+            (0.9,),
+        ],
+        fields=[Field(name="OD")],
+    )
+
+    match = "Raw assay 'assay' must be matched to the corresponding assay by its name."
+    with pytest.raises(ValueError, match=match):
+        Dataset(name="test", assays_raw=[raw_assay])
+
+
 def test_dataset_fails_with_duplicate_assay_variable_names() -> None:
     """A dataset fails if there are duplicate assay names."""
     duplicate_names = ["duplicate1", "duplicate2"]
