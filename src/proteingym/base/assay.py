@@ -109,12 +109,8 @@ class AssayTarget:
         )
 
 
-class AssayManifestSection(BaseModel):
-    """This is the manifest section for Assays.
-
-    They can be loaded from a file. This object is used to
-    validate the assay manifest.
-    """
+class _ManifestSection(BaseModel):
+    """The base class for the assay manifest sections."""
 
     model_config = ConfigDict(
         extra="forbid",
@@ -124,11 +120,62 @@ class AssayManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    name: str | None = None
-    """The name of the assay."""
+    name: str
+    """The assay name to which the raw data belongs."""
+
+    path: FilePath
+    """The path to the assay file, csv only."""
 
     description: str | None = None
-    """Description of the assay."""
+    """A brief description"""
+
+    @field_validator("path", mode="before", check_fields=True)
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        fmt = path.suffix.lower()
+        if fmt not in AssayFormat:
+            raise ValueError(f"Unsupported file format: {fmt}")
+        return path
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
+        """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
+        return path.as_posix()
+
+
+class AssayRawManifestSection(_ManifestSection):
+    """The manifest section describing the raw assay data."""
+
+    fields: list[Field]
+    """The list of fields in the raw assay."""
+
+    @model_validator(mode="after")
+    def validate_field_names(self) -> "AssayRawManifestSection":
+        """Validate whether field names are present in the `path` file."""
+        with self.path.open("r") as f:
+            header = f.readline()
+        for field in self.fields:
+            if field.name not in header:
+                raise ValueError(
+                    f"Field '{field.name}' not found in the file: {self.path}"
+                )
+        return self
+
+
+class AssayManifestSection(_ManifestSection):
+    """The manifest section describing an assay."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
 
     sequence: str = "sequence"
     """The sequence feature name given in the file."""
@@ -545,59 +592,6 @@ class Assay:
             case _:
                 raise NotImplementedError(f"Unsupported file type: {fmt.value}")
         return path
-
-
-class AssayRawManifestSection(BaseModel):
-    """The manifest section describing the raw assay data."""
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=True,
-        use_attribute_docstrings=True,
-        str_min_length=1,
-    )
-    """Configuration for the Pydantic model."""
-
-    name: str
-    """The assay name to which the raw data belongs."""
-
-    path: FilePath
-    """The path to the assay file, csv only."""
-
-    description: str | None = None
-    """A brief description"""
-
-    fields: list[Field]
-    """The list of fields in the raw assay."""
-
-    @field_validator("path", mode="before", check_fields=True)
-    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
-        """Optionally, extend the path with the `relative_to_path` from the context."""
-        if info.context and info.context.get("relative_to_path"):
-            path = info.context["relative_to_path"] / path
-        fmt = path.suffix.lower()
-        if fmt not in AssayFormat:
-            raise ValueError(f"Unsupported file format: {fmt}")
-        return path
-
-    @field_serializer("path", check_fields=True)
-    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
-        """Serialize the path as a Posix path."""
-        if info.context and info.context.get("relative_to_path"):
-            path = path.relative_to(info.context["relative_to_path"])
-        return path.as_posix()
-
-    @model_validator(mode="after")
-    def validate_field_names(self) -> "AssayRawManifestSection":
-        """Validate whether field names are present in the `path` file."""
-        with self.path.open("r") as f:
-            header = f.readline()
-        for field in self.fields:
-            if field.name not in header:
-                raise ValueError(
-                    f"Field '{field.name}' not found in the file: {self.path}"
-                )
-        return self
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)

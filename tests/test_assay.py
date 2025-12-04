@@ -86,7 +86,7 @@ def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     path.write_text("sequence,target\nF1I,1.59\nF1L,0.6")
     context = {"relative_to_path": tmp_path}
     section = AssayManifestSection.model_validate(
-        {"path": "assay.csv", "sequence_alphabet": "AA"},
+        {"path": "assay.csv", "name": "assay", "sequence_alphabet": "AA"},
         context=context,
     )
     assert section.path == path
@@ -416,6 +416,7 @@ def test_manifest_with_valid_assay_variables(assay_file: Path) -> None:
             assay_variables=[{"name": "pH"}, {"name": "temperature"}],  # noqa
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": "DNA",
                     "variables": {"pH": 7.0, "temperature": 37.0},
@@ -441,6 +442,7 @@ def test_manifest_with_undefined_assay_variable(assay_file: Path) -> None:
             assay_variables=[{"name": "pH"}],  # noqa
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
                     "variables": {"temperature": 37.0},
@@ -461,6 +463,7 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
             ],
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
                     "targets": {"DMS Score": "target", "DMS Score2": "target2"},
@@ -488,6 +491,7 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
             ],
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
                     "targets": {"DMS Score": "target", "DMS Score2": "target2"},
