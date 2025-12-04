@@ -369,6 +369,24 @@ class AssayRaw:
                 raise NotImplementedError(f"Unsupported file type: {fmt.value}")
         return path
 
+    def to_df(self, *, fields: list[Field] | None = None) -> pl.DataFrame:
+        """Returns the assay records as a Polars DataFrame.
+
+        Args:
+            fields (Collection[str] | None): The fields to include.
+                If None, all fields are included. Defaults to None.
+
+        Returns:
+            pl.DataFrame: The DataFrame containing the assay data.
+        """
+        fields = fields or self.fields
+        data = [
+            {f.name: r[i] for i, f in enumerate(self.fields) if f in fields}
+            for r in self.records
+        ]
+        schema = [(f.name, f.type) for f in self.fields]
+        return pl.DataFrame(data, schema=schema, strict=True)
+
 
 @dataclasses.dataclass
 class Assay(AssayRaw):
