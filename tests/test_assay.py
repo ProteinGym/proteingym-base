@@ -137,7 +137,6 @@ def test_field_unsupported_polars_type_raises_value_error() -> None:
 
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
-    # This should not raise an error
     try:
         variable = AssayVariable(name="test")
     except ValidationError as e:
@@ -148,7 +147,6 @@ def test_assay_variable_minimal() -> None:
 
 def test_assay_target_minimal() -> None:
     """Test creating a minimal AssayTarget."""
-    # This should not raise an error
     try:
         target = AssayTarget(name="DMS Score")
     except ValidationError as e:
