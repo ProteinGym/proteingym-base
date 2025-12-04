@@ -307,10 +307,10 @@ def test_dataset_fails_with_duplicate_sequence_names() -> None:
         alphabet=SequenceAlphabet.DNA,
     )
 
-    with pytest.raises(
-        ValidationError,
-        match=rf"Duplicate names found in:.*Sequences:.*{', '.join(duplicate_names)}",
-    ):
+    match = "Duplicate names found in `Dataset.sequences`:.*" + ", ".join(
+        duplicate_names
+    )
+    with pytest.raises(ValidationError, match=match):
         Dataset(name="test", sequences=[sequence1, sequence2, sequence3, sequence4])
 
 

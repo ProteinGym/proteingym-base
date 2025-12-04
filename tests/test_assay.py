@@ -1260,10 +1260,8 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         columns=["sequence", "DMS Score"],
     )
 
-    with pytest.raises(
-        ValidationError,
-        match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
-    ):
+    match = r"Duplicate names found in `Dataset.assays`:.*" + ", ".join(duplicate_names)
+    with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
 
 
@@ -1294,7 +1292,7 @@ def test_dataset_raises_error_when_raw_assays_have_duplicate_names() -> None:
         fields=[Field(name="OD")],
     )
 
-    match = "Duplicate names found in: AssayRaws:.*assay"
+    match = "Duplicate names found in `Dataset.assays_raw`: assay"
     with pytest.raises(ValueError, match=match):
         Dataset(name="test", assays_raw=[raw_assay, raw_assay])
 
@@ -1311,7 +1309,9 @@ def test_dataset_fails_with_duplicate_assay_variable_names() -> None:
         Field(name=duplicate_names[1]),
     ]
 
-    match = rf"Duplicate names found in: Fields:.*{', '.join(duplicate_names)}"
+    match = r"Duplicate names found in `Dataset.assay_variables`:.*" + ", ".join(
+        duplicate_names
+    )
     with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assay_variables=assay_variables)
 
@@ -1328,7 +1328,9 @@ def test_dataset_fails_with_duplicate_assay_target_names() -> None:
         Field(name=duplicate_names[1]),
     ]
 
-    match = r"Duplicate names found in: Fields:.*" + ", ".join(duplicate_names)
+    match = r"Duplicate names found in `Dataset.assay_targets`:.*" + ", ".join(
+        duplicate_names
+    )
     with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assay_targets=assay_targets)
 
