@@ -41,7 +41,6 @@ class Field:
 
     TODO
     ----
-    Reuse this class across the code base.
     Add field for setting the type.
     """
 
