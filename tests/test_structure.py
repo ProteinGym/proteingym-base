@@ -335,10 +335,10 @@ def test_dataset_fails_with_duplicate_structure_names() -> None:
     structure3 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
     structure4 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
 
-    with pytest.raises(
-        ValidationError,
-        match=rf"Duplicate names found in:.*Structures:.*{', '.join(duplicate_names)}",
-    ):
+    match = "Duplicate names found in `Dataset.structures`:.*" + ", ".join(
+        duplicate_names
+    )
+    with pytest.raises(ValidationError, match=match):
         Dataset(
             name="test", structures=[structure1, structure2, structure3, structure4]
         )

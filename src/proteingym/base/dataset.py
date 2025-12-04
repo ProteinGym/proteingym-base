@@ -347,28 +347,22 @@ class Dataset(BaseModel):
             name_counts = collections.Counter(item.name for item in items if item.name)
             return [name for name, count in name_counts.items() if count > 1]
 
-        data_types = {
-            Assay: self.assays,
-            AssayVariable: self.assay_variables,
-            AssayTarget: self.assay_targets,
-            AssayRaw: self.assays_raw,
-            Sequence: self.sequences,
-            Structure: self.structures,
-            MSA: self.msas,
-        }
-
-        duplicates = {
-            data_class: _get_duplicate_names(items)
-            for data_class, items in data_types.items()
-        }
-
-        if any(duplicates.values()):
-            error_lines = [
-                f"{data_class.__name__}s: {', '.join(names)}"
-                for data_class, names in duplicates.items()
-                if names
-            ]
-            raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
+        attribute_names = [
+            "assays",
+            "assay_variables",
+            "assay_targets",
+            "assays_raw",
+            "sequences",
+            "structures",
+            "msas",
+        ]
+        for attribute_name in attribute_names:
+            duplicates = _get_duplicate_names(getattr(self, attribute_name))
+            if duplicates:
+                raise ValueError(
+                    f"Duplicate names found in `Dataset.{attribute_name}`: "
+                    + ", ".join(duplicates)
+                )
         return self
 
     @property
