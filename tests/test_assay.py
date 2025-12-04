@@ -129,6 +129,19 @@ def test_field_polars_type(
     assert field.polars_type == polars_type
 
 
+def test_field_unsupported_polars_type_raises_value_error() -> None:
+    """An unsupported Field type should raise a ValueError."""
+    value = object()
+    try:
+        polars_type = Field(name="field", value=value).polars_type
+    except ValueError:
+        assert True
+    else:
+        raise AssertionError(
+            f"Value should not be mapped to a Polars type: {value} -> {polars_type}"
+        )
+
+
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     # This should not raise an error
