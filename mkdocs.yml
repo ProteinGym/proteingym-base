@@ -1,0 +1,16 @@
+site_name: ProteinGym Base Documentation
+theme:
+  name: material
+
+plugins:
+- search
+- mkdocs-autoapi:
+    autoapi_add_nav_entry: Code Reference
+    autoapi_dir: src
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [src]
+
+nav:
+- Home: manifest.md
