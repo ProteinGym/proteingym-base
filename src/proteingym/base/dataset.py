@@ -232,12 +232,9 @@ class Dataset(BaseModel):
         is_publication_match = self.publication == item.publication
         return (
             is_assay_match
-           
             and is_assay_raw_match
             and is_sequence_match
-           
             and is_structure_match
-           
             and is_msa_match
             and is_publication_match
         )
@@ -410,7 +407,8 @@ class Dataset(BaseModel):
         for assay_raw in self.assays_raw:
             if assay_raw.name not in assay_names:
                 raise ValueError(
-                    f"Raw assay '{assay_raw.name}' must be matched to the corresponding assay by its name."
+                    f"Raw assay '{assay_raw.name}' must be matched to the "
+                    "corresponding assay by its name."
                 )
         return self
 
