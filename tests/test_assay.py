@@ -158,6 +158,12 @@ def test_assay_raw_minimal() -> None:
         assert True, "Minimal valid assay created successfully."
 
 
+def test_assay_raw_empty_records() -> None:
+    """Test flag for empty assay."""
+    assay_raw = AssayRaw(name="assay", records=[])
+    assert assay_raw.is_empty() and len(assay_raw.records) == 0
+
+
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [
