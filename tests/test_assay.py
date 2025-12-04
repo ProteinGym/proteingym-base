@@ -3,6 +3,7 @@ from string import ascii_uppercase
 from zipfile import ZipFile
 
 import polars as pl
+import polars.testing
 import pytest
 from Bio.Seq import Seq
 from pydantic import ValidationError
@@ -380,6 +381,18 @@ def test_assay_raw_dump_raises_error_for_unknown_format(tmp_path: Path) -> None:
     )
     with pytest.raises(NotImplementedError, match="Unsupported file format: .*"):
         assay_raw.dump(path=tmp_path, fmt="unsupported_format")  # type: ignore
+
+
+def test_assay_raw_to_df() -> None:
+    """An error should be raised for unsupported file formats."""
+    expected = pl.DataFrame({"OD": [0.3, 0.9]})
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3,), (0.9,)],
+        fields=[Field(name="OD")],
+    )
+    df = assay_raw.to_df()
+    pl.testing.assert_frame_equal(df, expected)
 
 
 def test_assay() -> None:
