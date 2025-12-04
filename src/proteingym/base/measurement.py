@@ -77,7 +77,7 @@ class MeasurementsManifestSection(BaseModel):
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
-        fmt = path.suffix[1:].lower()
+        fmt = path.suffix.lower()
         if fmt not in MeasurementsFormat:
             raise ValueError(f"Unsupported measurements file format: {fmt}")
         return path
