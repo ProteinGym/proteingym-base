@@ -84,6 +84,15 @@ sequence_alphabet = "AA"
 [ assays.variables ]
 PH = "7"
 
+[[ assays_raw ]]
+name = "assay"
+path = "assay_raw.csv"
+
+[[ assays_raw.fields ]]
+name = "OD"
+unit = "log10(l0 / l)"
+description = "Optical density at 600nm"
+
 [[ sequences ]]
 type = "wild_type"
 alphabet = "DNA"
@@ -172,6 +181,30 @@ path = "path/to/assay.csv"
 target = "DMS_score"
 sequence = "mutated_sequence"
 ```
+
+### Raw Assay Data
+
+The raw assays section contains a list of raw assays with the data from which
+the assays are created. Raw assays represent observed or calculated values for
+specific targets. The raw assays are optional, though, if present, they need to
+be linked to an assay.
+
+| **Field**     | **Type**         | **Required** | **Default** | **Description**                                                |
+| ------------- | ---------------- | ------------ | ----------- | -------------------------------------------------------------- |
+| `name`        | `string`         | Yes          | `None`      | The name of the assay the raw data belongs to.              |
+| `path`        | `string`         | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
+| `description` | `string \| None` | No           | `None`      | A brief description.                                           |
+
+### Raw Assay Data fields
+
+The fields section defines the fields in the raw assay data file.
+
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
+| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------- |
+| `name`        | `string`                              | Yes          | N/A         | The field name             |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.       |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the variable. |
 
 ### Sequences
 

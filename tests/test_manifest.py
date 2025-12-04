@@ -41,6 +41,15 @@ sequence_alphabet = "AA"
 [ assays.variables ]
 PH = "7"
 
+[[ assays_raw ]]
+name = "assay"
+path = "assay_raw.csv"
+
+[[ assays_raw.fields ]]
+name = "OD"
+unit = "log10(l0 / l)"
+description = "Optical density at 600nm"
+
 [[ sequences ]]
 type = "wild_type"
 alphabet = "DNA"
@@ -71,10 +80,19 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     msa_file = tmp_path / "msas.a3m"
     msa_weights_file = tmp_path / "weights.npy"
     assay_file = tmp_path / "assay.csv"
-    for path in sequence_file, structure_file, msa_file, msa_weights_file, assay_file:
+    assay_raw_file = tmp_path / "assay_raw.csv"
+    for path in (
+        sequence_file,
+        structure_file,
+        msa_file,
+        msa_weights_file,
+        assay_file,
+        assay_raw_file,
+    ):
         path.touch()
     # Write header in the assay file
     assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
+    assay_raw_file.write_text("OD\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
