@@ -218,7 +218,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         >>>
         >>> X, y = transformer.fit_transform(df)
         >>>
-        >>> assert X.shape == (2, 20)
+        >>> assert X.shape == (2, 8)
         >>> assert y.shape == (2,)
     """
 
