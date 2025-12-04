@@ -3,6 +3,7 @@ from string import ascii_uppercase
 from zipfile import ZipFile
 
 import polars as pl
+import polars.testing
 import pytest
 from Bio.Seq import Seq
 from pydantic import ValidationError
@@ -13,9 +14,12 @@ from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
+    AssayRaw,
+    AssayRawManifestSection,
     AssaySlice,
     AssayTarget,
     AssayVariable,
+    Field,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -35,9 +39,146 @@ F1L,0.6,0.4""".lstrip()
     return path
 
 
+@pytest.fixture
+def assay_raw_file(tmp_path: Path) -> Path:
+    """Fixture to create a raw assay file."""
+    path = tmp_path / "assay_raw.csv"
+    path.write_text(
+        """
+OD
+0.3
+0.9""".lstrip()
+    )
+    return path
+
+
+@pytest.fixture
+def seq1() -> Sequence:
+    return Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+
+@pytest.fixture
+def seq2() -> Sequence:
+    return Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+
+@pytest.fixture
+def seq3() -> Sequence:
+    return Sequence(
+        name="seq3",
+        value=Seq("GHI"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+
+
+def test_field_minimal() -> None:
+    """At minimum, a Field requires a name."""
+    try:
+        field = Field(name="field")
+    except ValidationError as e:
+        raise AssertionError("Test failed") from e
+    else:
+        assert field.name == "field"
+
+
+def test_field_complete() -> None:
+    """Verify creating a Field with all parameters."""
+    try:
+        field = Field(
+            name="field",
+            value=42,
+            unit="log",
+            description="A test field",
+        )
+    except ValidationError as e:
+        raise AssertionError("Test failed") from e
+    else:
+        assert (
+            field.name == "field"
+            and field.value == 42
+            and field.unit == "log"
+            and field.description == "A test field"
+        )
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        Field(name="field", value=None),
+        Field(name="field", value=True),
+        Field(name="field", value=False),
+        Field(name="field", value=42),
+        Field(name="field", value=10281.1021),
+        Field(name="field", value="AABBCC"),
+        Field(name="field", value=42, unit="log"),
+        Field(name="field", value=42, description="A test field"),
+        Field(name="field", value=42, unit="log", description="A test field"),
+    ],
+)
+def test_field_equality_itself(field: Field) -> None:
+    """A field should equal itself."""
+    assert field == field
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        Field(name="field", value=True),
+        Field(name="field", value=42),
+        Field(name="field", value=10281.1021),
+        Field(name="field", value="AABBCC"),
+    ],
+)
+def test_field_without_value_not_equal_to_field_with_value(field: Field) -> None:
+    """A field without a value should not equal a field with a value."""
+    field_empty = Field(name="field")
+    assert field_empty != field
+
+
+def test_field_equality_excludes_description() -> None:
+    """Description should not be considered for Field equality."""
+    field1 = Field(name="field", value=42, unit="log", description="A test field")
+    field2 = Field(name="field", value=42, unit="log", description="Another test field")
+    assert field1 == field2
+
+
+@pytest.mark.parametrize(
+    "value, polars_type",
+    [
+        (True, pl.Boolean),
+        (42, pl.Int64),
+        (3.14, pl.Float64),
+        ("test", pl.Utf8),
+        (None, pl.Unknown),
+    ],
+)
+def test_field_polars_type(
+    value: bool | int | float | str | None, polars_type: pl.DataType
+) -> None:
+    """Test Polars type mapping for Field types."""
+    field = Field(name="field", value=value)
+    assert field.polars_type == polars_type
+
+
+def test_field_unsupported_polars_type_raises_value_error() -> None:
+    """An unsupported Field type should raise a ValueError."""
+    with pytest.raises(ValueError, match="Unsupported field type: .*"):
+        _ = Field(name="field", value=object()).polars_type
+
+
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
-    # This should not raise an error
     try:
         variable = AssayVariable(name="test")
     except ValidationError as e:
@@ -48,13 +189,74 @@ def test_assay_variable_minimal() -> None:
 
 def test_assay_target_minimal() -> None:
     """Test creating a minimal AssayTarget."""
-    # This should not raise an error
     try:
         target = AssayTarget(name="DMS Score")
     except ValidationError as e:
         raise AssertionError(f"AssayTarget raised ValidationError: {e}") from e
     else:
         assert target.name == "DMS Score"
+
+
+def test_assay_raw_manifest_section_minimal(assay_raw_file: Path) -> None:
+    """Test creating a minimal AssayRawManifestSection."""
+    try:
+        section = AssayRawManifestSection(
+            name="assay",
+            path=assay_raw_file,
+            fields=[Field(name="OD")],
+        )
+    except ValidationError as e:
+        raise AssertionError(
+            f"AssayRawManifestSection raised ValidationError: {e}"
+        ) from e
+    else:
+        assert (
+            section.name == "assay"
+            and section.path == assay_raw_file
+            and section.fields == [Field(name="OD")]
+        )
+
+
+def test_assay_raw_manifest_section_with_relative_path(assay_raw_file: Path) -> None:
+    """The can also be created with a relative path."""
+    context = {"relative_to_path": assay_raw_file.parent}
+    section = AssayRawManifestSection.model_validate(
+        {
+            "name": "assay",
+            "path": assay_raw_file.name,
+            "fields": [{"name": "OD"}],
+        },
+        context=context,
+    )
+    assert section.path == assay_raw_file
+
+
+def test_assay_raw_manifest_section_raises_error_for_unsupport_file_extension(
+    tmp_path: Path,
+) -> None:
+    """An unsupported file should raise a ValidationError."""
+    path = tmp_path / "assay.unsupported"
+    path.touch()
+    with pytest.raises(ValidationError, match="Unsupported file format: .unsupported"):
+        AssayRawManifestSection(
+            name="assay",
+            path=path,
+            fields=[Field(name="OD")],
+        )
+
+
+def test_assay_raw_manifest_section_raises_error_for_unknown_fields_names(
+    assay_raw_file: Path,
+) -> None:
+    """Unknown field names should raise a ValidationError."""
+    with pytest.raises(
+        ValidationError, match="Field 'UNKNOWN' not found in the file: .*"
+    ):
+        AssayRawManifestSection(
+            name="assay",
+            path=assay_raw_file,
+            fields=[Field(name="UNKNOWN")],
+        )
 
 
 def test_assay_manifest_section(assay_file: Path) -> None:
@@ -86,7 +288,7 @@ def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     path.write_text("sequence,target\nF1I,1.59\nF1L,0.6")
     context = {"relative_to_path": tmp_path}
     section = AssayManifestSection.model_validate(
-        {"path": "assay.csv", "sequence_alphabet": "AA"},
+        {"path": "assay.csv", "name": "assay", "sequence_alphabet": "AA"},
         context=context,
     )
     assert section.path == path
@@ -145,6 +347,105 @@ def test_assay_slice_to_json_with_columns_only() -> None:
     contents = '{"columns": ["sequence", "DMS Score"], "records": null}'
     slc = AssaySlice(columns=["sequence", "DMS Score"])
     assert slc.to_json() == contents
+
+
+def test_assay_raw_minimal() -> None:
+    """The minimaly valid assay."""
+    try:
+        assay_raw = AssayRaw(name="assay")
+    except ValidationError as e:
+        raise AssertionError("Minimal valid assay failed") from e
+    else:
+        assert assay_raw.name == "assay"
+
+
+def test_assay_raw_complete() -> None:
+    """The assay raw with all fields"""
+    try:
+        assay_raw = AssayRaw(
+            name="assay",
+            description="A test raw assay",
+            fields=[Field(name="OD")],
+            records=[(0.3,), (0.9,)],
+        )
+    except ValidationError as e:
+        raise AssertionError("Complete assay raw failed") from e
+    else:
+        assert (
+            assay_raw.name == "assay"
+            and assay_raw.description == "A test raw assay"
+            and assay_raw.fields == [Field(name="OD")]
+            and assay_raw.records == [(0.3,), (0.9,)]
+        )
+
+
+def test_assay_raw_empty_records() -> None:
+    """Test flag for empty assay."""
+    assay_raw = AssayRaw(name="assay", records=[])
+    assert assay_raw.is_empty() and len(assay_raw.records) == 0
+
+
+def test_assay_raw_non_empty_records(seq1: Sequence) -> None:
+    """Test flag for non empty assay."""
+    assay_raw = AssayRaw(name="assay", records=[(seq1, 1.56)])
+    assert not assay_raw.is_empty() and len(assay_raw.records) > 0
+
+
+def test_assay_raw_from_manifest_section(assay_raw_file: Path) -> None:
+    """Load a raw assay from the manifest section."""
+    section = AssayRawManifestSection(
+        name="assay",
+        path=assay_raw_file,
+        fields=[Field(name="OD")],
+    )
+    assay_raw = AssayRaw.from_manifest_section(section)
+    assert assay_raw.records == [(0.3,), (0.9,)]
+
+
+def test_assay_raw_dump_non_empty_file(tmp_path: Path) -> None:
+    """Dumping an assay raw creates a non-empty file."""
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3,), (0.9,)],
+        fields=[Field(name="OD")],
+    )
+    path = assay_raw.dump(path=tmp_path)
+    assert path.is_file() and path.read_text() and path.stat().st_size > 0
+
+
+def test_assay_raw_dump_raises_error_for_unknown_format(tmp_path: Path) -> None:
+    """An error should be raised for unsupported file formats."""
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3,), (0.9,)],
+        fields=[Field(name="OD")],
+    )
+    with pytest.raises(NotImplementedError, match="Unsupported file format: .*"):
+        assay_raw.dump(path=tmp_path, fmt="unsupported_format")  # type: ignore
+
+
+def test_assay_raw_to_df() -> None:
+    """Verify converting an AssayRaw to a Polars DataFrame."""
+    expected = pl.DataFrame({"OD": [0.3, 0.9]})
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3,), (0.9,)],
+        fields=[Field(name="OD")],
+    )
+    df = assay_raw.to_df()
+    pl.testing.assert_frame_equal(df, expected)
+
+
+def test_assay_raw_to_df_with_fields() -> None:
+    """Verify converting an AssayRaw to a Polars DataFrame."""
+    expected = pl.DataFrame({"OD": [0.3, 0.9]})
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3, 10e9), (0.9, 20e9)],
+        fields=[Field(name="OD"), Field(name="PPM")],
+    )
+    df = assay_raw.to_df(fields=[Field(name="OD")])
+    pl.testing.assert_frame_equal(df, expected)
 
 
 def test_assay() -> None:
@@ -416,6 +717,7 @@ def test_manifest_with_valid_assay_variables(assay_file: Path) -> None:
             assay_variables=[{"name": "pH"}, {"name": "temperature"}],  # noqa
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": "DNA",
                     "variables": {"pH": 7.0, "temperature": 37.0},
@@ -441,6 +743,7 @@ def test_manifest_with_undefined_assay_variable(assay_file: Path) -> None:
             assay_variables=[{"name": "pH"}],  # noqa
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
                     "variables": {"temperature": 37.0},
@@ -461,6 +764,7 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
             ],
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
                     "targets": {"DMS Score": "target", "DMS Score2": "target2"},
@@ -488,6 +792,7 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
             ],
             assays=[  # noqa
                 {
+                    "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
                     "targets": {"DMS Score": "target", "DMS Score2": "target2"},
@@ -505,36 +810,6 @@ def test_dataset_to_df_no_assays() -> None:
         raise AssertionError(f"Should return empty DataFrame: {e}") from e
     else:
         assert df.is_empty()
-
-
-@pytest.fixture
-def seq1() -> Sequence:
-    return Sequence(
-        name="seq1",
-        value=Seq("APC"),
-        type=SequenceType.STANDARD,
-        alphabet=SequenceAlphabet.DNA,
-    )
-
-
-@pytest.fixture
-def seq2() -> Sequence:
-    return Sequence(
-        name="seq2",
-        value=Seq("DEF"),
-        type=SequenceType.STANDARD,
-        alphabet=SequenceAlphabet.DNA,
-    )
-
-
-@pytest.fixture
-def seq3() -> Sequence:
-    return Sequence(
-        name="seq3",
-        value=Seq("GHI"),
-        type=SequenceType.STANDARD,
-        alphabet=SequenceAlphabet.DNA,
-    )
 
 
 @pytest.fixture
@@ -992,6 +1267,38 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
     ):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
+
+
+def test_dataset_raises_error_when_raw_assay_has_no_match() -> None:
+    """Dataset creation raises a ValueError if a raw assay has no matching assay."""
+    raw_assay = AssayRaw(
+        name="assay",
+        records=[
+            (0.3,),
+            (0.9,),
+        ],
+        fields=[Field(name="OD")],
+    )
+
+    match = "Raw assay 'assay' must be matched to the corresponding assay by its name."
+    with pytest.raises(ValueError, match=match):
+        Dataset(name="test", assays_raw=[raw_assay])
+
+
+def test_dataset_raises_error_when_raw_assays_have_duplicate_names() -> None:
+    """Dataset creation raises a ValueError if there are duplicate raw assay names."""
+    raw_assay = AssayRaw(
+        name="assay",
+        records=[
+            (0.3,),
+            (0.9,),
+        ],
+        fields=[Field(name="OD")],
+    )
+
+    match = "Duplicate names found in: AssayRaws:.*assay"
+    with pytest.raises(ValueError, match=match):
+        Dataset(name="test", assays_raw=[raw_assay, raw_assay])
 
 
 def test_dataset_fails_with_duplicate_assay_variable_names() -> None:
