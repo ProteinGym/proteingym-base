@@ -547,13 +547,6 @@ class Assay:
         return path
 
 
-class AssayRawFormat(StrEnum):
-    """Supported assay file formats."""
-
-    CSV = ".csv"
-    """A comma separated text file"""
-
-
 class AssayRawManifestSection(BaseModel):
     """The manifest section describing the raw assay data."""
 
@@ -583,7 +576,7 @@ class AssayRawManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         fmt = path.suffix.lower()
-        if fmt not in AssayRawFormat:
+        if fmt not in AssayFormat:
             raise ValueError(f"Unsupported file format: {fmt}")
         return path
 
@@ -670,7 +663,7 @@ class AssayRaw:
         self,
         *,
         path: Path | None = None,
-        fmt: AssayRawFormat = AssayRawFormat.CSV,
+        fmt: AssayFormat = AssayFormat.CSV,
     ) -> Path:
         """Dump the raw assay data to a file.
 
@@ -692,7 +685,7 @@ class AssayRaw:
             schema=[field.name for field in self.fields],  # TODO: Use units
         )
         match format:
-            case AssayRawFormat.CSV:
+            case AssayFormat.CSV:
                 df.write_csv(path)
             case _:
                 raise NotImplementedError(f"Unsupported file type: {fmt.value}")
