@@ -113,6 +113,47 @@ def test_field_complete() -> None:
 
 
 @pytest.mark.parametrize(
+    "field",
+    [
+        Field(name="field", value=None),
+        Field(name="field", value=True),
+        Field(name="field", value=False),
+        Field(name="field", value=42),
+        Field(name="field", value=10281.1021),
+        Field(name="field", value="AABBCC"),
+        Field(name="field", value=42, unit="log"),
+        Field(name="field", value=42, description="A test field"),
+        Field(name="field", value=42, unit="log", description="A test field"),
+    ],
+)
+def test_field_equality_itself(field: Field) -> None:
+    """A field should equal itself."""
+    assert field == field
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        Field(name="field", value=True),
+        Field(name="field", value=42),
+        Field(name="field", value=10281.1021),
+        Field(name="field", value="AABBCC"),
+    ],
+)
+def test_field_without_value_not_equal_to_field_with_value(field: Field) -> None:
+    """A field without a value should not equal a field with a value."""
+    field_empty = Field(name="field")
+    assert field_empty != field
+
+
+def test_field_equality_excludes_description() -> None:
+    """Description should not be considered for Field equality."""
+    field1 = Field(name="field", value=42, unit="log", description="A test field")
+    field2 = Field(name="field", value=42, unit="log", description="Another test field")
+    assert field1 == field2
+
+
+@pytest.mark.parametrize(
     "value, polars_type",
     [
         (True, pl.Boolean),
@@ -392,6 +433,18 @@ def test_assay_raw_to_df() -> None:
         fields=[Field(name="OD")],
     )
     df = assay_raw.to_df()
+    pl.testing.assert_frame_equal(df, expected)
+
+
+def test_assay_raw_to_df_with_fields() -> None:
+    """Verify converting an AssayRaw to a Polars DataFrame."""
+    expected = pl.DataFrame({"OD": [0.3, 0.9]})
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3, 10e9), (0.9, 20e9)],
+        fields=[Field(name="OD"), Field(name="PPM")],
+    )
+    df = assay_raw.to_df(fields=[Field(name="OD")])
     pl.testing.assert_frame_equal(df, expected)
 
 

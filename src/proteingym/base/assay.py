@@ -55,6 +55,17 @@ class Field:
     description: str | None = None
     """Description of the field."""
 
+    def __eq__(self, other: "Field") -> bool:
+        """Implements the '==' operator for Field."""
+        if not isinstance(other, Field):
+            return False
+        return (
+            # Description is not considered for equality
+            self.name == other.name
+            and self.unit == other.unit
+            and self.value == other.value
+        )
+
     @functools.cached_property
     def polars_type(self) -> pl.DataType:
         """Returns the Polars data type of the field."""
