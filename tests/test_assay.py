@@ -310,11 +310,11 @@ def test_assay_slice_to_json_with_columns_only() -> None:
 def test_assay_raw_minimal() -> None:
     """The minimaly valid assay."""
     try:
-        AssayRaw(name="assay")
+        assay_raw = AssayRaw(name="assay")
     except ValidationError as e:
         raise AssertionError("Minimal valid assay failed") from e
     else:
-        assert True, "Minimal valid assay created successfully."
+        assert assay_raw.name == "assay"
 
 
 def test_assay_raw_complete() -> None:
