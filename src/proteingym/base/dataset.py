@@ -623,12 +623,12 @@ class Dataset(BaseModel):
                 arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[assay_raw.path for assay_raw in manifest.assays_raw],
                 arcname_prefix=DatasetArchiveLayout.ASSAYS_RAW_DIRECTORY,
             )
             self._write_paths_to_zip(
-                zip,
+                zip_,
                 *[sequence.path for sequence in manifest.sequences],
                 arcname_prefix=DatasetArchiveLayout.SEQUENCES_DIRECTORY,
             )
