@@ -412,10 +412,11 @@ class AssayRaw:
             pl.DataFrame: The DataFrame containing the assay data.
         """
         fields = fields or self.fields
-        data = [
-            {f.name: r[i] for i, f in enumerate(self.fields) if f in fields}
-            for r in self.records
-        ]
+        data = {
+            f.name: [r[i] for r in self.records]
+            for i, f in enumerate(self.fields)
+            if f in fields
+        }
         schema = {f.name: f.polars_type for f in self.fields if f in fields}
         return pl.DataFrame(data, schema=schema, strict=True)
 
