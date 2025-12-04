@@ -184,6 +184,20 @@ def test_assay_raw_manifest_section_minimal(assay_raw_file: Path) -> None:
         )
 
 
+def test_assay_raw_manifest_section_with_relative_path(assay_raw_file: Path) -> None:
+    """The can also be created with a relative path."""
+    context = {"relative_to_path": assay_raw_file.parent}
+    section = AssayRawManifestSection.model_validate(
+        {
+            "name": "assay",
+            "path": assay_raw_file.name,
+            "fields": [{"name": "OD"}],
+        },
+        context=context,
+    )
+    assert section.path == assay_raw_file
+
+
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
