@@ -396,10 +396,12 @@ class AssayRaw:
         if path.is_dir():
             path = path / f"{self.name}{fmt}"
 
-        df = pl.DataFrame(
-            self.records,
-            schema=[field.name for field in self.fields],  # TODO: Use units
-        )
+        schema = {
+            field.name: field.polars_type
+            for field in self.fields
+            if field.polars_type != pl.Null  # Polars complains about Null types
+        }
+        df = pl.DataFrame(self.records, schema_overrides=schema, strict=True)
         match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)
