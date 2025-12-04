@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import itertools
 import json
 from collections.abc import Collection
@@ -146,6 +147,16 @@ class _ManifestSection(BaseModel):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
+    @functools.cached_property
+    def _header(self) -> str:
+        """Returns the header of the assay file."""
+        message = "Update header reading for new formats"
+        assert [f.value for f in AssayFormat] == [".csv"], message
+        # Not splitting the header to maintain consistency across formats
+        with self.path.open("r") as f:
+            header = f.readline()
+        return header
+
 
 class AssayRawManifestSection(_ManifestSection):
     """The manifest section describing the raw assay data."""
@@ -156,10 +167,8 @@ class AssayRawManifestSection(_ManifestSection):
     @model_validator(mode="after")
     def validate_field_names(self) -> "AssayRawManifestSection":
         """Validate whether field names are present in the `path` file."""
-        with self.path.open("r") as f:
-            header = f.readline()
         for field in self.fields:
-            if field.name not in header:
+            if field.name not in self._header:
                 raise ValueError(
                     f"Field '{field.name}' not found in the file: {self.path}"
                 )
@@ -213,10 +222,8 @@ class AssayManifestSection(_ManifestSection):
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
-        with self.path.open("r") as f:
-            header = f.readline()
         for v in [self.sequence] + list(self.targets.values()):
-            if v not in header:
+            if v not in self._header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
 
