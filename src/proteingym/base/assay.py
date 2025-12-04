@@ -149,10 +149,19 @@ class _ManifestSection(BaseModel):
     """A brief description"""
 
     @field_validator("path", mode="before", check_fields=True)
-    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
-        """Optionally, extend the path with the `relative_to_path` from the context."""
+    def validate_path_before(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context.
+
+        This validator runs before other validations because the `FilePath`
+        validates if the file exists, which requires the full path.
+        """
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
+        return path
+
+    @field_validator("path", mode="after", check_fields=True)
+    def validate_path_after(cls, path: Path) -> Path:
+        """Validate that the file format is supported."""
         fmt = path.suffix.lower()
         if fmt not in AssayFormat:
             raise ValueError(f"Unsupported file format: {fmt}")
