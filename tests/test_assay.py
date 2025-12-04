@@ -14,9 +14,11 @@ from proteingym.base.assay import (
     AssayFormat,
     AssayManifestSection,
     AssayRaw,
+    AssayRawManifestSection,
     AssaySlice,
     AssayTarget,
     AssayVariable,
+    Field,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -32,6 +34,19 @@ def assay_file(tmp_path: Path) -> Path:
 sequence,target,target2
 F1I,1.59,0.5
 F1L,0.6,0.4""".lstrip()
+    )
+    return path
+
+
+@pytest.fixture
+def assay_raw_file(tmp_path: Path) -> Path:
+    """Fixture to create a raw assay file."""
+    path = tmp_path / "assay_raw.csv"
+    path.write_text(
+        """
+OD
+0.3
+0.9""".lstrip()
     )
     return path
 
@@ -198,6 +213,17 @@ def test_assay_raw_non_empty_records(seq1: Sequence) -> None:
     """Test flag for non empty assay."""
     assay_raw = AssayRaw(name="assay", records=[(seq1, 1.56)])
     assert not assay_raw.is_empty() and len(assay_raw.records) > 0
+
+
+def test_assay_raw_from_manifest_section(assay_raw_file: Path) -> None:
+    """Load a raw assay from the manifest section."""
+    section = AssayRawManifestSection(
+        name="assay",
+        path=assay_raw_file,
+        fields=[Field(name="OD")],
+    )
+    assay_raw = AssayRaw.from_manifest_section(section)
+    assert assay_raw.records == [(0.3,), (0.9,)]
 
 
 def test_assay() -> None:

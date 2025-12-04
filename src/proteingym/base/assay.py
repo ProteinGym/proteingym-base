@@ -54,6 +54,23 @@ class Field:
     description: str | None = None
     """Description of the field."""
 
+    @functools.cached_property
+    def polars_type(self) -> pl.DataType:
+        """Returns the Polars data type of the field."""
+        match self.value:
+            case bool():
+                return pl.Boolean
+            case int():
+                return pl.Int64
+            case float():
+                return pl.Float64
+            case str():
+                return pl.Utf8
+            case None:
+                return pl.Null
+            case _:
+                raise ValueError(f"Unsupported field type: {type(self.value)}")
+
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayVariable:
@@ -163,6 +180,13 @@ class AssayRawManifestSection(_ManifestSection):
 
     fields: list[Field]
     """The list of fields in the raw assay."""
+
+    @field_validator("fields", mode="after", check_fields=True)
+    def validate_fields(cls, fields: list[Field]) -> "AssayRawManifestSection":
+        """The fields cannot be empty."""
+        if not fields:
+            raise ValueError("Missing fields")
+        return fields
 
     @model_validator(mode="after")
     def validate_field_names(self) -> "AssayRawManifestSection":
@@ -310,9 +334,13 @@ class AssayRaw:
         Returns:
             AssayRaw: The created AssayRaw object.
         """
-        schema = {field.name: field.type for field in section.fields}
+        schema = {
+            field.name: field.polars_type
+            for field in section.fields
+            if field.polars_type != pl.Null  # Polars complains about Null types
+        }
         # Reusing polars as we already depend on it for assays
-        records = list(pl.read_csv(section.path, schema=schema).iter_rows())
+        records = list(pl.read_csv(section.path, schema_overrides=schema).iter_rows())
         return cls(
             name=section.name,
             records=records,
