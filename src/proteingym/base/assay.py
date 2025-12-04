@@ -388,7 +388,7 @@ class AssayRaw:
         return pl.DataFrame(data, schema=schema, strict=True)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True, frozen=True)
 class Assay(AssayRaw):
     """An assay in the dataset."""
 
@@ -410,7 +410,7 @@ class Assay(AssayRaw):
     def sequence_feature_name(self) -> str:
         """Returns the sequence feature name in the assay records."""
         # TODO: Return field instead of string
-        return self.fields[0].name
+        return self.columns[0]
 
     @property
     def target_feature_names(self) -> list[str]:
@@ -418,7 +418,7 @@ class Assay(AssayRaw):
         # Get the target feature names from the fields
         # The first field is the sequence
         # TODO: Return fields instead of strings
-        return list(self.fields[1:])
+        return list(self.columns[1:])
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
