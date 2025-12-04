@@ -164,6 +164,26 @@ def test_assay_target_minimal() -> None:
         assert target.name == "DMS Score"
 
 
+def test_assay_raw_manifest_section_minimal(assay_raw_file: Path) -> None:
+    """Test creating a minimal AssayRawManifestSection."""
+    try:
+        section = AssayRawManifestSection(
+            name="assay",
+            path=assay_raw_file,
+            fields=[Field(name="OD")],
+        )
+    except ValidationError as e:
+        raise AssertionError(
+            f"AssayRawManifestSection raised ValidationError: {e}"
+        ) from e
+    else:
+        assert (
+            section.name == "assay"
+            and section.path == assay_raw_file
+            and section.fields == [Field(name="OD")]
+        )
+
+
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
