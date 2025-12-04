@@ -384,7 +384,7 @@ def test_assay_raw_dump_raises_error_for_unknown_format(tmp_path: Path) -> None:
 
 
 def test_assay_raw_to_df() -> None:
-    """An error should be raised for unsupported file formats."""
+    """Verify converting an AssayRaw to a Polars DataFrame."""
     expected = pl.DataFrame({"OD": [0.3, 0.9]})
     assay_raw = AssayRaw(
         name="assay",
