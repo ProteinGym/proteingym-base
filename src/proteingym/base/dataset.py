@@ -14,7 +14,7 @@ import pydantic
 from Bio.Seq import Seq
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, Field
+from .assay import Assay, AssayRaw, AssaySlice, Field
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
@@ -134,7 +134,7 @@ class Dataset(BaseModel):
     assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
 
-    assay_targets: list[AssayTarget] = pydantic.Field(default_factory=list)
+    assay_targets: list[Field] = pydantic.Field(default_factory=list)
     """The list of assay targets relevant to the dataset."""
 
     assays: list[Assay] = pydantic.Field(default_factory=list)
@@ -340,19 +340,17 @@ class Dataset(BaseModel):
             name_counts = collections.Counter(item.name for item in items if item.name)
             return [name for name, count in name_counts.items() if count > 1]
 
-        data_types = {
-            Assay: self.assays,
-            Field: self.assay_variables,
-            AssayTarget: self.assay_targets,
-            AssayRaw: self.assays_raw,
-            Sequence: self.sequences,
-            Structure: self.structures,
-            MSA: self.msas,
-        }
-
+        data_types = (
+            (Assay, self.assays),
+            (Field, self.assay_variables),
+            (Field, self.assay_targets),
+            (AssayRaw, self.assays_raw),
+            (Sequence, self.sequences),
+            (Structure, self.structures),
+            (MSA, self.msas),
+        )
         duplicates = {
-            data_class: _get_duplicate_names(items)
-            for data_class, items in data_types.items()
+            data_class: _get_duplicate_names(items) for data_class, items in data_types
         }
 
         if any(duplicates.values()):
@@ -863,8 +861,8 @@ def dummy_dataset() -> Dataset:
         description="A dataset containing a single assay.",
         assay_variables=[Field(name="var1", description="")],
         assay_targets=[
-            AssayTarget(name="numerical", description=""),
-            AssayTarget(name="categorical", description=""),
+            Field(name="numerical", description=""),
+            Field(name="categorical", description=""),
         ],
         assays=[assay],
         sequences=[],

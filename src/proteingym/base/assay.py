@@ -84,39 +84,6 @@ class Field:
                 raise ValueError(f"Unsupported field type: {type(self.value)}")
 
 
-@dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayTarget:
-    """Definition of an assay target.
-
-    TODO
-    ----
-    Replace with Field class above
-    """
-
-    name: str
-    """The name of the target."""
-
-    unit: str | None = None
-    """The unit of the target."""
-
-    value: bool | int | float | str | None = None
-    """The value of the target, can be a bool, int, float, or str."""
-
-    description: str | None = None
-    """Description of the target."""
-
-    def __eq__(self, other: "AssayTarget") -> bool:
-        """Implements the '==' operator for AssayTarget."""
-        if not isinstance(other, AssayTarget):
-            return False
-        return (
-            # Description is not considered for equality
-            self.name == other.name
-            and self.unit == other.unit
-            and self.value == other.value
-        )
-
-
 class _ManifestSection(BaseModel):
     """The base class for the assay manifest sections."""
 

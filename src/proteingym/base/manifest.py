@@ -17,7 +17,6 @@ from semver import Version
 from .assay import (
     AssayManifestSection,
     AssayRawManifestSection,
-    AssayTarget,
     Field,
 )
 from .msa import MSAManifestSection
@@ -112,7 +111,7 @@ class Manifest(BaseModel):
     assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The variables for the assays defined in the dataset."""
 
-    assay_targets: list[AssayTarget] = pydantic.Field(default_factory=list)
+    assay_targets: list[Field] = pydantic.Field(default_factory=list)
     """The targets for the assays defined in the dataset."""
 
     assays: list[AssayManifestSection] = pydantic.Field(default_factory=list)

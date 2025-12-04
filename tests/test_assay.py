@@ -17,7 +17,6 @@ from proteingym.base.assay import (
     AssayRaw,
     AssayRawManifestSection,
     AssaySlice,
-    AssayTarget,
     Field,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
@@ -189,7 +188,7 @@ def test_assay_variable_minimal() -> None:
 def test_assay_target_minimal() -> None:
     """Test creating a minimal AssayTarget."""
     try:
-        target = AssayTarget(name="DMS Score")
+        target = Field(name="DMS Score")
     except ValidationError as e:
         raise AssertionError(f"AssayTarget raised ValidationError: {e}") from e
     else:
@@ -758,8 +757,8 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
             version=Version(1, 0),
             name="test_manifest",
             assay_targets=[
-                AssayTarget(name="DMS Score"),
-                AssayTarget(name="DMS Score2"),
+                Field(name="DMS Score"),
+                Field(name="DMS Score2"),
             ],
             assays=[  # noqa
                 {
@@ -787,7 +786,7 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
             version=Version(1, 0),
             name="test_manifest",
             assay_targets=[
-                AssayTarget(name="DMS Bin"),
+                Field(name="DMS Bin"),
             ],
             assays=[  # noqa
                 {
@@ -840,9 +839,9 @@ def test_dataset_to_df_single_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -867,9 +866,9 @@ def test_dataset_to_df_no_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -896,9 +895,9 @@ def test_dataset_to_df_invalid_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -913,9 +912,9 @@ def test_dataset_to_df_string_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -973,8 +972,8 @@ def test_dataset_to_df_assay_with_different_targets(
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="Binding Affinity"),
+            Field(name="DMS Score"),
+            Field(name="Binding Affinity"),
         ],
         assay_variables=[Field(name="pH"), Field(name="T")],
         assays=[assay1, assay2, assay3, assay4],
@@ -1028,7 +1027,7 @@ def test_dataset_to_df_failed_assay_to_df() -> None:
     )
     dataset = Dataset(
         name="test_dataset",
-        assay_targets=[AssayTarget(name="DMS Score2")],
+        assay_targets=[Field(name="DMS Score2")],
         assays=[assay1, assay2],
     )
     try:
@@ -1071,7 +1070,7 @@ def test_dataset_to_df_drops_empty_target_rows() -> None:
     )
     dataset = Dataset(
         name="test_dataset",
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
         assays=[assay1, assay2],
     )
     df = dataset.to_df(target_names=["DMS Score"])
@@ -1135,7 +1134,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
     )
     dataset = Dataset(
         name="test_dataset",
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
         assays=[assay1, assay2],
     )
     archive_path = dataset.dump(path=tmp_path)
@@ -1182,7 +1181,7 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
     dataset = Dataset(
         name="test_dataset",
         assays=[assay1],
-        assay_targets=[AssayTarget(name="DMS Score"), AssayTarget(name="DMS Score2")],
+        assay_targets=[Field(name="DMS Score"), Field(name="DMS Score2")],
     )
     archive_path = dataset.dump(path=tmp_path)
     loaded_dataset = Dataset.from_path(archive_path)
@@ -1321,15 +1320,15 @@ def test_dataset_fails_with_duplicate_assay_target_names() -> None:
     """A dataset fails if there are duplicate assay target names."""
     duplicate_names = ["duplicate1", "duplicate2"]
     assay_targets = [
-        AssayTarget(name=duplicate_names[0]),
-        AssayTarget(name=duplicate_names[0]),
-        AssayTarget(name=duplicate_names[0]),
-        AssayTarget(name=duplicate_names[1]),
-        AssayTarget(name="unique1"),
-        AssayTarget(name=duplicate_names[1]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[1]),
+        Field(name="unique1"),
+        Field(name=duplicate_names[1]),
     ]
 
-    match = r"Duplicate names found in: AssayTargets:.*" + ", ".join(duplicate_names)
+    match = r"Duplicate names found in: Fields:.*" + ", ".join(duplicate_names)
     with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assay_targets=assay_targets)
 
