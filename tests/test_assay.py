@@ -203,6 +203,20 @@ def test_assay_raw_manifest_section_raises_error_for_unsupport_file_extension(
         )
 
 
+def test_assay_raw_manifest_section_raises_error_for_unknown_fields_names(
+    assay_raw_file: Path,
+) -> None:
+    """Unknown field names should raise a ValidationError."""
+    with pytest.raises(
+        ValidationError, match="Field 'UNKNOWN' not found in the file: .*"
+    ):
+        AssayRawManifestSection(
+            name="assay",
+            path=assay_raw_file,
+            fields=[Field(name="UNKNOWN")],
+        )
+
+
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
