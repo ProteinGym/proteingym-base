@@ -91,7 +91,7 @@ def test_field_minimal() -> None:
         assert field.name == "field"
 
 
-def test_field_all() -> None:
+def test_field_complete() -> None:
     """Verify creating a Field with all parameters."""
     try:
         field = Field(
