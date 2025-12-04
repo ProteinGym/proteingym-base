@@ -270,12 +270,109 @@ class AssaySlice:
         return json.dumps(dataclasses.asdict(self))
 
 
-@dataclasses.dataclass
-class Assay:
-    """An assay in the dataset."""
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayRaw:
+    """The raw data on which the assay is based."""
 
     name: str
     """The name of the assay."""
+
+    description: str | None = None
+    """A brief description"""
+
+    fields: list[Field] = dataclasses.field(default_factory=list)
+    """The raw assay fields."""
+
+    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
+        default_factory=list
+    )
+    """The raw assay records."""
+
+    def __len__(self) -> int:
+        """The length of the assay, i.e. the number of records."""
+        return len(self.records)
+
+    def is_empty(self) -> bool:
+        """Returns True if the assay has no records."""
+        return len(self) == 0
+
+    @classmethod
+    def from_manifest_section(
+        cls,
+        section: AssayRawManifestSection,
+    ) -> "AssayRaw":
+        """Creates AssayRaw from a manifest section.
+
+        Args:
+            section (AssayRawManifestSection): The manifest section
+                describing the raw assay data.
+
+        Returns:
+            AssayRaw: The created AssayRaw object.
+        """
+        columns = [field.name for field in section.fields]
+        # Reusing polars as we already depend on it for assays
+        records = list(pl.read_csv(section.path, columns=columns).iter_rows())
+        return cls(
+            name=section.name,
+            records=records,
+            fields=section.fields,
+            description=section.description,
+        )
+
+    def as_manifest_section(self, *, path: Path) -> AssayRawManifestSection:
+        """Converts the AssayRaw to a manifest section.
+
+        Args:
+            path (Path): The path to the raw assay file.
+
+        Returns:
+            AssayRawManifestSection: The manifest section representing
+                the raw assay.
+        """
+        return AssayRawManifestSection(
+            name=self.name,
+            path=path,
+            description=self.description,
+            fields=self.fields,
+        )
+
+    def dump(
+        self,
+        *,
+        path: Path | None = None,
+        fmt: AssayFormat = AssayFormat.CSV,
+    ) -> Path:
+        """Dump the raw assay data to a file.
+
+        Args:
+            path (Path, optional): The output directory to dump the raw assay
+                file in. If None, the current working directory is used.
+            fmt (AssayRawFormat, optional): The file format. Defaults to
+                AssayRawFormat.CSV.
+
+        Raises:
+            NotImplementedError if the file type is not supported.
+        """
+        path = path or Path.cwd()
+        if path.is_dir():
+            path = path / f"{self.name}{fmt.value}"
+
+        df = pl.DataFrame(
+            self.records,
+            schema=[field.name for field in self.fields],  # TODO: Use units
+        )
+        match format:
+            case AssayFormat.CSV:
+                df.write_csv(path)
+            case _:
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
+        return path
+
+
+@dataclasses.dataclass
+class Assay(AssayRaw):
+    """An assay in the dataset."""
 
     records: list[tuple[Sequence | str | int | float | bool | str, ...]]
     """The records of the assay, tuple with Sequence, target values."""
@@ -288,28 +385,18 @@ class Assay:
     )
     """The variables of the assay, defined in the manifest."""
 
-    description: str | None = None
-    """The description of the assay."""
-
     @property
     def sequence_feature_name(self) -> str:
         """Returns the sequence feature name in the assay records."""
-        return self.columns[0]
+        # TODO: Return field instead of string
+        return self.fields[0].name
 
     @property
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
-        # Get the target feature names from the columns
-        # The first column is the sequence
-        return list(self.columns[1:])
-
-    def __len__(self) -> int:
-        """The length of the assay, i.e. the number of records."""
-        return len(self.records)
-
-    def is_empty(self) -> bool:
-        """Returns True if the assay has no records."""
-        return len(self) == 0
+        # Get the target feature names from the fields
+        # The first field is the sequence
+        return list(self.fields[1:])
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -594,98 +681,6 @@ class Assay:
             )
         )
         match fmt:
-            case AssayFormat.CSV:
-                df.write_csv(path)
-            case _:
-                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
-        return path
-
-
-@dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayRaw:
-    """The raw data on which the assay is based."""
-
-    name: str
-    """The name of the assay."""
-
-    description: str | None = None
-    """A brief description"""
-
-    fields: list[Field] = dataclasses.field(default_factory=list)
-    """The raw assay fields."""
-
-    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
-        default_factory=list
-    )
-    """The raw assay records."""
-
-    @classmethod
-    def from_manifest_section(
-        cls,
-        section: AssayRawManifestSection,
-    ) -> "AssayRaw":
-        """Creates AssayRaw from a manifest section.
-
-        Args:
-            section (AssayRawManifestSection): The manifest section
-                describing the raw assay data.
-
-        Returns:
-            AssayRaw: The created AssayRaw object.
-        """
-        columns = [field.name for field in section.fields]
-        # Reusing polars as we already depend on it for assays
-        records = list(pl.read_csv(section.path, columns=columns).iter_rows())
-        return cls(
-            name=section.name,
-            records=records,
-            fields=section.fields,
-            description=section.description,
-        )
-
-    def as_manifest_section(self, *, path: Path) -> AssayRawManifestSection:
-        """Converts the AssayRaw to a manifest section.
-
-        Args:
-            path (Path): The path to the raw assay file.
-
-        Returns:
-            AssayRawManifestSection: The manifest section representing
-                the raw assay.
-        """
-        return AssayRawManifestSection(
-            name=self.name,
-            path=path,
-            description=self.description,
-            fields=self.fields,
-        )
-
-    def dump(
-        self,
-        *,
-        path: Path | None = None,
-        fmt: AssayFormat = AssayFormat.CSV,
-    ) -> Path:
-        """Dump the raw assay data to a file.
-
-        Args:
-            path (Path, optional): The output directory to dump the raw assay
-                file in. If None, the current working directory is used.
-            fmt (AssayRawFormat, optional): The file format. Defaults to
-                AssayRawFormat.CSV.
-
-        Raises:
-            NotImplementedError if the file type is not supported.
-        """
-        path = path or Path.cwd()
-        if path.is_dir():
-            path = path / f"{self.name}{fmt.value}"
-
-        df = pl.DataFrame(
-            self.records,
-            schema=[field.name for field in self.fields],  # TODO: Use units
-        )
-        match format:
             case AssayFormat.CSV:
                 df.write_csv(path)
             case _:

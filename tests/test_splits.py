@@ -180,7 +180,7 @@ def test_splitter_splits_with_targets_columns(
     expected_columns = ["sequence", "DMS Score"]
     splits = splitter.split(dataset_with_assay, targets=["DMS Score"])
     assays = [assay for split in splits for assay in split.assays]
-    assert all(expected_columns == assay.columns for assay in assays)
+    assert all(expected_columns == assay.fields for assay in assays)
 
 
 @pytest.mark.parametrize(
@@ -197,7 +197,7 @@ def test_splitter_splits_with_target_not_in_all_assays(
     """If a target is not in all assays, the assays without the targets are empty."""
     splits = splitter.split(dataset_with_assays, targets=["stability"])
     assays = [assay for split in splits for assay in split.assays]
-    assert all(assay.is_empty() for assay in assays if "stability" not in assay.columns)
+    assert all(assay.is_empty() for assay in assays if "stability" not in assay.fields)
     # Make sure we do not lose all data
     assert any(not split.to_df().is_empty() for split in splits)
 
@@ -216,11 +216,11 @@ def test_random_splitter_combining_split_targets(dataset_with_assays: Dataset) -
 
     assays = [assay for split in subsets["random_dms_score"] for assay in split.assays]
     expected_columns = ["sequence", "DMS Score"]
-    assert all(expected_columns == assay.columns for assay in assays if assay.columns)
+    assert all(expected_columns == assay.fields for assay in assays if assay.fields)
 
     assays = [assay for split in subsets["random_stability"] for assay in split.assays]
     expected_columns = ["sequence", "stability"]
-    assert all(expected_columns == assay.columns for assay in assays if assay.columns)
+    assert all(expected_columns == assay.fields for assay in assays if assay.fields)
 
 
 def test_splitters_combining_split_strategies(dataset_with_assays: Dataset) -> None:
