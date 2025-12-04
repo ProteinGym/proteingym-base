@@ -8,14 +8,14 @@ Move repetitive sequence and assay into fixtures.
 import pytest
 from Bio.Seq import Seq
 
-from proteingym.base.assay import Assay, AssaySlice, AssayTarget
+from proteingym.base.assay import Assay, AssaySlice, Field
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 def test_assay_target_equality_does_not_consider_description() -> None:
     """Test that assay target equality does not consider the description."""
-    assay_target1 = AssayTarget(name="DMS Score", description="DMS score")
-    assay_target2 = AssayTarget(name="DMS Score", description="Different description")
+    assay_target1 = Field(name="DMS Score", description="DMS score")
+    assay_target2 = Field(name="DMS Score", description="Different description")
     assert assay_target1 == assay_target2
 
 

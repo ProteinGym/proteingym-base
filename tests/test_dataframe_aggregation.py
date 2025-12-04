@@ -1,7 +1,7 @@
 import pytest
 from Bio.Seq import Seq
 
-from proteingym.base.assay import Assay, AssayTarget, Field
+from proteingym.base.assay import Assay, Field
 from proteingym.base.dataset import Dataset
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
@@ -37,8 +37,8 @@ def dataset_with_duplicates() -> Dataset:
     return Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="numeric_target"),
-            AssayTarget(name="categorical_target"),
+            Field(name="numeric_target"),
+            Field(name="categorical_target"),
         ],
         assay_variables=[Field(name="condition")],
         assays=[assay],
