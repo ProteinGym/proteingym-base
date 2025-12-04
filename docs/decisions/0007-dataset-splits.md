@@ -219,7 +219,7 @@ Introduce a splits archive with a split index next to the dataset archive.
 
 1. Add a split index in the [dataset archive](../dataset_archive.md)
 2. Splits archive: with split index next to dataset archive.
-3. Superset archive: a set of datasets.
+3. Subsets archive: a set of datasets.
 
 #### 1. Add a split index to the archive
 
@@ -271,7 +271,7 @@ dataset archive:
 ├── dataset.pgdata
 ```
 
-### 3. Superset: a dataset of datasets
+### 3. Subsets: a dataset of datasets
 
 A superset is a dataset that contains multiple datasets, it could be an archive of archives:
 
@@ -308,7 +308,7 @@ Additionally, an index file tracks how the dimensions of the splits:
 | --------------------------------- | ------------ | ---------------------- | --------- |
 | Add a split index to the archive  | Medium       | Low                    | High      |
 | Splits archive                    | High         | Medium                 | High      |
-| `Superset`: a dataset of datasets | High         | High                   | Low       |
+| `Subsets`: a dataset of datasets | High         | High                   | Low       |
 
 
 The splits archive allows is separate from the dataset archive, while reusing it.
