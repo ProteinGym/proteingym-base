@@ -77,7 +77,7 @@ path = "assay.csv"
 sequence = "sequence"
 sequence_alphabet = "AA"
 
-[ assays.targets ]  # TODO: Can this be removed by using an alias? Avoid the renaming?
+[ assays.targets ]
 "DMS Score" = "DMS_score"
 "DMS Score Bin" = "DMS_score_bin"
 
