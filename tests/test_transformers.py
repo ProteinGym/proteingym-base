@@ -131,21 +131,16 @@ def test_sequence_one_hot_encoder_basic() -> None:
     assert encoder.alphabet_ == ["A", "B", "C", "D", "E", "F"]
     assert encoder.max_length_ == 3
 
-    # Only variant columns are kept: 2 chars per position × 3 positions = 6 features
-    assert transformed.shape == (2, 6)
-
-    # Each sequence should still have 3 one-hot encoded positions
-    assert np.sum(transformed[0, :]) == 3.0  # Has 3 characters
-    assert np.sum(transformed[1, :]) == 3.0  # Has 3 characters
-
-    # Position 0: A=1 or D=1, Position 1: B=1 or E=1, Position 2: C=1 or F=1
-    assert transformed[0, 0] == 1.0  # A at position 0
-    assert transformed[0, 2] == 1.0  # B at position 1
-    assert transformed[0, 4] == 1.0  # C at position 2
-
-    assert transformed[1, 1] == 1.0  # D at position 0
-    assert transformed[1, 3] == 1.0  # E at position 1
-    assert transformed[1, 5] == 1.0  # F at position 2
+    # Variant columns: pos0(A,D), pos1(B,E), pos2(C,F)
+    # ABC → [1,0, 1,0, 1,0]  (A at pos0, B at pos1, C at pos2)
+    # DEF → [0,1, 0,1, 0,1]  (D at pos0, E at pos1, F at pos2)
+    expected = np.array(
+        [
+            [1.0, 0.0, 1.0, 0.0, 1.0, 0.0],  # ABC
+            [0.0, 1.0, 0.0, 1.0, 0.0, 1.0],  # DEF
+        ]
+    )
+    assert_array_equal(transformed, expected)
 
 
 def test_sequence_one_hot_encoder_different_lengths_raises_error() -> None:
@@ -186,15 +181,9 @@ def test_sequence_one_hot_encoder_unknown_char() -> None:
     X_test = pl.DataFrame({"sequence": ["ABG"]})
     transformed = encoder.transform(X_test)
 
-    assert transformed.shape == (1, 6)
-
-    assert np.sum(transformed[0, :]) == 2.0
-    assert transformed[0, 0] == 1.0  # A at position 0
-    assert transformed[0, 2] == 1.0  # B at position 1
-
-    # Position 2 should be all zeros (G is unknown)
-    assert transformed[0, 4] == 0.0  # C at position 2 (not present)
-    assert transformed[0, 5] == 0.0  # F at position 2 (not present)
+    # ABG → [1,0, 1,0, 0,0]  (A at pos0, B at pos1, G is unknown at pos2)
+    expected = np.array([[1.0, 0.0, 1.0, 0.0, 0.0, 0.0]])
+    assert_array_equal(transformed, expected)
 
 
 def test_sequence_one_hot_encoder_get_feature_names_out() -> None:
@@ -206,13 +195,17 @@ def test_sequence_one_hot_encoder_get_feature_names_out() -> None:
 
     feature_names = encoder.get_feature_names_out(["sequence"])
 
-    assert len(feature_names) == 6
-    assert feature_names[0] == "sequence_pos0_A"
-    assert feature_names[1] == "sequence_pos0_D"
-    assert feature_names[2] == "sequence_pos1_B"
-    assert feature_names[3] == "sequence_pos1_E"
-    assert feature_names[4] == "sequence_pos2_C"
-    assert feature_names[5] == "sequence_pos2_F"
+    expected_names = np.array(
+        [
+            "sequence_pos0_A",
+            "sequence_pos0_D",
+            "sequence_pos1_B",
+            "sequence_pos1_E",
+            "sequence_pos2_C",
+            "sequence_pos2_F",
+        ]
+    )
+    assert_array_equal(feature_names, expected_names)
 
 
 def test_sequence_one_hot_encoder_pandas_support() -> None:
@@ -250,17 +243,15 @@ def test_sequence_one_hot_encoder_dataset_support(simple_dataset: Dataset) -> No
     assert encoder.alphabet_ == ["A", "B", "C", "D", "E", "F"]
     assert encoder.max_length_ == 3
 
-    assert transformed.shape == (2, 6)
-
-    assert np.sum(transformed[0, :]) == 3.0  # Has 3 characters
-    assert transformed[0, 0] == 1.0  # A at position 0
-    assert transformed[0, 2] == 1.0  # B at position 1
-    assert transformed[0, 4] == 1.0  # C at position 2
-
-    assert np.sum(transformed[1, :]) == 3.0  # Has 3 characters
-    assert transformed[1, 1] == 1.0  # D at position 0
-    assert transformed[1, 3] == 1.0  # E at position 1
-    assert transformed[1, 5] == 1.0  # F at position 2
+    # Variant columns: pos0(A,D), pos1(B,E), pos2(C,F)
+    # ABC → [1,0, 1,0, 1,0], DEF → [0,1, 0,1, 0,1]
+    expected = np.array(
+        [
+            [1.0, 0.0, 1.0, 0.0, 1.0, 0.0],  # ABC
+            [0.0, 1.0, 0.0, 1.0, 0.0, 1.0],  # DEF
+        ]
+    )
+    assert_array_equal(transformed, expected)
 
 
 def test_assay_transformer_simple(simple_assay: Assay) -> None:
@@ -274,34 +265,16 @@ def test_assay_transformer_simple(simple_assay: Assay) -> None:
 
     X, y = transformer.fit_transform(df)
 
-    assert X.shape[0] == 2  # 2 samples
-    assert X.shape[1] == 6  # Only variant features: 2 per position × 3
-    assert_array_equal(
-        X[0],
+    expected_X = np.array(
         [
-            1.0,  # A at position 0
-            0.0,  # D at position 0 (not present)
-            1.0,  # B at position 1
-            0.0,  # E at position 1 (not present)
-            1.0,  # C at position 2
-            0.0,  # F at position 2 (not present)
-        ],
+            [1.0, 0.0, 1.0, 0.0, 1.0, 0.0],  # ABC
+            [0.0, 1.0, 0.0, 1.0, 0.0, 1.0],  # DEF
+        ]
     )
-    assert_array_equal(
-        X[1],
-        [
-            0.0,  # A at position 0 (not present)
-            1.0,  # D at position 0
-            0.0,  # B at position 1 (not present)
-            1.0,  # E at position 1
-            0.0,  # C at position 2 (not present)
-            1.0,  # F at position 2
-        ],
-    )
+    assert_array_equal(X, expected_X)
 
-    assert y.shape == (2,)  # 2 targets
-    assert y[0] == 1.5
-    assert y[1] == 2.0
+    expected_y = np.array([1.5, 2.0])
+    assert_array_equal(y, expected_y)
 
 
 def test_assay_transformer_with_variables(assay_with_variables: Assay) -> None:
@@ -321,19 +294,13 @@ def test_assay_transformer_with_variables(assay_with_variables: Assay) -> None:
     # Sequence variant features: pos0(A,D) + pos1(B,C,E) + pos2(C,E,F) = 8
     # Categorical: 1 (condition_A)
     # Numerical: 2 (pH, temperature)
-    assert X.shape[0] == 3  # 3 samples
-    assert X.shape[1] == 8 + 1 + 2  # 11 total features
+    assert X.shape == (3, 11)  # 3 samples × 11 features
 
-    categorical_features = X[:, 8:9]
+    expected_categorical = np.array([[1.0], [1.0], [1.0]])
+    assert_array_equal(X[:, 8:9], expected_categorical)
 
-    assert categorical_features[0, 0] == 1.0
-    assert categorical_features[1, 0] == 1.0
-    assert categorical_features[2, 0] == 1.0
-
-    assert y.shape == (3,)  # 3 samples × 1 target
-    assert y[0] == 1.5
-    assert y[1] == 2.0
-    assert y[2] == 1.8
+    expected_y = np.array([1.5, 2.0, 1.8])
+    assert_array_equal(y, expected_y)
 
 
 def test_assay_transformer_multiple_targets(assay_with_multiple_targets: Assay) -> None:
@@ -351,14 +318,15 @@ def test_assay_transformer_multiple_targets(assay_with_multiple_targets: Assay) 
     # Check that features include sequence + numerical
     # Sequence variant features: 2 per position × 3 positions = 6
     # Numerical: 1 (pH)
-    assert X.shape[0] == 2  # 2 samples
-    assert X.shape[1] == 6 + 1  # 7 total features
+    assert X.shape == (2, 7)  # 2 samples × 7 features
 
-    assert y.shape == (2, 2)  # 2 samples × 2 targets
-    assert y[0, 0] == 1.5  # DMS Score for sample 1
-    assert y[0, 1] == 0.8  # Binding Affinity for sample 1
-    assert y[1, 0] == 2.0  # DMS Score for sample 2
-    assert y[1, 1] == 0.9  # Binding Affinity for sample 2
+    expected_y = np.array(
+        [
+            [1.5, 0.8],  # DMS Score and Binding Affinity for sample 1
+            [2.0, 0.9],  # DMS Score and Binding Affinity for sample 2
+        ]
+    )
+    assert_array_equal(y, expected_y)
 
 
 def test_assay_transformer_transform_without_fit(simple_assay: Assay) -> None:
@@ -391,17 +359,33 @@ def test_assay_transformer_get_feature_names_out(assay_with_variables: Assay) ->
 
     assert len(feature_names) == 11  # 8 variant sequence + 1 categorical + 2 numerical
 
-    assert "sequence_pos0_A" in feature_names
-    assert "sequence_pos0_D" in feature_names
-    # pos0_B won't be in feature names (invariant - never appears)
-    assert "condition_A" in feature_names
-    assert "pH" in feature_names
-    assert "temperature" in feature_names
+    expected_features_present = [
+        "sequence_pos0_A",
+        "sequence_pos0_D",
+        "condition_A",
+        "pH",
+        "temperature",
+    ]
+    for feature in expected_features_present:
+        assert feature in feature_names
 
-    assert feature_names[0] == "sequence_pos0_A"
-    assert feature_names[8] == "condition_A"
-    assert feature_names[9] == "pH"
-    assert feature_names[10] == "temperature"
+    expected_positions = np.array(
+        [
+            "sequence_pos0_A",
+            "condition_A",
+            "pH",
+            "temperature",
+        ]
+    )
+    actual_positions = np.array(
+        [
+            feature_names[0],
+            feature_names[8],
+            feature_names[9],
+            feature_names[10],
+        ]
+    )
+    assert_array_equal(actual_positions, expected_positions)
 
 
 def test_assay_transformer_from_dataset(dataset_with_variables: Dataset) -> None:
@@ -419,11 +403,8 @@ def test_assay_transformer_from_dataset(dataset_with_variables: Dataset) -> None
     # Sequence variant features: pos0(A,D) + pos1(B,C,E) + pos2(C,E,F) = 8
     # Categorical: 1 (condition_A)
     # Numerical: 2 (pH, temperature)
-    assert X.shape[0] == 3  # 3 samples
-    assert X.shape[1] == 8 + 1 + 2  # 11 total features
+    assert X.shape == (3, 11)  # 3 samples × 11 features
 
-    assert y.shape == (3,)
     # Dataset returns rows sorted by sequence: ABC (1.5), ACE (1.8), DEF (2.0)
-    assert y[0] == 1.5
-    assert y[1] == 1.8
-    assert y[2] == 2.0
+    expected_y = np.array([1.5, 1.8, 2.0])
+    assert_array_equal(y, expected_y)
