@@ -18,7 +18,6 @@ from proteingym.base.assay import (
     AssayRawManifestSection,
     AssaySlice,
     AssayTarget,
-    AssayVariable,
     Field,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
@@ -180,7 +179,7 @@ def test_field_unsupported_polars_type_raises_value_error() -> None:
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     try:
-        variable = AssayVariable(name="test")
+        variable = Field(name="test")
     except ValidationError as e:
         raise AssertionError("Test failed") from e
     else:
@@ -977,7 +976,7 @@ def test_dataset_to_df_assay_with_different_targets(
             AssayTarget(name="DMS Score"),
             AssayTarget(name="Binding Affinity"),
         ],
-        assay_variables=[AssayVariable(name="pH"), AssayVariable(name="T")],
+        assay_variables=[Field(name="pH"), Field(name="T")],
         assays=[assay1, assay2, assay3, assay4],
     )
 
@@ -1303,12 +1302,12 @@ def test_dataset_fails_with_duplicate_assay_variable_names() -> None:
     """A dataset fails if there are duplicate assay names."""
     duplicate_names = ["duplicate1", "duplicate2"]
     assay_variables = [
-        AssayVariable(name=duplicate_names[0]),
-        AssayVariable(name=duplicate_names[0]),
-        AssayVariable(name=duplicate_names[0]),
-        AssayVariable(name=duplicate_names[1]),
-        AssayVariable(name="unique1"),
-        AssayVariable(name=duplicate_names[1]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[1]),
+        Field(name="unique1"),
+        Field(name=duplicate_names[1]),
     ]
 
     match = "Duplicate names found in `Dataset.assay_variables`:.*" + ", ".join(

@@ -18,7 +18,7 @@ from .assay import (
     AssayManifestSection,
     AssayRawManifestSection,
     AssayTarget,
-    AssayVariable,
+    Field,
 )
 from .msa import MSAManifestSection
 from .publication import Publication
@@ -116,7 +116,7 @@ class Manifest(BaseModel):
     reference with the token for a variant.
     """
 
-    assay_variables: list[AssayVariable] = pydantic.Field(default_factory=list)
+    assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The variables for the assays defined in the dataset."""
 
     assay_targets: list[AssayTarget] = pydantic.Field(default_factory=list)

@@ -88,28 +88,6 @@ class Field:
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayVariable:
-    """Definition of an assay variable.
-
-    TODO
-    ----
-    Replace with Field class above
-    """
-
-    name: str
-    """The name of the variable."""
-
-    unit: str | None = None
-    """The unit of the variable."""
-
-    value: bool | int | float | str | None = None
-    """The value of the variable, can be a bool, int, float, or str."""
-
-    description: str | None = None
-    """Description of the variable."""
-
-
-@dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayTarget:
     """Definition of an assay target.
 

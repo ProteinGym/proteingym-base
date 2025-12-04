@@ -14,7 +14,7 @@ import pydantic
 from Bio.Seq import Seq
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, AssayVariable
+from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, Field
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
@@ -138,7 +138,7 @@ class Dataset(BaseModel):
     reference with the token for a variant.
     """
 
-    assay_variables: list[AssayVariable] = pydantic.Field(default_factory=list)
+    assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
 
     assay_targets: list[AssayTarget] = pydantic.Field(default_factory=list)
@@ -889,7 +889,7 @@ def dummy_dataset() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[AssayVariable(name="var1", description="")],
+        assay_variables=[Field(name="var1", description="")],
         assay_targets=[
             AssayTarget(name="numerical", description=""),
             AssayTarget(name="categorical", description=""),
