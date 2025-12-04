@@ -84,14 +84,14 @@ sequence_alphabet = "AA"
 [ assays.variables ]
 PH = "7"
 
-[[ measurements ]]
+[[ assays_raw ]]
 name = "assay"
-path = "measurements.csv"
+path = "assay_raw.csv"
 
-[[ measurements.fields ]]
+[[ assays_raw.fields ]]
 name = "OD"
 unit = "log10(l0 / l)"
-description = "Optical density measurement at 600nm"
+description = "Optical density at 600nm"
 
 [[ sequences ]]
 type = "wild_type"
@@ -182,22 +182,22 @@ target = "DMS_score"
 sequence = "mutated_sequence"
 ```
 
-### Measurements
+### Raw Assay Data
 
-The measurements section contains a list of measurements from which the assay is
-created. Measurements represent observed or calculated values for specific
-targets. The measurements are optional, though, if present, they need to be
-linked to an assay.
+The raw assays section contains a list of raw assays with the data from which
+the assays are created. Raw assays represent observed or calculated values for
+specific targets. The raw assays are optional, though, if present, they need to
+be linked to an assay.
 
 | **Field**     | **Type**         | **Required** | **Default** | **Description**                                                |
 | ------------- | ---------------- | ------------ | ----------- | -------------------------------------------------------------- |
-| `name`        | `string`         | Yes          | `None`      | The name of the assay the measurements belong to.              |
+| `name`        | `string`         | Yes          | `None`      | The name of the assay the raw data belongs to.              |
 | `path`        | `string`         | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
 | `description` | `string \| None` | No           | `None`      | A brief description.                                           |
 
-### Measurement fields
+### Raw Assay Data fields
 
-The fields section defines the fields in the measurements file.
+The fields section defines the fields in the raw assay data file.
 
 | **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
 | ------------- | ------------------------------------- | ------------ | ----------- | -------------------------- |

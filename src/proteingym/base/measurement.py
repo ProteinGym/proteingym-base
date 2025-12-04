@@ -1,4 +1,4 @@
-"""The measurements on which the assays are based."""
+"""The raw assay data."""
 
 import dataclasses
 from enum import StrEnum
@@ -17,7 +17,7 @@ from pydantic import (
 )
 
 
-class MeasurementsFormat(StrEnum):
+class AssayRawFormat(StrEnum):
     """Supported assay file formats."""
 
     CSV = ".csv"
@@ -26,9 +26,9 @@ class MeasurementsFormat(StrEnum):
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class Field:
-    """A measurement field in an assay.
+    """A raw assay field in an assay.
 
-    A field contains the metadata about a measurement, like the schema
+    A field contains the metadata about a raw assay data, like the schema
     definition of a dataset.
 
     TODO
@@ -49,8 +49,8 @@ class Field:
     """Description of the field."""
 
 
-class MeasurementsManifestSection(BaseModel):
-    """The manifest section describing the measurements in an assay."""
+class AssayRawManifestSection(BaseModel):
+    """The manifest section describing the raw assay data."""
 
     model_config = ConfigDict(
         extra="forbid",
@@ -61,7 +61,7 @@ class MeasurementsManifestSection(BaseModel):
     """Configuration for the Pydantic model."""
 
     name: str
-    """The assay name to which the measurements belong."""
+    """The assay name to which the raw data belongs."""
 
     path: FilePath
     """The path to the assay file, csv only."""
@@ -70,7 +70,7 @@ class MeasurementsManifestSection(BaseModel):
     """A brief description"""
 
     fields: list[Field]
-    """The list of fields in the measurement manifest."""
+    """The list of fields in the raw assay."""
 
     @field_validator("path", mode="before", check_fields=True)
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
@@ -78,8 +78,8 @@ class MeasurementsManifestSection(BaseModel):
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         fmt = path.suffix.lower()
-        if fmt not in MeasurementsFormat:
-            raise ValueError(f"Unsupported measurements file format: {fmt}")
+        if fmt not in AssayRawFormat:
+            raise ValueError(f"Unsupported file format: {fmt}")
         return path
 
     @field_serializer("path", check_fields=True)
@@ -90,7 +90,7 @@ class MeasurementsManifestSection(BaseModel):
         return path.as_posix()
 
     @model_validator(mode="after")
-    def validate_field_names(self) -> "MeasurementsManifestSection":
+    def validate_field_names(self) -> "AssayRawManifestSection":
         """Validate whether field names are present in the `path` file."""
         with self.path.open("r") as f:
             header = f.readline()
@@ -103,36 +103,36 @@ class MeasurementsManifestSection(BaseModel):
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
-class Measurements:
-    """The measurements on which an assay is based."""
+class AssayRaw:
+    """The raw data on which the assay is based."""
 
     name: str
-    """The name of the measurement."""
+    """The name of the assay."""
 
     description: str | None = None
     """A brief description"""
 
     fields: list[Field] = dataclasses.field(default_factory=list)
-    """The measurement fields."""
+    """The raw assay fields."""
 
     records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
         default_factory=list
     )
-    """The measurement records."""
+    """The raw assay records."""
 
     @classmethod
     def from_manifest_section(
         cls,
-        section: MeasurementsManifestSection,
-    ) -> "Measurements":
-        """Creates Measurements from a manifest section.
+        section: AssayRawManifestSection,
+    ) -> "AssayRaw":
+        """Creates AssayRaw from a manifest section.
 
         Args:
-            section (MeasurementsManifestSection): The manifest section
-                describing the measurements.
+            section (AssayRawManifestSection): The manifest section
+                describing the raw assay data.
 
         Returns:
-            Measurements: The created Measurements object.
+            AssayRaw: The created AssayRaw object.
         """
         columns = [field.name for field in section.fields]
         # Reusing polars as we already depend on it for assays
@@ -144,17 +144,17 @@ class Measurements:
             description=section.description,
         )
 
-    def as_manifest_section(self, *, path: Path) -> MeasurementsManifestSection:
-        """Converts the Measurements to a manifest section.
+    def as_manifest_section(self, *, path: Path) -> AssayRawManifestSection:
+        """Converts the AssayRaw to a manifest section.
 
         Args:
-            path (Path): The path to the measurements file.
+            path (Path): The path to the raw assay file.
 
         Returns:
-            MeasurementsManifestSection: The manifest section representing
-            the measurements.
+            AssayRawManifestSection: The manifest section representing
+                the raw assay.
         """
-        return MeasurementsManifestSection(
+        return AssayRawManifestSection(
             name=self.name,
             path=path,
             description=self.description,
@@ -165,15 +165,15 @@ class Measurements:
         self,
         *,
         path: Path | None = None,
-        fmt: MeasurementsFormat = MeasurementsFormat.CSV,
+        fmt: AssayRawFormat = AssayRawFormat.CSV,
     ) -> Path:
-        """Dump the measurements to a file.
+        """Dump the raw assay data to a file.
 
         Args:
-            path (Path, optional): The output directory to dump the measurements
+            path (Path, optional): The output directory to dump the raw assay
                 file in. If None, the current working directory is used.
-            fmt (MeasurementsFormat, optional): The file format. Defaults to
-                MeasurementsFormat.CSV.
+            fmt (AssayRawFormat, optional): The file format. Defaults to
+                AssayRawFormat.CSV.
 
         Raises:
             NotImplementedError if the file type is not supported.
@@ -187,7 +187,7 @@ class Measurements:
             schema=[field.name for field in self.fields],  # TODO: Use units
         )
         match format:
-            case MeasurementsFormat.CSV:
+            case AssayRawFormat.CSV:
                 df.write_csv(path)
             case _:
                 raise NotImplementedError(f"Unsupported file type: {fmt.value}")
