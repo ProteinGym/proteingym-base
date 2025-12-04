@@ -198,6 +198,20 @@ def test_assay_raw_manifest_section_with_relative_path(assay_raw_file: Path) -> 
     assert section.path == assay_raw_file
 
 
+def test_assay_raw_manifest_section_raises_error_for_unsupport_file_extension(
+    tmp_path: Path,
+) -> None:
+    """An unsupported file should raise a ValidationError."""
+    path = tmp_path / "assay.unsupported"
+    path.touch()
+    with pytest.raises(ValidationError, match="Unsupported file format: .unsupported"):
+        AssayRawManifestSection(
+            name="assay",
+            path=path,
+            fields=[Field(name="OD")],
+        )
+
+
 def test_assay_manifest_section(assay_file: Path) -> None:
     """Test creating an AssayManifestSection."""
     try:
