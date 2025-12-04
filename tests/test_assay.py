@@ -91,6 +91,26 @@ def test_field_minimal() -> None:
         assert field.name == "field"
 
 
+def test_field_all() -> None:
+    """Verify creating a Field with all parameters."""
+    try:
+        field = Field(
+            name="field",
+            value=42,
+            unit="log",
+            description="A test field",
+        )
+    except ValidationError as e:
+        raise AssertionError("Test failed") from e
+    else:
+        assert (
+            field.name == "field"
+            and field.value == 42
+            and field.unit == "log"
+            and field.description == "A test field"
+        )
+
+
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     # This should not raise an error
