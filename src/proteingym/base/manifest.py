@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import IO, Annotated, Any, Callable
 
+import pydantic
 import toml
 from pydantic import (
     BaseModel,
     ConfigDict,
-    Field,
     GetJsonSchemaHandler,
     field_serializer,
     model_validator,
@@ -18,7 +18,7 @@ from .assay import (
     AssayManifestSection,
     AssayRawManifestSection,
     AssayTarget,
-    AssayVariable,
+    Field,
 )
 from .msa import MSAManifestSection
 from .publication import Publication
@@ -109,28 +109,28 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_variables: list[AssayVariable] = Field(default_factory=list)
+    assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The variables for the assays defined in the dataset."""
 
-    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    assay_targets: list[AssayTarget] = pydantic.Field(default_factory=list)
     """The targets for the assays defined in the dataset."""
 
-    assays: list[AssayManifestSection] = Field(default_factory=list)
+    assays: list[AssayManifestSection] = pydantic.Field(default_factory=list)
     """The assays included in the dataset."""
 
-    assays_raw: list[AssayRawManifestSection] = Field(default_factory=list)
+    assays_raw: list[AssayRawManifestSection] = pydantic.Field(default_factory=list)
     """The raw assay data included in the dataset."""
 
-    sequences: list[SequenceManifestSection] = Field(default_factory=list)
+    sequences: list[SequenceManifestSection] = pydantic.Field(default_factory=list)
     """The sequences included in the dataset."""
 
-    structures: list[StructureManifestSection] = Field(default_factory=list)
+    structures: list[StructureManifestSection] = pydantic.Field(default_factory=list)
     """The structures included in the dataset."""
 
-    msas: list[MSAManifestSection] = Field(default_factory=list)
+    msas: list[MSAManifestSection] = pydantic.Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
-    publication: Publication | None = Field(default=None)
+    publication: Publication | None = pydantic.Field(default=None)
     """Publication information for the dataset."""
 
     @model_validator(mode="after")

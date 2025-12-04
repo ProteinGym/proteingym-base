@@ -10,15 +10,11 @@ from typing import Any, Iterator
 from zipfile import ZipFile
 
 import polars as pl
+import pydantic
 from Bio.Seq import Seq
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, AssayVariable
+from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, Field
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
@@ -135,28 +131,28 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_variables: list[AssayVariable] = Field(default_factory=list)
+    assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
 
-    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    assay_targets: list[AssayTarget] = pydantic.Field(default_factory=list)
     """The list of assay targets relevant to the dataset."""
 
-    assays: list[Assay] = Field(default_factory=list)
+    assays: list[Assay] = pydantic.Field(default_factory=list)
     """The assays present in the dataset."""
 
-    assays_raw: list[AssayRaw] = Field(default_factory=list)
+    assays_raw: list[AssayRaw] = pydantic.Field(default_factory=list)
     """The raw assays present in the dataset."""
 
-    sequences: list[Sequence] = Field(default_factory=list)
+    sequences: list[Sequence] = pydantic.Field(default_factory=list)
     """The sequences included in the dataset."""
 
-    structures: list[Structure] = Field(default_factory=list)
+    structures: list[Structure] = pydantic.Field(default_factory=list)
     """The structures included in the dataset."""
 
-    msas: list[MSA] = Field(default_factory=list)
+    msas: list[MSA] = pydantic.Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
-    publication: Publication | None = Field(default=None)
+    publication: Publication | None = pydantic.Field(default=None)
     """Publication information for the dataset."""
 
     def __or__(self, other: "Dataset") -> "Dataset":
@@ -346,7 +342,7 @@ class Dataset(BaseModel):
 
         data_types = {
             Assay: self.assays,
-            AssayVariable: self.assay_variables,
+            Field: self.assay_variables,
             AssayTarget: self.assay_targets,
             AssayRaw: self.assays_raw,
             Sequence: self.sequences,
@@ -865,7 +861,7 @@ def dummy_dataset() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[AssayVariable(name="var1", description="")],
+        assay_variables=[Field(name="var1", description="")],
         assay_targets=[
             AssayTarget(name="numerical", description=""),
             AssayTarget(name="categorical", description=""),
