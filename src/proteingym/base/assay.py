@@ -394,7 +394,7 @@ class AssayRaw:
         """
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}{fmt.value}"
+            path = path / f"{self.name}{fmt}"
 
         df = pl.DataFrame(
             self.records,
@@ -404,7 +404,7 @@ class AssayRaw:
             case AssayFormat.CSV:
                 df.write_csv(path)
             case _:
-                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
+                raise NotImplementedError(f"Unsupported file format: {fmt}")
         return path
 
     def to_df(self, *, fields: list[Field] | None = None) -> pl.DataFrame:

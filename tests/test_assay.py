@@ -371,6 +371,17 @@ def test_assay_raw_dump_non_empty_file(tmp_path: Path) -> None:
     assert path.is_file() and path.read_text() and path.stat().st_size > 0
 
 
+def test_assay_raw_dump_raises_error_for_unknown_format(tmp_path: Path) -> None:
+    """An error should be raised for unsupported file formats."""
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3,), (0.9,)],
+        fields=[Field(name="OD")],
+    )
+    with pytest.raises(NotImplementedError, match="Unsupported file format: .*"):
+        assay_raw.dump(path=tmp_path, fmt="unsupported_format")  # type: ignore
+
+
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [
