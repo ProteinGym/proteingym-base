@@ -310,9 +310,9 @@ class AssayRaw:
         Returns:
             AssayRaw: The created AssayRaw object.
         """
-        columns = [field.name for field in section.fields]
+        schema = {field.name: field.type for field in section.fields}
         # Reusing polars as we already depend on it for assays
-        records = list(pl.read_csv(section.path, columns=columns).iter_rows())
+        records = list(pl.read_csv(section.path, schema=schema).iter_rows())
         return cls(
             name=section.name,
             records=records,
@@ -384,7 +384,7 @@ class AssayRaw:
             {f.name: r[i] for i, f in enumerate(self.fields) if f in fields}
             for r in self.records
         ]
-        schema = [(f.name, f.type) for f in self.fields]
+        schema = {f.name: f.type for f in self.fields}
         return pl.DataFrame(data, schema=schema, strict=True)
 
 
