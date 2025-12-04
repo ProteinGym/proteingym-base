@@ -13,6 +13,7 @@ from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
+    AssayRaw,
     AssaySlice,
     AssayTarget,
     AssayVariable,
@@ -145,6 +146,16 @@ def test_assay_slice_to_json_with_columns_only() -> None:
     contents = '{"columns": ["sequence", "DMS Score"], "records": null}'
     slc = AssaySlice(columns=["sequence", "DMS Score"])
     assert slc.to_json() == contents
+
+
+def test_assay_raw_minimal() -> None:
+    """The minimaly valid assay."""
+    try:
+        AssayRaw(name="assay")
+    except ValidationError as e:
+        raise AssertionError("Minimal valid assay failed") from e
+    else:
+        assert True, "Minimal valid assay created successfully."
 
 
 def test_assay() -> None:
