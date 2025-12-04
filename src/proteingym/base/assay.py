@@ -56,7 +56,12 @@ class Field:
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayVariable:
-    """Definition of an assay variable."""
+    """Definition of an assay variable.
+
+    TODO
+    ----
+    Replace with Field class above
+    """
 
     name: str
     """The name of the variable."""
@@ -73,7 +78,12 @@ class AssayVariable:
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayTarget:
-    """Definition of an assay target."""
+    """Definition of an assay target.
+
+    TODO
+    ----
+    Replace with Field class above
+    """
 
     name: str
     """The name of the target."""
