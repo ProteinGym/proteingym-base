@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import itertools
 import json
 from collections.abc import Collection
@@ -6,11 +7,11 @@ from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
+import pydantic
 from Bio.Seq import Seq
 from pydantic import (
     BaseModel,
     ConfigDict,
-    Field,
     FilePath,
     SerializationInfo,
     ValidationInfo,
@@ -30,8 +31,67 @@ class AssayFormat(StrEnum):
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
+class Field:
+    """A raw assay field in an assay.
+
+    A field contains the metadata about a raw assay data, like the schema
+    definition of a dataset.
+
+    TODO
+    ----
+    Reuse this class across the code base.
+    Add field for setting the type.
+    """
+
+    name: str
+    """The name of the field."""
+
+    value: bool | int | float | str | None = None
+    """The value of the field."""
+
+    unit: str | None = None
+    """The unit of the field."""
+
+    description: str | None = None
+    """Description of the field."""
+
+    def __eq__(self, other: "Field") -> bool:
+        """Implements the '==' operator for Field."""
+        if not isinstance(other, Field):
+            return False
+        return (
+            # Description is not considered for equality
+            self.name == other.name
+            and self.unit == other.unit
+            and self.value == other.value
+        )
+
+    @functools.cached_property
+    def polars_type(self) -> pl.DataType:
+        """Returns the Polars data type of the field."""
+        match self.value:
+            case bool():
+                return pl.Boolean
+            case int():
+                return pl.Int64
+            case float():
+                return pl.Float64
+            case str():
+                return pl.Utf8
+            case None:
+                return pl.Unknown
+            case _:
+                raise ValueError(f"Unsupported field type: {type(self.value)}")
+
+
+@dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayVariable:
-    """Definition of an assay variable."""
+    """Definition of an assay variable.
+
+    TODO
+    ----
+    Replace with Field class above
+    """
 
     name: str
     """The name of the variable."""
@@ -48,7 +108,12 @@ class AssayVariable:
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayTarget:
-    """Definition of an assay target."""
+    """Definition of an assay target.
+
+    TODO
+    ----
+    Replace with Field class above
+    """
 
     name: str
     """The name of the target."""
@@ -74,12 +139,8 @@ class AssayTarget:
         )
 
 
-class AssayManifestSection(BaseModel):
-    """This is the manifest section for Assays.
-
-    They can be loaded from a file. This object is used to
-    validate the assay manifest.
-    """
+class _ManifestSection(BaseModel):
+    """The base class for the assay manifest sections."""
 
     model_config = ConfigDict(
         extra="forbid",
@@ -89,34 +150,32 @@ class AssayManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    name: str | None = None
-    """The name of the assay."""
-
-    description: str | None = None
-    """Description of the assay."""
-
-    sequence: str = "sequence"
-    """The sequence feature name given in the file."""
-
-    sequence_alphabet: SequenceAlphabet | None = None
-    """The alphabet of the sequences of the assay."""
-
-    targets: dict[str, str] = Field(default_factory=dict)
-    """The map of target names in dataset to target feature names in assay."""
-
-    variables: dict[str, bool | int | float | str] = Field(default_factory=dict)
-    """The variable key:value pairs, key is the name of the assay variable (defined in
-    dataset manifest and value of the variable."""
+    name: str
+    """The assay name to which the raw data belongs."""
 
     path: FilePath
     """The path to the assay file, csv only."""
 
+    description: str | None = None
+    """A brief description"""
+
     @field_validator("path", mode="before", check_fields=True)
-    @classmethod
-    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
-        """Optionally, extend the path with the `relative_to_path` from the context."""
+    def validate_path_before(cls, path: Path, info: ValidationInfo) -> Path:
+        """Optionally, extend the path with the `relative_to_path` from the context.
+
+        This validator runs before other validations because the `FilePath`
+        validates if the file exists, which requires the full path.
+        """
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
+        return path
+
+    @field_validator("path", mode="after", check_fields=True)
+    def validate_path_after(cls, path: Path) -> Path:
+        """Validate that the file format is supported."""
+        fmt = path.suffix.lower()
+        if fmt not in AssayFormat:
+            raise ValueError(f"Unsupported file format: {fmt}")
         return path
 
     @field_serializer("path", check_fields=True)
@@ -126,13 +185,75 @@ class AssayManifestSection(BaseModel):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
 
+    @functools.cached_property
+    def _header(self) -> str:
+        """Returns the header of the assay file."""
+        message = "Update header reading for new formats"
+        assert [f.value for f in AssayFormat] == [".csv"], message
+        # Not splitting the header to maintain consistency across formats
+        with self.path.open("r") as f:
+            header = f.readline()
+        return header
+
+
+class AssayRawManifestSection(_ManifestSection):
+    """The manifest section describing the raw assay data."""
+
+    fields: list[Field]
+    """The list of fields in the raw assay."""
+
+    @field_validator("fields", mode="after", check_fields=True)
+    def validate_fields(cls, fields: list[Field]) -> "AssayRawManifestSection":
+        """The fields cannot be empty."""
+        if not fields:
+            raise ValueError("Missing fields")
+        return fields
+
+    @model_validator(mode="after")
+    def validate_field_names(self) -> "AssayRawManifestSection":
+        """Validate whether field names are present in the `path` file."""
+        for field in self.fields:
+            if field.name not in self._header:
+                raise ValueError(
+                    f"Field '{field.name}' not found in the file: {self.path}"
+                )
+        return self
+
+
+class AssayManifestSection(_ManifestSection):
+    """The manifest section describing an assay."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+    """Configuration for the Pydantic model."""
+
+    sequence: str = "sequence"
+    """The sequence feature name given in the file."""
+
+    sequence_alphabet: SequenceAlphabet | None = None
+    """The alphabet of the sequences of the assay."""
+
+    targets: dict[str, str] = pydantic.Field(default_factory=dict)
+    """The map of target names in dataset to target feature names in assay."""
+
+    variables: dict[str, bool | int | float | str] = pydantic.Field(
+        default_factory=dict
+    )
+    """The variable key:value pairs, key is the name of the assay variable (defined in
+    dataset manifest and value of the variable."""
+
+    path: FilePath
+    """The path to the assay file, csv only."""
+
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
-        with self.path.open("r") as f:
-            header = f.readline()
         for v in [self.sequence] + list(self.targets.values()):
-            if v not in header:
+            if v not in self._header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
 
@@ -179,38 +300,23 @@ class AssaySlice:
         return json.dumps(dataclasses.asdict(self))
 
 
-@dataclasses.dataclass
-class Assay:
-    """An assay in the dataset."""
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class AssayRaw:
+    """The raw data on which the assay is based."""
 
     name: str
     """The name of the assay."""
 
-    records: list[tuple[Sequence | str | int | float | bool | str, ...]]
-    """The records of the assay, tuple with Sequence, target values."""
-
-    columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
-    """The column names in the assay records."""
-
-    variables: dict[str, int | float | bool | str] = dataclasses.field(
-        default_factory=dict
-    )
-    """The variables of the assay, defined in the manifest."""
-
     description: str | None = None
-    """The description of the assay."""
+    """A brief description"""
 
-    @property
-    def sequence_feature_name(self) -> str:
-        """Returns the sequence feature name in the assay records."""
-        return self.columns[0]
+    fields: list[Field] = dataclasses.field(default_factory=list)
+    """The raw assay fields."""
 
-    @property
-    def target_feature_names(self) -> list[str]:
-        """Returns the target feature names in the assay records."""
-        # Get the target feature names from the columns
-        # The first column is the sequence
-        return list(self.columns[1:])
+    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
+        default_factory=list
+    )
+    """The raw assay records."""
 
     def __len__(self) -> int:
         """The length of the assay, i.e. the number of records."""
@@ -219,6 +325,133 @@ class Assay:
     def is_empty(self) -> bool:
         """Returns True if the assay has no records."""
         return len(self) == 0
+
+    @classmethod
+    def from_manifest_section(
+        cls,
+        section: AssayRawManifestSection,
+    ) -> "AssayRaw":
+        """Creates AssayRaw from a manifest section.
+
+        Args:
+            section (AssayRawManifestSection): The manifest section
+                describing the raw assay data.
+
+        Returns:
+            AssayRaw: The created AssayRaw object.
+        """
+        schema = {
+            field.name: field.polars_type
+            for field in section.fields
+            if field.polars_type != pl.Unknown  # Let polars infer Unknown types
+        }
+        # Reusing polars as we already depend on it for assays
+        records = list(pl.read_csv(section.path, schema_overrides=schema).iter_rows())
+        return cls(
+            name=section.name,
+            records=records,
+            fields=section.fields,
+            description=section.description,
+        )
+
+    def as_manifest_section(self, *, path: Path) -> AssayRawManifestSection:
+        """Converts the AssayRaw to a manifest section.
+
+        Args:
+            path (Path): The path to the raw assay file.
+
+        Returns:
+            AssayRawManifestSection: The manifest section representing
+                the raw assay.
+        """
+        return AssayRawManifestSection(
+            name=self.name,
+            path=path,
+            description=self.description,
+            fields=self.fields,
+        )
+
+    def dump(
+        self,
+        *,
+        path: Path | None = None,
+        fmt: AssayFormat = AssayFormat.CSV,
+    ) -> Path:
+        """Dump the raw assay data to a file.
+
+        Args:
+            path (Path, optional): The output directory to dump the raw assay
+                file in. If None, the current working directory is used.
+            fmt (AssayRawFormat, optional): The file format. Defaults to
+                AssayRawFormat.CSV.
+
+        Raises:
+            NotImplementedError if the file type is not supported.
+        """
+        path = path or Path.cwd()
+        if path.is_dir():
+            path = path / f"{self.name}{fmt}"
+
+        schema = {f.name: f.polars_type for f in self.fields}
+        df = pl.DataFrame(self.records, schema=schema, strict=True)
+        match fmt:
+            case AssayFormat.CSV:
+                df.write_csv(path)
+            case _:
+                raise NotImplementedError(f"Unsupported file format: {fmt}")
+        return path
+
+    def to_df(self, *, fields: list[Field] | None = None) -> pl.DataFrame:
+        """Returns the assay records as a Polars DataFrame.
+
+        Args:
+            fields (Collection[str] | None): The fields to include.
+                If None, all fields are included. Defaults to None.
+
+        Returns:
+            pl.DataFrame: The DataFrame containing the assay data.
+        """
+        fields = fields or self.fields
+        data = {
+            f.name: [r[i] for r in self.records]
+            for i, f in enumerate(self.fields)
+            if f in fields
+        }
+        schema = {f.name: f.polars_type for f in self.fields if f in fields}
+        return pl.DataFrame(data, schema=schema, strict=True)
+
+
+@dataclasses.dataclass(kw_only=True, frozen=True)
+class Assay(AssayRaw):
+    """An assay in the dataset."""
+
+    records: list[tuple[Sequence | str | int | float | bool | str, ...]]
+    """The records of the assay, tuple with Sequence, target values."""
+
+    columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
+    """The column names in the assay records.
+
+    TODO: Use fields instead of columns
+    """
+
+    variables: dict[str, int | float | bool | str] = dataclasses.field(
+        default_factory=dict
+    )
+    """The variables of the assay, defined in the manifest."""
+
+    @property
+    def sequence_feature_name(self) -> str:
+        """Returns the sequence feature name in the assay records."""
+        # TODO: Return field instead of string
+        return self.columns[0]
+
+    @property
+    def target_feature_names(self) -> list[str]:
+        """Returns the target feature names in the assay records."""
+        # Get the target feature names from the fields
+        # The first field is the sequence
+        # TODO: Return fields instead of strings
+        return list(self.columns[1:])
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -410,7 +643,7 @@ class Assay:
         """
 
         # Get the sequence alphabet from the first record
-        if not self.records:
+        if self.is_empty():
             sequence_alphabet = None
         else:
             sequence_alphabet = self.records[0][0].alphabet
@@ -438,7 +671,7 @@ class Assay:
         Returns:
             pl.DataFrame: The DataFrame containing all records from the assay.
         """
-        if not self.records:
+        if self.is_empty():
             # If no records are present, return empty DataFrame
             return pl.DataFrame(schema=["sequence"])
         if target_names:

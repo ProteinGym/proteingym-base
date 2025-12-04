@@ -14,7 +14,12 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from .assay import AssayManifestSection, AssayTarget, AssayVariable
+from .assay import (
+    AssayManifestSection,
+    AssayRawManifestSection,
+    AssayTarget,
+    AssayVariable,
+)
 from .msa import MSAManifestSection
 from .publication import Publication
 from .sequence import SequenceManifestSection
@@ -112,6 +117,9 @@ class Manifest(BaseModel):
 
     assays: list[AssayManifestSection] = Field(default_factory=list)
     """The assays included in the dataset."""
+
+    assays_raw: list[AssayRawManifestSection] = Field(default_factory=list)
+    """The raw assay data included in the dataset."""
 
     sequences: list[SequenceManifestSection] = Field(default_factory=list)
     """The sequences included in the dataset."""

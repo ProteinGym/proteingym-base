@@ -216,11 +216,11 @@ def test_random_splitter_combining_split_targets(dataset_with_assays: Dataset) -
 
     assays = [assay for split in subsets["random_dms_score"] for assay in split.assays]
     expected_columns = ["sequence", "DMS Score"]
-    assert all(expected_columns == assay.columns for assay in assays if assay.columns)
+    assert all(expected_columns == assay.fields for assay in assays if assay.fields)
 
     assays = [assay for split in subsets["random_stability"] for assay in split.assays]
     expected_columns = ["sequence", "stability"]
-    assert all(expected_columns == assay.columns for assay in assays if assay.columns)
+    assert all(expected_columns == assay.fields for assay in assays if assay.fields)
 
 
 def test_splitters_combining_split_strategies(dataset_with_assays: Dataset) -> None:
