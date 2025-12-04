@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
 
+# CI from https://squidfunk.github.io/mkdocs-material/publishing-your-site/
 jobs:
   deploy-pages:
     runs-on: ubuntu-latest
