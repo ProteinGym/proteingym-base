@@ -378,7 +378,10 @@ class Assay(AssayRaw):
     """The records of the assay, tuple with Sequence, target values."""
 
     columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
-    """The column names in the assay records."""
+    """The column names in the assay records.
+
+    TODO: Use fields instead of columns
+    """
 
     variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
@@ -396,6 +399,7 @@ class Assay(AssayRaw):
         """Returns the target feature names in the assay records."""
         # Get the target feature names from the fields
         # The first field is the sequence
+        # TODO: Return fields instead of strings
         return list(self.fields[1:])
 
     def __contains__(self, item: "Assay") -> bool:
