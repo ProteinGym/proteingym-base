@@ -111,6 +111,24 @@ def test_field_all() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    "value, polars_type",
+    [
+        (True, pl.Boolean),
+        (42, pl.Int64),
+        (3.14, pl.Float64),
+        ("test", pl.Utf8),
+        (None, pl.Null),
+    ],
+)
+def test_field_polars_type(
+    value: bool | int | float | str | None, polars_type: pl.DataType
+) -> None:
+    """Test Polars type mapping for Field types."""
+    field = Field(name="field", value=value)
+    assert field.polars_type == polars_type
+
+
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     # This should not raise an error
