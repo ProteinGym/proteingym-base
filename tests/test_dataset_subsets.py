@@ -162,7 +162,7 @@ def test_dataset_slice_with_columns_slices_assay_columns(
 
     subset = dataset_with_assay[slc]
 
-    assert all(assay.columns == expected_columns for assay in subset.assays)
+    assert all(assay.fields == expected_columns for assay in subset.assays)
 
 
 def test_subsets_with_strategies_get_skewed(

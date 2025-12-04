@@ -373,15 +373,6 @@ class AssayRaw:
 class Assay(AssayRaw):
     """An assay in the dataset."""
 
-    records: RECORDS
-    """The records of the assay, tuple with Sequence, target values."""
-
-    columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
-    """The column names in the assay records.
-
-    TODO: Use fields instead of columns
-    """
-
     variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
     )
@@ -389,17 +380,17 @@ class Assay(AssayRaw):
 
     @property
     def sequence_feature_name(self) -> str:
-        """Returns the sequence feature name in the assay records."""
-        # TODO: Return field instead of string
-        return self.columns[0]
+        """The sequence feature name."""
+        if len(self.fields) == 0:
+            return "sequence"  # TODO: Move to default constant
+        return self.fields[0].name
 
     @property
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
-        # Get the target feature names from the fields
-        # The first field is the sequence
-        # TODO: Return fields instead of strings
-        return list(self.columns[1:])
+        if len(self.fields) == 0:
+            return []
+        return [f.name for f in self.fields[1:]]  # The first field is the sequence
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -421,7 +412,7 @@ class Assay(AssayRaw):
         return (
             self.records == item.records
             and self.variables == item.variables
-            and self.columns == item.columns
+            and self.fields == item.fields
         )
 
     @staticmethod
@@ -433,7 +424,7 @@ class Assay(AssayRaw):
         if not is_columns_slice or slc is None:
             return assay
 
-        undefined_columns = set(slc) - set(assay.columns)
+        undefined_columns = set(slc) - set(assay.fields)
         if undefined_columns:
             raise KeyError(f"Undefined columns: {undefined_columns}")
 
@@ -441,7 +432,7 @@ class Assay(AssayRaw):
         if len(slc) == 0:
             records = []
         else:
-            column_indices = [assay.columns.index(column) for column in columns]
+            column_indices = [assay.fields.index(column) for column in columns]
             records = [
                 tuple(record[column_index] for column_index in column_indices)
                 for record in assay.records
@@ -570,10 +561,13 @@ class Assay(AssayRaw):
             df.select("sequence_object", *section.targets.values()).iter_rows()
         )
 
+        fields = [
+            Field(name=f) for f in [section.sequence] + list(section.targets.keys())
+        ]
         return cls(
             name=section.name or section.path.stem,
             records=records,
-            columns=[section.sequence] + list(section.targets.keys()),
+            fields=fields,
             description=section.description,
             variables=section.variables,
         )
@@ -636,8 +630,9 @@ class Assay(AssayRaw):
             for var_name, var_value in self.variables.items()
         ]
 
+        schema = {f.name: f.polars_type for f in self.fields}
         df = (
-            pl.DataFrame(self.records, schema=self.columns, orient="row")
+            pl.DataFrame(self.records, schema=schema, orient="row")
             .select([self.sequence_feature_name] + list(target_names))
             .with_columns(
                 pl.col(self.sequence_feature_name).map_elements(
@@ -671,16 +666,18 @@ class Assay(AssayRaw):
         if path.is_dir():
             path /= f"{self.name}{fmt.value}"
 
+        schema = {f.name: f.polars_type for f in self.fields}
         df = pl.DataFrame(
             self.records,
-            schema=self.columns,
+            schema=schema,
             orient="row",
         )
-        df = df.with_columns(
-            pl.col(self.sequence_feature_name).map_elements(
-                lambda seq: str(seq.value), return_dtype=pl.Utf8
+        if self.sequence_feature_name:
+            df = df.with_columns(
+                pl.col(self.sequence_feature_name).map_elements(
+                    lambda seq: str(seq.value), return_dtype=pl.Utf8
+                )
             )
-        )
         match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)

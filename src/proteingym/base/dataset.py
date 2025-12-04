@@ -856,7 +856,7 @@ def dummy_dataset() -> Dataset:
             (sequence2, 2.5, "bar"),
         ],
         variables={"var1": 2},
-        columns=["sequence", "numerical", "categorical"],
+        fields=["sequence", "numerical", "categorical"],
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
