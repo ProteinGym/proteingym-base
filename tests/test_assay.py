@@ -317,6 +317,26 @@ def test_assay_raw_minimal() -> None:
         assert True, "Minimal valid assay created successfully."
 
 
+def test_assay_raw_complete() -> None:
+    """The assay raw with all fields"""
+    try:
+        assay_raw = AssayRaw(
+            name="assay",
+            description="A test raw assay",
+            fields=[Field(name="OD")],
+            records=[(0.3,), (0.9,)],
+        )
+    except ValidationError as e:
+        raise AssertionError("Complete assay raw failed") from e
+    else:
+        assert (
+            assay_raw.name == "assay"
+            and assay_raw.description == "A test raw assay"
+            and assay_raw.fields == [Field(name="OD")]
+            and assay_raw.records == [(0.3,), (0.9,)]
+        )
+
+
 def test_assay_raw_empty_records() -> None:
     """Test flag for empty assay."""
     assay_raw = AssayRaw(name="assay", records=[])
