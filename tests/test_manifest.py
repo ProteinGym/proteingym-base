@@ -92,6 +92,7 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
         path.touch()
     # Write header in the assay file
     assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
+    measurement_file.write_text("OD\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
