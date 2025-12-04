@@ -22,6 +22,7 @@ name = "DMS Score Bin"
 description = "DMS score bin of the samples"
 
 [[ assays ]]
+name = "NEIME_2019"
 sequence = "mutated_sequence"
 path = "./NEIME_2019/Assays/Assay1.csv"
 sequence_alphabet = "AA"
