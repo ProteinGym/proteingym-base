@@ -18,9 +18,8 @@ from pydantic import (
     model_validator,
 )
 
-from .assay import Assay, AssaySlice, AssayTarget, AssayVariable
+from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
-from .measurement import AssayRaw
 from .msa import MSA
 from .publication import Publication
 from .sequence import Sequence, SequenceAlphabet, SequenceType
