@@ -13,4 +13,4 @@ plugins:
         paths: [src]
 
 nav:
-- Home: manifest.md
+- Home: index.md
