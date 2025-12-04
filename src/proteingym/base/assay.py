@@ -400,7 +400,7 @@ class AssayRaw:
             self.records,
             schema=[field.name for field in self.fields],  # TODO: Use units
         )
-        match format:
+        match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)
             case _:

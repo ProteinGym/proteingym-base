@@ -360,6 +360,17 @@ def test_assay_raw_from_manifest_section(assay_raw_file: Path) -> None:
     assert assay_raw.records == [(0.3,), (0.9,)]
 
 
+def test_assay_raw_dump_non_empty_file(tmp_path: Path) -> None:
+    """Dumping an assay raw creates a non-empty file."""
+    assay_raw = AssayRaw(
+        name="assay",
+        records=[(0.3,), (0.9,)],
+        fields=[Field(name="OD")],
+    )
+    path = assay_raw.dump(path=tmp_path)
+    assert path.is_file() and path.read_text() and path.stat().st_size > 0
+
+
 def test_assay() -> None:
     """Test creating an Assay instance."""
     records = [
