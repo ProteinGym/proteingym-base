@@ -412,7 +412,7 @@ class Dataset(BaseModel):
         for measurement in self.measurements:
             if measurement.name not in assay_names:
                 raise ValueError(
-                    f"Measurement '{measurement.name}' misses a reference assay."
+                    f"Measurement '{measurement.name}' must be matched to the corresponding assay by its name."
                 )
         return self
 
