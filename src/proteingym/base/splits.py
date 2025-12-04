@@ -126,10 +126,26 @@ def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
 def _unique_sequences_for_targets(
     dataset: Dataset, targets: list[str] = None
 ) -> list[Seq]:
+    """Get the unique sequences for all assays, for a given list of targets.
+
+    Args:
+        dataset: the dataset with assays
+        targets: list of targets for which we shall collect unique sequences.
+    """
     sequences = set()
     for assay in dataset.assays:
-        if not targets or (targets and any(t in assay.columns for t in targets)):
+        if not targets:
             sequences |= {r[0].value for r in assay.records}
+        else:
+            target_indices = [
+                assay.columns.index(t) for t in targets if t in assay.columns
+            ]
+            sequences |= {
+                r[0].value
+                for r in assay.records
+                if any(r[idx] is not None for idx in target_indices)
+            }
+
     return list(sequences)
 
 
