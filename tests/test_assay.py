@@ -81,6 +81,16 @@ def seq3() -> Sequence:
     )
 
 
+def test_field_minimal() -> None:
+    """At minimum, a Field requires a name."""
+    try:
+        field = Field(name="field")
+    except ValidationError as e:
+        raise AssertionError("Test failed") from e
+    else:
+        assert field.name == "field"
+
+
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     # This should not raise an error
