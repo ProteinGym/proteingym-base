@@ -341,7 +341,7 @@ class AssayRaw:
             path /= f"{self.name}{fmt}"
 
         schema = {f.name: f.polars_type for f in self.fields}
-        df = pl.DataFrame(self.records, schema=schema, strict=True)
+        df = pl.DataFrame(self.records, schema=schema, strict=True, orient="row")
         match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)
