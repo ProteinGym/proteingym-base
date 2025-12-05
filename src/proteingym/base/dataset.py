@@ -73,7 +73,7 @@ class DatasetSlice:
         This method is useful when deserializing from JSON including the sub-objects.
 
         Args:
-            data (dict[str, Any]): The dictionary to create the dataset slice from.
+            data: The dictionary to create the dataset slice from.
 
         Returns:
             The dataset slice created from the dictionary.
@@ -89,7 +89,7 @@ class DatasetSlice:
         """Create a dataset slice from a JSON string.
 
         Args:
-            contents (str): The JSON string to create the dataset slice from.
+            contents: The JSON string to create the dataset slice from.
 
         Returns:
             The dataset slice created from the JSON string.
@@ -291,7 +291,7 @@ class Dataset(BaseModel):
         """Get a slice of the dataset.
 
         Args:
-            item (slice | DatasetSlice): The slice to get. Can be a standard
+            item: The slice to get. Can be a standard
                 Python slice or a DatasetSlice.
 
         Returns:
@@ -450,7 +450,7 @@ class Dataset(BaseModel):
         Currently supports UniProt (in sequence) and DOI (in publication) identifiers.
 
         Args:
-            overwrite (bool): If True, overwrite existing values.
+            overwrite: If True, overwrite existing values.
                 If False, only fill empty fields.
 
         Returns:
@@ -492,7 +492,7 @@ class Dataset(BaseModel):
         structures, msas, and assays details.
 
         Args:
-            manifest (DatasetManifest): The manifest to create the dataset from.
+            manifest: The manifest to create the dataset from.
 
         Returns:
             Dataset: The dataset created from the manifest.
@@ -584,7 +584,7 @@ class Dataset(BaseModel):
         The manifest contains the metadata and sections for each data type.
 
         Args:
-            data_paths (dict[type, list[Path]]): A dictionary mapping the data
+            data_paths: A dictionary mapping the data
                 type - Sequence, Structure and MSA - to the list of paths to the
                 dumped data.
         """
@@ -682,7 +682,7 @@ class Dataset(BaseModel):
         """Dump the dataset.
 
         Args:
-            path (Path | str | None): The path to dump the dataset in. If None,
+            path: The path to dump the dataset in. If None,
                 the current working directory is used. Defaults to None.
 
         Returns:
@@ -729,7 +729,7 @@ class Dataset(BaseModel):
         """Returns the dataset assay records as a Polars DataFrame.
 
         Args:
-            target_names (Collection[str] | str | None): The target name(s) to include.
+            target_names: The target name(s) to include.
                 If None, all target names are included. Defaults to None.
             agg:
                 Aggregation function or mapping. Can be:
@@ -951,7 +951,7 @@ class Subsets:
         """Get a subset by key.
 
         Args:
-            key (str): The key of the subset to get.
+            key: The key of the subset to get.
 
         Returns:
             Subset: The subset corresponding to the key.
@@ -1002,7 +1002,7 @@ class Subsets:
         """Load the slices from a JSON string.
 
         Args:
-            slices_str (str): The JSON string representation of the slices.
+            slices_str: The JSON string representation of the slices.
         """
         data = json.loads(slices_str)
         if isinstance(data, dict):
@@ -1063,7 +1063,7 @@ class Subsets:
         """Dump the subsets.
 
         Args:
-            path (Path | str | None): The path to dump the dataset in. If None,
+            path: The path to dump the dataset in. If None,
                 the current working directory is used. Defaults to None.
 
         Returns:

@@ -66,11 +66,11 @@ def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
     positions are set to False.
 
     Args:
-        indices (list[int]): List of indices to be set to True.
-        length (int): Length of the resulting mask.
+        indices: List of indices to be set to True.
+        length: Length of the resulting mask.
 
     Returns:
-        list[bool]: Boolean mask with True at the specified indices.
+        list: Boolean mask with True at the specified indices.
     """
     mask = [False] * length
     for index in indices:
@@ -85,8 +85,8 @@ def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
     have the same size and thus the shape contain the size of each dimension.
 
     Args:
-        flat_list (list): The flat list to reshape.
-        shape (tuple[int, ...]): The desired shape.
+        flat_list: The flat list to reshape.
+        shape: The desired shape.
 
     Returns:
         list: The reshaped nested list.
@@ -106,10 +106,10 @@ class RandomSplitter:
     """Randomly split a dataset.
 
     Args:
-        fractions (list[float]): A list of floats representing the fractions.
+        fractions: A list of floats representing the fractions.
             The fractions must sum to 1. Provide two fractions for a train/test split;
             provide three fractions for a train/val/test split.
-        random_state (int | np.random.RandomState | None): Seed or random state for
+        random_state: Seed or random state for
             reproducibility. If None, the global numpy random state is used.
     """
 
@@ -138,8 +138,8 @@ class RandomSplitter:
         assay shapes after converting them into a boolean mask.
 
         Args:
-            dataset (Dataset): The dataset to split.
-            targets (list[str] | None): List of target column names to include in the
+            dataset: The dataset to split.
+            targets: List of target column names to include in the
                 splits. If None, all columns are included.
 
         Returns:
@@ -188,10 +188,10 @@ class KFoldSplitter:
     """Split a dataset into k folds for cross-validation.
 
     Args:
-        n_splits (int): Number of folds. Must be at least 2.
-        shuffle (bool): Whether to shuffle the dataset before splitting.
+        n_splits: Number of folds. Must be at least 2.
+        shuffle: Whether to shuffle the dataset before splitting.
             Defaults to False.
-        random_state (int | np.random.RandomState | None): Seed or random state for
+        random_state: Seed or random state for
             reproducibility. If None, the global numpy random state is used.
     """
 
@@ -218,12 +218,12 @@ class KFoldSplitter:
         the training set.
 
         Args:
-            dataset (Dataset): The dataset to split.
-            targets (list[str] | None): List of target column names to include in the
+            dataset: The dataset to split.
+            targets: List of target column names to include in the
                 splits. If None, all columns are included.
 
         Returns:
-            list[Subsets]: A list of Subsets, where each Subset contains a training set
+            list: A list of Subsets, where each Subset contains a training set
             and a validation set for one fold.
         """
         records_shape = tuple(len(assay) for assay in dataset.assays)

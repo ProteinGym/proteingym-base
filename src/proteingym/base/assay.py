@@ -284,7 +284,7 @@ class AssaySlice:
         """Create an assay slice from a JSON string.
 
         Args:
-            contents (str): The JSON string to create the assay slice from.
+            contents: The JSON string to create the assay slice from.
 
         Returns:
             The assay slice created from the JSON string.
@@ -334,7 +334,7 @@ class AssayRaw:
         """Creates AssayRaw from a manifest section.
 
         Args:
-            section (AssayRawManifestSection): The manifest section
+            section: The manifest section
                 describing the raw assay data.
 
         Returns:
@@ -358,7 +358,7 @@ class AssayRaw:
         """Converts the AssayRaw to a manifest section.
 
         Args:
-            path (Path): The path to the raw assay file.
+            path: The path to the raw assay file.
 
         Returns:
             AssayRawManifestSection: The manifest section representing
@@ -380,9 +380,9 @@ class AssayRaw:
         """Dump the raw assay data to a file.
 
         Args:
-            path (Path, optional): The output directory to dump the raw assay
+            path: The output directory to dump the raw assay
                 file in. If None, the current working directory is used.
-            fmt (AssayRawFormat, optional): The file format. Defaults to
+            fmt: The file format. Defaults to
                 AssayRawFormat.CSV.
 
         Raises:
@@ -405,7 +405,7 @@ class AssayRaw:
         """Returns the assay records as a Polars DataFrame.
 
         Args:
-            fields (Collection[str] | None): The fields to include.
+            fields: The fields to include.
                 If None, all fields are included. Defaults to None.
 
         Returns:
@@ -521,7 +521,7 @@ class Assay(AssayRaw):
         """Slice the assay to get a subset.
 
         Args:
-            slc (AssaySlice | list[bool | str]):
+            slc:
                 1. If an AssaySlice is given, it can contain both column names and
                     a boolean mask for the records.
                 2. If a list of strings is given, it is treated as a list of
@@ -636,7 +636,7 @@ class Assay(AssayRaw):
         """Create `AssayManifestSection` from the assay.
 
         Args:
-            path (Path): The path to the assay file.
+            path: The path to the assay file.
 
         Returns:
             AssayManifestSection: The manifest section for the assay.
@@ -665,7 +665,7 @@ class Assay(AssayRaw):
         """Returns the assay records with assay variables as a Polars DataFrame.
 
         Args:
-            target_names (Collection[str] | str | None): The target name(s) to include.
+            target_names: The target name(s) to include.
                 If None, all target names are included. Defaults to None.
 
         Returns:
@@ -713,9 +713,9 @@ class Assay(AssayRaw):
         - CSV (.csv)
 
         Args:
-            path (Path): The output directory to dump the assay file in. If
+            path: The output directory to dump the assay file in. If
                 None, the current working directory is used.
-            fmt (AssayFormat): The file format
+            fmt: The file format
 
         Raises:
             NotImplementedError: if the file type is not supported.

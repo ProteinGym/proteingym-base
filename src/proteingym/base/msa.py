@@ -253,7 +253,7 @@ class MSA:
         """Create a manifest section from the MSA instance.
 
         Args:
-            path (Path): The path to the MSA file. As created by the dump method.
+            path: The path to the MSA file. As created by the dump method.
 
         Returns:
             MSAManifestSection: The manifest section for the MSA.
@@ -280,9 +280,9 @@ class MSA:
         :func:`Bio.AlignIO.write` for details.
 
         Args:
-            path (Path | None): The directory path to save the MSA file in.
+            path: The directory path to save the MSA file in.
                 Defaults to the current working directory.
-            fmt (MSAFormat): The format to save the MSA in. Defaults to
+            fmt: The format to save the MSA in. Defaults to
                 MSAFormat.FASTA.
 
         Raises:
