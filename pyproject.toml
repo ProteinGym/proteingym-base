@@ -17,6 +17,8 @@ dependencies = [
     "msgpack>=1.1.0,<2.0.0",
     "polars[pyarrow]>=1.30.0,<2.0.0",
     "python-frontmatter>=1.1.0",
+    "scikit-learn>=1.5.0,<2.0.0",
+    "pandas>=2.3.3",
 ]
 
 [project.scripts]

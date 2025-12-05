@@ -56,6 +56,7 @@ followed by the schema definition.
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
+reference_sequence_name = "abc"
 
 [[ assay_variables ]]
 name = "PH"
@@ -84,6 +85,15 @@ sequence_alphabet = "AA"
 [ assays.variables ]
 PH = "7"
 
+[[ assays_raw ]]
+name = "assay"
+path = "assay_raw.csv"
+
+[[ assays_raw.fields ]]
+name = "OD"
+unit = "log10(l0 / l)"
+description = "Optical density at 600nm"
+
 [[ sequences ]]
 type = "wild_type"
 alphabet = "DNA"
@@ -109,17 +119,18 @@ weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
 The top-level of the manifest contains the dataset metadata and references to
 the protein data types.
 
-| **Field**         | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                                                                                                          |
-| ----------------- | --------------------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `version`         | `string`              | Yes          | N/A         | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>.<patch>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. A patch version change indicates bug fixes or minor improvements. |
-| `name`            | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                                                                                                 |
-| `description`     | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                                                                                                      |
-| `assay_variables` | `dict[str, str]`      | No           | Empty dict  | The variables for the assays defined in the dataset. Can be an assay condition or other variables of interest.                                                                                                                                                                                                           |
-| `assay_targets`   | `dict[str, str]`      | No           | Empty dict  | The targets for the assays defined in the dataset. Can be binding affinity, stability, or other targets of interest.                                                                                                                                                                                                     |
-| `assays`          | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                                                                                                |
-| `sequences`       | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                                                                                                   |
-| `structures`      | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                                                                                                  |
-| `msas`            | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                                                                                                                |
+| **Field**                 | **Type**              | **Required** | **Default** | **Description**                                                                                                                                                                                                                                                                                                          |
+|---------------------------|-----------------------|--------------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `version`                 | `string`              | Yes          | N/A         | The version of the manifest schema. The version follows the semantic versioning format: `<major>.<minor>.<patch>`. A major version change indicates breaking changes, while a minor version change indicates backward-compatible additions or changes. A patch version change indicates bug fixes or minor improvements. |
+| `name`                    | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                                                                                                 |
+| `description`             | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                                                                                                      |
+| `reference_sequence_name` | `string \| None`      | No           | `None`      | The name of the sequence considered to be the main reference sequence.                                                                                                                                                                                                                                                   |
+| `assay_variables`         | `dict[str, str]`      | No           | Empty dict  | The variables for the assays defined in the dataset. Can be an assay condition or other variables of interest.                                                                                                                                                                                                           |
+| `assay_targets`           | `dict[str, str]`      | No           | Empty dict  | The targets for the assays defined in the dataset. Can be binding affinity, stability, or other targets of interest.                                                                                                                                                                                                     |
+| `assays`                  | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                                                                                                |
+| `sequences`               | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                                                                                                   |
+| `structures`              | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                                                                                                  |
+| `msas`                    | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                                                                                                                |
 
 ### Assay Variables
 
@@ -172,6 +183,30 @@ path = "path/to/assay.csv"
 target = "DMS_score"
 sequence = "mutated_sequence"
 ```
+
+### Raw Assay Data
+
+The raw assays section contains a list of raw assays with the data from which
+the assays are created. Raw assays represent observed or calculated values for
+specific targets. The raw assays are optional, though, if present, they need to
+be linked to an assay.
+
+| **Field**     | **Type**         | **Required** | **Default** | **Description**                                                |
+| ------------- | ---------------- | ------------ | ----------- | -------------------------------------------------------------- |
+| `name`        | `string`         | Yes          | `None`      | The name of the assay the raw data belongs to.              |
+| `path`        | `string`         | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
+| `description` | `string \| None` | No           | `None`      | A brief description.                                           |
+
+### Raw Assay Data fields
+
+The fields section defines the fields in the raw assay data file.
+
+| **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
+| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------- |
+| `name`        | `string`                              | Yes          | N/A         | The field name             |
+| `description` | `string \| None`                      | No           | `None`      | A brief description.       |
+| `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
+| `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the variable. |
 
 ### Sequences
 

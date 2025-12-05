@@ -18,7 +18,7 @@ from pydantic import (
     model_validator,
 )
 
-from .assay import Assay, AssaySlice, AssayTarget, AssayVariable
+from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, AssayVariable
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
@@ -37,6 +37,9 @@ class DatasetArchiveLayout:
 
     ASSAYS_DIRECTORY = Path("assays/")
     """The directory for assays."""
+
+    ASSAYS_RAW_DIRECTORY = Path("assays_raw/")
+    """The directory for raw assay data."""
 
     SEQUENCES_DIRECTORY = Path("sequences/")
     """The directory for sequences."""
@@ -110,7 +113,7 @@ class Dataset(BaseModel):
     """A Protein Gym dataset.
 
     The dataset provides access to metadata and protein data such as assays,
-    sequences, structures, and multiple sequence alignments (MSAs).
+    raw assays, sequences, structures, and multiple sequence alignments (MSAs).
 
     In this BaseModel, we only use Pydantic validation feature only, not the
     (de)serialization feature because protein data is not persisted as mappings
@@ -132,6 +135,13 @@ class Dataset(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
+    reference_sequence_name: str | None = None
+    """Name of the sequence that is to be considered the reference for this dataset.
+
+    Useful for e.g. zero-shot models that compare likelihood for a token from a
+    reference with the token for a variant.
+    """
+
     assay_variables: list[AssayVariable] = Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
 
@@ -140,6 +150,9 @@ class Dataset(BaseModel):
 
     assays: list[Assay] = Field(default_factory=list)
     """The assays present in the dataset."""
+
+    assays_raw: list[AssayRaw] = Field(default_factory=list)
+    """The raw assays present in the dataset."""
 
     sequences: list[Sequence] = Field(default_factory=list)
     """The sequences included in the dataset."""
@@ -197,6 +210,7 @@ class Dataset(BaseModel):
             assay_variables=list_union(self.assay_variables, other.assay_variables),
             assay_targets=list_union(self.assay_targets, other.assay_targets),
             assays=list_union(self.assays, other.assays),
+            assays_raw=list_union(self.assays_raw, other.assays_raw),
             sequences=list_union(self.sequences, other.sequences),
             structures=list_union(self.structures, other.structures),
             msas=list_union(self.msas, other.msas),
@@ -214,6 +228,9 @@ class Dataset(BaseModel):
             return sorted(values, key=lambda value: value.name)
 
         is_assay_match = sort_by_name(self.assays) == sort_by_name(item.assays)
+        is_assay_raw_match = sort_by_name(self.assays_raw) == sort_by_name(
+            item.assays_raw
+        )
         is_sequence_match = sort_by_name(self.sequences) == sort_by_name(item.sequences)
         is_structure_match = sort_by_name(self.structures) == sort_by_name(
             item.structures
@@ -222,6 +239,7 @@ class Dataset(BaseModel):
         is_publication_match = self.publication == item.publication
         return (
             is_assay_match
+            and is_assay_raw_match
             and is_sequence_match
             and is_structure_match
             and is_msa_match
@@ -242,6 +260,9 @@ class Dataset(BaseModel):
                 for other_assay in other.assays
             )
         )
+        is_assay_raw_subset = len(other.assays_raw) == 0 or all(
+            raw_assay in self.assays_raw for raw_assay in other.assays_raw
+        )
         is_sequence_subset = len(other.sequences) == 0 or all(
             seq in self.sequences for seq in other.sequences
         )
@@ -251,7 +272,7 @@ class Dataset(BaseModel):
         is_msa_subset = len(other.msas) == 0 or all(
             msa in self.msas for msa in other.msas
         )
-        # If none its always a subset of any set
+        # If none it's always a subset of any set
         # If other.pub == self.pub, other is a subset
         # Other is not a subset when other != self
         is_publication_subset = (
@@ -259,6 +280,7 @@ class Dataset(BaseModel):
         )
         return (
             is_assay_subset
+            and is_assay_raw_subset
             and is_sequence_subset
             and is_structure_subset
             and is_msa_subset
@@ -298,6 +320,7 @@ class Dataset(BaseModel):
             lines.append("\tdescription: None,")
         lines.append("\tcontents:")
         lines.append(f"\t\tassays: {len(self.assays)},")
+        lines.append(f"\t\tassays_raw: {len(self.assays_raw)},")
         lines.append(f"\t\tsequences: {len(self.sequences)},")
         lines.append(f"\t\tstructures: {len(self.structures)},")
         lines.append(f"\t\tmsas: {len(self.msas)},")
@@ -332,6 +355,7 @@ class Dataset(BaseModel):
             Assay: self.assays,
             AssayVariable: self.assay_variables,
             AssayTarget: self.assay_targets,
+            AssayRaw: self.assays_raw,
             Sequence: self.sequences,
             Structure: self.structures,
             MSA: self.msas,
@@ -349,6 +373,32 @@ class Dataset(BaseModel):
                 if names
             ]
             raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
+        return self
+
+    @property
+    def reference_sequence(self) -> Sequence:
+        """Get the named reference sequence."""
+        return next(s for s in self.sequences if s.name == self.reference_sequence_name)
+
+    @model_validator(mode="after")
+    def _validate_reference_sequence(self) -> "Dataset":
+        """Ensure that the named reference sequence is present among the sequences.
+
+        Returns:
+            Dataset: The validated dataset instance.
+
+        Raises:
+            ValueError: If the reference sequence is specified but not among the
+                provided sequences.
+        """
+        if self.reference_sequence_name is not None:
+            try:
+                _ = self.reference_sequence
+            except StopIteration as e:
+                raise ValueError(
+                    f"'{self.reference_sequence_name}' is not present among the "
+                    "dataset's sequences."
+                ) from e
         return self
 
     @model_validator(mode="after")
@@ -372,6 +422,26 @@ class Dataset(BaseModel):
                     f"MSA '{msa.name}' reference sequence "
                     f"'{msa.reference_sequence_name}' is not present in the dataset's "
                     "sequences."
+                )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_assays_raw_have_reference_assay(self) -> "Dataset":
+        """Ensure that each raw assay has a reference assay.
+
+        Returns:
+            Dataset: The validated dataset instance.
+
+        Raises:
+            ValueError: If a reference assay is specified in a raw assay but not
+                found in the dataset's assays.
+        """
+        assay_names = {assay.name for assay in self.assays}
+        for assay_raw in self.assays_raw:
+            if assay_raw.name not in assay_names:
+                raise ValueError(
+                    f"Raw assay '{assay_raw.name}' must be matched to the "
+                    "corresponding assay by its name."
                 )
         return self
 
@@ -428,6 +498,7 @@ class Dataset(BaseModel):
             Dataset: The dataset created from the manifest.
         """
         assays = [Assay.from_manifest_section(a) for a in manifest.assays]
+        assays_raw = [AssayRaw.from_manifest_section(m) for m in manifest.assays_raw]
         sequences = itertools.chain(
             *[Sequence.from_manifest_section(s) for s in manifest.sequences]
         )
@@ -437,10 +508,12 @@ class Dataset(BaseModel):
         return cls(
             name=manifest.name,
             description=manifest.description,
+            reference_sequence_name=manifest.reference_sequence_name,
             publication=manifest.publication,
             assay_variables=manifest.assay_variables,
             assay_targets=manifest.assay_targets,
             assays=assays,
+            assays_raw=assays_raw,
             sequences=sequences,
             structures=structures,
             msas=msas,
@@ -489,6 +562,11 @@ class Dataset(BaseModel):
         data_paths = collections.defaultdict(list)
         for type_, subdirectory, objects in (
             (Assay, DatasetArchiveLayout.ASSAYS_DIRECTORY, self.assays),
+            (
+                AssayRaw,
+                DatasetArchiveLayout.ASSAYS_RAW_DIRECTORY,
+                self.assays_raw,
+            ),
             (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
             (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
             (MSA, DatasetArchiveLayout.MSAS_DIRECTORY, self.msas),
@@ -520,6 +598,12 @@ class Dataset(BaseModel):
             assays=[
                 a.as_manifest_section(path=path)
                 for a, path in zip(self.assays, data_paths.get(Assay, []), strict=True)
+            ],
+            assays_raw=[
+                m.as_manifest_section(path=path)
+                for m, path in zip(
+                    self.assays_raw, data_paths.get(AssayRaw, []), strict=True
+                )
             ],
             sequences=[
                 s.as_manifest_section(path=path)
@@ -571,6 +655,11 @@ class Dataset(BaseModel):
                 zip_,
                 *[assay.path for assay in manifest.assays],
                 arcname_prefix=DatasetArchiveLayout.ASSAYS_DIRECTORY,
+            )
+            self._write_paths_to_zip(
+                zip_,
+                *[assay_raw.path for assay_raw in manifest.assays_raw],
+                arcname_prefix=DatasetArchiveLayout.ASSAYS_RAW_DIRECTORY,
             )
             self._write_paths_to_zip(
                 zip_,

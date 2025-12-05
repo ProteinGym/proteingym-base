@@ -12,6 +12,7 @@ ALL_DATASET_NAMES = [
     "dataset_empty",
     "dataset_with_empty_assay",
     "dataset_with_single_assay",
+    "dataset_with_single_raw_assay",
     "dataset_with_multiple_assays",
     "dataset_with_single_sequence",
     "dataset_with_multiple_sequences",
@@ -56,7 +57,11 @@ def test_dataset_always_contains_dataset_empty(
 
 @pytest.mark.parametrize(
     "dataset",
-    ["dataset_with_single_assay", "dataset_with_multiple_assays"],
+    [
+        "dataset_with_single_assay",
+        "dataset_with_single_raw_assay",
+        "dataset_with_multiple_assays",
+    ],
     indirect=True,
 )
 def test_dataset_with_empty_assay_always_in_dataset_with_assay(

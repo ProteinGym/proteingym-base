@@ -1,8 +1,11 @@
 site_name: ProteinGym Base Documentation
 theme:
   name: material
+<<<<<<< HEAD
   logo: images/proteingymlogo.png
   favicon: images/proteingymlogo.png
+=======
+>>>>>>> origin/main
 
 plugins:
 - search
@@ -16,5 +19,8 @@ plugins:
 
 nav:
 - Home: index.md
+<<<<<<< HEAD
 - Manifest: manifest.md
 - ADRs: decisions/
+=======
+>>>>>>> origin/main
