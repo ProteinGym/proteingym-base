@@ -174,7 +174,7 @@ def test_field_polars_type(
 def test_field_unsupported_polars_type_raises_value_error() -> None:
     """An unsupported Field type should raise a ValueError."""
     with pytest.raises(ValueError, match="Unsupported field type: .*"):
-        _ = Field(name="field", value=object()).polars_type
+        _ = Field(name="field", value=object()).polars_type  # noqa
 
 
 def test_assay_variable_minimal() -> None:
@@ -231,7 +231,7 @@ def test_assay_raw_manifest_section_with_relative_path(assay_raw_file: Path) -> 
     assert section.path == assay_raw_file
 
 
-def test_assay_raw_manifest_section_raises_error_for_unsupport_file_extension(
+def test_assay_raw_manifest_section_raises_error_for_unsupported_file_extension(
     tmp_path: Path,
 ) -> None:
     """An unsupported file should raise a ValidationError."""
@@ -350,7 +350,7 @@ def test_assay_slice_to_json_with_columns_only() -> None:
 
 
 def test_assay_raw_minimal() -> None:
-    """The minimaly valid assay."""
+    """The minimally valid assay."""
     try:
         assay_raw = AssayRaw(name="assay")
     except ValidationError as e:
@@ -386,7 +386,7 @@ def test_assay_raw_empty_records() -> None:
 
 
 def test_assay_raw_non_empty_records(seq1: Sequence) -> None:
-    """Test flag for non empty assay."""
+    """Test flag for non-empty assay."""
     assay_raw = AssayRaw(name="assay", records=[(seq1, 1.56)])
     assert not assay_raw.is_empty() and len(assay_raw.records) > 0
 

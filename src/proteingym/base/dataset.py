@@ -222,7 +222,7 @@ class Dataset(BaseModel):
             return False
 
         def sort_by_name(
-            values: list[Assay | Sequence | Structure | MSA],
+            values: list[Assay | Sequence | Structure | MSA | AssayRaw],
         ) -> list[Assay | Sequence | Structure | MSA]:
             """Sort a list of BaseModel by name, placing unnamed items at the end."""
             return sorted(values, key=lambda value: value.name)

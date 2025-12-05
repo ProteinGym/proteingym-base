@@ -11,10 +11,11 @@ Attributes :
         loading and validating dataset from metadata.
 """
 
-from .dataset import Dataset
+from .dataset import Dataset, Subsets
 from .manifest import Manifest
 
 __all__ = [
     "Dataset",
     "Manifest",
+    "Subsets",
 ]
