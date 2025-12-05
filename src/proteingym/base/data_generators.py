@@ -132,9 +132,9 @@ def adjust_target_with_two_dummy_features(
     target_new = target_old * (2 if bar=="a" else -1) - foo/50
 
     Args:
-        df (pl.DataFrame): Input DataFrame containing the target column.
-        target (str): Name of the target column to adjust.
-        feature_names (list[str] | None): Names for the two new features.
+        df: Input DataFrame containing the target column.
+        target: Name of the target column to adjust.
+        feature_names: Names for the two new features.
             Must contain exactly 2 names. Defaults to ["foo", "bar"] if None.
 
     Returns:

@@ -191,7 +191,7 @@ class Manifest(BaseModel):
         manifest path.
 
         Args:
-            path (Path | str | None): The path to dump the manifest to. If None,
+            path: The path to dump the manifest to. If None,
                 the current working directory is used as path. If path is a
                 directory, the manifest name is used as file name. Defaults to None.
 
