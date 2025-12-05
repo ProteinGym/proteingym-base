@@ -731,7 +731,7 @@ class Dataset(BaseModel):
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
-            agg (Callable[[pl.Expr, pl.DataType], pl.Expr] | dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None):
+            agg:
                 Aggregation function or mapping. Can be:
                 - Function: Applied to all targets
                 - Dict: Maps target names to specific functions

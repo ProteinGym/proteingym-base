@@ -386,7 +386,7 @@ class AssayRaw:
                 AssayRawFormat.CSV.
 
         Raises:
-            NotImplementedError if the file type is not supported.
+            NotImplementedError: if the file type is not supported.
         """
         path = path or Path.cwd()
         if path.is_dir():
