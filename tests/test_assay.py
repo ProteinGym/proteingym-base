@@ -174,7 +174,7 @@ def test_field_polars_type(
 def test_field_unsupported_polars_type_raises_value_error() -> None:
     """An unsupported Field type should raise a ValueError."""
     with pytest.raises(ValueError, match="Unsupported field type: .*"):
-        _ = Field(name="field", value=object()).polars_type
+        _ = Field(name="field", value=object()).polars_type  # noqa
 
 
 def test_assay_variable_minimal() -> None:
