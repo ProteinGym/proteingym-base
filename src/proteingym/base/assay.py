@@ -313,8 +313,8 @@ class AssayRaw:
     fields: list[Field] = dataclasses.field(default_factory=list)
     """The raw assay fields."""
 
-    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
-        default_factory=list
+    records: list[tuple[str | int | float | bool | str | None, ...]] = (
+        dataclasses.field(default_factory=list)
     )
     """The raw assay records."""
 
@@ -425,7 +425,7 @@ class AssayRaw:
 class Assay(AssayRaw):
     """An assay in the dataset."""
 
-    records: list[tuple[Sequence | str | int | float | bool | str, ...]]
+    records: list[tuple[Sequence | str | int | float | bool | str | None, ...]]
     """The records of the assay, tuple with Sequence, target values."""
 
     columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
