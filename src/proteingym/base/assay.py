@@ -34,14 +34,13 @@ class AssayFormat(StrEnum):
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class Field:
-    """A raw assay field in an assay.
+    """A data field for an assay associated quantity or protein property.
 
-    A field contains the metadata about a raw assay data, like the schema
-    definition of a dataset.
+    A field is used to describe assay variables, e.g., assay conditions such as the
+    pH, or the prediction target, e.g., the observed activity or stability.
 
     TODO
     ----
-    Reuse this class across the code base.
     Add field for setting the type.
     """
 
@@ -85,61 +84,6 @@ class Field:
                 return pl.Unknown
             case _:
                 raise ValueError(f"Unsupported field type: {type(self.value)}")
-
-
-@dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayVariable:
-    """Definition of an assay variable.
-
-    TODO
-    ----
-    Replace with Field class above
-    """
-
-    name: str
-    """The name of the variable."""
-
-    unit: str | None = None
-    """The unit of the variable."""
-
-    value: bool | int | float | str | None = None
-    """The value of the variable, can be a bool, int, float, or str."""
-
-    description: str | None = None
-    """Description of the variable."""
-
-
-@dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayTarget:
-    """Definition of an assay target.
-
-    TODO
-    ----
-    Replace with Field class above
-    """
-
-    name: str
-    """The name of the target."""
-
-    unit: str | None = None
-    """The unit of the target."""
-
-    value: bool | int | float | str | None = None
-    """The value of the target, can be a bool, int, float, or str."""
-
-    description: str | None = None
-    """Description of the target."""
-
-    def __eq__(self, other: "AssayTarget") -> bool:
-        """Implements the '==' operator for AssayTarget."""
-        if not isinstance(other, AssayTarget):
-            return False
-        return (
-            # Description is not considered for equality
-            self.name == other.name
-            and self.unit == other.unit
-            and self.value == other.value
-        )
 
 
 class _ManifestSection(BaseModel):
@@ -397,7 +341,7 @@ class AssayRaw:
             path /= f"{self.name}{fmt}"
 
         schema = {f.name: f.polars_type for f in self.fields}
-        df = pl.DataFrame(self.records, schema=schema, strict=True)
+        df = pl.DataFrame(self.records, schema=schema, strict=True, orient="row")
         match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)

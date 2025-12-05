@@ -4,7 +4,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay, AssayRaw, AssayTarget, AssayVariable, Field
+from proteingym.base.assay import Assay, AssayRaw, Field
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.publication import Publication
@@ -39,7 +39,7 @@ def dataset_with_assay_empty() -> Dataset:
         name="dataset_with_empty_assay",
         description="A dataset containing an empty assay.",
         assay_variables=[],
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -74,10 +74,10 @@ def dataset_with_assay() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_variables=[Field(name="var1", description="A test variable")],
         assay_targets=[
-            AssayTarget(name="DMS Score", description="The DMS score"),
-            AssayTarget(name="stability", description="The resistance to temperature"),
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
         ],
         assays=[assay],
         sequences=[],
@@ -121,10 +121,10 @@ def dataset_with_assay_raw() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_raw_assay",
         description="A dataset containing a single assay and its raw assay.",
-        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_variables=[Field(name="var1", description="A test variable")],
         assay_targets=[
-            AssayTarget(name="DMS Score", description="The DMS score"),
-            AssayTarget(name="stability", description="The resistance to temperature"),
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
         ],
         assays=[assay],
         assays_raw=[assay_raw],
@@ -185,10 +185,10 @@ def dataset_with_assays() -> Dataset:
     dataset = Dataset(
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
-        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_variables=[Field(name="var1", description="A test variable")],
         assay_targets=[
-            AssayTarget(name="DMS Score", description="The DMS score"),
-            AssayTarget(name="stability", description="The resistance to temperature"),
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
         ],
         assays=[assay1, assay2],
         sequences=[],

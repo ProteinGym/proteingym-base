@@ -305,11 +305,9 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         if isinstance(X, Dataset):
             X = X.to_df()
 
-        transformers: list[tuple[str, BaseEstimator | str, list[str]]] = []
-
-        transformers.append(
+        transformers: list[tuple[str, BaseEstimator | str, list[str]]] = [
             (self.sequence_column, SequenceOneHotEncoder(), [self.sequence_column])
-        )
+        ]
 
         if self.categorical_columns:
             for categorical_column in self.categorical_columns:
