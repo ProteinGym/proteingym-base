@@ -34,10 +34,10 @@ class AssayFormat(StrEnum):
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class Field:
-    """A raw assay field in an assay.
+    """A data field for an assay associated quantity or protein property.
 
-    A field contains the metadata about a raw assay data, like the schema
-    definition of a dataset.
+    A field is used to describe assay variables, e.g., assay conditions such as the
+    pH, or the prediction target, e.g., the observed activity or stability.
 
     TODO
     ----
