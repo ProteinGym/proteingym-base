@@ -66,6 +66,7 @@ class Field:
             and self.value == other.value
         )
 
+    # noinspection PyTypeChecker
     @functools.cached_property
     def polars_type(self) -> pl.DataType:
         """Returns the Polars data type of the field."""
@@ -160,6 +161,7 @@ class _ManifestSection(BaseModel):
     """A brief description"""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path_before(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context.
 
@@ -171,6 +173,7 @@ class _ManifestSection(BaseModel):
         return path
 
     @field_validator("path", mode="after", check_fields=True)
+    @classmethod
     def validate_path_after(cls, path: Path) -> Path:
         """Validate that the file format is supported."""
         fmt = path.suffix.lower()
@@ -203,7 +206,8 @@ class AssayRawManifestSection(_ManifestSection):
     """The list of fields in the raw assay."""
 
     @field_validator("fields", mode="after", check_fields=True)
-    def validate_fields(cls, fields: list[Field]) -> "AssayRawManifestSection":
+    @classmethod
+    def validate_fields(cls, fields: list[Field]) -> list[Field]:
         """The fields cannot be empty."""
         if not fields:
             raise ValueError("Missing fields")
