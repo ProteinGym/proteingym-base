@@ -394,7 +394,7 @@ class AssayRaw:
         """
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}{fmt}"
+            path /= f"{self.name}{fmt}"
 
         schema = {f.name: f.polars_type for f in self.fields}
         df = pl.DataFrame(self.records, schema=schema, strict=True)
