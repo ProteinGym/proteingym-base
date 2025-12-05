@@ -22,6 +22,8 @@ from pydantic import (
 
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 
+RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
+
 
 class AssayFormat(StrEnum):
     """Supported assay file formats."""
@@ -317,9 +319,7 @@ class AssayRaw:
     fields: list[Field] = dataclasses.field(default_factory=list)
     """The raw assay fields."""
 
-    records: list[tuple[str | int | float | bool | str | None, ...]] = (
-        dataclasses.field(default_factory=list)
-    )
+    records: RECORDS = dataclasses.field(default_factory=list)
     """The raw assay records."""
 
     def __len__(self) -> int:
@@ -429,7 +429,7 @@ class AssayRaw:
 class Assay(AssayRaw):
     """An assay in the dataset."""
 
-    records: list[tuple[Sequence | str | int | float | bool | str | None, ...]]
+    records: RECORDS
     """The records of the assay, tuple with Sequence, target values."""
 
     columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
@@ -484,9 +484,8 @@ class Assay(AssayRaw):
     def _slice_columns(assay: "Assay", slc: list[str] | None) -> "Assay":
         """Slice the assay columns given a list of column names."""
         is_columns_slice = (
-            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str))
-            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
-        )
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str)
+        ) or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
         if not is_columns_slice or slc is None:
             return assay
 
@@ -509,9 +508,8 @@ class Assay(AssayRaw):
     def _slice_records(assay: "Assay", slc: list[bool] | None) -> "Assay":
         """Slice the assay records given a slice or a boolean masks."""
         is_records_slice = (
-            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool))
-            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
-        )
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool)
+        ) or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
         if not is_records_slice or slc is None:
             return assay
 
