@@ -485,7 +485,7 @@ class Assay:
             fmt (AssayFormat): The file format
 
         Raises:
-            NotImplementedError if the file type is not supported.
+            NotImplementedError: if the file type is not supported.
         """
 
         path = path or Path.cwd()

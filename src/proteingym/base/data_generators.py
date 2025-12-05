@@ -135,7 +135,7 @@ def adjust_target_with_two_dummy_features(
         df (pl.DataFrame): Input DataFrame containing the target column.
         target (str): Name of the target column to adjust.
         feature_names (list[str] | None): Names for the two new features.
-        Must contain exactly 2 names. Defaults to ["foo", "bar"] if None.
+            Must contain exactly 2 names. Defaults to ["foo", "bar"] if None.
 
     Returns:
         pl.DataFrame: DataFrame with two new features added and

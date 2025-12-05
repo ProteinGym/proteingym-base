@@ -29,7 +29,7 @@ def setup_logger(*, level: int = logging.CRITICAL) -> None:
 
     Args:
         level (int): The logging level to set. Defaults to
-           `logging.CRITICAL`.
+            `logging.CRITICAL`.
     """
     logger = logging.getLogger("proteingym.base")
     logger.setLevel(level)
@@ -91,7 +91,7 @@ def build(
     Args:
         manifest_path (Path): The path to the manifest TOML file.
         output_path (Path | None): The directory path to dump the dataset archive. If
-        `None`, the current working directory is used. Defaults to `None`.
+            `None`, the current working directory is used. Defaults to `None`.
 
 
     Outputs:

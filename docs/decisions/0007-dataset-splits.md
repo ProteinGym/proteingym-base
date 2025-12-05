@@ -32,7 +32,7 @@ and a noun ([object](https://docs.python.org/3/glossary.html#term-slice)). Also
 see 
 [slicings in Python](https://docs.python.org/3/reference/expressions.html#slicings).
 
-For the protein gym [data model](../data_model.md), a dataset slice is a
+For the protein gym data model, a dataset slice is a
 collection of accessors for a dataset to select specific (subsets of) assays,
 sequences, structures, or MSAs. 
 
@@ -68,7 +68,7 @@ split_1 intersection split_2 equals empty set        # Always disjoint
 subset_1 intersection subset_2 not equals empty set  # May overlap
 ```
 
-For the protein gym [data model](../data_model.md), this implies that a dataset
+For the protein gym data model, this implies that a dataset
 split needs to account for the interdependencies between the protein data types.
 For example, the sequences split from an assay need to be split from the
 list of sequences list.

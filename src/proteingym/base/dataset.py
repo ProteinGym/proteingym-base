@@ -381,7 +381,7 @@ class Dataset(BaseModel):
 
         Args:
             overwrite (bool): If True, overwrite existing values.
-            If False, only fill empty fields.
+                If False, only fill empty fields.
 
         Returns:
             Dataset: A new Dataset instance with updated metadata.
@@ -642,11 +642,7 @@ class Dataset(BaseModel):
         Args:
             target_names (Collection[str] | str | None): The target name(s) to include.
                 If None, all target names are included. Defaults to None.
-            agg (
-                Callable[[pl.Expr, pl.DataType], pl.Expr]
-                | dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]]
-                | None
-            ):
+            agg (Callable[[pl.Expr, pl.DataType], pl.Expr] | dict[str, Callable[[pl.Expr, pl.DataType], pl.Expr]] | None):
                 Aggregation function or mapping. Can be:
                 - Function: Applied to all targets
                 - Dict: Maps target names to specific functions
@@ -896,7 +892,7 @@ class Subsets:
         """Update the subsets with other subsets.
 
         Args:
-            **subsets (Subsets) : The subsets to update. The keys are used as
+            **subsets: The subsets to update. The keys are used as
                 keys in the slices dictionary.
         """
         if not isinstance(self.slices, dict):

@@ -34,6 +34,9 @@ dev = [
     "pytest-cov>=6.2.1",
     "ruff>=0.11.7",
     "scikit-learn>=1.7.2",
+    "mkdocs-material",
+    "mkdocstrings-python",
+    "mkdocs-autoapi", 
 ]
 
 [tool.hatch.version]

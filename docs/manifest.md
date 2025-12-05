@@ -1,6 +1,6 @@
 # Manifest
 
-The manifest defines how a [dataset](data_model.md) is constructed.
+The manifest defines how a dataset is constructed.
 
 ## Capabilities
 

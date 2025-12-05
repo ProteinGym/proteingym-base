@@ -128,8 +128,8 @@ class Structure:
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
         """Create a Structure instance from a manifest section.
 
-        Raises :
-            NotImplementedError if the file type is not supported.
+        Raises:
+            NotImplementedError: If the file type is not supported.
         """
         match section.path.suffix.lower():
             case StructureFormat.PDB:
@@ -185,7 +185,7 @@ class Structure:
             fmt (StructureFormat): The format to dump the structure in.
 
         Raises:
-            NotImplementedError if the file type is not supported.
+            NotImplementedError: if the file type is not supported.
         """
         path = path or Path.cwd()
         structure_path = path / f"{self.name}{fmt.value}"
