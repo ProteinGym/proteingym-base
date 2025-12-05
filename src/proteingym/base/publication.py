@@ -3,74 +3,67 @@ import re
 
 import requests
 
+from .lookup_field import LookupField
+
+
+class DoiField(LookupField):
+    """Query publication data from dx.doi.org."""
+
+    identifier = "doi"
+
+    def resolve(self, id_: str):
+        response = requests.get(
+            f"https://dx.doi.org/{id_}",
+            headers={"Accept": "text/bibliography; style=bibtex"},
+            allow_redirects=True,
+            timeout=10,
+        )
+        response.raise_for_status()
+        response.encoding = "utf-8"
+        fields = re.findall(r"(\w+)={([^}]+)}", response.text)
+        queried_data = dict(fields)
+        # DOI returns more, e.g. ISSNs, editors, types
+        # Accepted keys follows APA entries
+        accepted_keys = [
+            "title",
+            "author",
+            "journal",
+            "volume",
+            "number",
+            "year",
+            "pages",
+        ]
+        return {k: v for k, v in queried_data.items() if k in accepted_keys}
+
 
 @dataclasses.dataclass(kw_only=True, frozen=False)
 class Publication:
-    title: str | None = None
+    """Metadata about a publication."""
+
+    title: str | None = dataclasses.field(default=DoiField())
     """The title of the publication."""
 
-    author: str | None = None
+    author: str | None = dataclasses.field(default=DoiField())
     """The authors of the publication."""
     # singular since DOI returns author key
 
-    journal: str | None = None
+    journal: str | None = dataclasses.field(default=DoiField())
     """The journal of the publication."""
 
-    volume: str | None = None
+    volume: str | None = dataclasses.field(default=DoiField())
     """The volume of the publication."""
 
-    number: str | None = None
+    number: str | None = dataclasses.field(default=DoiField())
     """The number of the publication issue."""
 
-    year: str | None = None
+    year: str | None = dataclasses.field(default=DoiField())
     """The year of publication."""
 
-    pages: str | None = None
+    pages: str | None = dataclasses.field(default=DoiField())
     """The pages of the publication."""
 
     doi: str | None = None
     """The DOI of the publication."""
-
-    def fill_from_database(self, overwrite: bool = False) -> "Publication":
-        """Fill missing fields from DOI if available."""
-        data = dataclasses.asdict(self)
-        if self.doi:
-            response = requests.get(
-                f"https://dx.doi.org/{self.doi}",
-                headers={"Accept": "text/bibliography; style=bibtex"},
-                allow_redirects=True,
-                timeout=10,
-            )
-            response.raise_for_status()
-            response.encoding = "utf-8"
-            fields = re.findall(r"(\w+)={([^}]+)}", response.text)
-            queried_data = dict(fields)
-            # DOI returns more, e.g. ISSNs, editors, types
-            # Accepted keys follows APA entries
-            accepted_keys = [
-                "title",
-                "author",
-                "journal",
-                "volume",
-                "number",
-                "year",
-                "pages",
-            ]
-
-            if overwrite:
-                data.update(
-                    **{k: v for k, v in queried_data.items() if k in accepted_keys}
-                )
-            else:
-                data.update(
-                    **{
-                        k: v
-                        for k, v in queried_data.items()
-                        if k in accepted_keys and data.get(k) is None
-                    }
-                )
-
-        return self.__class__(**data)
 
     def __repr__(self) -> str:
         """Return a string representation of the Publication object."""

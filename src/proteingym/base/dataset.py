@@ -435,30 +435,6 @@ class Dataset(BaseModel):
                 )
         return self
 
-    def fill_from_database(self, overwrite: bool = False) -> "Dataset":
-        """Fill metadata from database for all available databases.
-        Currently supports UniProt (in sequence) and DOI (in publication) identifiers.
-
-        Args:
-            overwrite (bool): If True, overwrite existing values.
-            If False, only fill empty fields.
-
-        Returns:
-            Dataset: A new Dataset instance with updated metadata.
-        """
-        updated_sequences = [
-            seq.fill_from_database(overwrite=overwrite) for seq in self.sequences
-        ]
-        updated_publication = (
-            self.publication.fill_from_database(overwrite=overwrite)
-            if self.publication
-            else None
-        )
-
-        return self.model_copy(
-            update={"sequences": updated_sequences, "publication": updated_publication}
-        )
-
     def model_dump_json(self, **kwargs) -> str:
         """Override to ensure JSON serialization works with Bio objects.
 
