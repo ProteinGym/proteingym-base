@@ -406,10 +406,8 @@ def test_dataset_fails_with_duplicate_msa_names(
     msa3 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
     msa4 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
 
-    with pytest.raises(
-        ValidationError,
-        match=rf"Duplicate names found in:.*MSAs:.*{', '.join(duplicate_names)}",
-    ):
+    match = "Duplicate names found in `Dataset.msas`:.*" + ", ".join(duplicate_names)
+    with pytest.raises(ValidationError, match=match):
         Dataset(name="test", msas=[msa1, msa2, msa3, msa4])
 
 

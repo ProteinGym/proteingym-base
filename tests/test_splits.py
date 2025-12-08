@@ -3,13 +3,16 @@ import functools
 import polars as pl
 import polars.testing
 import pytest
+from Bio.Seq import Seq
 
-from proteingym.base.dataset import Dataset, Subsets
+from proteingym.base.dataset import Assay, Dataset, Sequence, Subsets
+from proteingym.base.sequence import SequenceAlphabet, SequenceType
 from proteingym.base.splits import (
     KFoldSplitter,
     RandomSplitter,
-    _cast_indices_to_mask,
-    _reshape_list,
+    _cast_indices_to_mask,  # noqa
+    _reshape_list,  # noqa
+    _unique_sequences_for_targets,  # noqa
 )
 
 
@@ -63,6 +66,56 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
     assert len(subsets) == len(fractions)
 
 
+@pytest.fixture
+def dataset_with_missing_values() -> Dataset:
+    seq1 = Sequence(
+        name="one",
+        value=Seq("A"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.AA,
+    )
+    seq2 = Sequence(
+        name="two",
+        value=Seq("C"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.AA,
+    )
+    return Dataset(
+        name="foo",
+        sequences=[seq1, seq2],
+        assays=[
+            Assay(
+                columns=["sequence", "complete", "incomplete"],
+                name="bar",
+                records=[
+                    (seq1, 1, None),
+                    (seq2, 1, 2),
+                ],
+            )
+        ],
+    )
+
+
+@pytest.mark.parametrize(
+    "targets,expected",
+    [(["complete"], {"A", "C"}), (["incomplete"], {"C"})],
+)
+def test_unique_sequences_for_targets_with_none_values(
+    targets, expected, dataset_with_missing_values
+):
+    assert {
+        str(s)
+        for s in _unique_sequences_for_targets(dataset_with_missing_values, targets)
+    } == expected
+
+
+def test_unique_sequences_for_targets_all_sequences(dataset_with_missing_values):
+    dataset = dataset_with_missing_values
+    result = {str(s) for s in _unique_sequences_for_targets(dataset)}
+    expected = {str(r[0].value) for r in dataset.assays[0].records}
+    assert result == expected
+
+
 @pytest.mark.parametrize(
     "dataset",
     [
@@ -102,8 +155,7 @@ def test_random_splitter_splits_are_disjoint(dataset: Dataset) -> None:
     fractions = [0.5, 0.5]
     splitter = RandomSplitter(fractions)
     split_first, split_second = tuple(splitter.split(dataset=dataset))
-    assert split_first not in split_second
-    assert split_second not in split_first
+    assert split_first not in split_second and split_second not in split_first
 
 
 def test_kfold_splitter_raises_value_error_if_n_splits_below_two() -> None:
@@ -159,7 +211,7 @@ def test_kfold_splitter_splits_contain_all_records(
     # folds will have the records spread over multiple assays
     pl.testing.assert_frame_equal(
         dataset_with_assays.to_df(),
-        dataset_with_all_splits.to_df(),
+        dataset_with_all_splits.to_df(),  # noqa
         check_dtypes=False,
         check_column_order=False,
     )
@@ -181,6 +233,25 @@ def test_splitter_splits_with_targets_columns(
     splits = splitter.split(dataset_with_assay, targets=["DMS Score"])
     assays = [assay for split in splits for assay in split.assays]
     assert all(expected_columns == assay.columns for assay in assays)
+
+
+@pytest.mark.parametrize(
+    "splitter",
+    [
+        RandomSplitter(fractions=[0.5, 0.5]),
+        KFoldSplitter(n_splits=2),
+    ],
+    ids=lambda splitter: splitter.__class__.__name__,
+)
+def test_splitter_splits_share_no_sequences(
+    dataset_with_assays: Dataset,
+    splitter: RandomSplitter | KFoldSplitter,
+) -> None:
+    """Different splits must never contain the same sequences."""
+    train, valid = splitter.split(dataset_with_assays, targets=["DMS Score"])
+    train_seq = {record[0].value for assay in train.assays for record in assay.records}
+    valid_seq = {record[0].value for assay in valid.assays for record in assay.records}
+    assert train_seq.intersection(valid_seq) == set()
 
 
 @pytest.mark.parametrize(

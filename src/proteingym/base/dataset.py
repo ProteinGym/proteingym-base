@@ -10,15 +10,11 @@ from typing import Any, Iterator
 from zipfile import ZipFile
 
 import polars as pl
+import pydantic
 from Bio.Seq import Seq
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import Assay, AssayRaw, AssaySlice, AssayTarget, AssayVariable
+from .assay import Assay, AssayRaw, AssaySlice, Field
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
@@ -142,28 +138,28 @@ class Dataset(BaseModel):
     reference with the token for a variant.
     """
 
-    assay_variables: list[AssayVariable] = Field(default_factory=list)
+    assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The list of assay variables relevant to the dataset."""
 
-    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    assay_targets: list[Field] = pydantic.Field(default_factory=list)
     """The list of assay targets relevant to the dataset."""
 
-    assays: list[Assay] = Field(default_factory=list)
+    assays: list[Assay] = pydantic.Field(default_factory=list)
     """The assays present in the dataset."""
 
-    assays_raw: list[AssayRaw] = Field(default_factory=list)
+    assays_raw: list[AssayRaw] = pydantic.Field(default_factory=list)
     """The raw assays present in the dataset."""
 
-    sequences: list[Sequence] = Field(default_factory=list)
+    sequences: list[Sequence] = pydantic.Field(default_factory=list)
     """The sequences included in the dataset."""
 
-    structures: list[Structure] = Field(default_factory=list)
+    structures: list[Structure] = pydantic.Field(default_factory=list)
     """The structures included in the dataset."""
 
-    msas: list[MSA] = Field(default_factory=list)
+    msas: list[MSA] = pydantic.Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
 
-    publication: Publication | None = Field(default=None)
+    publication: Publication | None = pydantic.Field(default=None)
     """Publication information for the dataset."""
 
     def __or__(self, other: "Dataset") -> "Dataset":
@@ -222,7 +218,7 @@ class Dataset(BaseModel):
             return False
 
         def sort_by_name(
-            values: list[Assay | Sequence | Structure | MSA],
+            values: list[Assay | Sequence | Structure | MSA | AssayRaw],
         ) -> list[Assay | Sequence | Structure | MSA]:
             """Sort a list of BaseModel by name, placing unnamed items at the end."""
             return sorted(values, key=lambda value: value.name)
@@ -351,28 +347,22 @@ class Dataset(BaseModel):
             name_counts = collections.Counter(item.name for item in items if item.name)
             return [name for name, count in name_counts.items() if count > 1]
 
-        data_types = {
-            Assay: self.assays,
-            AssayVariable: self.assay_variables,
-            AssayTarget: self.assay_targets,
-            AssayRaw: self.assays_raw,
-            Sequence: self.sequences,
-            Structure: self.structures,
-            MSA: self.msas,
-        }
-
-        duplicates = {
-            data_class: _get_duplicate_names(items)
-            for data_class, items in data_types.items()
-        }
-
-        if any(duplicates.values()):
-            error_lines = [
-                f"{data_class.__name__}s: {', '.join(names)}"
-                for data_class, names in duplicates.items()
-                if names
-            ]
-            raise ValueError(f"Duplicate names found in: {'\n'.join(error_lines)}")
+        attribute_names = [
+            "assays",
+            "assay_variables",
+            "assay_targets",
+            "assays_raw",
+            "sequences",
+            "structures",
+            "msas",
+        ]
+        for attribute_name in attribute_names:
+            duplicates = _get_duplicate_names(getattr(self, attribute_name))
+            if duplicates:
+                raise ValueError(
+                    f"Duplicate names found in `Dataset.{attribute_name}`: "
+                    + ", ".join(duplicates)
+                )
         return self
 
     @property
@@ -444,30 +434,6 @@ class Dataset(BaseModel):
                     "corresponding assay by its name."
                 )
         return self
-
-    def fill_from_database(self, overwrite: bool = False) -> "Dataset":
-        """Fill metadata from database for all available databases.
-        Currently supports UniProt (in sequence) and DOI (in publication) identifiers.
-
-        Args:
-            overwrite: If True, overwrite existing values.
-                If False, only fill empty fields.
-
-        Returns:
-            Dataset: A new Dataset instance with updated metadata.
-        """
-        updated_sequences = [
-            seq.fill_from_database(overwrite=overwrite) for seq in self.sequences
-        ]
-        updated_publication = (
-            self.publication.fill_from_database(overwrite=overwrite)
-            if self.publication
-            else None
-        )
-
-        return self.model_copy(
-            update={"sequences": updated_sequences, "publication": updated_publication}
-        )
 
     def model_dump_json(self, **kwargs) -> str:
         """Override to ensure JSON serialization works with Bio objects.
@@ -895,10 +861,10 @@ def dummy_dataset() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[AssayVariable(name="var1", description="")],
+        assay_variables=[Field(name="var1", description="")],
         assay_targets=[
-            AssayTarget(name="numerical", description=""),
-            AssayTarget(name="categorical", description=""),
+            Field(name="numerical", description=""),
+            Field(name="categorical", description=""),
         ],
         assays=[assay],
         sequences=[],

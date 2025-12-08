@@ -17,8 +17,6 @@ from proteingym.base.assay import (
     AssayRaw,
     AssayRawManifestSection,
     AssaySlice,
-    AssayTarget,
-    AssayVariable,
     Field,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
@@ -174,13 +172,13 @@ def test_field_polars_type(
 def test_field_unsupported_polars_type_raises_value_error() -> None:
     """An unsupported Field type should raise a ValueError."""
     with pytest.raises(ValueError, match="Unsupported field type: .*"):
-        _ = Field(name="field", value=object()).polars_type
+        _ = Field(name="field", value=object()).polars_type  # noqa
 
 
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     try:
-        variable = AssayVariable(name="test")
+        variable = Field(name="test")
     except ValidationError as e:
         raise AssertionError("Test failed") from e
     else:
@@ -190,7 +188,7 @@ def test_assay_variable_minimal() -> None:
 def test_assay_target_minimal() -> None:
     """Test creating a minimal AssayTarget."""
     try:
-        target = AssayTarget(name="DMS Score")
+        target = Field(name="DMS Score")
     except ValidationError as e:
         raise AssertionError(f"AssayTarget raised ValidationError: {e}") from e
     else:
@@ -231,7 +229,7 @@ def test_assay_raw_manifest_section_with_relative_path(assay_raw_file: Path) -> 
     assert section.path == assay_raw_file
 
 
-def test_assay_raw_manifest_section_raises_error_for_unsupport_file_extension(
+def test_assay_raw_manifest_section_raises_error_for_unsupported_file_extension(
     tmp_path: Path,
 ) -> None:
     """An unsupported file should raise a ValidationError."""
@@ -350,7 +348,7 @@ def test_assay_slice_to_json_with_columns_only() -> None:
 
 
 def test_assay_raw_minimal() -> None:
-    """The minimaly valid assay."""
+    """The minimally valid assay."""
     try:
         assay_raw = AssayRaw(name="assay")
     except ValidationError as e:
@@ -386,7 +384,7 @@ def test_assay_raw_empty_records() -> None:
 
 
 def test_assay_raw_non_empty_records(seq1: Sequence) -> None:
-    """Test flag for non empty assay."""
+    """Test flag for non-empty assay."""
     assay_raw = AssayRaw(name="assay", records=[(seq1, 1.56)])
     assert not assay_raw.is_empty() and len(assay_raw.records) > 0
 
@@ -759,8 +757,8 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
             version=Version(1, 0),
             name="test_manifest",
             assay_targets=[
-                AssayTarget(name="DMS Score"),
-                AssayTarget(name="DMS Score2"),
+                Field(name="DMS Score"),
+                Field(name="DMS Score2"),
             ],
             assays=[  # noqa
                 {
@@ -788,7 +786,7 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
             version=Version(1, 0),
             name="test_manifest",
             assay_targets=[
-                AssayTarget(name="DMS Bin"),
+                Field(name="DMS Bin"),
             ],
             assays=[  # noqa
                 {
@@ -841,9 +839,9 @@ def test_dataset_to_df_single_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -868,9 +866,9 @@ def test_dataset_to_df_no_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -897,9 +895,9 @@ def test_dataset_to_df_invalid_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -914,9 +912,9 @@ def test_dataset_to_df_string_target(assay1: Assay, assay2: Assay) -> None:
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="DMS Score2"),
-            AssayTarget(name="DMS Score3"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+            Field(name="DMS Score3"),
         ],
         assays=[assay1, assay2],
     )
@@ -974,10 +972,10 @@ def test_dataset_to_df_assay_with_different_targets(
     dataset = Dataset(
         name="test_dataset",
         assay_targets=[
-            AssayTarget(name="DMS Score"),
-            AssayTarget(name="Binding Affinity"),
+            Field(name="DMS Score"),
+            Field(name="Binding Affinity"),
         ],
-        assay_variables=[AssayVariable(name="pH"), AssayVariable(name="T")],
+        assay_variables=[Field(name="pH"), Field(name="T")],
         assays=[assay1, assay2, assay3, assay4],
     )
 
@@ -1029,7 +1027,7 @@ def test_dataset_to_df_failed_assay_to_df() -> None:
     )
     dataset = Dataset(
         name="test_dataset",
-        assay_targets=[AssayTarget(name="DMS Score2")],
+        assay_targets=[Field(name="DMS Score2")],
         assays=[assay1, assay2],
     )
     try:
@@ -1072,7 +1070,7 @@ def test_dataset_to_df_drops_empty_target_rows() -> None:
     )
     dataset = Dataset(
         name="test_dataset",
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
         assays=[assay1, assay2],
     )
     df = dataset.to_df(target_names=["DMS Score"])
@@ -1136,7 +1134,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
     )
     dataset = Dataset(
         name="test_dataset",
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
         assays=[assay1, assay2],
     )
     archive_path = dataset.dump(path=tmp_path)
@@ -1183,7 +1181,7 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
     dataset = Dataset(
         name="test_dataset",
         assays=[assay1],
-        assay_targets=[AssayTarget(name="DMS Score"), AssayTarget(name="DMS Score2")],
+        assay_targets=[Field(name="DMS Score"), Field(name="DMS Score2")],
     )
     archive_path = dataset.dump(path=tmp_path)
     loaded_dataset = Dataset.from_path(archive_path)
@@ -1262,10 +1260,8 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
         columns=["sequence", "DMS Score"],
     )
 
-    with pytest.raises(
-        ValidationError,
-        match=rf"Duplicate names found in:.*Assays:.*{', '.join(duplicate_names)}",
-    ):
+    match = "Duplicate names found in `Dataset.assays`:.*" + ", ".join(duplicate_names)
+    with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assays=[assay1, assay2, assay3, assay4])
 
 
@@ -1296,7 +1292,7 @@ def test_dataset_raises_error_when_raw_assays_have_duplicate_names() -> None:
         fields=[Field(name="OD")],
     )
 
-    match = "Duplicate names found in: AssayRaws:.*assay"
+    match = "Duplicate names found in `Dataset.assays_raw`:.*"
     with pytest.raises(ValueError, match=match):
         Dataset(name="test", assays_raw=[raw_assay, raw_assay])
 
@@ -1305,15 +1301,17 @@ def test_dataset_fails_with_duplicate_assay_variable_names() -> None:
     """A dataset fails if there are duplicate assay names."""
     duplicate_names = ["duplicate1", "duplicate2"]
     assay_variables = [
-        AssayVariable(name=duplicate_names[0]),
-        AssayVariable(name=duplicate_names[0]),
-        AssayVariable(name=duplicate_names[0]),
-        AssayVariable(name=duplicate_names[1]),
-        AssayVariable(name="unique1"),
-        AssayVariable(name=duplicate_names[1]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[1]),
+        Field(name="unique1"),
+        Field(name=duplicate_names[1]),
     ]
 
-    match = rf"Duplicate names found in: AssayVariables:.*{', '.join(duplicate_names)}"
+    match = "Duplicate names found in `Dataset.assay_variables`:.*" + ", ".join(
+        duplicate_names
+    )
     with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assay_variables=assay_variables)
 
@@ -1322,15 +1320,17 @@ def test_dataset_fails_with_duplicate_assay_target_names() -> None:
     """A dataset fails if there are duplicate assay target names."""
     duplicate_names = ["duplicate1", "duplicate2"]
     assay_targets = [
-        AssayTarget(name=duplicate_names[0]),
-        AssayTarget(name=duplicate_names[0]),
-        AssayTarget(name=duplicate_names[0]),
-        AssayTarget(name=duplicate_names[1]),
-        AssayTarget(name="unique1"),
-        AssayTarget(name=duplicate_names[1]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[0]),
+        Field(name=duplicate_names[1]),
+        Field(name="unique1"),
+        Field(name=duplicate_names[1]),
     ]
 
-    match = r"Duplicate names found in: AssayTargets:.*" + ", ".join(duplicate_names)
+    match = "Duplicate names found in `Dataset.assay_targets`:.*" + ", ".join(
+        duplicate_names
+    )
     with pytest.raises(ValidationError, match=match):
         Dataset(name="test", assay_targets=assay_targets)
 

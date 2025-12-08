@@ -12,7 +12,7 @@ import pytest
 from Bio.Seq import Seq
 from numpy.testing import assert_array_equal
 
-from proteingym.base.assay import Assay, AssayTarget, AssayVariable
+from proteingym.base.assay import Assay, Field
 from proteingym.base.dataset import Dataset
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.transformers import AssayTransformer, SequenceOneHotEncoder
@@ -97,7 +97,7 @@ def simple_dataset(seq1: Sequence, seq2: Sequence, simple_assay: Assay) -> Datas
         name="test_dataset",
         sequences=[seq1, seq2],
         assays=[simple_assay],
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
     )
 
 
@@ -110,11 +110,11 @@ def dataset_with_variables(
         name="test_dataset",
         sequences=[seq1, seq2, seq3],
         assays=[assay_with_variables],
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
         assay_variables=[
-            AssayVariable(name="pH", value=7.0),
-            AssayVariable(name="temperature", value=37),
-            AssayVariable(name="condition", value="A"),
+            Field(name="pH", value=7.0),
+            Field(name="temperature", value=37),
+            Field(name="condition", value="A"),
         ],
     )
 

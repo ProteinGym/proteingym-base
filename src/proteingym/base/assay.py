@@ -22,6 +22,8 @@ from pydantic import (
 
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 
+RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
+
 
 class AssayFormat(StrEnum):
     """Supported assay file formats."""
@@ -32,14 +34,13 @@ class AssayFormat(StrEnum):
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class Field:
-    """A raw assay field in an assay.
+    """A data field for an assay associated quantity or protein property.
 
-    A field contains the metadata about a raw assay data, like the schema
-    definition of a dataset.
+    A field is used to describe assay variables, e.g., assay conditions such as the
+    pH, or the prediction target, e.g., the observed activity or stability.
 
     TODO
     ----
-    Reuse this class across the code base.
     Add field for setting the type.
     """
 
@@ -66,6 +67,7 @@ class Field:
             and self.value == other.value
         )
 
+    # noinspection PyTypeChecker
     @functools.cached_property
     def polars_type(self) -> pl.DataType:
         """Returns the Polars data type of the field."""
@@ -82,61 +84,6 @@ class Field:
                 return pl.Unknown
             case _:
                 raise ValueError(f"Unsupported field type: {type(self.value)}")
-
-
-@dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayVariable:
-    """Definition of an assay variable.
-
-    TODO
-    ----
-    Replace with Field class above
-    """
-
-    name: str
-    """The name of the variable."""
-
-    unit: str | None = None
-    """The unit of the variable."""
-
-    value: bool | int | float | str | None = None
-    """The value of the variable, can be a bool, int, float, or str."""
-
-    description: str | None = None
-    """Description of the variable."""
-
-
-@dataclasses.dataclass(kw_only=True, frozen=True)
-class AssayTarget:
-    """Definition of an assay target.
-
-    TODO
-    ----
-    Replace with Field class above
-    """
-
-    name: str
-    """The name of the target."""
-
-    unit: str | None = None
-    """The unit of the target."""
-
-    value: bool | int | float | str | None = None
-    """The value of the target, can be a bool, int, float, or str."""
-
-    description: str | None = None
-    """Description of the target."""
-
-    def __eq__(self, other: "AssayTarget") -> bool:
-        """Implements the '==' operator for AssayTarget."""
-        if not isinstance(other, AssayTarget):
-            return False
-        return (
-            # Description is not considered for equality
-            self.name == other.name
-            and self.unit == other.unit
-            and self.value == other.value
-        )
 
 
 class _ManifestSection(BaseModel):
@@ -160,6 +107,7 @@ class _ManifestSection(BaseModel):
     """A brief description"""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path_before(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context.
 
@@ -171,6 +119,7 @@ class _ManifestSection(BaseModel):
         return path
 
     @field_validator("path", mode="after", check_fields=True)
+    @classmethod
     def validate_path_after(cls, path: Path) -> Path:
         """Validate that the file format is supported."""
         fmt = path.suffix.lower()
@@ -203,7 +152,8 @@ class AssayRawManifestSection(_ManifestSection):
     """The list of fields in the raw assay."""
 
     @field_validator("fields", mode="after", check_fields=True)
-    def validate_fields(cls, fields: list[Field]) -> "AssayRawManifestSection":
+    @classmethod
+    def validate_fields(cls, fields: list[Field]) -> list[Field]:
         """The fields cannot be empty."""
         if not fields:
             raise ValueError("Missing fields")
@@ -313,9 +263,7 @@ class AssayRaw:
     fields: list[Field] = dataclasses.field(default_factory=list)
     """The raw assay fields."""
 
-    records: list[tuple[str | int | float | bool | str, ...]] = dataclasses.field(
-        default_factory=list
-    )
+    records: RECORDS = dataclasses.field(default_factory=list)
     """The raw assay records."""
 
     def __len__(self) -> int:
@@ -390,10 +338,10 @@ class AssayRaw:
         """
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}{fmt}"
+            path /= f"{self.name}{fmt}"
 
         schema = {f.name: f.polars_type for f in self.fields}
-        df = pl.DataFrame(self.records, schema=schema, strict=True)
+        df = pl.DataFrame(self.records, schema=schema, strict=True, orient="row")
         match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)
@@ -425,7 +373,7 @@ class AssayRaw:
 class Assay(AssayRaw):
     """An assay in the dataset."""
 
-    records: list[tuple[Sequence | str | int | float | bool | str, ...]]
+    records: RECORDS
     """The records of the assay, tuple with Sequence, target values."""
 
     columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
@@ -480,9 +428,8 @@ class Assay(AssayRaw):
     def _slice_columns(assay: "Assay", slc: list[str] | None) -> "Assay":
         """Slice the assay columns given a list of column names."""
         is_columns_slice = (
-            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str))
-            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
-        )
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], str)
+        ) or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
         if not is_columns_slice or slc is None:
             return assay
 
@@ -505,9 +452,8 @@ class Assay(AssayRaw):
     def _slice_records(assay: "Assay", slc: list[bool] | None) -> "Assay":
         """Slice the assay records given a slice or a boolean masks."""
         is_records_slice = (
-            (isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool))
-            or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
-        )
+            isinstance(slc, list) and len(slc) > 0 and isinstance(slc[0], bool)
+        ) or (isinstance(slc, list) and len(slc) == 0)  # Empty slice
         if not is_records_slice or slc is None:
             return assay
 

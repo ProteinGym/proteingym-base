@@ -4,7 +4,7 @@ from Bio.PDB.Structure import Structure as BioStructure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from proteingym.base.assay import Assay, AssayRaw, AssayTarget, AssayVariable, Field
+from proteingym.base.assay import Assay, AssayRaw, Field
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.publication import Publication
@@ -39,7 +39,7 @@ def dataset_with_assay_empty() -> Dataset:
         name="dataset_with_empty_assay",
         description="A dataset containing an empty assay.",
         assay_variables=[],
-        assay_targets=[AssayTarget(name="DMS Score")],
+        assay_targets=[Field(name="DMS Score")],
         assays=[assay],
         sequences=[],
         structures=[],
@@ -74,10 +74,10 @@ def dataset_with_assay() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_variables=[Field(name="var1", description="A test variable")],
         assay_targets=[
-            AssayTarget(name="DMS Score", description="The DMS score"),
-            AssayTarget(name="stability", description="The resistance to temperature"),
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
         ],
         assays=[assay],
         sequences=[],
@@ -121,10 +121,10 @@ def dataset_with_assay_raw() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_raw_assay",
         description="A dataset containing a single assay and its raw assay.",
-        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_variables=[Field(name="var1", description="A test variable")],
         assay_targets=[
-            AssayTarget(name="DMS Score", description="The DMS score"),
-            AssayTarget(name="stability", description="The resistance to temperature"),
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
         ],
         assays=[assay],
         assays_raw=[assay_raw],
@@ -138,39 +138,57 @@ def dataset_with_assay_raw() -> Dataset:
 @pytest.fixture
 def dataset_with_assays() -> Dataset:
     """A dataset containing multiple assays."""
-    sequence1 = Sequence(
-        name="seq1",
-        value=Seq("ACDEFG"),
-        type=SequenceType.WILD_TYPE,
-        alphabet=SequenceAlphabet.AA,
-    )
-    sequence2 = Sequence(
-        name="seq2",
-        value=Seq("GFEDCA"),
-        type=SequenceType.WILD_TYPE,
-        alphabet=SequenceAlphabet.AA,
-    )
+    sequences = [
+        Sequence(
+            name=f"seq{i}",
+            value=Seq(s),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        )
+        for i, s in enumerate(
+            ["AA", "CC", "DD", "EE", "FF", "GG", "HH", "II", "JJ", "KK"]
+        )
+    ]
     assay1 = Assay(
         name="assay2",
         records=[
-            (sequence1, 1.0, 1.5),
+            (sequences[0], 1.1, 1.5),
+            (sequences[0], 1.2, 1.4),  # duplicate sequence to handle that
+            (sequences[1], 1.1, 1.5),
+            (sequences[2], 1.1, 1.5),
+            (sequences[3], 1.1, 1.5),
+            (sequences[4], 1.1, 1.5),
+            (sequences[5], 1.1, 1.5),
+            (sequences[6], 1.1, 1.5),
+            (sequences[7], 1.1, 1.5),
+            (sequences[8], 1.1, 1.5),
+            (sequences[9], 1.1, 1.5),
         ],
         columns=["sequence", "DMS Score", "stability"],
     )
     assay2 = Assay(
         name="assay3",
         records=[
-            (sequence2, 2.0),
+            (sequences[0], 1.0),
+            (sequences[1], 1.0),
+            (sequences[2], 1.0),
+            (sequences[3], 1.0),
+            (sequences[4], 1.0),
+            (sequences[5], 1.0),
+            (sequences[6], 1.0),
+            (sequences[7], 1.0),
+            (sequences[8], 1.0),
+            (sequences[9], 1.0),
         ],
         columns=["sequence", "DMS Score"],
     )
     dataset = Dataset(
         name="dataset_with_multiple_assays",
         description="A dataset containing multiple assays.",
-        assay_variables=[AssayVariable(name="var1", description="A test variable")],
+        assay_variables=[Field(name="var1", description="A test variable")],
         assay_targets=[
-            AssayTarget(name="DMS Score", description="The DMS score"),
-            AssayTarget(name="stability", description="The resistance to temperature"),
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
         ],
         assays=[assay1, assay2],
         sequences=[],
@@ -339,7 +357,6 @@ def dataset_with_publication() -> Dataset:
         author="Test Author",
         journal="Test Journal",
         year="2023",
-        doi="10.1000/test",
     )
     dataset = Dataset(
         name="dataset_with_publication",

@@ -13,6 +13,7 @@ import logging
 import numbers
 
 import numpy as np
+from Bio.Seq import Seq
 
 from .assay import AssaySlice
 from .dataset import Dataset, DatasetSlice, Subsets
@@ -78,6 +79,26 @@ def _cast_indices_to_mask(indices: list[int], *, length: int) -> list[bool]:
     return mask
 
 
+def _sequences_to_mask(selection: list[Seq], *, all_sequences: list[Seq]) -> list[bool]:
+    """Cast a list of indices to a boolean mask.
+
+    The indices in the input list are set to True in the output mask, while all other
+    positions are set to False.
+
+    Args:
+        selection: List of sequences for which the mask shall be True
+        all_sequences: List of sequences at each position of mask
+
+    Returns:
+        list[bool]: Boolean mask with True at the specified indices.
+    """
+    mask = [False] * len(all_sequences)
+    for index, seq in enumerate(all_sequences):
+        if seq in selection:
+            mask[index] = True
+    return mask
+
+
 def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
     """Reshape to a two-dimensional list with varying sizes of the sublists.
 
@@ -100,6 +121,32 @@ def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
         reshaped_list.append(sublist)
         index += size
     return reshaped_list
+
+
+def _unique_sequences_for_targets(
+    dataset: Dataset, targets: list[str] = None
+) -> list[Seq]:
+    """Get the unique sequences for all assays, for a given list of targets.
+
+    Args:
+        dataset: the dataset with assays
+        targets: list of targets for which we shall collect unique sequences.
+    """
+    sequences = set()
+    for assay in dataset.assays:
+        if not targets:
+            sequences |= {r[0].value for r in assay.records}
+        else:
+            target_indices = [
+                assay.columns.index(t) for t in targets if t in assay.columns
+            ]
+            sequences |= {
+                r[0].value
+                for r in assay.records
+                if any(r[idx] is not None for idx in target_indices)
+            }
+
+    return list(sequences)
 
 
 class RandomSplitter:
@@ -131,11 +178,13 @@ class RandomSplitter:
     def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
         """Splits the dataset into a subsets.
 
-        The dataset is split into subsets with randomized splits according to
-        given fractions. The task is approached by considering all records in
-        all assays to be a single list. Then, we shuffle the indices across all
-        records. Finally, we reshape shuffled indices back into the original
-        assay shapes after converting them into a boolean mask.
+        The unique sequences from the records of all assays that list at least one of
+        the given targets, are split into random subsets according to the given
+        fractions. The task is approached by considering all records in all assays to
+        be a single list. We collect the unique sequences, shuffle and split those,
+        then turn these into a boolean masks based on non-unique sequences to slice
+        the assays. Note that depending on the duplicity of sequences among datasets,
+        the resulting sizes may deviate from those implied by the given fractions.
 
         Args:
             dataset: The dataset to split.
@@ -145,20 +194,25 @@ class RandomSplitter:
         Returns:
             Subsets: The subsets containing the splits.
         """
+        sequences = [
+            record[0].value for assay in dataset.assays for record in assay.records
+        ]
+        unique_sequences = _unique_sequences_for_targets(dataset, targets)
+        self.random_state.shuffle(unique_sequences)
+
         records_shape = tuple(len(assay) for assay in dataset.assays)
-        indices = list(range(sum(records_shape)))
-        self.random_state.shuffle(indices)
 
         # Ensure all items are used due to rounding errors by treating the last
         # fraction separately
-        sizes = [int(round(f * len(indices))) for f in self.fractions[:-1]]
-        sizes.append(len(indices) - sum(sizes))
+        sizes = [int(round(f * len(unique_sequences))) for f in self.fractions[:-1]]
+        sizes.append(len(unique_sequences) - sum(sizes))
 
         slices, offset = [], 0
         for size in sizes:
-            index_slice = indices[offset : offset + size]
+            sequence_slice = unique_sequences[offset : offset + size]
             masks = _reshape_list(
-                _cast_indices_to_mask(index_slice, length=len(indices)), records_shape
+                _sequences_to_mask(sequence_slice, all_sequences=sequences),
+                records_shape,
             )
 
             assay_slices = []
@@ -213,8 +267,9 @@ class KFoldSplitter:
     def split(self, dataset: Dataset, targets: list[str] | None = None) -> Subsets:
         """Splits the dataset into k folds for cross-validation.
 
-        The dataset is split into k folds with approximately equal sizes. Each
-        fold is used as a validation set once, while the remaining folds form
+        The unique sequences from the records of all assays that list at least one of
+        the given targets, are split into k folds with approximately equal sizes.
+        Each fold is used as a validation set once, while the remaining folds form
         the training set.
 
         Args:
@@ -226,22 +281,26 @@ class KFoldSplitter:
             list: A list of Subsets, where each Subset contains a training set
             and a validation set for one fold.
         """
-        records_shape = tuple(len(assay) for assay in dataset.assays)
-        indices = list(range(sum(records_shape)))
-
+        sequences = [
+            record[0].value for assay in dataset.assays for record in assay.records
+        ]
+        unique_sequences = _unique_sequences_for_targets(dataset, targets)
         if self.shuffle:
-            self.random_state.shuffle(indices)
+            self.random_state.shuffle(unique_sequences)
 
-        # Split indices into k folds
-        sizes = [len(indices) // self.n_splits] * self.n_splits
-        for i in range(len(indices) % self.n_splits):
+        records_shape = tuple(len(assay) for assay in dataset.assays)
+
+        # Split sequences into k folds
+        sizes = [len(unique_sequences) // self.n_splits] * self.n_splits
+        for i in range(len(unique_sequences) % self.n_splits):
             sizes[i] += 1
 
         slices, offset = [], 0
         for size in sizes:
-            index_slice = indices[offset : offset + size]
+            sequence_slice = unique_sequences[offset : offset + size]
             masks = _reshape_list(
-                _cast_indices_to_mask(index_slice, length=len(indices)), records_shape
+                _sequences_to_mask(sequence_slice, all_sequences=sequences),
+                records_shape,
             )
 
             assay_slices = []
