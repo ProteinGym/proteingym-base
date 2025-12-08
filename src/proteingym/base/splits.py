@@ -324,3 +324,64 @@ class KFoldSplitter:
 
         subsets = Subsets(dataset=dataset, slices=slices)
         return subsets
+
+
+
+class PredefinedSplitter:
+    """Split a dataset based on pre-defined splits from a column.
+
+    Args:
+        split_column: Name of the column containing split labels (e.g., 'train', 'val', 'test').
+        split_values: List of split values to create subsets for. If None, uses all unique values.
+    """
+
+    def __init__(self, split_column: str, split_values: list[str] | None = None) -> None:
+        self.split_column = split_column
+        self.split_values = split_values
+
+    def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
+        """Splits the dataset based on pre-defined split column values.
+
+        Args:
+            dataset: The dataset to split.
+            targets: List of target column names to include in the splits. If None, all columns are included.
+
+        Returns:
+            Subsets: The subsets containing the splits.
+        """
+        # Get unique split values if not provided
+        if self.split_values is None:
+            all_values = set()
+            for assay in dataset.assays:
+                if self.split_column in assay.columns:
+                    all_values.update(assay.data[self.split_column].unique())
+            split_values = sorted(all_values)
+        else:
+            split_values = self.split_values
+
+        slices = []
+        for split_value in split_values:
+            assay_slices = []
+            for assay in dataset.assays:
+                if self.split_column in assay.columns:
+                    mask = (assay.data[self.split_column] == split_value).tolist()
+                    if targets is not None:
+                        if not any(target in assay.columns for target in targets):
+                            columns = []
+                        else:
+                            columns = [assay.sequence_feature_name] + list(
+                                set(targets) & set(assay.columns)
+                            )
+                    else:
+                        columns = None
+                    assay_slice = AssaySlice(records=mask, columns=columns)
+                else:
+                    # If split column not in assay, create empty slice
+                    assay_slice = AssaySlice(records=[False] * len(assay), columns=[])
+                assay_slices.append(assay_slice)
+
+            dataset_slice = DatasetSlice(assays=assay_slices)
+            slices.append(dataset_slice)
+
+        subsets = Subsets(dataset=dataset, slices=slices)
+        return subsets
