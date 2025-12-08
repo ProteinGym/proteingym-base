@@ -128,8 +128,8 @@ class Structure:
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
         """Create a Structure instance from a manifest section.
 
-        Raises :
-            NotImplementedError if the file type is not supported.
+        Raises:
+            NotImplementedError: If the file type is not supported.
         """
         match section.path.suffix.lower():
             case StructureFormat.PDB:
@@ -155,7 +155,7 @@ class Structure:
         """Convert the structure to a manifest section.
 
         Args:
-            path (Path): The path to the structure file (as created by
+            path: The path to the structure file (as created by
                 `method:dump`).
 
         Returns:
@@ -180,12 +180,12 @@ class Structure:
         Note that binary CIF files (.bcif) are not supported for writing.
 
         Args:
-            path (Path): The output directory path to dump the structure to. If
+            path: The output directory path to dump the structure to. If
                 None, the current working directory is used.
-            fmt (StructureFormat): The format to dump the structure in.
+            fmt: The format to dump the structure in.
 
         Raises:
-            NotImplementedError if the file type is not supported.
+            NotImplementedError: if the file type is not supported.
         """
         path = path or Path.cwd()
         structure_path = path / f"{self.name}{fmt.value}"

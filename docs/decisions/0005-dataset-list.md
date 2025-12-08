@@ -27,7 +27,7 @@ There are two phases of filtering here:
   * Multiple conditions: `name=NEIME_2019&assay_conditions.name=PH`
   * Multiple choices: `assay_conditions.name=PH,T` or `assay_conditions.name=PH&assay_conditions.name=T`
 
-* The second is the [Dataset](../../src/proteingym/base/dataset.py) object itself, namely `class Dataset(BaseModel)`:
+* The second is the Dataset object itself, namely `class Dataset(BaseModel)`:
   * Simple fields: `name`, `description`, etc...
   * Nested fields: `assays`, `sequences`, `structures`, `msas`, etc... of which they are also a list to loop over, which will lead to extra CPU computations.
 

@@ -1,12 +1,17 @@
 site_name: ProteinGym Base Documentation
 theme:
   name: material
+  logo: images/proteingymlogo.png
+  favicon: images/proteingymlogo.png
 
 plugins:
 - search
 - mkdocs-autoapi:
     autoapi_add_nav_entry: Code Reference
     autoapi_dir: src
+    autoapi_ignore:
+      - "**/__about__.py"
+      - "**/__main__.py"
 - mkdocstrings:
     handlers:
       python:
@@ -14,3 +19,5 @@ plugins:
 
 nav:
 - Home: index.md
+- Manifest: manifest.md
+- ADRs: decisions/

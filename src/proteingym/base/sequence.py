@@ -238,7 +238,7 @@ class Sequence:
         """Create Sequence(s) from a sequence manifest section.
 
         Args:
-            section (SequenceManifestSection): The sequence manifest section to create
+            section: The sequence manifest section to create
                 the Sequence from.
 
         Yields:
@@ -262,7 +262,7 @@ class Sequence:
         """Convert the sequence to a manifest section.
 
         Args:
-            path (Path): The path to the sequence file (as created by
+            path: The path to the sequence file (as created by
                 `method:dump`).
 
         Returns:
@@ -289,7 +289,7 @@ class Sequence:
         - FASTQ (.fastq)
 
         Args:
-            path (Path): The output directory path to dump the sequence to. If
+            path: The output directory path to dump the sequence to. If
                 None, the current working directory is used.
             fmt (SequenceFormat): The format to dump the sequence in.
 

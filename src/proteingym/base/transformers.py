@@ -107,9 +107,9 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
 
         Returns:
             One-hot encoded matrix of shape (n_samples, n_variant_features).
-            Each sequence is encoded as a flattened matrix where position i and
-            character j are encoded at index (i * alphabet_size + j).
-            Invariant (constant) columns are removed.
+                Each sequence is encoded as a flattened matrix where position i and
+                character j are encoded at index (i * alphabet_size + j).
+                Invariant (constant) columns are removed.
 
         Raises:
             ValueError: If sequences have varying lengths or don't match the expected
@@ -169,7 +169,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
 
         Returns:
             Array of feature names in the format: column_pos{i}_{char}.
-            Only includes features for variant (non-constant) columns.
+                Only includes features for variant (non-constant) columns.
         """
         feature_names = []
         for pos in range(self.max_length_):
