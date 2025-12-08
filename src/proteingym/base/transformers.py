@@ -3,11 +3,6 @@
 This module provides sklearn-compatible transformers for converting assay
 dataframes to feature matrices (X) and target vectors (y).
 """
-# Ignore argument and variable `X` in function should be lowercase
-# ruff: noqa: N803, N806
-
-# PyCharm: Suppress PEP 8 naming warnings for sklearn transformer methods
-# noinspection PyPep8Naming
 
 from __future__ import annotations
 
@@ -21,6 +16,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from .dataset import Dataset
 
 
+# noinspection PyPep8Naming
 class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
     """One-hot encoder for sequences.
 
@@ -185,6 +181,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
         return feature_names_array
 
 
+# noinspection PyPep8Naming
 class AssayTransformer(BaseEstimator, TransformerMixin):
     """Sklearn ColumnTransformer for converting assay dataframes to X and y matrices.
 
@@ -331,12 +328,12 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         )
 
         feature_columns = [col for col in X.columns if col not in self.target_columns]
-        X_features = X.select(feature_columns)
+        x_features = X.select(feature_columns)
 
         # sklearn's ColumnTransformer needs pandas DataFrame when using column names
-        X_features_pandas = X_features.to_pandas()
+        x_features_pandas = x_features.to_pandas()
 
-        self.column_transformer_.fit(X_features_pandas)
+        self.column_transformer_.fit(x_features_pandas)
 
         self.feature_names_ = self._get_feature_names()
 
@@ -363,19 +360,19 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
             raise ValueError(msg)
 
         feature_columns = [col for col in X.columns if col not in self.target_columns]
-        X_features = X.select(feature_columns)
+        x_features = X.select(feature_columns)
         y_targets = X.select(self.target_columns).to_numpy()
 
         # Convert to pandas for sklearn compatibility
-        X_features_pandas = X_features.to_pandas()
+        x_features_pandas = x_features.to_pandas()
 
-        X_transformed = self.column_transformer_.transform(X_features_pandas)
+        x_transformed = self.column_transformer_.transform(x_features_pandas)
 
         # Squeeze y if single target
         if y_targets.shape[1] == 1:
             y_targets = y_targets.ravel()
 
-        return X_transformed, y_targets
+        return x_transformed, y_targets
 
     def _get_feature_names(self) -> list[str]:
         """Get feature names from the fitted transformer.

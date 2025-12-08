@@ -65,3 +65,6 @@ select = [
     "B", # flake8-bugbear
     "A", # flake8-builtins
 ]
+
+[tool.ruff.lint.pep8-naming]
+extend-ignore-names = ["X"]
