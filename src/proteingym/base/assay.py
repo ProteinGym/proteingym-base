@@ -5,7 +5,9 @@ import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
+from typing import Annotated
 
+import annotated_types
 import polars as pl
 import pydantic
 from Bio.Seq import Seq
@@ -148,16 +150,8 @@ class _ManifestSection(BaseModel):
 class AssayRawManifestSection(_ManifestSection):
     """The manifest section describing the raw assay data."""
 
-    fields: list[Field]
+    fields: Annotated[list[Field], annotated_types.Len(min_length=1)]
     """The list of fields in the raw assay."""
-
-    @field_validator("fields", mode="after", check_fields=True)
-    @classmethod
-    def validate_fields(cls, fields: list[Field]) -> list[Field]:
-        """The fields cannot be empty."""
-        if not fields:
-            raise ValueError("Missing fields")
-        return fields
 
     @model_validator(mode="after")
     def validate_field_names(self) -> "AssayRawManifestSection":

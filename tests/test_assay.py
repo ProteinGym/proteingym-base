@@ -151,6 +151,10 @@ def test_field_equality_excludes_description() -> None:
     assert field1 == field2
 
 
+def test_a_non_field_is_not_a_field():
+    assert Field(name="foo") != {"name": "foo"}
+
+
 @pytest.mark.parametrize(
     "value, polars_type",
     [
@@ -398,6 +402,19 @@ def test_assay_raw_from_manifest_section(assay_raw_file: Path) -> None:
     )
     assay_raw = AssayRaw.from_manifest_section(section)
     assert assay_raw.records == [(0.3,), (0.9,)]
+
+
+def test_assay_raw_as_manifest_section(assay_raw_file: Path) -> None:
+    """Round-trip a manifest section."""
+    section = AssayRawManifestSection(
+        name="assay",
+        path=assay_raw_file,
+        fields=[Field(name="OD")],
+    )
+    round_trip = AssayRaw.from_manifest_section(section).as_manifest_section(
+        path=assay_raw_file
+    )
+    assert section == round_trip
 
 
 def test_assay_raw_dump_non_empty_file(tmp_path: Path) -> None:
