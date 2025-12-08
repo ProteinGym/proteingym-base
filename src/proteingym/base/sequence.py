@@ -17,6 +17,8 @@ from pydantic import (
     field_validator,
 )
 
+from .lookup_field import LookupField
+
 
 class SequenceFormat(StrEnum):
     """Enumeration for sequence file formats."""
@@ -124,6 +126,37 @@ class SequenceManifestSection(BaseModel):
         return str_enum.value
 
 
+class UniprotField(LookupField):
+    """Query sequence data from uniprot.org."""
+
+    identifier: str = "uniprot_id"
+
+    def resolve(self, id_: str):
+        response = requests.get(
+            f"https://rest.uniprot.org/uniprotkb/{id_}",
+            headers={"Accept": "application/json"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        api_data = response.json()
+
+        lineage_list = api_data.get("organism", {}).get("lineage", [])
+        taxon_root = lineage_list[0] if lineage_list else None
+        molecule_name = (
+            api_data.get("proteinDescription", {})
+            .get("recommendedName", {})
+            .get("fullName", {})
+            .get("value")
+        )
+        organism = api_data.get("organism", {}).get("scientificName")
+
+        return {
+            "taxon_root": taxon_root,
+            "molecule_name": molecule_name,
+            "organism": organism,
+        }
+
+
 @dataclasses.dataclass
 class Sequence:
     """A sequence in the dataset."""
@@ -131,6 +164,7 @@ class Sequence:
     name: str
     """The name of the sequence."""
 
+    # TODO: make sequence and type also LookupFields
     value: Seq
     """The value of the sequence, a Seq object."""
 
@@ -146,57 +180,15 @@ class Sequence:
     uniprot_id: str | None = None
     """The UniProt identifier for this sequence."""
 
-    taxon_root: str | None = None
+    taxon_root: str | None = dataclasses.field(default=UniprotField())
     """The root of taxonomic lineage information.
-    For grouping datasets into main taxons"""
+    Useful for grouping datasets into main taxons"""
 
-    molecule_name: str | None = None
+    molecule_name: str | None = dataclasses.field(default=UniprotField())
     """The molecule name."""
 
-    organism: str | None = None
+    organism: str | None = dataclasses.field(default=UniprotField())
     """The organism information."""
-
-    def fill_from_database(self, overwrite: bool = False) -> "Sequence":
-        """Get UniProt data if uniprot_id is available and other fields are empty."""
-        data = dataclasses.asdict(self)
-
-        if self.uniprot_id:
-            response = requests.get(
-                f"https://rest.uniprot.org/uniprotkb/{self.uniprot_id}",
-                headers={"Accept": "application/json"},
-                timeout=10,
-            )
-            response.raise_for_status()
-            api_data = response.json()
-
-            lineage_list = api_data.get("organism", {}).get("lineage", [])
-            taxon_root = lineage_list[0] if lineage_list else None
-            molecule_name = (
-                api_data.get("proteinDescription", {})
-                .get("recommendedName", {})
-                .get("fullName", {})
-                .get("value")
-            )
-            organism = api_data.get("organism", {}).get("scientificName")
-
-            queried_data = {
-                "taxon_root": taxon_root,
-                "molecule_name": molecule_name,
-                "organism": organism,
-            }
-
-            if overwrite:
-                data.update(**{k: v for k, v in queried_data.items() if v is not None})
-            else:
-                data.update(
-                    **{
-                        k: v
-                        for k, v in queried_data.items()
-                        if v is not None and data.get(k) is None
-                    }
-                )
-
-        return self.__class__(**data)
 
     def __eq__(self, item: "Sequence") -> bool:
         """Implements the equality (==) operator for Sequence.

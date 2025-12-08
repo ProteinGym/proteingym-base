@@ -1,8 +1,10 @@
 import io
+from dataclasses import asdict
 from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+import requests
 import toml
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -101,6 +103,7 @@ def test_sequence_manifest_section_serialize_strenum_as_string(tmp_path: Path) -
     path.touch()
 
     section = SequenceManifestSection(
+        uniprot_id="P01308",
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.DNA,
         path=path,
@@ -195,14 +198,18 @@ def test_dataset_dump_with_sequence(tmp_path: Path) -> None:
     - Should not contain a bad file.
     - Should contain the sequence file.
     - Should result the sequence being loaded correctly.
+    - Should have uniprot data resolved
     """
-    bio_sequence = Seq("ATCGATCGATCG")
     sequence = Sequence(
-        name="seq",
-        value=bio_sequence,
-        description="Test sequence",
+        value=Seq(
+            "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGG"
+            "PGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN"
+        ),
         type=SequenceType.WILD_TYPE,
-        alphabet=SequenceAlphabet.DNA,
+        alphabet=SequenceAlphabet.AA,
+        uniprot_id="P01308",
+        name="seq",
+        description="Test sequence",
     )
     dataset = Dataset(name="test", sequences=[sequence])
 
@@ -217,7 +224,7 @@ def test_dataset_dump_with_sequence(tmp_path: Path) -> None:
     with zip_.open("sequences/seq.fasta", "r") as sequence_file:
         string_io = io.StringIO(sequence_file.read().decode("utf-8"))
         loaded_sequence = SeqIO.read(string_io, "fasta")
-        assert bio_sequence == loaded_sequence.seq
+        assert loaded_sequence.seq == sequence.value
 
 
 def test_dataset_dump_with_sequences_contains_archive_names(tmp_path: Path) -> None:
@@ -385,3 +392,39 @@ def test_sequence_repr() -> None:
     )
     repr_str = repr(sequence)
     assert f"value: {long_value[:60]}..." in repr_str
+
+
+def test_uniprot_field_retrieves_correct_organism_data() -> None:
+    """Test that UniProt lookup returns expected organism metadata."""
+    # human insulin, well-known protein
+    seq = Sequence(
+        name="insulin",
+        value=Seq(
+            "MALWMRLLPLLALLALWGPDPAAAFVNQHLCGSHLVEALYLVCGERGFFYTPKTRREAEDLQVGQVELGGG"
+            "PGAGSLQPLALEGSLQKRGIVEQCCTSICSLYQLENYCN"
+        ),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+        uniprot_id="P01308",
+    )
+    expected = {
+        "organism": "Homo sapiens",
+        "taxon_root": "Eukaryota",
+        "molecule_name": "Insulin",
+    }
+    assert {k: v for k, v in asdict(seq).items() if k in expected} == expected
+
+
+def test_uniprot_field_api_error_behavior() -> None:
+    """Test that system crashes appropriately on API errors."""
+
+    seq = Sequence(
+        name="test",
+        value=Seq("ACDE"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+        uniprot_id="DEFINITELY_INVALID_ID_12345",
+    )
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        _ = seq.taxon_root

@@ -357,7 +357,6 @@ def dataset_with_publication() -> Dataset:
         author="Test Author",
         journal="Test Journal",
         year="2023",
-        doi="10.1000/test",
     )
     dataset = Dataset(
         name="dataset_with_publication",
