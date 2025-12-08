@@ -3,7 +3,7 @@ from zipfile import ZipFile
 
 import pytest
 
-from proteingym.base.assay import AssaySlice
+from proteingym.base.assay import AssaySlice, Field
 from proteingym.base.dataset import Dataset, DatasetSlice, Subsets
 
 
@@ -157,12 +157,12 @@ def test_dataset_slice_with_columns_slices_assay_columns(
     dataset_with_assay: Dataset,
 ) -> None:
     """Slicing a dataset with columns should slice the assay columns."""
-    expected_columns = ["DMS Score"]
+    expected_fields = [Field(name="DMS Score")]
     slc = DatasetSlice(assays=[AssaySlice(columns=["DMS Score"])])
 
     subset = dataset_with_assay[slc]
 
-    assert all(assay.fields == expected_columns for assay in subset.assays)
+    assert all(assay.fields == expected_fields for assay in subset.assays)
 
 
 def test_subsets_with_strategies_get_skewed(

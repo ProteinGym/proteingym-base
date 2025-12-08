@@ -181,12 +181,15 @@ class AssayManifestSection(_ManifestSection):
     )
     """Configuration for the Pydantic model."""
 
+    # TODO: make this sequence_alias instead?
     sequence: str = "sequence"
     """The sequence feature name given in the file."""
 
     sequence_alphabet: SequenceAlphabet | None = None
     """The alphabet of the sequences of the assay."""
 
+    # TODO: make this a list instead and also include 'field_aliases' as more explicit
+    #  mapping?
     targets: dict[str, str] = pydantic.Field(default_factory=dict)
     """The map of target names in dataset to target feature names in assay."""
 
@@ -210,7 +213,7 @@ class AssayManifestSection(_ManifestSection):
     @field_serializer("sequence_alphabet")
     def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
         """Serialize the sequence alphabet as a string."""
-        return sequence_alphabet.value
+        return str(sequence_alphabet.value)
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -260,7 +263,9 @@ class AssayRaw:
     description: str | None = None
     """A brief description"""
 
-    fields: list[Field] = dataclasses.field(default_factory=list)
+    fields: list[Field] = dataclasses.field(
+        default_factory=lambda: [Field(name="sequence")]
+    )
     """The raw assay fields."""
 
     records: RECORDS = dataclasses.field(default_factory=list)
@@ -380,16 +385,16 @@ class Assay(AssayRaw):
 
     @property
     def sequence_feature_name(self) -> str:
-        """The sequence feature name."""
-        if len(self.fields) == 0:
-            return "sequence"  # TODO: Move to default constant
+        """The sequence feature name.
+
+        Manifest defines first field to be the sequence - here we take it for granted
+        that this is adhered to.
+        """
         return self.fields[0].name
 
     @property
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
-        if len(self.fields) == 0:
-            return []
         return [f.name for f in self.fields[1:]]  # The first field is the sequence
 
     def __contains__(self, item: "Assay") -> bool:
@@ -424,20 +429,21 @@ class Assay(AssayRaw):
         if not is_columns_slice or slc is None:
             return assay
 
-        undefined_columns = set(slc) - set(assay.fields)
-        if undefined_columns:
-            raise KeyError(f"Undefined columns: {undefined_columns}")
+        fields_by_name = {e.name: e for e in assay.fields}
+        try:
+            fields_slice = [fields_by_name[e] for e in slc]
+        except KeyError as e:
+            raise KeyError(f"Undefined columns: {e}") from e
 
-        columns = list(slc)
-        if len(slc) == 0:
+        if not fields_slice:
             records = []
         else:
-            column_indices = [assay.fields.index(column) for column in columns]
+            field_indices = [assay.fields.index(column) for column in fields_slice]
             records = [
-                tuple(record[column_index] for column_index in column_indices)
+                tuple(record[column_index] for column_index in field_indices)
                 for record in assay.records
             ]
-        return dataclasses.replace(assay, records=records, columns=columns)
+        return dataclasses.replace(assay, records=records, fields=fields_slice)
 
     @staticmethod
     def _slice_records(assay: "Assay", slc: list[bool] | None) -> "Assay":
@@ -500,7 +506,7 @@ class Assay(AssayRaw):
         lines = [f"Assay(\n\tname='{self.name}',"]
         if self.description:
             desc = (
-                self.description[:60] + "..."
+                self.description[:60] + "..."  # noqa
                 if len(self.description) > 60
                 else self.description
             )
@@ -682,5 +688,5 @@ class Assay(AssayRaw):
             case AssayFormat.CSV:
                 df.write_csv(path)
             case _:
-                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")  # noqa
         return path

@@ -33,7 +33,7 @@ def dataset_with_assay_empty() -> Dataset:
     assay = Assay(
         name="empty_assay",
         records=[],
-        fields=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     dataset = Dataset(
         name="dataset_with_empty_assay",
@@ -69,7 +69,11 @@ def dataset_with_assay() -> Dataset:
             (sequence1, 1.0, 1.5),
             (sequence2, 2.0, 2.5),
         ],
-        fields=["sequence", "DMS Score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="stability"),
+        ],
     )
     dataset = Dataset(
         name="dataset_with_single_assay",
@@ -108,7 +112,11 @@ def dataset_with_assay_raw() -> Dataset:
             (sequence1, 1.0, 1.5),
             (sequence2, 2.0, 2.5),
         ],
-        fields=["sequence", "DMS Score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="stability"),
+        ],
     )
     assay_raw = AssayRaw(
         name="assay1",
@@ -164,7 +172,11 @@ def dataset_with_assays() -> Dataset:
             (sequences[8], 1.1, 1.5),
             (sequences[9], 1.1, 1.5),
         ],
-        fields=["sequence", "DMS Score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="stability"),
+        ],
     )
     assay2 = Assay(
         name="assay3",
@@ -180,7 +192,7 @@ def dataset_with_assays() -> Dataset:
             (sequences[8], 1.0),
             (sequences[9], 1.0),
         ],
-        fields=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     dataset = Dataset(
         name="dataset_with_multiple_assays",

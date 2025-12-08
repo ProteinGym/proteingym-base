@@ -307,7 +307,7 @@ class Dataset(BaseModel):
         lines = [f"Dataset(\n\tname='{self.name}',"]
         if self.description:
             desc = (
-                self.description[:60] + "..."
+                self.description[:60] + "..."  # noqa
                 if len(self.description) > 60
                 else self.description
             )
@@ -480,7 +480,7 @@ class Dataset(BaseModel):
             assay_targets=manifest.assay_targets,
             assays=assays,
             assays_raw=assays_raw,
-            sequences=sequences,
+            sequences=sequences,  # noqa
             structures=structures,
             msas=msas,
         )
@@ -835,6 +835,11 @@ class Dataset(BaseModel):
 
 def dummy_dataset() -> Dataset:
     """Create a trivial dataset for illustrative purposes."""
+    fields = [
+        Field(name="sequence", description=""),
+        Field(name="numerical", description=""),
+        Field(name="categorical", description=""),
+    ]
     sequence1 = Sequence(
         name="seq1",
         value=Seq("ACDEFG"),
@@ -856,7 +861,7 @@ def dummy_dataset() -> Dataset:
             (sequence2, 2.5, "bar"),
         ],
         variables={"var1": 2},
-        fields=["sequence", "numerical", "categorical"],
+        fields=fields,
     )
     dataset = Dataset(
         name="dataset_with_single_assay",

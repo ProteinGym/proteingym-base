@@ -76,7 +76,7 @@ def test_assay_with_record_equals_itself() -> None:
                 1.0,
             )
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert assay == assay
 
@@ -90,7 +90,9 @@ def test_assay_with_record_contains_itself() -> None:
         alphabet=SequenceAlphabet.AA,
     )
     assay = Assay(
-        name="Test Assay", records=[(sequence, 1.0)], fields=["sequence", "DMS_score"]
+        name="Test Assay",
+        records=[(sequence, 1.0)],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert assay in assay
 
@@ -111,7 +113,7 @@ def test_assay_empty_in_assay_with_record() -> None:
                 1.0,
             )
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert assay_empty in assay
 
@@ -140,7 +142,7 @@ def test_assay_contains_subset() -> None:
                 2.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     subset = Assay(
         name="Subset of test Assay",
@@ -155,7 +157,7 @@ def test_assay_contains_subset() -> None:
                 1.0,
             )
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert subset in assay
 
@@ -184,7 +186,7 @@ def test_assay_contains_subset_mismatch() -> None:
                 2.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     subset = Assay(
         name="Subset of test Assay",
@@ -199,7 +201,7 @@ def test_assay_contains_subset_mismatch() -> None:
                 3.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert subset not in assay
 
@@ -229,7 +231,7 @@ def test_assay_equals_with_name_mismatch() -> None:
             ),
         ],
         variables={"variable1": 1},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     other_assay = Assay(
         name="Other Test Assay",
@@ -254,7 +256,7 @@ def test_assay_equals_with_name_mismatch() -> None:
             ),
         ],
         variables={"variable1": 1},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert assay == other_assay
 
@@ -284,7 +286,7 @@ def test_assay_equals_with_variable() -> None:
             ),
         ],
         variables={"variable1": 1},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert assay == assay
 
@@ -314,7 +316,7 @@ def test_assay_equals_with_variable_mismatch() -> None:
             ),
         ],
         variables={"variable1": 1},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assay2 = Assay(
         name="Test assay 2",
@@ -339,7 +341,7 @@ def test_assay_equals_with_variable_mismatch() -> None:
             ),
         ],
         variables={"variable2": 2},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert assay1 != assay2
 
@@ -369,7 +371,7 @@ def test_assay_contains_includes_variables() -> None:
             ),
         ],
         variables={"variable1": 1, "variable2": 2},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     subset = Assay(
         name="Test assay subset",
@@ -394,7 +396,7 @@ def test_assay_contains_includes_variables() -> None:
             ),
         ],
         variables={"variable2": 2},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert subset in assay
 
@@ -424,7 +426,7 @@ def test_assay_contains_includes_variable_mismatch() -> None:
             ),
         ],
         variables={"variable1": 1, "variable2": 2},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     subset = Assay(
         name="Test assay subset",
@@ -449,7 +451,7 @@ def test_assay_contains_includes_variable_mismatch() -> None:
             ),
         ],
         variables={"variable3": 3},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert subset not in assay
 
@@ -479,7 +481,7 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
             ),
         ],
         variables={"variable1": 1, "variable2": 2},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     subset = Assay(
         name="Test assay subset",
@@ -504,7 +506,7 @@ def test_assay_contains_includes_variable_value_mismatch() -> None:
             ),
         ],
         variables={"variable2": 3},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert subset not in assay
 
@@ -535,7 +537,7 @@ def test_assay_slice_all() -> None:
             ),
         ],
         variables={"variable1": 1, "variable2": 2},
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert assay == assay[slc]
 
@@ -565,7 +567,7 @@ def test_assay_slice_first_with_slice() -> None:
                 2.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     first = Assay(
         name="Test assay with first record",
@@ -580,7 +582,7 @@ def test_assay_slice_first_with_slice() -> None:
                 1.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert first == assay[slc]
 
@@ -610,7 +612,7 @@ def test_assay_slice_last() -> None:
                 2.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     last = Assay(
         name="Test assay with last record",
@@ -625,7 +627,7 @@ def test_assay_slice_last() -> None:
                 2.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     assert last == assay[slc]
 
@@ -654,7 +656,7 @@ def test_assay_get_first_raises_not_implemented_error() -> None:
                 2.0,
             ),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
     with pytest.raises(
         NotImplementedError, match="Getting a single record is not supported."
@@ -689,13 +691,23 @@ def seq2() -> Sequence:
 def test_assay_slice_empty(seq1: Sequence, seq2: Sequence) -> None:
     """An empty mask should return the assay without records"""
     excepted = Assay(
-        name="Test assay", records=[], fields=["sequence", "DMS_score", "stability"]
+        name="Test assay",
+        records=[],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
     assert assay[[]] == excepted
 
@@ -707,7 +719,11 @@ def test_assay_slice_column_string_raises_not_implemented_error(
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     with pytest.raises(
@@ -719,25 +735,35 @@ def test_assay_slice_column_string_raises_not_implemented_error(
 def test_assay_slice_column_string_raises_key_error_for_unknown_column(
     seq1: Sequence, seq2: Sequence
 ) -> None:
-    """Slicing an assy with an unknown column string raises a KeyError."""
+    """Slicing an assay with an unknown column string raises a KeyError."""
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
-    with pytest.raises(KeyError, match=r"Undefined columns: {'unknown'}"):
+    with pytest.raises(KeyError, match=r"Undefined columns: 'unknown'"):
         assay[["sequence", "unknown"]]  # noqa
 
 
 def test_assay_slice_column(seq1: Sequence, seq2: Sequence) -> None:
     """Slicing an assay with a column returns an assay with only that column."""
-    expected = Assay(name="Test assay", records=[(1.5,), (2.5,)], fields=["stability"])
+    expected = Assay(
+        name="Test assay", records=[(1.5,), (2.5,)], fields=[Field(name="stability")]
+    )
 
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     actual = assay[["stability"]]
@@ -752,13 +778,17 @@ def test_assay_slice_columns(seq1: Sequence, seq2: Sequence) -> None:
             (seq1, 1.5),
             (seq2, 2.5),
         ],
-        fields=["sequence", "stability"],
+        fields=[Field(name="sequence"), Field(name="stability")],
     )
 
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     actual = assay[["sequence", "stability"]]
@@ -773,14 +803,18 @@ def test_assay_slice_object_with_columns(seq1: Sequence, seq2: Sequence) -> None
             (seq1, 1.5),
             (seq2, 2.5),
         ],
-        fields=["sequence", "stability"],
+        fields=[Field(name="sequence"), Field(name="stability")],
     )
 
     slc = AssaySlice(columns=["sequence", "stability"])
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     actual = assay[slc]
@@ -794,14 +828,22 @@ def test_assay_slice_object_with_records(seq1: Sequence, seq2: Sequence) -> None
         records=[
             (seq1, 1.0, 1.5),
         ],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     slc = AssaySlice(records=[True, False])
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     actual = assay[slc]
@@ -817,14 +859,18 @@ def test_assay_slice_object_with_records_and_columns(
         records=[
             (seq1, 1.0),
         ],
-        fields=["sequence", "DMS_score"],
+        fields=[Field(name="sequence"), Field(name="DMS_Score")],
     )
 
-    slc = AssaySlice(records=[True, False], columns=["sequence", "DMS_score"])
+    slc = AssaySlice(records=[True, False], columns=["sequence", "DMS_Score"])
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     actual = assay[slc]
@@ -839,7 +885,11 @@ def test_assay_slice_object_with_empty_columns(seq1: Sequence, seq2: Sequence) -
     assay = Assay(
         name="Test assay",
         records=[(seq1, 1.0, 1.5), (seq2, 2.0, 2.5)],
-        fields=["sequence", "DMS_score", "stability"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS_Score"),
+            Field(name="stability"),
+        ],
     )
 
     actual = assay[slc]

@@ -57,7 +57,7 @@ def simple_assay(seq1: Sequence, seq2: Sequence) -> Assay:
             (seq1, 1.5),
             (seq2, 2.0),
         ],
-        fields=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
 
 
@@ -71,7 +71,7 @@ def assay_with_variables(seq1: Sequence, seq2: Sequence, seq3: Sequence) -> Assa
             (seq2, 2.0),
             (seq3, 1.8),
         ],
-        fields=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
         variables={"pH": 7.0, "temperature": 37, "condition": "A"},
     )
 
@@ -85,7 +85,11 @@ def assay_with_multiple_targets(seq1: Sequence, seq2: Sequence) -> Assay:
             (seq1, 1.5, 0.8),
             (seq2, 2.0, 0.9),
         ],
-        fields=["sequence", "DMS Score", "Binding Affinity"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="Binding Affinity"),
+        ],
         variables={"pH": 7.0},
     )
 

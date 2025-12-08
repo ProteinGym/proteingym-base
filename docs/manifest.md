@@ -83,7 +83,7 @@ sequence_alphabet = "AA"
 "DMS Score Bin" = "DMS_score_bin"
 
 [ assays.variables ]
-PH = "7"
+PH = 7
 
 [[ assays_raw ]]
 name = "assay"
