@@ -351,3 +351,29 @@ def test_predefined_splitter_with_specified_values(
         records = [r for assay in subset.assays for r in assay.records]
         assert len(records) == 1
         assert str(records[0][0].value) == expected_seq
+
+
+def test_predefined_splitter_with_targets_not_in_assay(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
+    """Test that PredefinedSplitter handles targets not present in assay."""
+    splitter = PredefinedSplitter(split_column="split")
+    subsets = splitter.split(
+        dataset_with_assay_predefined_split, targets=["nonexistent"]
+    )
+
+    for subset in subsets:
+        for assay in subset.assays:
+            assert assay.is_empty()
+
+
+def test_predefined_splitter_with_missing_split_column(
+    dataset_with_assay: Dataset,
+) -> None:
+    """Test that PredefinedSplitter handles assays without the split column."""
+    splitter = PredefinedSplitter(split_column="nonexistent_column")
+    subsets = splitter.split(dataset_with_assay)
+
+    for subset in subsets:
+        for assay in subset.assays:
+            assert assay.is_empty()
