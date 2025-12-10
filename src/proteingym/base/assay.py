@@ -34,7 +34,7 @@ class AssayFormat(StrEnum):
     """A comma separated text file"""
 
 
-@dataclasses.dataclass(kw_only=True, frozen=True)
+@dataclasses.dataclass(kw_only=True, frozen=False)
 class Field:
     """A data field for an assay associated quantity or protein property.
 
@@ -57,6 +57,42 @@ class Field:
 
     description: str | None = None
     """Description of the field."""
+
+    alias: str | None = None
+    """An alias for this field.
+
+    Example use is when a field is referred to be a different name in an input csv file.
+    """
+
+    def fill_from_parent(self, parent: "Field") -> None:
+        """Fill value, unit and description this field from another field.
+
+        Raises:
+            ValueError if names do not match (expected for parent / child) relationship.
+            ValueError if an attribute is set of self but differs on parent.
+        """
+        if self.name != parent.name:
+            raise ValueError("Expected names to match")
+        for attr in ("value", "unit", "description"):
+            own = getattr(self, attr)
+            if own is not None and own != getattr(parent, attr):
+                raise ValueError(f"Attribute {attr} for field {self.name} redefined")
+            setattr(self, attr, getattr(parent, attr))
+
+    def without_alias(self) -> "Field":
+        """Get a Field identical to this one but without its alias."""
+        return Field(
+            name=self.name,
+            value=self.value,
+            unit=self.unit,
+            description=self.description,
+        )
+
+    @property
+    def alias_(self) -> str:
+        """Get the alias for this field (i.e., name if no alias available)."""
+        # The obvious getter/setter pattern is not compatible with dataclasses
+        return self.name if self.alias is None else self.alias
 
     def __eq__(self, other: "Field") -> bool:
         """Implements the '==' operator for Field."""
@@ -93,7 +129,7 @@ class _ManifestSection(BaseModel):
 
     model_config = ConfigDict(
         extra="forbid",
-        frozen=True,
+        frozen=False,
         use_attribute_docstrings=True,
         str_min_length=1,
     )
@@ -175,17 +211,14 @@ class AssayManifestSection(_ManifestSection):
     )
     """Configuration for the Pydantic model."""
 
-    # TODO: make this sequence_alias instead?
-    sequence: str = "sequence"
+    sequence: Field = pydantic.Field(default_factory=lambda: Field(name="sequence"))
     """The sequence feature name given in the file."""
 
     sequence_alphabet: SequenceAlphabet | None = None
     """The alphabet of the sequences of the assay."""
 
-    # TODO: make this a list instead and also include 'field_aliases' as more explicit
-    #  mapping?
-    targets: dict[str, str] = pydantic.Field(default_factory=dict)
-    """The map of target names in dataset to target feature names in assay."""
+    targets: list[Field] = pydantic.Field(default_factory=list)
+    """The list of prediction targets in this assay."""
 
     variables: dict[str, bool | int | float | str] = pydantic.Field(
         default_factory=dict
@@ -197,11 +230,13 @@ class AssayManifestSection(_ManifestSection):
     """The path to the assay file, csv only."""
 
     @model_validator(mode="after")
-    def validate_feature_names(self) -> "AssayManifestSection":
-        """Validate whether feature names are present in the `path` file."""
-        for v in [self.sequence] + list(self.targets.values()):
-            if v not in self._header:
-                raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
+    def validate_fields(self) -> "AssayManifestSection":
+        """Validate whether field names are present in the `path` file."""
+        for v in [self.sequence] + self.targets:
+            if v.alias_ not in self._header:
+                raise ValueError(
+                    f"Feature '{v.name}' not found in the file: {self.path}"
+                )
         return self
 
     @field_serializer("sequence_alphabet")
@@ -537,13 +572,14 @@ class Assay(AssayRaw):
         """Create an Assay instance from a manifest section."""
 
         df = pl.read_csv(
-            section.path, columns=[section.sequence] + list(section.targets.values())
+            section.path,
+            columns=[section.sequence.alias_] + [f.alias_ for f in section.targets],
         )
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
             # provided in the assay file.
-            pl.col(section.sequence)
+            pl.col(section.sequence.alias_)
             .map_elements(
                 lambda seq: Sequence(
                     # The type of the sequence is set to "standard". This would be
@@ -558,16 +594,15 @@ class Assay(AssayRaw):
             .alias("sequence_object")
         )
         records = list(
-            df.select("sequence_object", *section.targets.values()).iter_rows()
+            df.select(
+                "sequence_object", *[f.alias_ for f in section.targets]
+            ).iter_rows()
         )
 
-        fields = [
-            Field(name=f) for f in [section.sequence] + list(section.targets.keys())
-        ]
         return cls(
             name=section.name or section.path.stem,
             records=records,
-            fields=fields,
+            fields=[section.sequence] + section.targets,
             description=section.description,
             variables=section.variables,
         )
@@ -590,11 +625,9 @@ class Assay(AssayRaw):
         return AssayManifestSection(
             name=self.name,
             description=self.description,
-            sequence=self.sequence_feature_name,
+            sequence=self.fields[0].without_alias(),
             sequence_alphabet=sequence_alphabet,
-            targets=dict(
-                zip(self.target_feature_names, self.target_feature_names, strict=False)
-            ),
+            targets=[f.without_alias() for f in self.fields[1:]],
             variables=self.variables,
             path=path,
         )

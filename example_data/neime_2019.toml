@@ -2,6 +2,9 @@ name = "NEIME_2019"
 description = "The NEIME Kennouche 2019 (UniProt id: A0A1I9GEU1) datase"
 version = "1.0.0"
 
+[publication]
+doi = "10.15252/embj.2019102145"
+
 [[ assay_variables ]]
 name = "PH"
 description = "pH level of the samples"
@@ -23,13 +26,20 @@ description = "DMS score bin of the samples"
 
 [[ assays ]]
 name = "NEIME_2019"
-sequence = "mutated_sequence"
 path = "./NEIME_2019/Assays/Assay1.csv"
 sequence_alphabet = "AA"
 
-[ assays.targets ]
-"DMS Score" = "DMS_score"
-"DMS Score Bin" = "DMS_score_bin"
+[ assays.sequence ]
+name = "sequence"
+alias = "mutated_sequence"
+
+[[ assays.targets ]]
+name = "DMS Score"
+alias = "DMS_score"
+
+[[ assays.targets ]]
+name = "DMS Score Bin"
+alias = "DMS_score_bin"
 
 [ assays.variables ]
 T = 37
@@ -39,6 +49,7 @@ PH = 7
 path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
 type = "wild_type"
 alphabet = "AA"
+uniprot_id = "A0A1I9GEU1"
 
 [[ structures ]]
 path = "./NEIME_2019/Structures/computational.pdb"
