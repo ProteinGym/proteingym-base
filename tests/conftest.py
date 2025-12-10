@@ -211,6 +211,42 @@ def dataset_with_assays() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_assay_predefined_split() -> Dataset:
+    """A dataset containing an assay with predefined split column."""
+    sequences = [
+        Sequence(
+            name=f"seq{i}",
+            value=Seq(s),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        )
+        for i, s in enumerate(["ACGT", "TGCA", "AAAA"])
+    ]
+    assay = Assay(
+        name="test_assay",
+        fields=[
+            Field(name="sequence"),
+            Field(name="target1"),
+            Field(name="split"),
+        ],
+        records=[
+            (sequences[0], 1.0, "train"),
+            (sequences[1], 2.0, "test"),
+            (sequences[2], 3.0, "val"),
+        ],
+        non_target_feature_names=["split"],
+    )
+    dataset = Dataset(
+        name="dataset_with_predefined_split",
+        description="A dataset with predefined split column.",
+        assays=[assay],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+@pytest.fixture
 def dataset_with_sequence() -> Dataset:
     """A dataset containing a single sequence."""
     sequence = Sequence(
@@ -408,6 +444,7 @@ def datasets(
     dataset_with_assay: Dataset,
     dataset_with_assay_raw: Dataset,
     dataset_with_assays: Dataset,
+    dataset_with_assay_predefined_split: Dataset,
     dataset_with_sequence: Dataset,
     dataset_with_sequences: Dataset,
     dataset_with_structure: Dataset,
