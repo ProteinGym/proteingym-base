@@ -415,9 +415,7 @@ class Assay(AssayRaw):
     )
     """The variables of the assay, defined in the manifest."""
 
-    non_target_feature_names: list[str] = dataclasses.field(
-        default_factory=list
-    )
+    non_target_feature_names: list[str] = dataclasses.field(default_factory=list)
     """List of non-target feature names that are included but not targets."""
 
     @property
@@ -583,7 +581,9 @@ class Assay(AssayRaw):
 
         df = pl.read_csv(
             section.path,
-            columns=[section.sequence.alias_] + [f.alias_ for f in section.targets] + [f.name for f in section.non_targets], 
+            columns=[section.sequence.alias_]
+            + [f.alias_ for f in section.targets]
+            + [f.name for f in section.non_targets],
         )
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
@@ -605,7 +605,9 @@ class Assay(AssayRaw):
         )
         records = list(
             df.select(
-                "sequence_object", *[f.alias_ for f in section.targets], *[f.name for f in section.non_targets]
+                "sequence_object",
+                *[f.alias_ for f in section.targets],
+                *[f.name for f in section.non_targets],
             ).iter_rows()
         )
 
@@ -638,7 +640,11 @@ class Assay(AssayRaw):
             description=self.description,
             sequence=self.fields[0].without_alias(),
             sequence_alphabet=sequence_alphabet,
-            targets=[f.without_alias() for f in self.fields if f.name in self.target_feature_names],
+            targets=[
+                f.without_alias()
+                for f in self.fields
+                if f.name in self.target_feature_names
+            ],
             non_targets=[Field(name=name) for name in self.non_target_feature_names],
             variables=self.variables,
             path=path,
@@ -678,7 +684,11 @@ class Assay(AssayRaw):
         schema = {f.name: f.polars_type for f in self.fields}
         df = (
             pl.DataFrame(self.records, schema=schema, orient="row")
-            .select([self.sequence_feature_name] + list(target_names) + self.non_target_feature_names)
+            .select(
+                [self.sequence_feature_name]
+                + list(target_names)
+                + self.non_target_feature_names
+            )
             .with_columns(
                 pl.col(self.sequence_feature_name).map_elements(
                     lambda seq: str(seq.value), return_dtype=pl.Utf8

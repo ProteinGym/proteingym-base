@@ -325,30 +325,35 @@ class KFoldSplitter:
         return subsets
 
 
-
 class PredefinedSplitter:
     """Split a dataset based on pre-defined splits from a column.
 
     Args:
-        split_column: Name of the column containing split labels (e.g., 'train', 'val', 'test').
-        split_values: List of split values to create subsets for. If None, uses all unique values in standard order.
+        split_column: Name of the column containing split labels
+            (e.g., 'train', 'val', 'test').
+        split_values: List of split values to create subsets for.
+            If None, uses all unique values in standard order.
     """
-    
+
     # Since we return unnamed subsets, i want to prevent the case
-    # where users take the first subset as train by default even when it isn't 
+    # where users take the first subset as train by default even when it isn't
     STANDARD_ORDER = ["train", "val", "valid", "validation", "test"]
 
-    def __init__(self, split_column: str, split_values: list[str] | None = None) -> None:
+    def __init__(
+        self, split_column: str, split_values: list[str] | None = None
+    ) -> None:
         self.split_column = split_column
         self.split_values = split_values
-    
+
     def _sort_split_values(self, values: list[str]) -> list[str]:
         """Sort split values using standard ML order."""
+
         def sort_key(value):
             try:
                 return self.STANDARD_ORDER.index(value.lower())
             except ValueError:
                 return len(self.STANDARD_ORDER)  # Unknown values go last
+
         return sorted(values, key=sort_key)
 
     def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
@@ -356,7 +361,8 @@ class PredefinedSplitter:
 
         Args:
             dataset: The dataset to split.
-            targets: List of target column names to include in the splits. If None, all columns are included.
+            targets: List of target column names to include in the splits.
+                If None, all columns are included.
 
         Returns:
             Subsets: The subsets containing the splits.
@@ -381,7 +387,7 @@ class PredefinedSplitter:
                 if self.split_column in field_names:
                     col_idx = field_names.index(self.split_column)
                     mask = [record[col_idx] == split_value for record in assay.records]
-                    
+
                     if targets is not None:
                         target_names = [e.name for e in assay.fields]
                         if not any(target in target_names for target in targets):
