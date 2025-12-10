@@ -97,6 +97,7 @@ def test_field_complete() -> None:
             name="field",
             value=42,
             unit="log",
+            alias="foo",
             description="A test field",
         )
     except ValidationError as e:
@@ -105,9 +106,40 @@ def test_field_complete() -> None:
         assert (
             field.name == "field"
             and field.value == 42
+            and field.alias == "foo"
             and field.unit == "log"
             and field.description == "A test field"
         )
+
+
+def test_field_alias_():
+    """The alias_ if a field is the name if alias not available."""
+    assert (
+        Field(name="foo").alias_ == "foo"
+        and Field(name="foo", alias="bar").alias_ == "bar"
+    )
+
+
+def test_field_fill_from_parent():
+    parent = Field(name="foo", unit="kg")
+    child = Field(name="foo")
+    child.fill_from_parent(parent)
+    assert child.unit == "kg"
+
+
+def test_field_fill_from_parent_names_must_match():
+    parent = Field(name="foo", unit="kg")
+    child = Field(name="bar")
+    with pytest.raises(ValueError):
+        child.fill_from_parent(parent)
+
+
+def test_field_fill_from_parent_must_not_redefine():
+    """Must"""
+    parent = Field(name="foo", unit="kg")
+    child = Field(name="foo", unit="g")
+    with pytest.raises(ValueError, match="Attribute unit for field foo redefined"):
+        child.fill_from_parent(parent)
 
 
 @pytest.mark.parametrize(
@@ -219,6 +251,15 @@ def test_assay_raw_manifest_section_minimal(assay_raw_file: Path) -> None:
         )
 
 
+def test_fields_work_as_expected_in_lists():
+    """Should be able to test if a field is in a list of fields."""
+    fields = [Field(name="foo"), Field(name="bar", unit="g")]
+    assert (
+        Field(name="bar", unit="g") in fields
+        and Field(name="foo", unit="g") not in fields
+    )
+
+
 def test_assay_raw_manifest_section_with_relative_path(assay_raw_file: Path) -> None:
     """The can also be created with a relative path."""
     context = {"relative_to_path": assay_raw_file.parent}
@@ -267,9 +308,12 @@ def test_assay_manifest_section(assay_file: Path) -> None:
         section = AssayManifestSection(
             name="test_assay",
             description="Test assay",
-            sequence="sequence",
+            sequence=Field(name="sequence"),
             sequence_alphabet=SequenceAlphabet.AA,
-            targets={"DMS Score": "target", "DMS Score2": "target2"},
+            targets=[
+                Field(name="DMS Score", alias="target"),
+                Field(name="DMS Score2", alias="target2"),
+            ],
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
@@ -280,8 +324,8 @@ def test_assay_manifest_section(assay_file: Path) -> None:
         assert isinstance(section.path, Path)
         with assay_file.open() as f:
             content = f.read()
-        assert section.sequence in content
-        assert all(target in content for target in section.targets.values())
+        assert section.sequence.alias_ in content
+        assert all(target.alias_ in content for target in section.targets)
 
 
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
@@ -305,9 +349,9 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
         AssayManifestSection(
             name="test_assay",
             description="Test assay",
-            sequence="invalid_feature",
+            sequence=Field(name="invalid_feature"),
             sequence_alphabet=SequenceAlphabet.AA,  # noqa
-            targets={"DMS Score": "invalid_feature"},
+            targets=[Field(name="DMS Score", alias="invalid_feature")],
             variables={"test_cond1": "true", "test_cond2": 42},
             path=assay_file,
         )
@@ -508,9 +552,12 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
         assay = Assay.from_manifest_section(
             AssayManifestSection(
                 name="assay",
-                sequence="sequence",
+                sequence=Field(name="sequence"),
                 sequence_alphabet=SequenceAlphabet.DNA,
-                targets={"DMS Score": "target", "DMS Score2": "target2"},
+                targets=[
+                    Field(name="DMS Score", alias="target"),
+                    Field(name="DMS Score2", alias="target2"),
+                ],
                 path=assay_file,
                 variables={"test_cond1": "true", "test_cond2": 42},
             ),
@@ -786,7 +833,10 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
                     "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
-                    "targets": {"DMS Score": "target", "DMS Score2": "target2"},
+                    "targets": [
+                        {"name": "DMS Score", "alias": "target"},
+                        {"name": "DMS Score2", "alias": "target2"},
+                    ],
                 }
             ],
         )
@@ -796,12 +846,61 @@ def test_manifest_with_valid_assay_targets(assay_file: Path) -> None:
         assert manifest.assay_targets, "Valid assay targets should be present"
 
 
+def test_manifest_assay_targets_populated_from_parent_targets(assay_file: Path) -> None:
+    """Attribute unit, description copied to assay's targets."""
+    manifest = Manifest(
+        version=Version(1, 0),
+        name="test_manifest",
+        assay_targets=[
+            Field(name="DMS Score", unit="kg", description="foo"),
+        ],
+        assays=[  # noqa
+            {
+                "name": "assay",
+                "path": assay_file,
+                "sequence_alphabet": SequenceAlphabet.DNA,
+                "targets": [
+                    {"name": "DMS Score", "alias": "target"},
+                ],
+            }
+        ],
+    )
+    [target] = manifest.assays[0].targets
+    assert target.unit == "kg" and target.description == "foo"
+
+
+def test_manifest_assay_must_not_redefine_targets(assay_file: Path) -> None:
+    """Test creating a Manifest with undefined assay targets."""
+    with pytest.raises(
+        ValidationError,
+        match=r"validation error for Manifest\n"
+        r".*Value error, Attribute .* for field .* redefined.*",
+    ):
+        Manifest(
+            version=Version(1, 0),
+            name="test_manifest",
+            assay_targets=[
+                Field(name="yield", unit="g"),
+            ],
+            assays=[  # noqa
+                {
+                    "name": "assay",
+                    "path": assay_file,
+                    "sequence_alphabet": SequenceAlphabet.DNA,
+                    "targets": [
+                        {"name": "yield", "alias": "target", "unit": "kg"},
+                    ],
+                }
+            ],
+        )
+
+
 def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
     """Test creating a Manifest with undefined assay targets."""
     with pytest.raises(
         ValidationError,
         match=r"validation error for Manifest\n"
-        r".*Value error, Assay .* contains undefined targets",
+        r".*Value error, Assay .* contains undefined target.*",
     ):
         Manifest(
             version=Version(1, 0),
@@ -814,7 +913,10 @@ def test_manifest_with_undefined_assay_target(assay_file: Path) -> None:
                     "name": "assay",
                     "path": assay_file,
                     "sequence_alphabet": SequenceAlphabet.DNA,
-                    "targets": {"DMS Score": "target", "DMS Score2": "target2"},
+                    "targets": [
+                        {"name": "DMS Score", "alias": "target"},
+                        {"name": "DMS Score2", "alias": "target2"},
+                    ],
                 }
             ],
         )

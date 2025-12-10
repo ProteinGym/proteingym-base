@@ -32,12 +32,18 @@ description = "DMS score bin of the samples"
 [[ assays ]]
 name = "assay"
 path = "assay.csv"
-sequence = "sequence"
 sequence_alphabet = "AA"
 
-[ assays.targets ]
-"DMS Score" = "DMS_score"
-"DMS Score Bin" = "DMS_score_bin"
+[ assays.sequence ]
+name = "sequence"
+
+[[ assays.targets ]]
+name = "DMS Score"
+alias = "DMS_score"
+
+[[ assays.targets ]]
+name = "DMS Score Bin"
+alias = "DMS_score_bin"
 
 [[ assays.non_targets ]]
 name = "split"

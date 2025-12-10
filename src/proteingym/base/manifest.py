@@ -156,15 +156,20 @@ class Manifest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_assay_targets(self) -> "Manifest":
-        """Validate that all assay targets are defined in the manifest."""
-        defined_target_names = {target.name for target in self.assay_targets}
+        """Validate that all assay targets are defined in the manifest.
+
+        Fill assay target (fields) with properties from the target defined at the top
+        level.
+        """
+        targets = {t.name: t for t in self.assay_targets}
         for assay in self.assays:
-            undefined_target_names = set(assay.targets.keys()) - defined_target_names
-            if undefined_target_names:
-                raise ValueError(
-                    f"Assay {assay.name} contains undefined targets:"
-                    f"{undefined_target_names}"
-                )
+            for t in assay.targets:
+                try:
+                    t.fill_from_parent(targets[t.name])
+                except KeyError as e:
+                    raise ValueError(
+                        f"Assay {assay.name} contains undefined target: {str(e)}"
+                    ) from e
         return self
 
     @classmethod
