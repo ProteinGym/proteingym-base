@@ -331,12 +331,25 @@ class PredefinedSplitter:
 
     Args:
         split_column: Name of the column containing split labels (e.g., 'train', 'val', 'test').
-        split_values: List of split values to create subsets for. If None, uses all unique values.
+        split_values: List of split values to create subsets for. If None, uses all unique values in standard order.
     """
+    
+    # Since we return unnamed subsets, i want to prevent the case
+    # where users take the first subset as train by default even when it isn't 
+    STANDARD_ORDER = ["train", "val", "valid", "validation", "test"]
 
     def __init__(self, split_column: str, split_values: list[str] | None = None) -> None:
         self.split_column = split_column
         self.split_values = split_values
+    
+    def _sort_split_values(self, values: list[str]) -> list[str]:
+        """Sort split values using standard ML order."""
+        def sort_key(value):
+            try:
+                return self.STANDARD_ORDER.index(value.lower())
+            except ValueError:
+                return len(self.STANDARD_ORDER)  # Unknown values go last
+        return sorted(values, key=sort_key)
 
     def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
         """Splits the dataset based on pre-defined split column values.
@@ -348,13 +361,15 @@ class PredefinedSplitter:
         Returns:
             Subsets: The subsets containing the splits.
         """
-        # Get unique split values if not provided
+
         if self.split_values is None:
             all_values = set()
             for assay in dataset.assays:
-                if self.split_column in assay.columns:
-                    all_values.update(assay.data[self.split_column].unique())
-            split_values = sorted(all_values)
+                field_names = [f.name for f in assay.fields]
+                if self.split_column in field_names:
+                    col_idx = field_names.index(self.split_column)
+                    all_values.update(record[col_idx] for record in assay.records)
+            split_values = self._sort_split_values(list(all_values))
         else:
             split_values = self.split_values
 
@@ -362,20 +377,23 @@ class PredefinedSplitter:
         for split_value in split_values:
             assay_slices = []
             for assay in dataset.assays:
-                if self.split_column in assay.columns:
-                    mask = (assay.data[self.split_column] == split_value).tolist()
+                field_names = [f.name for f in assay.fields]
+                if self.split_column in field_names:
+                    col_idx = field_names.index(self.split_column)
+                    mask = [record[col_idx] == split_value for record in assay.records]
+                    
                     if targets is not None:
-                        if not any(target in assay.columns for target in targets):
+                        target_names = [e.name for e in assay.fields]
+                        if not any(target in target_names for target in targets):
                             columns = []
                         else:
                             columns = [assay.sequence_feature_name] + list(
-                                set(targets) & set(assay.columns)
+                                set(targets) & set(target_names)
                             )
                     else:
                         columns = None
                     assay_slice = AssaySlice(records=mask, columns=columns)
                 else:
-                    # If split column not in assay, create empty slice
                     assay_slice = AssaySlice(records=[False] * len(assay), columns=[])
                 assay_slices.append(assay_slice)
 
