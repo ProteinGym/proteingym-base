@@ -395,7 +395,8 @@ def test_predefined_splitter_with_targets_in_assay(
 
 
 def test_predefined_splitter_with_custom_split_values() -> None:
-    """Test that PredefinedSplitter handles custom split values not in STANDARD_ORDER."""
+    """Test that PredefinedSplitter handles custom split values
+    not in STANDARD_ORDER."""
     seq = Sequence(
         name="s",
         value=Seq("A"),
