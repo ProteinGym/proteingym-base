@@ -82,6 +82,9 @@ sequence_alphabet = "AA"
 "DMS Score" = "DMS_score"
 "DMS Score Bin" = "DMS_score_bin"
 
+[[ assays.non_targets ]]
+name = "split"
+
 [ assays.variables ]
 PH = 7
 
@@ -163,6 +166,7 @@ The assays section contains a list of assays included in the dataset.
 | `name`              | `string`         | No           | `None`       | The name of the assay.                                                   |
 | `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.           |
 | `targets`           | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay. |
+| `non_targets`       | `list[Field]`    | No           | Empty list   | List of non-target fields that are included but not targets.                 |
 | `sequence`          | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                                  |
 | `sequence_alphabet` | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                    |
 | `variables`         | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                              |
@@ -170,9 +174,9 @@ The assays section contains a list of assays included in the dataset.
 Example of an assay file:
 
 ``` csv
-mutated_sequence,DMS_score,engineering_round
-ITLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNHGEWPGDNSSAGVATSADIKGKYVQSVTVANGVITAQMASSNVNNEIKSKKLSLWAKRQNGSVKWFCGQPVTRTTATATDVAAANGKTDDKINTKHLPSTCRDDSSAS,-3.5980000000000003,3
-LTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNHGEWPGDNSSAGVATSADIKGKYVQSVTVANGVITAQMASSNVNNEIKSKKLSLWAKRQNGSVKWFCGQPVTRTTATATDVAAANGKTDDKINTKHLPSTCRDDSSAS,-0.6779999999999999,1
+mutated_sequence,DMS_score,engineering_round,split
+ITLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNHGEWPGDNSSAGVATSADIKGKYVQSVTVANGVITAQMASSNVNNEIKSKKLSLWAKRQNGSVKWFCGQPVTRTTATATDVAAANGKTDDKINTKHLPSTCRDDSSAS,-3.5980000000000003,3,train
+LTLIELMIVIAIVGILAAVALPAYQDYTARAQVSEAILLAEGQKSAVTEYYLNHGEWPGDNSSAGVATSADIKGKYVQSVTVANGVITAQMASSNVNNEIKSKKLSLWAKRQNGSVKWFCGQPVTRTTATATDVAAANGKTDDKINTKHLPSTCRDDSSAS,-0.6779999999999999,1,test
 ```
 
 This would be represented in the manifest as:
@@ -180,8 +184,13 @@ This would be represented in the manifest as:
 ``` toml
 [[assays]]
 path = "path/to/assay.csv"
-target = "DMS_score"
 sequence = "mutated_sequence"
+
+[assays.targets]
+"DMS Score" = "DMS_score"
+
+[[assays.non_targets]]
+name = "split"
 ```
 
 ### Raw Assay Data

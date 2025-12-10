@@ -187,6 +187,9 @@ class AssayManifestSection(_ManifestSection):
     targets: dict[str, str] = pydantic.Field(default_factory=dict)
     """The map of target names in dataset to target feature names in assay."""
 
+    non_targets: list[Field] = pydantic.Field(default_factory=list)
+    """List of non-target fields that are included but not targets."""
+
     variables: dict[str, bool | int | float | str] = pydantic.Field(
         default_factory=dict
     )
@@ -199,7 +202,7 @@ class AssayManifestSection(_ManifestSection):
     @model_validator(mode="after")
     def validate_feature_names(self) -> "AssayManifestSection":
         """Validate whether feature names are present in the `path` file."""
-        for v in [self.sequence] + list(self.targets.values()):
+        for v in [self.sequence] + list(self.targets.values()) + [f.name for f in self.non_targets]:
             if v not in self._header:
                 raise ValueError(f"Feature '{v}' not found in the file: {self.path}")
         return self
@@ -377,6 +380,11 @@ class Assay(AssayRaw):
     )
     """The variables of the assay, defined in the manifest."""
 
+    non_target_feature_names: list[str] = dataclasses.field(
+        default_factory=list
+    )
+    """List of non-target feature names that are included but not targets."""
+
     @property
     def sequence_feature_name(self) -> str:
         """The sequence feature name.
@@ -389,7 +397,8 @@ class Assay(AssayRaw):
     @property
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
-        return [f.name for f in self.fields[1:]]  # The first field is the sequence
+        all_names = [f.name for f in self.fields[1:]]  # Exclude sequence
+        return [name for name in all_names if name not in self.non_target_feature_names]
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -412,6 +421,7 @@ class Assay(AssayRaw):
             self.records == item.records
             and self.variables == item.variables
             and self.fields == item.fields
+            and self.non_target_feature_names == item.non_target_feature_names
         )
 
     @staticmethod
@@ -536,9 +546,8 @@ class Assay(AssayRaw):
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
 
-        df = pl.read_csv(
-            section.path, columns=[section.sequence] + list(section.targets.values())
-        )
+        all_columns = [section.sequence] + list(section.targets.values()) + [f.name for f in section.non_targets]
+        df = pl.read_csv(section.path, columns=all_columns)
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
@@ -558,11 +567,11 @@ class Assay(AssayRaw):
             .alias("sequence_object")
         )
         records = list(
-            df.select("sequence_object", *section.targets.values()).iter_rows()
+            df.select("sequence_object", *section.targets.values(), *[f.name for f in section.non_targets]).iter_rows()
         )
 
         fields = [
-            Field(name=f) for f in [section.sequence] + list(section.targets.keys())
+            Field(name=f) for f in [section.sequence] + list(section.targets.keys()) + [f.name for f in section.non_targets]
         ]
         return cls(
             name=section.name or section.path.stem,
@@ -570,6 +579,7 @@ class Assay(AssayRaw):
             fields=fields,
             description=section.description,
             variables=section.variables,
+            non_target_feature_names=[f.name for f in section.non_targets],
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -595,6 +605,7 @@ class Assay(AssayRaw):
             targets=dict(
                 zip(self.target_feature_names, self.target_feature_names, strict=False)
             ),
+            non_targets=[Field(name=name) for name in self.non_target_feature_names],
             variables=self.variables,
             path=path,
         )
@@ -633,7 +644,7 @@ class Assay(AssayRaw):
         schema = {f.name: f.polars_type for f in self.fields}
         df = (
             pl.DataFrame(self.records, schema=schema, orient="row")
-            .select([self.sequence_feature_name] + list(target_names))
+            .select([self.sequence_feature_name] + list(target_names) + self.non_target_feature_names)
             .with_columns(
                 pl.col(self.sequence_feature_name).map_elements(
                     lambda seq: str(seq.value), return_dtype=pl.Utf8
