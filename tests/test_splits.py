@@ -384,22 +384,41 @@ def test_predefined_splitter_with_targets_in_assay(
 ) -> None:
     """Test that PredefinedSplitter includes specified targets that exist."""
     splitter = PredefinedSplitter(split_column="split")
-    subsets = splitter.split(dataset_with_assay_predefined_split, targets=["DMS Score"])
+    subsets = splitter.split(dataset_with_assay_predefined_split, targets=["target1"])
 
     for subset in subsets:
         for assay in subset.assays:
             if not assay.is_empty():
                 field_names = [f.name for f in assay.fields]
                 assert "sequence" in field_names
-                assert "DMS Score" in field_names
+                assert "target1" in field_names
 
 
-def test_predefined_splitter_with_unknown_split_values(
-    dataset_with_assay_predefined_split: Dataset,
+def test_predefined_splitter_with_custom_split_values() -> None:
+    """Test that PredefinedSplitter handles custom split values not in STANDARD_ORDER."""
+    seq = Sequence(
+        name="s",
+        value=Seq("A"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay = Assay(
+        name="a",
+        fields=[Field(name="sequence"), Field(name="split")],
+        records=[(seq, "custom_value")],
+    )
+    dataset = Dataset(name="d", assays=[assay], sequences=[], structures=[], msas=[])
+    splitter = PredefinedSplitter(split_column="split")
+    subsets = splitter.split(dataset)
+    assert len(subsets) == 1
+
+
+def test_predefined_splitter_with_multiple_assays_missing_split_column(
+    dataset_with_assays: Dataset,
 ) -> None:
-    """Test that PredefinedSplitter handles unknown split values correctly."""
-    splitter = PredefinedSplitter(split_column="split", split_values=["custom_split"])
-    subsets = splitter.split(dataset_with_assay_predefined_split)
+    """Test PredefinedSplitter when assays don't have the split column."""
+    splitter = PredefinedSplitter(split_column="nonexistent")
+    subsets = splitter.split(dataset_with_assays)
 
     for subset in subsets:
         for assay in subset.assays:
