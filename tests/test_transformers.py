@@ -7,7 +7,7 @@ import pytest
 from Bio.Seq import Seq
 from numpy.testing import assert_array_equal
 
-from proteingym.base.assay import Assay, Field
+from proteingym.base.assay import Assay, Field, FieldEncoding
 from proteingym.base.dataset import Dataset
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.transformers import AssayTransformer, SequenceOneHotEncoder
@@ -111,9 +111,27 @@ def dataset_with_variables(
         assays=[assay_with_variables],
         assay_targets=[Field(name="DMS Score")],
         assay_variables=[
-            Field(name="pH", value=7.0),
-            Field(name="temperature", value=37),
-            Field(name="condition", value="A"),
+            Field(name="pH", encoding=FieldEncoding.NUMERICAL),
+            Field(name="temperature", encoding=FieldEncoding.NUMERICAL),
+            Field(name="condition", encoding=FieldEncoding.CATEGORICAL),
+        ],
+    )
+
+
+@pytest.fixture
+def dataset_with_variables_lack_encoding(
+    seq1: Sequence, seq2: Sequence, seq3: Sequence, assay_with_variables: Assay
+) -> Dataset:
+    """Create a dataset with variables from assay_with_variables fixture."""
+    return Dataset(
+        name="test_dataset",
+        sequences=[seq1, seq2, seq3],
+        assays=[assay_with_variables],
+        assay_targets=[Field(name="DMS Score")],
+        assay_variables=[
+            Field(name="pH"),
+            Field(name="temperature"),
+            Field(name="condition"),
         ],
     )
 
@@ -385,6 +403,24 @@ def test_assay_transformer_get_feature_names_out(assay_with_variables: Assay) ->
         ]
     )
     assert_array_equal(actual_positions, expected_positions)
+
+
+def test_assay_transformer_from_dataset_error_no_encoding(
+    seq1, assay_with_variables
+) -> None:
+    dataset = Dataset(
+        name="test_dataset",
+        sequences=[seq1],
+        assays=[assay_with_variables],
+        assay_targets=[Field(name="DMS Score")],
+        assay_variables=[
+            Field(name="pH"),
+            Field(name="temperature"),
+            Field(name="condition"),
+        ],
+    )
+    with pytest.raises(ValueError, match="Undefined encoding"):
+        AssayTransformer.from_dataset(dataset)
 
 
 def test_assay_transformer_from_dataset(dataset_with_variables: Dataset) -> None:
