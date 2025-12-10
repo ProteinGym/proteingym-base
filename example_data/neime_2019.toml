@@ -41,6 +41,9 @@ alias = "DMS_score"
 name = "DMS Score Bin"
 alias = "DMS_score_bin"
 
+[[ assays.non_targets ]]
+name = "split"
+
 [ assays.variables ]
 T = 37
 PH = 7
