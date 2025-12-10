@@ -377,3 +377,18 @@ def test_predefined_splitter_with_missing_split_column(
     for subset in subsets:
         for assay in subset.assays:
             assert assay.is_empty()
+
+
+def test_predefined_splitter_with_targets_in_assay(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
+    """Test that PredefinedSplitter includes specified targets that exist."""
+    splitter = PredefinedSplitter(split_column="split")
+    subsets = splitter.split(dataset_with_assay_predefined_split, targets=["DMS Score"])
+
+    for subset in subsets:
+        for assay in subset.assays:
+            if not assay.is_empty():
+                field_names = [f.name for f in assay.fields]
+                assert "sequence" in field_names
+                assert "DMS Score" in field_names
