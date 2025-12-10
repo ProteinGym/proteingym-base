@@ -392,3 +392,15 @@ def test_predefined_splitter_with_targets_in_assay(
                 field_names = [f.name for f in assay.fields]
                 assert "sequence" in field_names
                 assert "DMS Score" in field_names
+
+
+def test_predefined_splitter_with_unknown_split_values(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
+    """Test that PredefinedSplitter handles unknown split values correctly."""
+    splitter = PredefinedSplitter(split_column="split", split_values=["custom_split"])
+    subsets = splitter.split(dataset_with_assay_predefined_split)
+
+    for subset in subsets:
+        for assay in subset.assays:
+            assert assay.is_empty()
