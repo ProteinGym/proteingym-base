@@ -246,6 +246,7 @@ def dataset_with_assay_predefined_split() -> Dataset:
     )
     return dataset
 
+
 @pytest.fixture
 def dataset_with_sequence() -> Dataset:
     """A dataset containing a single sequence."""

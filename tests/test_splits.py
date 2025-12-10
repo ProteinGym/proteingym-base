@@ -319,30 +319,35 @@ def test_splitters_combining_split_strategies(dataset_with_assays: Dataset) -> N
     assert "random" in subsets.slices and len(subsets.slices["random"]) == 2
     assert "kfold" in subsets.slices and len(subsets.slices["kfold"]) == 2
 
-def test_predefined_splitter_correct_ordering(dataset_with_assay_predefined_split: Dataset) -> None:
+
+def test_predefined_splitter_correct_ordering(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
     """Test that PredefinedSplitter returns splits in standard ML order."""
     splitter = PredefinedSplitter(split_column="split")
     subsets = splitter.split(dataset_with_assay_predefined_split)
-    
+
     assert len(subsets) == 3
-    
-    #fixture ordering: train, test, val: ["ACGT", "TGCA", "AAAA"])
+
+    # fixture ordering: train, test, val: ["ACGT", "TGCA", "AAAA"])
     expected_sequences = ["ACGT", "AAAA", "TGCA"]  # train, val, test
-    for subset, expected_seq in zip(subsets, expected_sequences):
+    for subset, expected_seq in zip(subsets, expected_sequences, strict=False):
         records = [r for assay in subset.assays for r in assay.records]
         assert len(records) == 1
         assert str(records[0][0].value) == expected_seq
 
 
-def test_predefined_splitter_with_specified_values(dataset_with_assay_predefined_split: Dataset) -> None:
+def test_predefined_splitter_with_specified_values(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
     """Test that PredefinedSplitter respects specified split_values order."""
     splitter = PredefinedSplitter(split_column="split", split_values=["test", "train"])
     subsets = splitter.split(dataset_with_assay_predefined_split)
-    
+
     assert len(subsets) == 2
-    
+
     expected_sequences = ["TGCA", "ACGT"]  # test, train
-    for subset, expected_seq in zip(subsets, expected_sequences):
+    for subset, expected_seq in zip(subsets, expected_sequences, strict=False):
         records = [r for assay in subset.assays for r in assay.records]
         assert len(records) == 1
         assert str(records[0][0].value) == expected_seq
