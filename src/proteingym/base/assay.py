@@ -5,7 +5,9 @@ import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
+from typing import Annotated
 
+import annotated_types
 import polars as pl
 import pydantic
 from Bio.Seq import Seq
@@ -148,16 +150,8 @@ class _ManifestSection(BaseModel):
 class AssayRawManifestSection(_ManifestSection):
     """The manifest section describing the raw assay data."""
 
-    fields: list[Field]
+    fields: Annotated[list[Field], annotated_types.Len(min_length=1)]
     """The list of fields in the raw assay."""
-
-    @field_validator("fields", mode="after", check_fields=True)
-    @classmethod
-    def validate_fields(cls, fields: list[Field]) -> list[Field]:
-        """The fields cannot be empty."""
-        if not fields:
-            raise ValueError("Missing fields")
-        return fields
 
     @model_validator(mode="after")
     def validate_field_names(self) -> "AssayRawManifestSection":
@@ -181,12 +175,15 @@ class AssayManifestSection(_ManifestSection):
     )
     """Configuration for the Pydantic model."""
 
+    # TODO: make this sequence_alias instead?
     sequence: str = "sequence"
     """The sequence feature name given in the file."""
 
     sequence_alphabet: SequenceAlphabet | None = None
     """The alphabet of the sequences of the assay."""
 
+    # TODO: make this a list instead and also include 'field_aliases' as more explicit
+    #  mapping?
     targets: dict[str, str] = pydantic.Field(default_factory=dict)
     """The map of target names in dataset to target feature names in assay."""
 
@@ -210,7 +207,7 @@ class AssayManifestSection(_ManifestSection):
     @field_serializer("sequence_alphabet")
     def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
         """Serialize the sequence alphabet as a string."""
-        return sequence_alphabet.value
+        return str(sequence_alphabet.value)
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -260,7 +257,9 @@ class AssayRaw:
     description: str | None = None
     """A brief description"""
 
-    fields: list[Field] = dataclasses.field(default_factory=list)
+    fields: list[Field] = dataclasses.field(
+        default_factory=lambda: [Field(name="sequence")]
+    )
     """The raw assay fields."""
 
     records: RECORDS = dataclasses.field(default_factory=list)
@@ -373,15 +372,6 @@ class AssayRaw:
 class Assay(AssayRaw):
     """An assay in the dataset."""
 
-    records: RECORDS
-    """The records of the assay, tuple with Sequence, target values."""
-
-    columns: list[str] = dataclasses.field(default_factory=lambda: ["sequence"])
-    """The column names in the assay records.
-
-    TODO: Use fields instead of columns
-    """
-
     variables: dict[str, int | float | bool | str] = dataclasses.field(
         default_factory=dict
     )
@@ -389,17 +379,17 @@ class Assay(AssayRaw):
 
     @property
     def sequence_feature_name(self) -> str:
-        """Returns the sequence feature name in the assay records."""
-        # TODO: Return field instead of string
-        return self.columns[0]
+        """The sequence feature name.
+
+        Manifest defines first field to be the sequence - here we take it for granted
+        that this is adhered to.
+        """
+        return self.fields[0].name
 
     @property
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
-        # Get the target feature names from the fields
-        # The first field is the sequence
-        # TODO: Return fields instead of strings
-        return list(self.columns[1:])
+        return [f.name for f in self.fields[1:]]  # The first field is the sequence
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -421,7 +411,7 @@ class Assay(AssayRaw):
         return (
             self.records == item.records
             and self.variables == item.variables
-            and self.columns == item.columns
+            and self.fields == item.fields
         )
 
     @staticmethod
@@ -433,20 +423,21 @@ class Assay(AssayRaw):
         if not is_columns_slice or slc is None:
             return assay
 
-        undefined_columns = set(slc) - set(assay.columns)
-        if undefined_columns:
-            raise KeyError(f"Undefined columns: {undefined_columns}")
+        fields_by_name = {e.name: e for e in assay.fields}
+        try:
+            fields_slice = [fields_by_name[e] for e in slc]
+        except KeyError as e:
+            raise KeyError(f"Undefined columns: {e}") from e
 
-        columns = list(slc)
-        if len(slc) == 0:
+        if not fields_slice:
             records = []
         else:
-            column_indices = [assay.columns.index(column) for column in columns]
+            field_indices = [assay.fields.index(column) for column in fields_slice]
             records = [
-                tuple(record[column_index] for column_index in column_indices)
+                tuple(record[column_index] for column_index in field_indices)
                 for record in assay.records
             ]
-        return dataclasses.replace(assay, records=records, columns=columns)
+        return dataclasses.replace(assay, records=records, fields=fields_slice)
 
     @staticmethod
     def _slice_records(assay: "Assay", slc: list[bool] | None) -> "Assay":
@@ -509,7 +500,7 @@ class Assay(AssayRaw):
         lines = [f"Assay(\n\tname='{self.name}',"]
         if self.description:
             desc = (
-                self.description[:60] + "..."
+                self.description[:60] + "..."  # noqa
                 if len(self.description) > 60
                 else self.description
             )
@@ -570,10 +561,13 @@ class Assay(AssayRaw):
             df.select("sequence_object", *section.targets.values()).iter_rows()
         )
 
+        fields = [
+            Field(name=f) for f in [section.sequence] + list(section.targets.keys())
+        ]
         return cls(
             name=section.name or section.path.stem,
             records=records,
-            columns=[section.sequence] + list(section.targets.keys()),
+            fields=fields,
             description=section.description,
             variables=section.variables,
         )
@@ -636,8 +630,9 @@ class Assay(AssayRaw):
             for var_name, var_value in self.variables.items()
         ]
 
+        schema = {f.name: f.polars_type for f in self.fields}
         df = (
-            pl.DataFrame(self.records, schema=self.columns, orient="row")
+            pl.DataFrame(self.records, schema=schema, orient="row")
             .select([self.sequence_feature_name] + list(target_names))
             .with_columns(
                 pl.col(self.sequence_feature_name).map_elements(
@@ -671,19 +666,21 @@ class Assay(AssayRaw):
         if path.is_dir():
             path /= f"{self.name}{fmt.value}"
 
+        schema = {f.name: f.polars_type for f in self.fields}
         df = pl.DataFrame(
             self.records,
-            schema=self.columns,
+            schema=schema,
             orient="row",
         )
-        df = df.with_columns(
-            pl.col(self.sequence_feature_name).map_elements(
-                lambda seq: str(seq.value), return_dtype=pl.Utf8
+        if self.sequence_feature_name:
+            df = df.with_columns(
+                pl.col(self.sequence_feature_name).map_elements(
+                    lambda seq: str(seq.value), return_dtype=pl.Utf8
+                )
             )
-        )
         match fmt:
             case AssayFormat.CSV:
                 df.write_csv(path)
             case _:
-                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")  # noqa
         return path

@@ -1,9 +1,4 @@
 """Tests for sklearn transformers."""
-# Ignore argument and variable `X` in function should be lowercase
-# ruff: noqa: N803, N806
-
-# PyCharm: Suppress PEP 8 naming warnings for sklearn transformer methods
-# noinspection PyPep8Naming
 
 import numpy as np
 import pandas as pd
@@ -57,7 +52,7 @@ def simple_assay(seq1: Sequence, seq2: Sequence) -> Assay:
             (seq1, 1.5),
             (seq2, 2.0),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
 
 
@@ -71,7 +66,7 @@ def assay_with_variables(seq1: Sequence, seq2: Sequence, seq3: Sequence) -> Assa
             (seq2, 2.0),
             (seq3, 1.8),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
         variables={"pH": 7.0, "temperature": 37, "condition": "A"},
     )
 
@@ -85,7 +80,11 @@ def assay_with_multiple_targets(seq1: Sequence, seq2: Sequence) -> Assay:
             (seq1, 1.5, 0.8),
             (seq2, 2.0, 0.9),
         ],
-        columns=["sequence", "DMS Score", "Binding Affinity"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="Binding Affinity"),
+        ],
         variables={"pH": 7.0},
     )
 
@@ -123,10 +122,10 @@ def test_sequence_one_hot_encoder_basic() -> None:
     """Test basic functionality of SequenceOneHotEncoder."""
     encoder = SequenceOneHotEncoder()
 
-    X = pl.DataFrame({"sequence": ["ABC", "DEF"]})
+    x = pl.DataFrame({"sequence": ["ABC", "DEF"]})
 
-    encoder.fit(X)
-    transformed = encoder.transform(X)
+    encoder.fit(x)
+    transformed = encoder.transform(x)
 
     assert encoder.alphabet_ == ["A", "B", "C", "D", "E", "F"]
     assert encoder.max_length_ == 3
@@ -147,39 +146,39 @@ def test_sequence_one_hot_encoder_different_lengths_raises_error() -> None:
     """SequenceOneHotEncoder raises error for sequences of different lengths."""
     encoder = SequenceOneHotEncoder()
 
-    X = pl.DataFrame({"sequence": ["AB", "ABCD"]})
+    x = pl.DataFrame({"sequence": ["AB", "ABCD"]})
 
     with pytest.raises(ValueError, match="All sequences must have the same length"):
-        encoder.fit(X)
+        encoder.fit(x)
 
     # Test error during transform when sequences don't match training length
     encoder = SequenceOneHotEncoder()
-    X_train = pl.DataFrame({"sequence": ["ABC", "DEF"]})
-    encoder.fit(X_train)
+    x_train = pl.DataFrame({"sequence": ["ABC", "DEF"]})
+    encoder.fit(x_train)
 
-    X_test = pl.DataFrame({"sequence": ["AB", "CD"]})
+    x_test = pl.DataFrame({"sequence": ["AB", "CD"]})
     with pytest.raises(
         ValueError,
         match="Expected sequences of length 3 .* but got sequences of length 2",
     ):
-        encoder.transform(X_test)
+        encoder.transform(x_test)
 
     # Test error during transform when test sequences have varying lengths
-    X_test_varying = pl.DataFrame({"sequence": ["AB", "ABCD"]})
+    x_test_varying = pl.DataFrame({"sequence": ["AB", "ABCD"]})
     with pytest.raises(ValueError, match="All sequences must have the same length"):
-        encoder.transform(X_test_varying)
+        encoder.transform(x_test_varying)
 
 
 def test_sequence_one_hot_encoder_unknown_char() -> None:
     """Test SequenceOneHotEncoder with unknown characters in transform."""
     encoder = SequenceOneHotEncoder()
 
-    X_train = pl.DataFrame({"sequence": ["ABC", "DEF"]})
-    encoder.fit(X_train)
+    x_train = pl.DataFrame({"sequence": ["ABC", "DEF"]})
+    encoder.fit(x_train)
 
     # Transform with unknown character 'G' at position 2
-    X_test = pl.DataFrame({"sequence": ["ABG"]})
-    transformed = encoder.transform(X_test)
+    x_test = pl.DataFrame({"sequence": ["ABG"]})
+    transformed = encoder.transform(x_test)
 
     # ABG → [1,0, 1,0, 0,0]  (A at pos0, B at pos1, G is unknown at pos2)
     expected = np.array([[1.0, 0.0, 1.0, 0.0, 0.0, 0.0]])
@@ -190,8 +189,8 @@ def test_sequence_one_hot_encoder_get_feature_names_out() -> None:
     """Test SequenceOneHotEncoder.get_feature_names_out()."""
     encoder = SequenceOneHotEncoder()
 
-    X = pl.DataFrame({"sequence": ["ABC", "DEF"]})
-    encoder.fit(X)
+    x = pl.DataFrame({"sequence": ["ABC", "DEF"]})
+    encoder.fit(x)
 
     feature_names = encoder.get_feature_names_out(["sequence"])
 
@@ -212,9 +211,9 @@ def test_sequence_one_hot_encoder_pandas_support() -> None:
     """Test SequenceOneHotEncoder with pandas DataFrame and Series."""
     encoder = SequenceOneHotEncoder()
 
-    X_df = pd.DataFrame({"sequence": ["ABC", "DEF"]})
-    encoder.fit(X_df)
-    transformed_df = encoder.transform(X_df)
+    x_df = pd.DataFrame({"sequence": ["ABC", "DEF"]})
+    encoder.fit(x_df)
+    transformed_df = encoder.transform(x_df)
 
     assert encoder.alphabet_ == ["A", "B", "C", "D", "E", "F"]
     assert encoder.max_length_ == 3
@@ -222,9 +221,9 @@ def test_sequence_one_hot_encoder_pandas_support() -> None:
     assert transformed_df.shape == (2, 6)
 
     encoder2 = SequenceOneHotEncoder()
-    X_series = pd.Series(["ABC", "DEF"])
-    encoder2.fit(X_series)
-    transformed_series = encoder2.transform(X_series)
+    x_series = pd.Series(["ABC", "DEF"])
+    encoder2.fit(x_series)
+    transformed_series = encoder2.transform(x_series)
 
     assert encoder2.alphabet_ == ["A", "B", "C", "D", "E", "F"]
     assert encoder2.max_length_ == 3
@@ -263,15 +262,15 @@ def test_assay_transformer_simple(simple_assay: Assay) -> None:
         target_columns=["DMS Score"],
     )
 
-    X, y = transformer.fit_transform(df)
+    x, y = transformer.fit_transform(df)
 
-    expected_X = np.array(
+    expected_x = np.array(
         [
             [1.0, 0.0, 1.0, 0.0, 1.0, 0.0],  # ABC
             [0.0, 1.0, 0.0, 1.0, 0.0, 1.0],  # DEF
         ]
     )
-    assert_array_equal(X, expected_X)
+    assert_array_equal(x, expected_x)
 
     expected_y = np.array([1.5, 2.0])
     assert_array_equal(y, expected_y)
@@ -288,16 +287,16 @@ def test_assay_transformer_with_variables(assay_with_variables: Assay) -> None:
         numerical_columns=["pH", "temperature"],
     )
 
-    X, y = transformer.fit_transform(df)
+    x, y = transformer.fit_transform(df)
 
     # Check that features include sequence + categorical + numerical
     # Sequence variant features: pos0(A,D) + pos1(B,C,E) + pos2(C,E,F) = 8
     # Categorical: 1 (condition_A)
     # Numerical: 2 (pH, temperature)
-    assert X.shape == (3, 11)  # 3 samples × 11 features
+    assert x.shape == (3, 11)  # 3 samples × 11 features
 
     expected_categorical = np.array([[1.0], [1.0], [1.0]])
-    assert_array_equal(X[:, 8:9], expected_categorical)
+    assert_array_equal(x[:, 8:9], expected_categorical)
 
     expected_y = np.array([1.5, 2.0, 1.8])
     assert_array_equal(y, expected_y)
@@ -313,12 +312,12 @@ def test_assay_transformer_multiple_targets(assay_with_multiple_targets: Assay) 
         numerical_columns=["pH"],
     )
 
-    X, y = transformer.fit_transform(df)
+    x, y = transformer.fit_transform(df)
 
     # Check that features include sequence + numerical
     # Sequence variant features: 2 per position × 3 positions = 6
     # Numerical: 1 (pH)
-    assert X.shape == (2, 7)  # 2 samples × 7 features
+    assert x.shape == (2, 7)  # 2 samples × 7 features
 
     expected_y = np.array(
         [
@@ -398,12 +397,12 @@ def test_assay_transformer_from_dataset(dataset_with_variables: Dataset) -> None
     assert "pH" in transformer.numerical_columns
     assert "temperature" in transformer.numerical_columns
 
-    X, y = transformer.fit_transform(dataset_with_variables)
+    x, y = transformer.fit_transform(dataset_with_variables)
 
     # Sequence variant features: pos0(A,D) + pos1(B,C,E) + pos2(C,E,F) = 8
     # Categorical: 1 (condition_A)
     # Numerical: 2 (pH, temperature)
-    assert X.shape == (3, 11)  # 3 samples × 11 features
+    assert x.shape == (3, 11)  # 3 samples × 11 features
 
     # Dataset returns rows sorted by sequence: ABC (1.5), ACE (1.8), DEF (2.0)
     expected_y = np.array([1.5, 1.8, 2.0])

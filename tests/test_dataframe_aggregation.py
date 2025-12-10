@@ -31,14 +31,18 @@ def dataset_with_duplicates() -> Dataset:
             (seq2, 4.0, "A"),  # Duplicate sequence
         ],
         variables={"condition": "test"},
-        columns=["sequence", "numeric_target", "categorical_target"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="numerical"),
+            Field(name="categorical"),
+        ],
     )
 
     return Dataset(
         name="test_dataset",
         assay_targets=[
-            Field(name="numeric_target"),
-            Field(name="categorical_target"),
+            Field(name="numerical"),
+            Field(name="categorical"),
         ],
         assay_variables=[Field(name="condition")],
         assays=[assay],

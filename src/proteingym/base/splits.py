@@ -26,28 +26,24 @@ def _check_random_state(
 ) -> np.random.RandomState:
     """Turn seed into a np.random.RandomState instance.
 
-    Parameters
-    ----------
-    seed : None, int or instance of RandomState
-        If seed is None, return the RandomState singleton used by np.random.
-        If seed is an int, return a new RandomState instance seeded with seed.
-        If seed is already a RandomState instance, return it.
-        Otherwise, raise ValueError.
+    Args:
+        seed : None, int or instance of RandomState
+            If seed is None, return the RandomState singleton used by np.random.
+            If seed is an int, return a new RandomState instance seeded with seed.
+            If seed is already a RandomState instance, return it.
+            Otherwise, raise ValueError.
 
-    Returns
-    -------
-    :class:`numpy:numpy.random.RandomState`
+    Returns:
         The random state object based on `seed` parameter.
 
-    Examples
-    --------
+    Examples:
     >>> from sklearn.utils.validation import check_random_state
     >>> check_random_state(42)
     RandomState(MT19937) at 0x...
 
-    Sources
-    -------
-    Copied from scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/886829ae577ba7a47307e9cfbe6bcc6118296830/sklearn/utils/validation.py#L1439
+    Sources:
+    Copied from scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/
+    886829ae577ba7a47307e9cfbe6bcc6118296830/sklearn/utils/validation.py#L1439
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -137,8 +133,9 @@ def _unique_sequences_for_targets(
         if not targets:
             sequences |= {r[0].value for r in assay.records}
         else:
+            target_names = [e.name for e in assay.fields]
             target_indices = [
-                assay.columns.index(t) for t in targets if t in assay.columns
+                target_names.index(t) for t in targets if t in target_names
             ]
             sequences |= {
                 r[0].value
@@ -188,8 +185,8 @@ class RandomSplitter:
 
         Args:
             dataset: The dataset to split.
-            targets: List of target column names to include in the
-                splits. If None, all columns are included.
+            targets: List of target field names to include in the
+                splits. If None, all fields are included.
 
         Returns:
             Subsets: The subsets containing the splits.
@@ -217,13 +214,14 @@ class RandomSplitter:
 
             assay_slices = []
             for mask, assay in zip(masks, dataset.assays, strict=True):
+                target_names = [e.name for e in assay.fields]
                 if targets is not None:
-                    if not any(target in assay.columns for target in targets):
+                    if not any(target in target_names for target in targets):
                         # Skipping the assay if none of the targets are present
                         columns = []
                     else:
                         columns = [assay.sequence_feature_name] + list(
-                            set(targets) & set(assay.columns)
+                            set(targets) & set(target_names)
                         )
                 else:
                     columns = None
@@ -274,8 +272,8 @@ class KFoldSplitter:
 
         Args:
             dataset: The dataset to split.
-            targets: List of target column names to include in the
-                splits. If None, all columns are included.
+            targets: List of target field names to include in the
+                splits. If None, all fields are included.
 
         Returns:
             list: A list of Subsets, where each Subset contains a training set
@@ -305,13 +303,14 @@ class KFoldSplitter:
 
             assay_slices = []
             for mask, assay in zip(masks, dataset.assays, strict=True):
+                target_names = [e.name for e in assay.fields]
                 if targets is not None:
-                    if not any(target in assay.columns for target in targets):
+                    if not any(target in target_names for target in targets):
                         # Skipping the assay if none of the targets are present
                         columns = []
                     else:
                         columns = [assay.sequence_feature_name] + list(
-                            set(targets) & set(assay.columns)
+                            set(targets) & set(target_names)
                         )
                 else:
                     columns = None

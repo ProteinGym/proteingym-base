@@ -151,6 +151,10 @@ def test_field_equality_excludes_description() -> None:
     assert field1 == field2
 
 
+def test_a_non_field_is_not_a_field():
+    assert Field(name="foo") != {"name": "foo"}
+
+
 @pytest.mark.parametrize(
     "value, polars_type",
     [
@@ -400,6 +404,19 @@ def test_assay_raw_from_manifest_section(assay_raw_file: Path) -> None:
     assert assay_raw.records == [(0.3,), (0.9,)]
 
 
+def test_assay_raw_as_manifest_section(assay_raw_file: Path) -> None:
+    """Round-trip a manifest section."""
+    section = AssayRawManifestSection(
+        name="assay",
+        path=assay_raw_file,
+        fields=[Field(name="OD")],
+    )
+    round_trip = AssayRaw.from_manifest_section(section).as_manifest_section(
+        path=assay_raw_file
+    )
+    assert section == round_trip
+
+
 def test_assay_raw_dump_non_empty_file(tmp_path: Path) -> None:
     """Dumping an assay raw creates a non-empty file."""
     assay_raw = AssayRaw(
@@ -474,7 +491,7 @@ def test_assay() -> None:
             name="assay",
             variables={"test_cond1": "true", "test_cond2": 42},
             records=records,
-            columns=["sequence", "DMS Score"],
+            fields=[Field(name="sequence"), Field(name="DMS Score")],
         )
     except ValidationError as e:
         raise AssertionError(f"Assay raised ValidationError: {e}") from e
@@ -535,7 +552,7 @@ def test_as_manifest_section(tmp_path: Path) -> None:
                 2.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
@@ -566,7 +583,11 @@ def test_assay_to_df() -> None:
             (seq2, 2.0, 0.6),
         ],
         variables={"test_cond1": "true", "test_cond2": 42},
-        columns=["sequence", "DMS Score", "DMS Score2"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+        ],
     )
     try:
         df = assay.to_df()
@@ -604,7 +625,7 @@ def test_assay_to_df_single_string_target():
             (seq1, 1.56),
             (seq2, 2.0),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     df = assay.to_df(target_names="DMS Score")
     assert "DMS Score" in df.columns
@@ -636,7 +657,7 @@ def test_assay_to_df_invalid_target_name_returns_empty_df() -> None:
                 2.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     try:
         df = assay.to_df(target_names=["Invalid Target"])
@@ -696,7 +717,7 @@ def test_assay_dump(tmp_path: Path) -> None:
                 2.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     dumped_path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     assert dumped_path == tmp_path / "assay.csv"
@@ -818,7 +839,11 @@ def assay1(seq1: Sequence, seq2: Sequence) -> Assay:
             (seq1, 1.0, 0.5),
             (seq2, 2.0, 0.6),
         ],
-        columns=["sequence", "DMS Score", "DMS Score2"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+        ],
     )
 
 
@@ -830,7 +855,11 @@ def assay2(seq1: Sequence, seq3: Sequence) -> Assay:
             (seq1, 1.0, 0.7),
             (seq3, 3.0, 0.8),
         ],
-        columns=["sequence", "DMS Score", "DMS Score3"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score3"),
+        ],
     )
 
 
@@ -944,7 +973,7 @@ def test_dataset_to_df_assay_with_different_targets(
             (seq2, 2.0),
         ],
         variables={"pH": 7.0, "T": 30},
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay2 = Assay(
         name="assay2",
@@ -952,7 +981,7 @@ def test_dataset_to_df_assay_with_different_targets(
             (seq1, 3.0),
         ],
         variables={"pH": 7.0, "T": 30},
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay3 = Assay(
         name="assay3",
@@ -961,12 +990,16 @@ def test_dataset_to_df_assay_with_different_targets(
             (seq3, 0.9, 2.0),
         ],
         variables={"pH": 7.0},
-        columns=["sequence2", "Binding Affinity", "Other Target"],
+        fields=[
+            Field(name="sequence2"),
+            Field(name="Binding Affinity"),
+            Field(name="Other Target"),
+        ],
     )
     assay4 = Assay(
         name="assay4",
         records=[],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
 
     dataset = Dataset(
@@ -1018,12 +1051,12 @@ def test_dataset_to_df_failed_assay_to_df() -> None:
             (seq1, 1.0),
             (seq2, 2.0),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay2 = Assay(
         name="assay2",
         records=[(seq1, 1.0)],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     dataset = Dataset(
         name="test_dataset",
@@ -1058,7 +1091,7 @@ def test_dataset_to_df_drops_empty_target_rows() -> None:
             (seq1, 1.0),
             (seq2, None),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay2 = Assay(
         name="assay2",
@@ -1066,7 +1099,7 @@ def test_dataset_to_df_drops_empty_target_rows() -> None:
             (seq1, None),
             (seq2, None),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     dataset = Dataset(
         name="test_dataset",
@@ -1106,7 +1139,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
                 2.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay2 = Assay(
         name="assay2",
@@ -1130,7 +1163,7 @@ def test_dataset_with_dump_assays(tmp_path: Path) -> None:
                 3.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     dataset = Dataset(
         name="test_dataset",
@@ -1176,7 +1209,11 @@ def test_dataset_instance_from_dump_assays(tmp_path: Path) -> None:
                 0.6,
             ),
         ],
-        columns=["sequence", "DMS Score", "DMS Score2"],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="DMS Score2"),
+        ],
     )
     dataset = Dataset(
         name="test_dataset",
@@ -1212,7 +1249,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                 1.0,
             )
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay2 = Assay(
         name=duplicate_names[0],
@@ -1227,7 +1264,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                 2.0,
             )
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay3 = Assay(
         name=duplicate_names[1],
@@ -1242,7 +1279,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                 3.0,
             )
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     assay4 = Assay(
         name=duplicate_names[1],
@@ -1257,7 +1294,7 @@ def test_dataset_fails_with_duplicate_assay_names() -> None:
                 4.0,
             )
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
 
     match = "Duplicate names found in `Dataset.assays`:.*" + ", ".join(duplicate_names)
@@ -1350,7 +1387,7 @@ def test_assay_repr() -> None:
                 1.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     repr_str = repr(assay)
     assert "Assay(\n\tname='test assay'," in repr_str
@@ -1371,7 +1408,7 @@ def test_assay_repr() -> None:
                 2.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
         description="Short description.",
     )
     repr_str = repr(assay)
@@ -1391,7 +1428,7 @@ def test_assay_repr() -> None:
                 3.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
         description=long_desc,
     )
     repr_str = repr(assay)
@@ -1410,7 +1447,7 @@ def test_assay_repr() -> None:
                 4.0,
             ),
         ],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
         variables={"var1": 42, "var2": "x"},
     )
     repr_str = repr(assay)
@@ -1433,7 +1470,7 @@ def test_assay_repr() -> None:
     assay = Assay(
         name="trunc records",
         records=records,
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     repr_str = repr(assay)
     assert "\t\t..." in repr_str
@@ -1441,7 +1478,7 @@ def test_assay_repr() -> None:
     assay = Assay(
         name="no records",
         records=[],
-        columns=["sequence", "DMS Score"],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     repr_str = repr(assay)
     assert "\t\t<no records>" in repr_str
