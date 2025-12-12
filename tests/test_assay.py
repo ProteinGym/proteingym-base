@@ -309,7 +309,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
         section = AssayManifestSection(
             name="test_assay",
             description="Test assay",
-            sequence=Field(name="sequence"),
+            sequence_alias="sequence",
             sequence_alphabet=SequenceAlphabet.AA,
             targets=[
                 Field(name="DMS Score", alias="target"),
@@ -325,7 +325,7 @@ def test_assay_manifest_section(assay_file: Path) -> None:
         assert isinstance(section.path, Path)
         with assay_file.open() as f:
             content = f.read()
-        assert section.sequence.alias_ in content
+        assert section.sequence_alias in content
         assert all(target.alias_ in content for target in section.targets)
 
 
@@ -350,7 +350,6 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
         AssayManifestSection(
             name="test_assay",
             description="Test assay",
-            sequence=Field(name="invalid_feature"),
             sequence_alphabet=SequenceAlphabet.AA,  # noqa
             targets=[Field(name="DMS Score", alias="invalid_feature")],
             variables={"test_cond1": "true", "test_cond2": 42},
@@ -553,7 +552,6 @@ def test_assay_from_manifest_section(assay_file: Path) -> None:
         assay = Assay.from_manifest_section(
             AssayManifestSection(
                 name="assay",
-                sequence=Field(name="sequence"),
                 sequence_alphabet=SequenceAlphabet.DNA,
                 targets=[
                     Field(name="DMS Score", alias="target"),

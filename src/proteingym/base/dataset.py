@@ -14,7 +14,7 @@ import pydantic
 from Bio.Seq import Seq
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import Assay, AssayRaw, AssaySlice, Field
+from .assay import SEQUENCE, Assay, AssayRaw, AssaySlice, Field
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA
 from .publication import Publication
@@ -771,7 +771,7 @@ class Dataset(BaseModel):
             df = df.with_columns(missing_variables)
 
             assays_dfs.append(
-                df.select(["sequence"] + variable_names + list(target_names))
+                df.select([SEQUENCE] + variable_names + list(target_names))
             )
 
         df = pl.concat(assays_dfs, how="vertical_relaxed").filter(
@@ -779,7 +779,7 @@ class Dataset(BaseModel):
         )
 
         # If no duplication no need for aggregation
-        group_cols = ["sequence"] + variable_names
+        group_cols = [SEQUENCE] + variable_names
         duplicate_count = df.group_by(group_cols).len().filter(pl.col("len") > 1).height
         if duplicate_count == 0:
             return df.sort(group_cols)
@@ -836,7 +836,7 @@ class Dataset(BaseModel):
 def dummy_dataset() -> Dataset:
     """Create a trivial dataset for illustrative purposes."""
     fields = [
-        Field(name="sequence", description=""),
+        Field(name=SEQUENCE, description=""),
         Field(name="numerical", description=""),
         Field(name="categorical", description=""),
     ]
