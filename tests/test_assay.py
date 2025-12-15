@@ -18,6 +18,7 @@ from proteingym.base.assay import (
     AssayRawManifestSection,
     AssaySlice,
     Field,
+    FieldEncoding,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -214,7 +215,7 @@ def test_field_unsupported_polars_type_raises_value_error() -> None:
 def test_assay_variable_minimal() -> None:
     """Test creating a minimal AssayVariable."""
     try:
-        variable = Field(name="test")
+        variable = Field(name="test", encoding=FieldEncoding.NUMERICAL)
     except ValidationError as e:
         raise AssertionError("Test failed") from e
     else:

@@ -61,6 +61,7 @@ reference_sequence_name = "abc"
 [[ assay_variables ]]
 name = "PH"
 description = "pH level of the samples"
+encoding = "numerical"
 unit = "pH"
 
 [[ assay_targets ]]

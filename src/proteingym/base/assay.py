@@ -34,6 +34,17 @@ class AssayFormat(StrEnum):
     """A comma separated text file"""
 
 
+class FieldEncoding(StrEnum):
+    """How to encode the variable when used as regression input.
+
+    A variable may be best represented as a categorical, e.g., 1-hot encoded,
+    or directly as a numerical float.
+    """
+
+    CATEGORICAL = "categorical"
+    NUMERICAL = "numerical"
+
+
 @dataclasses.dataclass(kw_only=True, frozen=False)
 class Field:
     """A data field for an assay associated quantity or protein property.
@@ -58,6 +69,8 @@ class Field:
     description: str | None = None
     """Description of the field."""
 
+    encoding: FieldEncoding | None = None
+
     alias: str | None = None
     """An alias for this field.
 
@@ -73,7 +86,7 @@ class Field:
         """
         if self.name != parent.name:
             raise ValueError("Expected names to match")
-        for attr in ("value", "unit", "description"):
+        for attr in ("value", "unit", "description", "encoding"):
             own = getattr(self, attr)
             if own is not None and own != getattr(parent, attr):
                 raise ValueError(f"Attribute {attr} for field {self.name} redefined")
@@ -86,6 +99,7 @@ class Field:
             value=self.value,
             unit=self.unit,
             description=self.description,
+            encoding=self.encoding,
         )
 
     @property
@@ -103,7 +117,13 @@ class Field:
             self.name == other.name
             and self.unit == other.unit
             and self.value == other.value
+            and self.encoding == other.encoding
         )
+
+    def to_dict(self):
+        result = dataclasses.asdict(self)
+        result["encoding"] = str(self.encoding) if self.encoding is not None else None
+        return result
 
     # noinspection PyTypeChecker
     @functools.cached_property
