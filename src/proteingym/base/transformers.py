@@ -13,7 +13,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from .assay import FieldEncoding
+from .assay import SEQUENCE, FieldEncoding
 from .dataset import Dataset
 
 
@@ -49,7 +49,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
             ValueError: If sequences have varying lengths.
         """
         if isinstance(X, Dataset):
-            X = X.to_df()["sequence"]
+            X = X.to_df()[SEQUENCE]
 
         # Flatten to 1D array
         sequences = X.to_numpy().ravel()
@@ -113,7 +113,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
                 length from fitting.
         """
         if isinstance(X, Dataset):
-            X = X.to_df()["sequence"]
+            X = X.to_df()[SEQUENCE]
 
         # Flatten to 1D array
         sequences = X.to_numpy().ravel()
@@ -222,7 +222,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        sequence_column: str = "sequence",
+        sequence_column: str = SEQUENCE,
         target_columns: list[str] | None = None,
         categorical_columns: list[str] | None = None,
         numerical_columns: list[str] | None = None,
@@ -271,7 +271,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
                     raise ValueError(f"Undefined encoding for {var.name}")
 
         return cls(
-            sequence_column="sequence",
+            sequence_column=SEQUENCE,
             target_columns=target_columns,
             categorical_columns=categorical_variables,
             numerical_columns=numerical_variables,

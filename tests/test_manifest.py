@@ -36,9 +36,6 @@ name = "assay"
 path = "assay.csv"
 sequence_alphabet = "AA"
 
-[ assays.sequence ]
-name = "sequence"
-
 [[ assays.targets ]]
 name = "DMS Score"
 alias = "DMS_score"
