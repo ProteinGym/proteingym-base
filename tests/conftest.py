@@ -303,7 +303,10 @@ def dataset_two_assays_with_split_and_mixed_targets() -> Dataset:
 
 @pytest.fixture
 def dataset_mixed_split_presence() -> Dataset:
-    """Two assays, where the first one contains the split non-target and the second doesn't"""
+    """
+    Two assays, where the first one contains the split non-target and
+    the second does not
+    """
 
     seq1 = Sequence(
         name="s1",
