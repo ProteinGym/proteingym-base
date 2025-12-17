@@ -479,3 +479,30 @@ def test_predefined_splitter_targets_missing_in_assay_sets_empty_fields(
 
         # Assay B should be empty
         assert fields_b == []
+
+
+def test_predefined_splitter_assay_missing_split_column_yields_empty_view(
+    dataset_mixed_split_presence: Dataset,
+) -> None:
+    """
+    For assays missing the split column, the slice should be empty:
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+    subsets = splitter.split(dataset_mixed_split_presence, targets=["DMS Score"])
+
+    assert len(subsets) == 2
+
+    for subset in subsets:
+        assert len(subset.assays) == 2
+
+        slice_missing = subset.assays[0]
+        slice_present = subset.assays[1]
+
+        assert slice_missing.is_empty()
+        assert len(slice_missing.records) == 0
+        assert len(slice_missing.fields) == 0
+
+        assert not slice_present.is_empty()
+        assert len(slice_present.records) == 1
+        present_field_names = [f.name for f in slice_present.fields]
+        assert "sequence" in present_field_names
