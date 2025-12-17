@@ -436,3 +436,46 @@ def test_predefined_splitter_raises_on_sequence_overlap(
     assert "Sequence overlap detected" in msg
     assert "'train'" in msg and "'test'" in msg
     assert "Found 1 overlapping sequence(s)." in msg  # only seq1 overlaps
+
+
+def test_predefined_splitter_missing_split_column_raises_missing_split_values(
+    dataset_with_assay: Dataset,  # fixture without "split" column
+) -> None:
+    """
+    Current behavior: when the split column is absent everywhere, the splitter
+    creates zero slices and triggers the final 'All subsets are empty' guard.
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+
+    with pytest.raises(ValueError, match=r"Dataset is missing required split values"):
+        splitter.split(dataset_with_assay, targets=["DMS Score"])
+
+
+def test_predefined_splitter_targets_missing_in_assay_sets_empty_fields(
+    dataset_two_assays_with_split_and_mixed_targets: Dataset,
+) -> None:
+    """
+    If a requested target is not present in an assay, its slice should expose
+    no fields (empty fields list).
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+    subsets = splitter.split(
+        dataset_two_assays_with_split_and_mixed_targets, targets=["target_a"]
+    )
+
+    assert len(subsets) == 2
+
+    for subset in subsets:
+        assert len(subset.assays) == 2
+        slice_a = subset.assays[0]  # assay_a has target_a
+        slice_b = subset.assays[1]  # assay_b does NOT have target_a
+
+        fields_a = [f.name for f in slice_a.fields]
+        fields_b = [f.name for f in slice_b.fields]
+
+        # Assay A includes sequence + target_a (split is a non-target, so not included)
+        assert "sequence" in fields_a
+        assert "target_a" in fields_a
+
+        # Assay B should be empty
+        assert fields_b == []

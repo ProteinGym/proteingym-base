@@ -248,6 +248,107 @@ def dataset_with_assay_predefined_split() -> Dataset:
 
 
 @pytest.fixture
+def dataset_two_assays_with_split_and_mixed_targets() -> Dataset:
+    """
+    Two assays with split labels but different targets.
+        assay A has fields: sequence, split, target_a
+        assay B has fields: sequence, split, target_b
+    Requesting targets=['target_a'] should return:
+        assay A slice: columns include sequence + target_a
+        assay B slice: columns == [] (since target_a not present)
+    """
+    seq1 = Sequence(
+        name="s1",
+        value=Seq("ACDE"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    seq2 = Sequence(
+        name="s2",
+        value=Seq("FGHI"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+
+    assay_a = Assay(
+        name="assay_a",
+        fields=[Field(name="sequence"), Field(name="split"), Field(name="target_a")],
+        records=[
+            (seq1, "train", 1.0),
+            (seq2, "test", 2.0),
+        ],
+        non_targets=["split"],
+    )
+
+    assay_b = Assay(
+        name="assay_b",
+        fields=[Field(name="sequence"), Field(name="split"), Field(name="target_b")],
+        records=[
+            (seq1, "train", 3.0),
+            (seq2, "test", 4.0),
+        ],
+        non_targets=["split"],
+    )
+
+    dataset = Dataset(
+        name="dataset_two_assays_with_split_and_mixed_targets",
+        description="Two assays with split; targets differ per assay.",
+        assays=[assay_a, assay_b],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
+def dataset_mixed_split_presence() -> Dataset:
+    """Two assays, where the first one contains the split non-target and the second doesn't"""
+
+    seq1 = Sequence(
+        name="s1",
+        value=Seq("AAAA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    seq2 = Sequence(
+        name="s2",
+        value=Seq("BBBB"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+
+    assay_without_split = Assay(
+        name="assay_no_split",
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+        records=[
+            (seq1, 0.1),
+            (seq2, 0.2),
+        ],
+    )
+
+    assay_with_split = Assay(
+        name="assay_with_split",
+        fields=[Field(name="sequence"), Field(name="split"), Field(name="DMS Score")],
+        records=[
+            (seq1, "train", 1.0),
+            (seq2, "test", 2.0),
+        ],
+        non_targets=["split"],
+    )
+
+    dataset = Dataset(
+        name="dataset_mixed_split_presence",
+        description="One assay without split column, one assay with split column.",
+        assays=[assay_without_split, assay_with_split],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
 def dataset_with_sequence() -> Dataset:
     """A dataset containing a single sequence."""
     sequence = Sequence(
