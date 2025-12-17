@@ -296,6 +296,50 @@ def dataset_with_sequences() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_duplicates_sequences_across_splits() -> Dataset:
+    """A dataset where the same sequence appears in multiple splits (overlap)."""
+    sequences = [
+        Sequence(
+            name="seq1",
+            value=Seq("ACDEFG"),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        ),
+        Sequence(
+            name="seq2",
+            value=Seq("GFEDCA"),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        ),
+    ]
+
+    assay = Assay(
+        name="overlap_assay",
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="split"),
+        ],
+        records=[
+            (sequences[0], 1.0, "train"),
+            (sequences[1], 2.0, "train"),
+            (sequences[0], 3.0, "test"),
+        ],
+        non_targets=["split"],
+    )
+
+    dataset = Dataset(
+        name="dataset_with_duplicates_sequences_across_splits",
+        description="Dataset with overlapping sequences across splits for testing.",
+        assays=[assay],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
 def dataset_with_structure() -> Dataset:
     """A dataset containing a single structure."""
     structure = Structure(
@@ -448,6 +492,7 @@ def datasets(
     dataset_with_assay_predefined_split: Dataset,
     dataset_with_sequence: Dataset,
     dataset_with_sequences: Dataset,
+    dataset_with_duplicates_sequences_across_splits: Dataset,
     dataset_with_structure: Dataset,
     dataset_with_structures: Dataset,
     dataset_with_msa: Dataset,
@@ -465,6 +510,7 @@ def datasets(
         dataset_with_assay_predefined_split,
         dataset_with_sequence,
         dataset_with_sequences,
+        dataset_with_duplicates_sequences_across_splits,
         dataset_with_structure,
         dataset_with_structures,
         dataset_with_msa,

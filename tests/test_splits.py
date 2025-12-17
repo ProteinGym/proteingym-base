@@ -416,3 +416,23 @@ def test_predefined_splitter_with_targets_in_assay(
                 field_names = [f.name for f in assay.fields]
                 assert "sequence" in field_names
                 assert "target1" in field_names
+
+
+def test_predefined_splitter_raises_on_sequence_overlap(
+    dataset_with_duplicates_sequences_across_splits: Dataset,
+) -> None:
+    """
+    Verifies the exact ValueError message when the
+    same sequence appears in multiple splits.
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+
+    with pytest.raises(ValueError) as exc:
+        splitter.split(
+            dataset_with_duplicates_sequences_across_splits, targets=["DMS Score"]
+        )
+
+    msg = str(exc.value)
+    assert "Sequence overlap detected" in msg
+    assert "'train'" in msg and "'test'" in msg
+    assert "Found 1 overlapping sequence(s)." in msg  # only seq1 overlaps
