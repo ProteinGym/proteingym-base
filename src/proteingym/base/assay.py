@@ -242,7 +242,7 @@ class AssayManifestSection(_ManifestSection):
     """The list of prediction targets in this assay."""
 
     non_targets: list[Field] = pydantic.Field(default_factory=list)
-    """List of non-target fields that are included but not targets."""
+    """List of non-target fields that are included but are not prediction targets."""
 
     variables: dict[str, bool | int | float | str] = pydantic.Field(
         default_factory=dict
@@ -600,19 +600,11 @@ class Assay(AssayRaw):
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
-<<<<<<< HEAD
 
-        df = pl.read_csv(
-            section.path,
-            columns=[section.sequence.alias_]
-            + [f.alias_ for f in section.targets]
-            + [f.name for f in section.non_targets],
-        )
-=======
         sequence_field = Field(name=SEQUENCE, alias=section.sequence_alias)
-        all_fields = [sequence_field] + section.targets
+        all_fields = [sequence_field] + section.targets + section.non_targets
         df = pl.read_csv(section.path, columns=[f.alias_ for f in all_fields])
->>>>>>> main
+
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
@@ -642,11 +634,8 @@ class Assay(AssayRaw):
         return cls(
             name=section.name or section.path.stem,
             records=records,
-<<<<<<< HEAD
-            fields=[section.sequence] + section.targets + section.non_targets,
-=======
-            fields=all_fields,
->>>>>>> main
+            fields=[Field(name="sequence", alias=section.sequence_alias)]
+            + section.targets + section.non_targets,
             description=section.description,
             variables=section.variables,
             non_target_feature_names=[f.name for f in section.non_targets],

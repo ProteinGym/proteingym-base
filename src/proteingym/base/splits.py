@@ -328,7 +328,7 @@ class KFoldSplitter:
 class PredefinedSplitter:
     """Split a dataset based on pre-defined splits from a column.
 
-    Args:
+    Attributes:
         split_column: Name of the column containing split labels
             (e.g., 'train', 'val', 'test').
         split_values: List of split values to create subsets for.
@@ -350,9 +350,10 @@ class PredefinedSplitter:
 
         def sort_key(value):
             try:
-                return self.STANDARD_ORDER.index(value.lower())
+                return (self.STANDARD_ORDER.index(value.lower()), value)
             except ValueError:
-                return len(self.STANDARD_ORDER)  # Unknown values go last
+                # Unknown values go last, then alphabetically
+                return (len(self.STANDARD_ORDER), value)
 
         return sorted(values, key=sort_key)
 
@@ -368,6 +369,7 @@ class PredefinedSplitter:
             Subsets: The subsets containing the splits.
         """
 
+        # grab name of split values to slice accordingly with
         if self.split_values is None:
             all_values = set()
             for assay in dataset.assays:
@@ -379,28 +381,39 @@ class PredefinedSplitter:
         else:
             split_values = self.split_values
 
+        # Create one subset per split value (e.g., train, val, test)
         slices = []
         for split_value in split_values:
             assay_slices = []
+
             for assay in dataset.assays:
                 field_names = [f.name for f in assay.fields]
+
+                # Split column doesn't exist in this assay, exclude all records
+                if self.split_column not in field_names:
+                    assay_slices.append(AssaySlice(records=[False] * len(assay), columns=[]))
+                    continue
+
                 if self.split_column in field_names:
+                    # Find which records match this split value
                     col_idx = field_names.index(self.split_column)
                     mask = [record[col_idx] == split_value for record in assay.records]
 
+                    # Determine which columns to include in the slice
                     if targets is not None:
-                        target_names = [e.name for e in assay.fields]
-                        if not any(target in target_names for target in targets):
+                        if not any(target in field_names for target in targets):
+                            # Skip assay if none of the target columns exist
                             columns = []
                         else:
+                            # Include sequence column plus requested target columns
                             columns = [assay.sequence_feature_name] + list(
-                                set(targets) & set(target_names)
+                                set(targets) & set(field_names)
                             )
                     else:
+                        # Include all columns
                         columns = None
                     assay_slice = AssaySlice(records=mask, columns=columns)
-                else:
-                    assay_slice = AssaySlice(records=[False] * len(assay), columns=[])
+
                 assay_slices.append(assay_slice)
 
             dataset_slice = DatasetSlice(assays=assay_slices)
