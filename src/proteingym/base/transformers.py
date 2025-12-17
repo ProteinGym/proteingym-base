@@ -13,6 +13,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
+from .assay import SEQUENCE, FieldEncoding
 from .dataset import Dataset
 
 
@@ -48,7 +49,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
             ValueError: If sequences have varying lengths.
         """
         if isinstance(X, Dataset):
-            X = X.to_df()["sequence"]
+            X = X.to_df()[SEQUENCE]
 
         # Flatten to 1D array
         sequences = X.to_numpy().ravel()
@@ -112,7 +113,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
                 length from fitting.
         """
         if isinstance(X, Dataset):
-            X = X.to_df()["sequence"]
+            X = X.to_df()[SEQUENCE]
 
         # Flatten to 1D array
         sequences = X.to_numpy().ravel()
@@ -221,7 +222,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(
         self,
-        sequence_column: str = "sequence",
+        sequence_column: str = SEQUENCE,
         target_columns: list[str] | None = None,
         categorical_columns: list[str] | None = None,
         numerical_columns: list[str] | None = None,
@@ -246,44 +247,31 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         self.feature_names_: list[str] = []
 
     @classmethod
-    def from_dataset(
-        cls,
-        dataset: Dataset,
-        categorical_variables: list[str] | None = None,
-        numerical_variables: list[str] | None = None,
-    ) -> AssayTransformer:
+    def from_dataset(cls, dataset: Dataset) -> AssayTransformer:
         """Create an AssayTransformer from a Dataset.
 
         Args:
             dataset: The Dataset to create the transformer from.
-            categorical_variables: Names of categorical variables to one-hot encode.
-                If None, all string/bool variables are treated as categorical.
-            numerical_variables: Names of numerical variables to standardize.
-                If None, all int/float variables are treated as numerical.
 
         Returns:
             An initialized AssayTransformer.
         """
         target_columns = [target.name for target in dataset.assay_targets]
 
-        # Infer categorical columns if not provided
-        if categorical_variables is None:
-            categorical_variables = []
+        categorical_variables = []
+        numerical_variables = []
 
-            for var in dataset.assay_variables:
-                if var.value is not None and isinstance(var.value, (bool, str)):
-                    categorical_variables.append(var.name)
-
-        # Infer numerical columns if not provided
-        if numerical_variables is None:
-            numerical_variables = []
-
-            for var in dataset.assay_variables:
-                if var.value is not None and isinstance(var.value, (int, float)):
+        for var in dataset.assay_variables:
+            match var.encoding:
+                case FieldEncoding.NUMERICAL:
                     numerical_variables.append(var.name)
+                case FieldEncoding.CATEGORICAL:
+                    categorical_variables.append(var.name)
+                case _:
+                    raise ValueError(f"Undefined encoding for {var.name}")
 
         return cls(
-            sequence_column="sequence",
+            sequence_column=SEQUENCE,
             target_columns=target_columns,
             categorical_columns=categorical_variables,
             numerical_columns=numerical_variables,
@@ -300,7 +288,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
             Fitted transformer.
         """
         if isinstance(X, Dataset):
-            X = X.to_df()
+            X = X.to_df(target_names=self.target_columns)
 
         transformers: list[tuple[str, BaseEstimator | str, list[str]]] = [
             (self.sequence_column, SequenceOneHotEncoder(), [self.sequence_column])

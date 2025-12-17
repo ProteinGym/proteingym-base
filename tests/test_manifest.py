@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from proteingym.base.assay import FieldEncoding
 from proteingym.base.manifest import Manifest
 
 
@@ -18,6 +19,7 @@ reference_sequence_name = "abc"
 [[ assay_variables ]]
 name = "PH"
 description = "pH level of the samples"
+encoding = "numerical"
 unit = "pH"
 
 [[ assay_targets ]]
@@ -33,9 +35,6 @@ description = "DMS score bin of the samples"
 name = "assay"
 path = "assay.csv"
 sequence_alphabet = "AA"
-
-[ assays.sequence ]
-name = "sequence"
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -260,6 +259,11 @@ def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
         assert loaded_manifest == manifest, (
             f"Loaded manifest does not match dumped manifest: {path.read_text()}"
         )
+
+
+def test_manifest_from_path_assay_variable_enum(manifest_path: Path):
+    manifest = Manifest.from_path(manifest_path)
+    assert manifest.assay_variables[0].encoding == FieldEncoding.NUMERICAL
 
 
 def test_manifest_dump_from_path_unit_docs_example(

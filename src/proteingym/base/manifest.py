@@ -188,6 +188,11 @@ class Manifest(BaseModel):
         """Serialize the version to a string."""
         return str(version)
 
+    @field_serializer("assay_variables")
+    def serialize_assay_variables(self, variables: list[Field]) -> list[dict]:
+        """Serialize the version to a string."""
+        return [v.to_dict() for v in variables]
+
     def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the manifest to a TOML file.
 

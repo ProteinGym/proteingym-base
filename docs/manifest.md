@@ -7,7 +7,7 @@ The manifest defines how a dataset is constructed.
 The following capabilities have been identified:
 
 | Capability           | Kind           | Motivation                                                |
-| -------------------- | -------------- | --------------------------------------------------------- |
+|----------------------|----------------|-----------------------------------------------------------|
 | Primitive data types | Functional     | For data representation, like `int`, `bool` and `string`. |
 | Lists                | Functional     | For organizing data entries.                              |
 | Maps                 | Functional     | For organizing data entries.                              |
@@ -21,7 +21,7 @@ The following capabilities have been identified:
 Additionally, we defined:
 
 | Kind           | Description                                                                                                     |
-| -------------- | --------------------------------------------------------------------------------------------------------------- |
+|----------------|-----------------------------------------------------------------------------------------------------------------|
 | Functional     | The capability is directly related to the dataset's functionality and is essential for its operation            |
 | Non-functional | The capability is not directly related to the dataset's functionality but enhances usability or maintainability |
 | Domain         | The capability is specific to the domain of the dataset, such as biological data types.                         |
@@ -29,22 +29,22 @@ Additionally, we defined:
 ## TOML Medium
 
 The manifest is defined in [TOML](https://toml.io/en/) format, which is a
-human-readable data serialization language. Below tables motivate the coice of
+human-readable data serialization language. Below tables motivate the choice of
 TOML as the medium for the manifest.
 
 | Criteria           | Minimum | Motivation                                          |
-| ------------------ | ------- | --------------------------------------------------- |
+|--------------------|---------|-----------------------------------------------------|
 | Covers requirement | Yes     | The medium should cover the criteria                |
 | Text based         | No      | Works well with line-diffs in source control (git). |
 | Industry standard  | No      | Easier for user to adopt.                           |
 
 | Minimum criteria | Description                    |
-| ---------------- | ------------------------------ |
+|------------------|--------------------------------|
 | Yes              | The criteria is **required**.  |
 | No               | The criteria is **preferred**. |
 
 | Medium | Covers criteria | Text based | Industry standard |
-| ------ | --------------- | ---------- | ----------------- |
+|--------|-----------------|------------|-------------------|
 | TOML   | Yes             | Yes        | Yes               |
 
 ## Schema
@@ -61,6 +61,7 @@ reference_sequence_name = "abc"
 [[ assay_variables ]]
 name = "PH"
 description = "pH level of the samples"
+encoding = "numerical"
 unit = "pH"
 
 [[ assay_targets ]]
@@ -76,9 +77,6 @@ description = "DMS score bin of the samples"
 name = "assay"
 path = "assay.csv"
 sequence_alphabet = "AA"
-
-[ assays.sequence ]
-name = "sequence"
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -146,7 +144,7 @@ the protein data types.
 The assay variables section contains a list of assay variables defined in the dataset. E.g., the pH a certain assay was run at, or the round of engineering that an assay belonged to.
 
 | **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
-| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------- |
+|---------------|---------------------------------------|--------------|-------------|----------------------------|
 | `name`        | `string`                              | Yes          | N/A         | The assay variable name    |
 | `description` | `string \| None`                      | No           | `None`      | A brief description.       |
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
@@ -157,7 +155,7 @@ The assay variables section contains a list of assay variables defined in the da
 The assay targets section contains a list of assay targets defined in the dataset. E.g., the target measured in a certain assay, like binding affinity or stability.
 
 | **Field**     | **Type**                              | **Required** | **Default** | **Description**          |
-| ------------- | ------------------------------------- | ------------ | ----------- | ------------------------ |
+|---------------|---------------------------------------|--------------|-------------|--------------------------|
 | `name`        | `string`                              | Yes          | N/A         | The assay target name    |
 | `description` | `string \| None`                      | No           | `None`      | A brief description.     |
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement. |
@@ -168,12 +166,12 @@ The assay targets section contains a list of assay targets defined in the datase
 The assays section contains a list of assays included in the dataset.
 
 | **Field**           | **Type**         | **Required** | **Default**  | **Description**                                                          |
-| ------------------- | ---------------- | ------------ | ------------ | ------------------------------------------------------------------------ |
+|---------------------|------------------|--------------|--------------|--------------------------------------------------------------------------|
 | `name`              | `string`         | No           | `None`       | The name of the assay.                                                   |
 | `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.           |
 | `targets`           | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay. |
 | `non_targets`       | `list[Field]`    | No           | Empty list   | List of non-target fields that are included but not targets.                 |
-| `sequence`          | `string`         | No           | `"sequence"` | The sequence feature name in the assay.                                  |
+| `sequence_alias`    | `string`         | No           | `"sequence"` | The name of the column with sequences in the provided data.              |
 | `sequence_alphabet` | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                    |
 | `variables`         | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                              |
 
@@ -192,8 +190,9 @@ This would be represented in the manifest as:
 path = "path/to/assay.csv"
 sequence = "mutated_sequence"
 
-[assays.targets]
-"DMS Score" = "DMS_score"
+[[ assays.targets ]]
+name = "DMS Score"
+alias = "DMS_scorre
 
 [[assays.non_targets]]
 name = "split"
@@ -207,8 +206,8 @@ specific targets. The raw assays are optional, though, if present, they need to
 be linked to an assay.
 
 | **Field**     | **Type**         | **Required** | **Default** | **Description**                                                |
-| ------------- | ---------------- | ------------ | ----------- | -------------------------------------------------------------- |
-| `name`        | `string`         | Yes          | `None`      | The name of the assay the raw data belongs to.              |
+|---------------|------------------|--------------|-------------|----------------------------------------------------------------|
+| `name`        | `string`         | Yes          | `None`      | The name of the assay the raw data belongs to.                 |
 | `path`        | `string`         | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
 | `description` | `string \| None` | No           | `None`      | A brief description.                                           |
 
@@ -217,7 +216,7 @@ be linked to an assay.
 The fields section defines the fields in the raw assay data file.
 
 | **Field**     | **Type**                              | **Required** | **Default** | **Description**            |
-| ------------- | ------------------------------------- | ------------ | ----------- | -------------------------- |
+|---------------|---------------------------------------|--------------|-------------|----------------------------|
 | `name`        | `string`                              | Yes          | N/A         | The field name             |
 | `description` | `string \| None`                      | No           | `None`      | A brief description.       |
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
@@ -228,7 +227,7 @@ The fields section defines the fields in the raw assay data file.
 The sequences section contains a list of sequences included in the dataset.
 
 | **Field**  | **Type**         | **Required** | **Default** | **Description**                                                                                                                                                     |
-| ---------- | ---------------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------|------------------|--------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `path`     | `string`         | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
 | `alphabet` | `string`         | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                            |
 | `type`     | `string` \| None | No           | None        | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                           |
@@ -238,24 +237,24 @@ The sequences section contains a list of sequences included in the dataset.
 The structures section contains a list of structures included in the dataset.
 
 | **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                           |
-| --------- | -------- | ------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-----------|----------|--------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `path`    | `string` | Yes          | N/A         | The path to the structure data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.pdb`, `.cif`, `.bcif`. |
 
 ### MSAs
 
 The MSAs section contains a list of multiple sequence alignments included in the dataset.
 
-| **Field**            | **Type**              | **Required** | **Default** | **Description**                                                                                                                                            |
-| -------------------- | --------------------- | ------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `path`               | `string`              | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
-| `format`             | `string`              | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
-| `num_significant`    | `int` \| None         | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
-| `bit_score`          | `float` \| None       | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
-| `theta`              | `float` \| None       | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
-| `reference_sequence` | `string` \| None      | No           | `None`      | The reference sequence identifier in the MSA.                                                                                                              |
-| `sequence_start`     | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
-| `sequence_end`       | `int` \| None         | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
-| `weights`            | `list[float]` \| None | No           | `None`      | The weights for the MSA.                                                                                                                                   |
-| `weights_path`       | `string` \| None      | No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`.                                                                                    |
+| **Field**                 | **Type**              | **Required** | **Default** | **Description**                                                                                                                                            |
+|---------------------------|-----------------------|--------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `path`                    | `string`              | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
+| `format`                  | `string`              | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
+| `num_significant`         | `int` \| None         | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
+| `bit_score`               | `float` \| None       | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
+| `theta`                   | `float` \| None       | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
+| `reference_sequence`      | `string` \| None      | No           | `None`      | The reference sequence identifier in the MSA.                                                                                                              |
+| `sequence_start`          | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
+| `sequence_end`            | `int` \| None         | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
+| `weights`                 | `list[float]` \| None | No           | `None`      | The weights for the MSA.                                                                                                                                   |
+| `weights_path`            | `string` \| None      | No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`.                                                                                    |
 | `reference_sequence_name` | `string` \| None      | No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
-| `sequence_start`         | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
+| `sequence_start`          | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |

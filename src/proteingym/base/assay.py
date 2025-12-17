@@ -24,6 +24,7 @@ from pydantic import (
 
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 
+SEQUENCE = "sequence"
 RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
 
 
@@ -32,6 +33,17 @@ class AssayFormat(StrEnum):
 
     CSV = ".csv"
     """A comma separated text file"""
+
+
+class FieldEncoding(StrEnum):
+    """How to encode the variable when used as regression input.
+
+    A variable may be best represented as a categorical, e.g., 1-hot encoded,
+    or directly as a numerical float.
+    """
+
+    CATEGORICAL = "categorical"
+    NUMERICAL = "numerical"
 
 
 @dataclasses.dataclass(kw_only=True, frozen=False)
@@ -58,6 +70,8 @@ class Field:
     description: str | None = None
     """Description of the field."""
 
+    encoding: FieldEncoding | None = None
+
     alias: str | None = None
     """An alias for this field.
 
@@ -73,7 +87,7 @@ class Field:
         """
         if self.name != parent.name:
             raise ValueError("Expected names to match")
-        for attr in ("value", "unit", "description"):
+        for attr in ("value", "unit", "description", "encoding"):
             own = getattr(self, attr)
             if own is not None and own != getattr(parent, attr):
                 raise ValueError(f"Attribute {attr} for field {self.name} redefined")
@@ -86,6 +100,7 @@ class Field:
             value=self.value,
             unit=self.unit,
             description=self.description,
+            encoding=self.encoding,
         )
 
     @property
@@ -103,7 +118,13 @@ class Field:
             self.name == other.name
             and self.unit == other.unit
             and self.value == other.value
+            and self.encoding == other.encoding
         )
+
+    def to_dict(self):
+        result = dataclasses.asdict(self)
+        result["encoding"] = str(self.encoding) if self.encoding is not None else None
+        return result
 
     # noinspection PyTypeChecker
     @functools.cached_property
@@ -211,7 +232,7 @@ class AssayManifestSection(_ManifestSection):
     )
     """Configuration for the Pydantic model."""
 
-    sequence: Field = pydantic.Field(default_factory=lambda: Field(name="sequence"))
+    sequence_alias: str | None = None
     """The sequence feature name given in the file."""
 
     sequence_alphabet: SequenceAlphabet | None = None
@@ -235,10 +256,11 @@ class AssayManifestSection(_ManifestSection):
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
-        for v in [self.sequence] + self.targets + self.non_targets:
+        sequence = Field(name="sequence", alias=self.sequence_alias)
+        for v in [sequence] + self.targets + self.non_targets:
             if v.alias_ not in self._header:
                 raise ValueError(
-                    f"Feature '{v.name}' not found in the file: {self.path}"
+                    f"Feature '{v.alias_}' not found in the file: {self.path}"
                 )
         return self
 
@@ -296,7 +318,7 @@ class AssayRaw:
     """A brief description"""
 
     fields: list[Field] = dataclasses.field(
-        default_factory=lambda: [Field(name="sequence")]
+        default_factory=lambda: [Field(name=SEQUENCE)]
     )
     """The raw assay fields."""
 
@@ -578,6 +600,7 @@ class Assay(AssayRaw):
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
+<<<<<<< HEAD
 
         df = pl.read_csv(
             section.path,
@@ -585,11 +608,16 @@ class Assay(AssayRaw):
             + [f.alias_ for f in section.targets]
             + [f.name for f in section.non_targets],
         )
+=======
+        sequence_field = Field(name=SEQUENCE, alias=section.sequence_alias)
+        all_fields = [sequence_field] + section.targets
+        df = pl.read_csv(section.path, columns=[f.alias_ for f in all_fields])
+>>>>>>> main
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
             # provided in the assay file.
-            pl.col(section.sequence.alias_)
+            pl.col(sequence_field.alias_)
             .map_elements(
                 lambda seq: Sequence(
                     # The type of the sequence is set to "standard". This would be
@@ -614,7 +642,11 @@ class Assay(AssayRaw):
         return cls(
             name=section.name or section.path.stem,
             records=records,
+<<<<<<< HEAD
             fields=[section.sequence] + section.targets + section.non_targets,
+=======
+            fields=all_fields,
+>>>>>>> main
             description=section.description,
             variables=section.variables,
             non_target_feature_names=[f.name for f in section.non_targets],
@@ -638,7 +670,7 @@ class Assay(AssayRaw):
         return AssayManifestSection(
             name=self.name,
             description=self.description,
-            sequence=self.fields[0].without_alias(),
+            sequence_alias=None,
             sequence_alphabet=sequence_alphabet,
             targets=[
                 f.without_alias()
@@ -664,7 +696,7 @@ class Assay(AssayRaw):
         """
         if self.is_empty():
             # If no records are present, return empty DataFrame
-            return pl.DataFrame(schema=["sequence"])
+            return pl.DataFrame(schema=[SEQUENCE])
         if target_names:
             if isinstance(target_names, str):
                 target_names = {target_names}
@@ -672,7 +704,7 @@ class Assay(AssayRaw):
                 target_names = set(target_names).intersection(self.target_feature_names)
             if not target_names:
                 # If not matching target names, return empty DataFrame
-                return pl.DataFrame(schema=["sequence"])
+                return pl.DataFrame(schema=[SEQUENCE])
         else:
             target_names = self.target_feature_names
 
@@ -694,7 +726,7 @@ class Assay(AssayRaw):
                     lambda seq: str(seq.value), return_dtype=pl.Utf8
                 )
             )
-            .rename({self.sequence_feature_name: "sequence"})
+            .rename({self.sequence_feature_name: SEQUENCE})
             .with_columns(variables)
         )
 
