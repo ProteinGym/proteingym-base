@@ -455,11 +455,4 @@ class PredefinedSplitter:
 
         subsets = Subsets(dataset=dataset, slices=slices)
 
-        # Validate at least one subset is non-empty
-        if all(all(assay.is_empty() for assay in subset.assays) for subset in subsets):
-            raise ValueError(
-                f"All subsets are empty. Check that split column '{self.split_column}' "
-                "exists and contains valid split values."
-            )
-
         return subsets
