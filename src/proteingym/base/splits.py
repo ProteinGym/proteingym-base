@@ -331,33 +331,76 @@ class PredefinedSplitter:
     Attributes:
         split_column: Name of the column containing split labels
             (e.g., 'train', 'val', 'test').
-        split_values: List of split values to create subsets for.
-            If None, uses all unique values in standard order.
+        split_order: Explicit order of split keys to return.
     """
 
-    # Since we return unnamed subsets, i want to prevent the case
-    # where users take the first subset as train by default even when it isn't
-    STANDARD_ORDER = ["train", "val", "valid", "validation", "test"]
-
-    def __init__(
-        self, split_column: str, split_values: list[str] | None = None
-    ) -> None:
+    def __init__(self, split_column: str, split_order: list[str]) -> None:
         self.split_column = split_column
-        self.split_values = split_values
+        self.split_order = split_order
 
-    def _sort_split_values(self, values: list[str]) -> list[str]:
-        """Sort split values using standard ML order."""
+    def _collect_observed_values(self, dataset) -> set[str]:
+        """Collect all unique split values from the dataset."""
+        observed = set()
+        for assay in dataset.assays:
+            field_names = [f.name for f in assay.fields]
+            if self.split_column not in field_names:
+                continue
+            col_idx = field_names.index(self.split_column)
+            observed.update(record[col_idx] for record in assay.records)
+        return observed
 
-        def sort_key(value):
-            try:
-                return (self.STANDARD_ORDER.index(value.lower()), value)
-            except ValueError:
-                # Unknown values go last, then alphabetically
-                return (len(self.STANDARD_ORDER), value)
+    def _validate_split_values(self, dataset) -> list[str]:
+        """Checks if all observed values are in split_order and orders accordingly"""
+        observed = self._collect_observed_values(dataset)
+        order_set = set(self.split_order)
 
-        return sorted(values, key=sort_key)
+        # Check for unknown keys present in data
+        unknown = observed - set(self.split_order)
+        if unknown:
+            raise ValueError(
+                f"Found split values in dataset not in split_order: {sorted(unknown)}\n"
+                f"Allowed split_order: {self.split_order}"
+            )
 
-    def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
+        # Check for split_order keys not present in data
+        missing = order_set - observed
+        if missing:
+            raise ValueError(
+                f"Dataset is missing required split values from split_order.\n"
+                f"  Missing keys: {sorted(missing)}\n"
+                f"  Observed keys: {sorted(observed)}"
+            )
+
+        return list(self.split_order)
+
+    def _validate_no_sequence_overlap(
+        self, dataset: Dataset, split_values: list[str]
+    ) -> None:
+        """Validate that sequences don't appear in multiple splits."""
+        split_sequences = {}
+
+        for split_value in split_values:
+            sequences = set()
+            for assay in dataset.assays:
+                field_names = [f.name for f in assay.fields]
+                if self.split_column in field_names:
+                    col_idx = field_names.index(self.split_column)
+                    for record in assay.records:
+                        if record[col_idx] == split_value:
+                            sequences.add(record[0].value)
+            split_sequences[split_value] = sequences
+
+        for i, split1 in enumerate(split_values):
+            for split2 in split_values[i + 1 :]:
+                overlap = split_sequences[split1] & split_sequences[split2]
+                if overlap:
+                    raise ValueError(
+                        f"Sequence overlap detected between '{split1}' "
+                        f"and '{split2}' splits. "
+                        f"Found {len(overlap)} overlapping sequence(s)."
+                    )
+
+    def split(self, dataset: Dataset, *, targets: list[str] | None = None) -> Subsets:
         """Splits the dataset based on pre-defined split column values.
 
         Args:
@@ -367,57 +410,56 @@ class PredefinedSplitter:
 
         Returns:
             Subsets: The subsets containing the splits.
+
+        Raises:
+            ValueError: If sequences appear in multiple splits.
+            ValueError: If the split column contains split values not in split order.
         """
 
-        # grab name of split values to slice accordingly with
-        if self.split_values is None:
-            all_values = set()
-            for assay in dataset.assays:
-                field_names = [f.name for f in assay.fields]
-                if self.split_column in field_names:
-                    col_idx = field_names.index(self.split_column)
-                    all_values.update(record[col_idx] for record in assay.records)
-            split_values = self._sort_split_values(list(all_values))
-        else:
-            split_values = self.split_values
+        split_values = self._validate_split_values(dataset)
+        self._validate_no_sequence_overlap(dataset, split_values)
 
         # Create one subset per split value (e.g., train, val, test)
         slices = []
         for split_value in split_values:
             assay_slices = []
-
             for assay in dataset.assays:
                 field_names = [f.name for f in assay.fields]
 
                 # Split column doesn't exist in this assay, exclude all records
                 if self.split_column not in field_names:
-                    assay_slices.append(AssaySlice(records=[False] * len(assay), columns=[]))
+                    assay_slices.append(
+                        AssaySlice(records=[False] * len(assay), columns=[])
+                    )
                     continue
 
-                if self.split_column in field_names:
-                    # Find which records match this split value
-                    col_idx = field_names.index(self.split_column)
-                    mask = [record[col_idx] == split_value for record in assay.records]
+                col_idx = field_names.index(self.split_column)
+                mask = [record[col_idx] == split_value for record in assay.records]
 
-                    # Determine which columns to include in the slice
-                    if targets is not None:
-                        if not any(target in field_names for target in targets):
-                            # Skip assay if none of the target columns exist
-                            columns = []
-                        else:
-                            # Include sequence column plus requested target columns
-                            columns = [assay.sequence_feature_name] + list(
-                                set(targets) & set(field_names)
-                            )
+                # Determine which columns to include in the slice
+                if targets is not None:
+                    if not any(target in field_names for target in targets):
+                        # Skip assay if none of the target columns exist
+                        columns = []
                     else:
-                        # Include all columns
-                        columns = None
-                    assay_slice = AssaySlice(records=mask, columns=columns)
+                        # Include sequence column plus requested target columns
+                        columns = [assay.sequence_feature_name] + list(
+                            set(targets) & set(field_names)
+                        )
+                else:
+                    columns = None  # None include all columns by default
 
-                assay_slices.append(assay_slice)
+                assay_slices.append(AssaySlice(records=mask, columns=columns))
 
-            dataset_slice = DatasetSlice(assays=assay_slices)
-            slices.append(dataset_slice)
+            slices.append(DatasetSlice(assays=assay_slices))
 
         subsets = Subsets(dataset=dataset, slices=slices)
+
+        # Validate at least one subset is non-empty
+        if all(all(assay.is_empty() for assay in subset.assays) for subset in subsets):
+            raise ValueError(
+                f"All subsets are empty. Check that split column '{self.split_column}' "
+                "exists and contains valid split values."
+            )
+
         return subsets

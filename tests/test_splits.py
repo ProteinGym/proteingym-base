@@ -320,70 +320,94 @@ def test_splitters_combining_split_strategies(dataset_with_assays: Dataset) -> N
     assert "kfold" in subsets.slices and len(subsets.slices["kfold"]) == 2
 
 
-def test_predefined_splitter_correct_ordering(
+def test_predefined_splitter_returns_in_user_defined_order(
     dataset_with_assay_predefined_split: Dataset,
 ) -> None:
-    """Test that PredefinedSplitter returns splits in standard ML order."""
-    splitter = PredefinedSplitter(split_column="split")
+    """
+    With required split_order, verify that returned subsets
+    follow the exact user-provided order.
+    """
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "val", "test"]
+    )
     subsets = splitter.split(dataset_with_assay_predefined_split)
 
     assert len(subsets) == 3
 
-    # fixture ordering: train, test, val: ["ACGT", "TGCA", "AAAA"])
-    expected_sequences = ["ACGT", "AAAA", "TGCA"]  # train, val, test
+    # fixture is train, test, val on purpose
+    # fixture sequences order: train="ACGT", test="TGCA", val="AAAA"
+    expected_sequences = ["ACGT", "AAAA", "TGCA"]
     for subset, expected_seq in zip(subsets, expected_sequences, strict=False):
         records = [r for assay in subset.assays for r in assay.records]
         assert len(records) == 1
         assert str(records[0][0].value) == expected_seq
 
 
-def test_predefined_splitter_with_specified_values(
+def test_predefined_splitter_strict_unknown_key_raises(
     dataset_with_assay_predefined_split: Dataset,
 ) -> None:
-    """Test that PredefinedSplitter respects specified split_values order."""
-    splitter = PredefinedSplitter(split_column="split", split_values=["test", "train"])
-    subsets = splitter.split(dataset_with_assay_predefined_split)
+    """
+    If the dataset contains a split value not present in split_order, raise.
+    Example: dataset has 'val', but split_order is ['train', 'test'] only.
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
 
-    assert len(subsets) == 2
-
-    expected_sequences = ["TGCA", "ACGT"]  # test, train
-    for subset, expected_seq in zip(subsets, expected_sequences, strict=False):
-        records = [r for assay in subset.assays for r in assay.records]
-        assert len(records) == 1
-        assert str(records[0][0].value) == expected_seq
+    with pytest.raises(
+        ValueError, match=r"Found split values in dataset not in split_order"
+    ):
+        splitter.split(dataset_with_assay_predefined_split)
 
 
-def test_predefined_splitter_with_targets_not_in_assay(
+def test_predefined_splitter_strict_missing_key_raises(
     dataset_with_assay_predefined_split: Dataset,
 ) -> None:
-    """Test that PredefinedSplitter handles targets not present in assay."""
-    splitter = PredefinedSplitter(split_column="split")
-    subsets = splitter.split(
-        dataset_with_assay_predefined_split, targets=["nonexistent"]
+    """
+    If split_order requires a value missing in the dataset, raise.
+    Example: split_order requires 'holdout' but data has only train/val/test.
+    """
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "val", "test", "holdout"]
     )
 
-    for subset in subsets:
-        for assay in subset.assays:
-            assert assay.is_empty()
+    with pytest.raises(ValueError, match=r"Dataset is missing required split values"):
+        splitter.split(dataset_with_assay_predefined_split)
 
 
-def test_predefined_splitter_with_missing_split_column(
-    dataset_with_assay: Dataset,
+@pytest.mark.parametrize(
+    "dataset_fixture, split_column",
+    [
+        ("dataset_with_assay", "split"),
+        ("dataset_with_assays", "split"),
+    ],
+    ids=["single_assay_missing_split_col", "multiple_assays_missing_split_col"],
+)
+def test_predefined_splitter_missing_split_column_is_missing_keys_error(
+    dataset_fixture: str,
+    split_column: str,
+    request,
 ) -> None:
-    """Test that PredefinedSplitter handles assays without the split column."""
-    splitter = PredefinedSplitter(split_column="nonexistent_column")
-    subsets = splitter.split(dataset_with_assay)
-
-    for subset in subsets:
-        for assay in subset.assays:
-            assert assay.is_empty()
+    """
+    If the split column is absent everywhere observed set is empty,
+    which triggers 'missing required split values'.
+    """
+    dataset = request.getfixturevalue(dataset_fixture)
+    splitter = PredefinedSplitter(
+        split_column=split_column, split_order=["train", "test"]
+    )
+    with pytest.raises(ValueError, match=r"missing required split values"):
+        splitter.split(dataset)
 
 
 def test_predefined_splitter_with_targets_in_assay(
     dataset_with_assay_predefined_split: Dataset,
 ) -> None:
-    """Test that PredefinedSplitter includes specified targets that exist."""
-    splitter = PredefinedSplitter(split_column="split")
+    """
+    Verify that when targets exist, slices include
+    the sequence and the requested target.
+    """
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "val", "test"]
+    )
     subsets = splitter.split(dataset_with_assay_predefined_split, targets=["target1"])
 
     for subset in subsets:
@@ -392,35 +416,3 @@ def test_predefined_splitter_with_targets_in_assay(
                 field_names = [f.name for f in assay.fields]
                 assert "sequence" in field_names
                 assert "target1" in field_names
-
-
-def test_predefined_splitter_with_custom_split_values() -> None:
-    """Test that PredefinedSplitter handles custom split values
-    not in STANDARD_ORDER."""
-    seq = Sequence(
-        name="s",
-        value=Seq("A"),
-        type=SequenceType.STANDARD,
-        alphabet=SequenceAlphabet.AA,
-    )
-    assay = Assay(
-        name="a",
-        fields=[Field(name="sequence"), Field(name="split")],
-        records=[(seq, "custom_value")],
-    )
-    dataset = Dataset(name="d", assays=[assay], sequences=[], structures=[], msas=[])
-    splitter = PredefinedSplitter(split_column="split")
-    subsets = splitter.split(dataset)
-    assert len(subsets) == 1
-
-
-def test_predefined_splitter_with_multiple_assays_missing_split_column(
-    dataset_with_assays: Dataset,
-) -> None:
-    """Test PredefinedSplitter when assays don't have the split column."""
-    splitter = PredefinedSplitter(split_column="nonexistent")
-    subsets = splitter.split(dataset_with_assays)
-
-    for subset in subsets:
-        for assay in subset.assays:
-            assert assay.is_empty()

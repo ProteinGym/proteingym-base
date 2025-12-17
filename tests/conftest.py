@@ -231,10 +231,10 @@ def dataset_with_assay_predefined_split() -> Dataset:
         ],
         records=[
             (sequences[0], 1.0, "train"),
-            (sequences[1], 2.0, "test"),
+            (sequences[1], 2.0, "test"),  # test before val to test ordering
             (sequences[2], 3.0, "val"),
         ],
-        non_target_feature_names=["split"],
+        non_targets=["split"],
     )
     dataset = Dataset(
         name="dataset_with_predefined_split",
@@ -462,6 +462,7 @@ def datasets(
         dataset_with_assay,
         dataset_with_assay_raw,
         dataset_with_assays,
+        dataset_with_assay_predefined_split,
         dataset_with_sequence,
         dataset_with_sequences,
         dataset_with_structure,
