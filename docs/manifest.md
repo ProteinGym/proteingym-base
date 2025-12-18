@@ -192,7 +192,7 @@ sequence = "mutated_sequence"
 
 [[ assays.targets ]]
 name = "DMS Score"
-alias = "DMS_scorre
+alias = "DMS_score"
 
 [[ assays.non_targets ]]
 name = "split"
