@@ -635,7 +635,7 @@ class Assay(AssayRaw):
         return cls(
             name=section.name or section.path.stem,
             records=records,
-            fields=[Field(name="sequence", alias=section.sequence_alias)]
+            fields=[sequence_field]
             + section.targets
             + section.non_targets,
             description=section.description,
