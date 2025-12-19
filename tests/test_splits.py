@@ -419,7 +419,9 @@ def test_predefined_splitter_missing_split_column_raises_missing_split_values(
     """
     When the split column is absent from all the assays, should raise a ValueError
     """
-    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test", "fake"])
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "test", "fake"]
+    )
 
     with pytest.raises(ValueError, match=r"not found in any assay of the dataset"):
         splitter.split(dataset_with_assay, targets=["DMS Score"])
