@@ -18,6 +18,9 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -28,6 +31,5 @@ jobs:
           path: ~/.cache 
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material mkdocstrings-python mkdocs-autoapi 
       - run: cp README.md docs/index.md
-      - run: mkdocs gh-deploy --force
+      - run: uv run mkdocs gh-deploy --force

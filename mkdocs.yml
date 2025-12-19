@@ -16,8 +16,15 @@ plugins:
     handlers:
       python:
         paths: [src]
+- mkdocs-jupyter
 
 nav:
 - Home: index.md
 - Manifest: manifest.md
 - ADRs: decisions/
+- Tutorials:
+  - Introduction: notebooks/01_Introduction_to_PG2_Dataset.ipynb
+  - Creating a manifest: notebooks/02_Creating_Manifests_and_Archives.ipynb
+  - Loading data: notebooks/03_Loading_and_Accessing_Data.ipynb
+  - Using pgdata for ML: notebooks/04_Data_Access_for_ML.ipynb
+

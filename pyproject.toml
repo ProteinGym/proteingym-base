@@ -38,7 +38,8 @@ dev = [
     "scikit-learn>=1.7.2",
     "mkdocs-material",
     "mkdocstrings-python",
-    "mkdocs-autoapi", 
+    "mkdocs-autoapi",
+    "mkdocs-jupyter",
 ]
 
 [tool.hatch.version]
