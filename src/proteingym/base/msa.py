@@ -47,15 +47,15 @@ class MSAMetadataManifestSection(BaseModel):
     """Number of evolutionary couplings that are considered significant."""
 
     bit_score: float | None = None
-    """Bitscore threshold used to generate the alignment divided
+    """Bitscore threshold.
 
-    by the length of the target protein.
+    Used to generate the alignment divided by the length of the target protein.
     """
 
     theta: float | None = None
     """Hamming distance cutoff for sequence re-weighting."""
 
-    reference_sequence: str | None = None
+    reference_sequence_name: str | None = None
     """The name of the reference sequence of MSA present in Dataset."""
 
     sequence_start: int | None = None
@@ -101,15 +101,16 @@ class MSAManifestSection(MSAMetadataManifestSection):
     """Additional metadata for the multiple sequence alignment."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
-        """Optionally, extend the path with the `relative_to_path` from the
-        context."""
+        """Extend the path with the `relative_to_path` from the context."""
 
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         return path
 
     @field_validator("weights_path", mode="before", check_fields=True)
+    @classmethod
     def validate_weights_path(
         cls, weights_path: Path | None, info: ValidationInfo
     ) -> Path | None:
@@ -122,15 +123,13 @@ class MSAManifestSection(MSAMetadataManifestSection):
         ):
             weights_path = info.context["relative_to_path"] / weights_path
 
-        format = weights_path.suffix[1:].lower()
-        if format not in MSAWeightFormat:
-            raise ValueError(f"Unsupported MSA weight file format: {format}")
+        weights_format = weights_path.suffix[1:].lower()
+        if weights_format not in MSAWeightFormat:
+            raise ValueError(f"Unsupported MSA weight file format: {weights_format}")
         return weights_path
 
     @model_validator(mode="after")
-    def check_weights_and_weights_path(
-        self, info: ValidationInfo
-    ) -> "MSAManifestSection":
+    def check_weights_and_weights_path(self) -> "MSAManifestSection":
         """Ensure that both weights and weights_path are not provided together."""
 
         if self.weights and self.weights_path:
@@ -148,9 +147,9 @@ class MSAManifestSection(MSAMetadataManifestSection):
         return path.as_posix()
 
     @field_serializer("format", check_fields=True)
-    def _serialize_str_enum(self, format: MSAFormat) -> str:
+    def _serialize_str_enum(self, fmt: MSAFormat) -> str:
         """Serialize a StrEnum as a string."""
-        return format.value
+        return fmt.value
 
     def __eq__(self, other: Any) -> bool:
         """Custom equality that excludes `weights_path` from comparison.
@@ -195,15 +194,15 @@ class MSA:
     """Number of evolutionary couplings that are considered significant."""
 
     bit_score: float | None = None
-    """Bitscore threshold used to generate the alignment divided
+    """Bitscore threshold
 
-    by the length of the target protein.
+    It is used to generate the alignment divided by the length of the target protein.
     """
 
     theta: float | None = None
     """Hamming distance cutoff for sequence re-weighting."""
 
-    reference_sequence: str | None = None
+    reference_sequence_name: str | None = None
     """The name of the reference sequence of MSA present in Dataset."""
 
     sequence_start: int | None = None
@@ -248,7 +247,7 @@ class MSA:
 
     @classmethod
     def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
-        """Create a MSA instance from a manifest section.
+        """Create an MSA instance from a manifest section.
 
         Raises :
             NotImplementedError if the file type is not supported.
@@ -269,7 +268,7 @@ class MSA:
             num_significant=section.num_significant,
             bit_score=section.bit_score,
             theta=section.theta,
-            reference_sequence=section.reference_sequence,
+            reference_sequence_name=section.reference_sequence_name,
             sequence_start=section.sequence_start,
             sequence_end=section.sequence_end,
             weights=weights,
@@ -279,7 +278,7 @@ class MSA:
         """Create a manifest section from the MSA instance.
 
         Args:
-            path (Path): The path to the MSA file. As created by the dump method.
+            path: The path to the MSA file. As created by the dump method.
 
         Returns:
             MSAManifestSection: The manifest section for the MSA.
@@ -291,14 +290,14 @@ class MSA:
             num_significant=self.num_significant,
             bit_score=self.bit_score,
             theta=self.theta,
-            reference_sequence=self.reference_sequence,
+            reference_sequence_name=self.reference_sequence_name,
             sequence_start=self.sequence_start,
             sequence_end=self.sequence_end,
             weights=self.weights,
         )
 
     def dump(
-        self, *, path: Path | None = None, format: MSAFormat = MSAFormat.FASTA
+        self, *, path: Path | None = None, fmt: MSAFormat = MSAFormat.FASTA
     ) -> Path:
         """Dump the multiple sequence alignment to a file.
 
@@ -306,9 +305,9 @@ class MSA:
         :func:`Bio.AlignIO.write` for details.
 
         Args:
-            path (Path | None): The directory path to save the MSA file in.
+            path: The directory path to save the MSA file in.
                 Defaults to the current working directory.
-            format (MSAFormat): The format to save the MSA in. Defaults to
+            fmt: The format to save the MSA in. Defaults to
                 MSAFormat.FASTA.
 
         Raises:
@@ -322,10 +321,10 @@ class MSA:
             sequence alignment. This metadata should be stored with dumping the
             dataset.
         """
-        if format not in MSAFormat:
-            raise ValueError(f"Format {format} is not supported for MSA dumping.")
+        if fmt not in MSAFormat:
+            raise ValueError(f"Format {fmt} is not supported for MSA dumping.")
         path = path or Path.cwd()
         if path.is_dir():
-            path /= f"{self.name}.{format.value}"
-        AlignIO.write(self.value, path, format=format.value)
+            path /= f"{self.name}.{fmt.value}"
+        AlignIO.write(self.value, path, format=fmt.value)
         return path

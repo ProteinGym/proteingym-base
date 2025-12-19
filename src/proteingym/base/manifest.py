@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import IO, Annotated, Any, Callable
 
+import pydantic
 import toml
 from pydantic import (
     BaseModel,
     ConfigDict,
-    Field,
     GetJsonSchemaHandler,
     field_serializer,
     model_validator,
@@ -14,8 +14,13 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from semver import Version
 
-from .assay import AssayManifestSection, AssayTarget, AssayVariable
+from .assay import (
+    AssayManifestSection,
+    AssayRawManifestSection,
+    Field,
+)
 from .msa import MSAManifestSection
+from .publication import Publication
 from .sequence import SequenceManifestSection
 from .structure import StructureManifestSection
 
@@ -103,23 +108,36 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
-    assay_variables: list[AssayVariable] = Field(default_factory=list)
+    reference_sequence_name: str | None = None
+    """Name of the sequence that is to be considered the reference for this dataset.
+
+    Useful for e.g. zero-shot models that compare likelihood for a token from a
+    reference with the token for a variant.
+    """
+
+    assay_variables: list[Field] = pydantic.Field(default_factory=list)
     """The variables for the assays defined in the dataset."""
 
-    assay_targets: list[AssayTarget] = Field(default_factory=list)
+    assay_targets: list[Field] = pydantic.Field(default_factory=list)
     """The targets for the assays defined in the dataset."""
 
-    assays: list[AssayManifestSection] = Field(default_factory=list)
+    assays: list[AssayManifestSection] = pydantic.Field(default_factory=list)
     """The assays included in the dataset."""
 
-    sequences: list[SequenceManifestSection] = Field(default_factory=list)
+    assays_raw: list[AssayRawManifestSection] = pydantic.Field(default_factory=list)
+    """The raw assay data included in the dataset."""
+
+    sequences: list[SequenceManifestSection] = pydantic.Field(default_factory=list)
     """The sequences included in the dataset."""
 
-    structures: list[StructureManifestSection] = Field(default_factory=list)
+    structures: list[StructureManifestSection] = pydantic.Field(default_factory=list)
     """The structures included in the dataset."""
 
-    msas: list[MSAManifestSection] = Field(default_factory=list)
+    msas: list[MSAManifestSection] = pydantic.Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
+
+    publication: Publication | None = pydantic.Field(default=None)
+    """Publication information for the dataset."""
 
     @model_validator(mode="after")
     def _validate_assay_variables(self) -> "Manifest":
@@ -138,15 +156,20 @@ class Manifest(BaseModel):
 
     @model_validator(mode="after")
     def _validate_assay_targets(self) -> "Manifest":
-        """Validate that all assay targets are defined in the manifest."""
-        defined_target_names = {target.name for target in self.assay_targets}
+        """Validate that all assay targets are defined in the manifest.
+
+        Fill assay target (fields) with properties from the target defined at the top
+        level.
+        """
+        targets = {t.name: t for t in self.assay_targets}
         for assay in self.assays:
-            undefined_target_names = set(assay.targets.keys()) - defined_target_names
-            if undefined_target_names:
-                raise ValueError(
-                    f"Assay {assay.name} contains undefined targets:"
-                    f"{undefined_target_names}"
-                )
+            for t in assay.targets:
+                try:
+                    t.fill_from_parent(targets[t.name])
+                except KeyError as e:
+                    raise ValueError(
+                        f"Assay {assay.name} contains undefined target: {str(e)}"
+                    ) from e
         return self
 
     @classmethod
@@ -165,6 +188,11 @@ class Manifest(BaseModel):
         """Serialize the version to a string."""
         return str(version)
 
+    @field_serializer("assay_variables")
+    def serialize_assay_variables(self, variables: list[Field]) -> list[dict]:
+        """Serialize the version to a string."""
+        return [v.to_dict() for v in variables]
+
     def dump(self, *, path: Path | str | None = None) -> Path:
         """Dump the manifest to a TOML file.
 
@@ -172,9 +200,9 @@ class Manifest(BaseModel):
         manifest path.
 
         Args:
-            path (Path | str | None): The path to dump the manifest to. If None,
-              the current working directory is used as path. If path is a
-              directory, the manifest name is used as file name. Defaults to None.
+            path: The path to dump the manifest to. If None,
+                the current working directory is used as path. If path is a
+                directory, the manifest name is used as file name. Defaults to None.
 
         Returns:
             Path: The path to the dumped manifest file.
@@ -183,7 +211,7 @@ class Manifest(BaseModel):
             path = Path(path)
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}.toml"
+            path /= f"{self.name}.toml"
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
         include = {key for key, value in self.model_dump().items() if value}

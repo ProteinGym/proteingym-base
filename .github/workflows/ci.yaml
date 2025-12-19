@@ -33,6 +33,9 @@ jobs:
       - name: Ruff check
         run: uv run ruff check src tests
 
+      - name: Ruff format
+        run: uv run ruff format --check src tests
+
   test:
     name: test
     runs-on: ubuntu-latest
@@ -56,7 +59,7 @@ jobs:
 
       - name: Execute notebooks
         # Sanity check if the notebooks can be executed
-        run: find notebooks/*.ipynb -maxdepth 1 -type f | xargs -L1 uv run jupyter nbconvert --to notebook --execute
+        run: find docs/notebooks/*.ipynb -maxdepth 1 -type f | xargs -L1 uv run jupyter nbconvert --to notebook --execute
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

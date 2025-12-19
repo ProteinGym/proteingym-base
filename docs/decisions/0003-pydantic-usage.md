@@ -49,7 +49,7 @@ Use Pydantic:
 ## Decision matrix
 
 | Option                   | Aligns with Pydantic's use | Use Pydantic features | Fail early | Avoid overuse |
-| ------------------------ | -------------------------- | --------------------- | ---------- | ------------- |
+|--------------------------|----------------------------|-----------------------|------------|---------------|
 | All data classes         | Low                        | High                  | High       | Low           |
 | `Manifest`               | High                       | Low                   | High       | High          |
 | `Manifest` and `Dataset` | High                       | Medium                | High       | High          |

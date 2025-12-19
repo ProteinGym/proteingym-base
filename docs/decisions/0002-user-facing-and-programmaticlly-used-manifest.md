@@ -33,7 +33,7 @@ Furthermore, this package can augment the metadata in the external manifest with
 runtime metadata, like creation time, to create the metadata for the internal
 manifest.
 
-Currently we have an external user-facing manifest only. If we reuse that
+Currently, we have an external user-facing manifest only. If we reuse that
 within the dataset archive, then it is likely to become inaccurate when
 archiving the dataset. 
 
@@ -45,7 +45,7 @@ Not just because of efficiency, but also because access to the bucket might be
 unavailable at this time
 
 Additionally, a user needs to open the dataset archive to quickly reference the
-manifest (from a text editor) while we want users to only use the arhive 
+manifest (from a text editor) while we want users to only use the archive 
 through our package. Therefore, it is better to ship the (external)
 manifest **next to** the persisted dataset instead **within** .
 
@@ -76,7 +76,7 @@ archive to indicate it should not be edited by users.
 ## Decision matrix
 
 | Option                     | Accuracy          | Reusability | Quick reference                                                                          | Avoids access internals         |
-| -------------------------- | ----------------- | ----------- | ---------------------------------------------------------------------------------------- | ------------------------------- |
+|----------------------------|-------------------|-------------|------------------------------------------------------------------------------------------|---------------------------------|
 | No separation              | Low (see example) | High        | Low: when part of the dataset archive <br> High when shipped next to the dataset archive | Correlates with quick reference |
 | External and internal      | High              | High        | High: requires shipping next to the dataset archive                                      | high                            |
 | Additional internal medium | High              | Low         | High                                                                                     | High                            |
@@ -87,7 +87,7 @@ reusing manifest logic.
 ## Naming drivers
 
 The following drivers motivate the choice in naming.
-1. Accuracy: Accuracetly describes the manifest's purpose and how it is used.
+1. Accuracy: Accurately describes the manifest's purpose and how it is used.
 2. User-friendliness: The manifest should be easy to understand and use for
    users, while also being suitable for programmatic access.
 3. Verbosity: The manifest should not be overly verbose while still
@@ -102,7 +102,7 @@ The following drivers motivate the choice in naming.
 ## Naming Decision Matrix
 
 | Approach                       | Accuracy | User-friendliness | Verbosity |
-| ------------------------------ | -------- | ----------------- | --------- |
+|--------------------------------|----------|-------------------|-----------|
 | External / internal            | Medium   | Medium            | Medium    |
 | \<nothing\> / archive          | High     | High              | Medium    |
 | User-facing / Programmatically | High     | Low               | High      |
@@ -126,7 +126,7 @@ We accept that it is less verbosity over user-friendliness.
 ## File Name Decision Matrix
 
 | Option                  | Clarity | Consistency | Simplicity |
-| ----------------------- | ------- | ----------- | ---------- |
+|-------------------------|---------|-------------|------------|
 | `manifest.toml`         | Medium  | High        | High       |
 | `_manifest.toml`        | Medium  | Medium      | Medium     |
 | `manifest.lock`         | High    | Medium      | High       |

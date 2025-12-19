@@ -25,9 +25,9 @@ There are two phases of filtering here:
   * Simple fields: `name=NEIME_2019`
   * Nested fields: `assay_conditions.name=PH`
   * Multiple conditions: `name=NEIME_2019&assay_conditions.name=PH`
-  * Multiple choises: `assay_conditions.name=PH,T` or `assay_conditions.name=PH&assay_conditions.name=T`
+  * Multiple choices: `assay_conditions.name=PH,T` or `assay_conditions.name=PH&assay_conditions.name=T`
 
-* The second is the [Dataset](../../src/pg2_dataset/dataset.py) object itself, namely `class Dataset(BaseModel)`:
+* The second is the Dataset object itself, namely `class Dataset(BaseModel)`:
   * Simple fields: `name`, `description`, etc...
   * Nested fields: `assays`, `sequences`, `structures`, `msas`, etc... of which they are also a list to loop over, which will lead to extra CPU computations.
 
@@ -52,17 +52,17 @@ To choose which tool to use, our decisions are based on the following considerat
 ### 1. Whether to use an existing tool to parse and query `Dataset` object or build it ourselves. 
 * Both `JMESPath` and `jq` support the JSON data query, and both are CLI tools and have their corresponding Python package: [jmespath.py
 ](https://github.com/jmespath/jmespath.py) and [jq.py](https://github.com/mwilliamson/jq.py), meaning we can either use them in CLI or integrate them inside our `proteingym-base` Python package. 
-* Besides, by using these two tools, we can parse both the query params and the serialized `Dataset` object, wherease `urllib` can only parse the query params. To parse `Dataset`, we need to implement the logic ourselves which is non-trivial.
+* Besides, by using these two tools, we can parse both the query params and the serialized `Dataset` object, whereas `urllib` can only parse the query params. To parse `Dataset`, we need to implement the logic ourselves which is non-trivial.
 * The downsides of using these two tools are that they only support the JSON format, and we need to ensure the `Dataset` object can be serialized to JSON. Unluckily, `Bio.Seq.Seq` , `Bio.PDB.Structure`, `Bio.Align.MultipleSeqAlignment`  can't be serialized because they lack custom `JSONEncoder`, thus we need to rely on their `__str__` method to convert any non-serializable fields to their string representations.
 
 ### 2. Whether to parse and query `Dataset` inside our `proteingym-base` Python package or outside it in CLI. 
 * If we query it in CLI, then the command can be chained like proteingym-base list <path-to-your-dataset(s)> --format json | jq 'map(select(.name == "NEIME_2019"))'` using `jq`, instead of `proteingym-base list <path-to-your-dataset(s)> --query "name=NEIME_2019" --format json`, which is much simpler.
 * For the memory and performance characteristics of using `jq` or `JMESPath` in CLI to parse serialized `Dataset`, the comparison is shown in the following table:
   
-  | Tool     | Memory Usage                  | Processing                         |
-  | -------- | ----------------------------- | ---------------------------------- |
-  | jq       | Loads entire JSON into memory | [Stream-capable](https://jqlang.org/manual/#streaming) for some operations |
-  | JMESPath | Loads entire JSON into memory | In-memory processing               |
+| Tool     | Memory Usage                  | Processing                                                                 |
+|----------|-------------------------------|----------------------------------------------------------------------------|
+| jq       | Loads entire JSON into memory | [Stream-capable](https://jqlang.org/manual/#streaming) for some operations |
+| JMESPath | Loads entire JSON into memory | In-memory processing                                                       |
 
 * Based on [this jq benchmark](https://github.com/jqlang/jq/wiki/X---Experimental-Benchmarks), we see that `jq` handles moderate-sized datasets (54-181MB) quite well, compared to `gojq` (Go implementation), `rq` (Rust implementation). So we infer that given 1000 datasets (likely much smaller total size), processing should be very fast under seconds. Especially with `--stream`, it can reduce memory usage from 223MB to 1.3MB for the same operation.
 
@@ -77,7 +77,7 @@ There are several tools to parse the query params and the `Dataset` object, we t
 ## Decision matrix
 
 | Option   | Robustness                                               | Simplicity                  | Performance |
-| -------- | -------------------------------------------------------- | --------------------------- | ----------- |
+|----------|----------------------------------------------------------|-----------------------------|-------------|
 | JMESPath | High                                                     | Medium                      | Medium      |
 | jq       | High                                                     | Medium                      | High        |
 | urllib   | Low (We need to implement `Dataset` selection in Python) | High (Only in query params) | Unknown     |

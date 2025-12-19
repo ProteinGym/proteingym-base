@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from proteingym.base import Dataset
 from proteingym.base.msa import MSA, MSAFormat, MSAManifestSection
-from proteingym.base.sequence import Sequence
+from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
 def test_msa_manifest_section_minimal(tmp_path: Path) -> None:
@@ -80,7 +80,7 @@ def test_msa_manifest_section_missing_path() -> None:
         "validation error for MSAManifestSection\npath\n  Path does not point to a file"
     )
     with pytest.raises(ValidationError, match=match):
-        MSAManifestSection(path="non_existent.msa")
+        MSAManifestSection(path="non_existent.msa")  # noqa
 
 
 @pytest.mark.parametrize("field", ["name", "description"])
@@ -148,8 +148,6 @@ def test_msa_minimal() -> None:
 @pytest.fixture
 def multiple_sequence_alignment() -> MultipleSeqAlignment:
     """Minimal biopython multiple sequence alignment for testing."""
-    alignment = MultipleSeqAlignment([])
-
     a = SeqRecord(Seq("AAAACGT"), id="Alpha")
     b = SeqRecord(Seq("AAA-CGT"), id="Beta")
     c = SeqRecord(Seq("AAAAGGT"), id="Gamma")
@@ -188,8 +186,8 @@ def a3m_file(tmp_path: Path, multiple_sequence_alignment: MultipleSeqAlignment) 
 
 
 def test_msa_from_manifest_section_with_a3m(a3m_file: Path) -> None:
-    """A MSA can be created from a manifest section with A3M file."""
-    section = MSAManifestSection(path=a3m_file, format="fasta")
+    """An MSA can be created from a manifest section with A3M file."""
+    section = MSAManifestSection(path=a3m_file, format="fasta")  # noqa
 
     msa = MSA.from_manifest_section(section)
 
@@ -209,7 +207,7 @@ def weights_file(tmp_path: Path) -> Path:
 def test_msa_from_manifest_section_with_weights_path(
     fasta_file: Path, weights_file: Path
 ) -> None:
-    """A MSA can be created from a manifest section with weights_path."""
+    """An MSA can be created from a manifest section with weights_path."""
     section = MSAManifestSection(
         path=fasta_file,
         weights_path=weights_file,
@@ -240,7 +238,7 @@ def test_msa_manifest_section_raises_error_with_both_weights_and_weights_path(
 def test_msa_from_manifest_section_with_weights(
     fasta_file: Path,
 ) -> None:
-    """A MSA can be created from a manifest section with weights."""
+    """An MSA can be created from a manifest section with weights."""
     arr = [0.1, 0.5, 0.4]
 
     section = MSAManifestSection(
@@ -253,7 +251,7 @@ def test_msa_from_manifest_section_with_weights(
 
 
 def test_msa_as_manifest_section(fasta_file: Path) -> None:
-    """A MSA can be converted to a manifest section."""
+    """An MSA can be converted to a manifest section."""
     expected = MSAManifestSection(
         path=fasta_file,
         name="test_msa",
@@ -295,10 +293,15 @@ def test_msa_reference_sequence_present_in_dataset(
 ) -> None:
     """A ValueError is raised if the reference sequence is not in the MSA."""
     seq = Sequence(
-        name="ref_seq", value=Seq("TTTTTTT"), type="wild_type", alphabet="DNA"
+        name="ref_seq",
+        value=Seq("TTTTTTT"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
     )
     msa = MSA(
-        name="test", value=multiple_sequence_alignment, reference_sequence="ref_seq"
+        name="test",
+        value=multiple_sequence_alignment,
+        reference_sequence_name="ref_seq",
     )
 
     try:
@@ -308,7 +311,7 @@ def test_msa_reference_sequence_present_in_dataset(
             "Could not create Dataset with MSA and reference sequence"
         ) from e
     else:
-        assert msa.reference_sequence in [seq.name for seq in dataset.sequences], (
+        assert msa.reference_sequence_name in [seq.name for seq in dataset.sequences], (
             "Reference sequence not found in dataset sequences."
         )
 
@@ -318,7 +321,9 @@ def test_msa_reference_sequence_not_present_in_dataset(
 ) -> None:
     """A ValueError is raised if the reference sequence is not in the MSA."""
     msa = MSA(
-        name="test", value=multiple_sequence_alignment, reference_sequence="ref_seq"
+        name="test",
+        value=multiple_sequence_alignment,
+        reference_sequence_name="ref_seq",
     )
 
     with pytest.raises(
@@ -344,11 +349,11 @@ def test_dataset_dump_with_msa(
 
     path = dataset.dump(path=tmp_path)
 
-    zip = ZipFile(path)
-    assert not zip.testzip(), "Dataset dump contains a bad file."
-    assert "msas/msa.fasta" in zip.namelist(), "MSA file not found in dataset dump."
+    zip_ = ZipFile(path)
+    assert not zip_.testzip(), "Dataset dump contains a bad file."
+    assert "msas/msa.fasta" in zip_.namelist(), "MSA file not found in dataset dump."
 
-    with zip.open("msas/msa.fasta", "r") as msa_file:
+    with zip_.open("msas/msa.fasta", "r") as msa_file:
         string_io = io.StringIO(msa_file.read().decode("utf-8"))
         loaded_msa = AlignIO.read(string_io, "fasta")
         assert multiple_sequence_alignment.alignment == loaded_msa.alignment
@@ -401,10 +406,8 @@ def test_dataset_fails_with_duplicate_msa_names(
     msa3 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
     msa4 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
 
-    with pytest.raises(
-        ValidationError,
-        match=rf"Duplicate names found in:.*MSAs:.*{', '.join(duplicate_names)}",
-    ):
+    match = "Duplicate names found in `Dataset.msas`:.*" + ", ".join(duplicate_names)
+    with pytest.raises(ValidationError, match=match):
         Dataset(name="test", msas=[msa1, msa2, msa3, msa4])
 
 

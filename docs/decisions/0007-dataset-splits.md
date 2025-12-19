@@ -1,0 +1,318 @@
+# 7. Dataset splits
+
+Date: 2025-10-30
+Status: Accepted
+
+## Context and Problem Statement
+
+For AI/ML applications, datasets are typically split into training, validation,
+and test sets. These splits are used to evaluate the generalization performance of
+models and to prevent overfitting. However, the way these splits are created can
+vary between datasets or when done on the fly, making it challenging to replicate
+the behaviour across model training and evaluation runs.
+
+For more consistent and reproducible results, the dataset should be split
+deterministicly while accommodating for different split strategies.  
+
+A counterintuitive example: the random split. Even for the random split, one could
+create such a split randomly, then share *their* split with others so that
+everyone has the same *random* split.
+
+### Dataset slice
+
+The term "dataset slice" refers to the accessors that create a  subset of a
+dataset. Slice is a common term in programming to create a subset of a data
+structure, for example 
+[array slicing](https://en.wikipedia.org/wiki/Array_slicing) or search for
+"slice" together with your programming language of choice. 
+
+Note that "slice" is used both as a verb 
+([function](https://docs.python.org/3/library/functions.html#slice))
+and a noun ([object](https://docs.python.org/3/glossary.html#term-slice)). Also
+see 
+[slicings in Python](https://docs.python.org/3/reference/expressions.html#slicings).
+
+For the protein gym data model, a dataset slice is a
+collection of accessors for a dataset to select specific (subsets of) assays,
+sequences, structures, or MSAs. 
+
+### Dataset operators
+
+The introduction of splits introduces the notion for dataset operators for
+communicating about the relationships between datasets, dataset splits, and
+subsets of datasets (other term for splits).
+
+For example, when splitting a dataset, for each split the following is true:
+
+```
+dataset contains split
+split is contained in dataset
+```
+
+> See Wikipedia on this [subsets](https://en.wikipedia.org/wiki/Set_(mathematics)#Subsets)
+
+When splitting a dataset into two, the following operations hold true:
+
+```
+split_1 union split_2 equals dataset
+split_1 intersection split_2 equals empty set
+dataset difference split_1 equals split_2
+```
+
+The difference between a dataset split and subset is that splits are always
+[disjoint](https://en.wikipedia.org/wiki/Disjoint_sets) while subsets may
+overlap.
+
+```
+split_1 intersection split_2 equals empty set        # Always disjoint
+subset_1 intersection subset_2 not equals empty set  # May overlap
+```
+
+For the protein gym data model, this implies that a dataset
+split needs to account for the interdependencies between the protein data types.
+For example, the sequences split from an assay need to be split from the
+list of sequences list.
+
+## Decision
+
+Subsets (of a dataset) will hold the split information.
+
+## Decision Drivers
+
+- Split strategy agnostic: The split implementation should be agnostic to the
+  split strategy. Ideally, users can apply their own split strategy to any
+  dataset and then consistently share their split with others.
+- Adjustable dimensions: the split implementation should result in split rounds
+  where each round can have a variable number of splits and the number of rounds
+  can also be variable.
+- Consistent for archived datasets: The split implementation should be
+  consistent for archived datasets only and be applied while archiving data.
+  Datasets created from manifests files do not have to result in consistent
+  splits.
+- Flexibility : A flexible implementation is preferred. For example, for
+  boosting algorithms, one might want to have training sets from different
+  datasets and a separate test set. While this is not a common use case, a
+  programmatic user might want to create such a dataset combination.
+
+### User-interfaces
+
+The command line interface (CLI) should be as follows:
+
+```shell
+$ pg2-dataset splits ./path/to/dataset_with_validation.splits.pgdata
+train1.pgdata test1.pgdata val1.pgdata
+train2.pgdata test2.pgdata val2.pgdata
+train3.pgdata test3.pgdata val3.pgdata
+$ pg2-dataset splits ./path/to/dataset_without_validation.splits.pgdata
+train1.pgdata test1.pgdata
+train2.pgdata test2.pgdata
+```
+
+> Note: the `.splits` suffix is just an example, the actual suffix can be different.
+
+The Python API should be as follows:
+
+```python
+from proteingym.dataset import Subsets
+
+subsets = Subsets.from_path("./path/to/dataset_with_validation.splits.pgdata")
+for train_set, test_set, val_set in subsets:
+    ...  # Do something with the splits
+
+subsets = Subsets.from_path("./path/to/dataset_without_validation.splits.pgdata")
+for train_set, test_set in subsets:
+    ...  # Do something with the splits
+```
+
+> Note: the `Subsets` class is just an example, the actual class can be different.
+
+### Splits marker
+
+Our library should be able to know if a dataset consists of splits, or not.
+Furthermore, a user should also be able to check if a dataset is a split.
+
+#### Splits marker decision
+
+A archive with dataset splits has the suffix `.splits.pgdata`.
+
+#### Decision Drivers for splits marker
+
+- differentiate: The splits marker should be able to differentiate between a
+  dataset with splits and a dataset without splits.
+- user-friendly: The splits marker should be user-friendly and easy to use.
+
+#### Considered splits marker
+
+- Suffix: use a specific suffix for datasets with splits, e.g. `.splits`
+- Flag in archive manifest: add a flag in the archive manifest file to indicate
+  if a dataset has splits. Note: this has to be done in the **archive** manifest
+  file as the splits do not exist yet before archiving.
+
+### Decision matrix for splits marker
+
+| Option                   | Differentiate | User-friendly |
+| ------------------------ | ------------- | ------------- |
+| Suffix                   | High          | High          |
+| Flag in archive manifest | High          | Medium        |
+
+The flag in the archive manifest requires a user to run a command to check if a
+dataset has splits, while the suffix can be checked by just looking at the file
+name. Therefore, the suffix is more user-friendly.
+
+##### Suffix decision
+
+The chosen suffix is `.splits.pgdata` .
+
+##### Decision drivers for suffix
+
+- Non-breaking : The suffix should not break existing workflows.
+- Consistent : The suffix should be consistent with existing conventions.
+- Explicit : The suffix should clearly indicate the purpose of the dataset.
+
+##### Considered suffixes
+
+The following additional suffixes were considered:
+- `.splits`
+- `.superset`
+- `.subsets`
+
+These suffixes can go before or after the `.pgdata` suffix, e.g.: `.splits.pgdata` or
+`.pgdata.splits`. Or, without the `.pgdata` suffix, e.g.: `.splits` or
+`.superset`.
+
+##### Decision matrix for suffix
+
+| Option             | Non-breaking | Consistent | Explicit |
+| ------------------ | ------------ | ---------- | -------- |
+| `.splits.pgdata`   | High         | High       | High     |
+| `.pgdata.splits`   | High         | Medium     | High     |
+| `.splits`          | Low          | Low        | High     |
+| `.superset.pgdata` | High         | High       | Low      |
+| `.pgdata.superset` | High         | Medium     | Medium   |
+| `.superset`        | Low          | Low        | Low      |
+| `.subsets.pgdata`  | High         | High       | Medium   |
+| `.pgdata.subsets`  | High         | Medium     | Medium   |
+| `.subsets`         | Low          | Low        | Medium   |
+
+The `.splits.pgdata` suffix is the most straigh-forward option as the archives
+remain to end with `.pgdata` and the `.splits` suffix clearly indicates the
+purpose of this "special" archive. (That the archive has splits.)
+
+## Splits archive
+
+Through archiving the splits, they can be shared and reused consistently.
+
+### Splits archive decision
+
+Introduce a splits archive with a split index next to the dataset archive.
+
+### Decision Drivers for splits archive
+
+- Non-breaking : The splits archive implementation should not break existing
+  dataset archiving.
+- Separation of concerns: The splits archive implementation should
+  separate the split information from the dataset archive.
+- Efficient : The archive implementation should be reasonably efficient in
+  terms of storage.
+
+### Considered splits archive implementations
+
+1. Add a split index in the [dataset archive](../dataset_archive.md)
+2. Splits archive: with split index next to dataset archive.
+3. Subsets archive: a set of datasets.
+
+#### 1. Add a split index to the archive
+
+One option is to add a split index to the archive that tracks how the dataset
+is split:
+
+``` tree
+|   # inside archive.pgdata
+├── split_index.lock
+├── manifest.lock
+├── assays/
+├── msas/
+├── sequences/
+├── structures/
+```
+
+The index file tracks how the dimensions of the splits:
+
+``` json
+{
+    "splits": [
+        [
+            ["seq_id1", "seq_id2", ...],
+            ["seq_id3", "seq_id4", ...],
+            ["seq_id5", "seq_id6", ...]
+        ],
+        [
+            ["seq_id7", "seq_id8", ...],
+            ["seq_id9", "seq_id10", ...],
+            ["seq_id11", "seq_id12", ...]
+        ],
+        ...
+    ]
+}
+```
+
+> Note: the index file format is just an example, the actual format can be
+> different. 
+
+#### 2. Splits archive
+
+Simlarly to the above implementation, but instead of adding the split index to the
+archive itself, we create a splits archive that contains the split index next to the
+dataset archive:
+
+``` tree
+|   # inside dataset_with_splits.splits.pgdata
+├── split_index.lock
+├── dataset.pgdata
+```
+
+### 3. Subsets: a dataset of datasets
+
+A superset is a dataset that contains multiple datasets, it could be an archive of archives:
+
+``` tree
+|   # inside dataset_with_splits.splits.pgdata
+├── split_index.lock
+├── train1.pgdata
+├── test1.pgdata
+├── val1.pgdata
+├── train2.pgdata
+├── test2.pgdata
+├── val2.pgdata
+├── ...
+```
+
+Additionally, an index file tracks how the dimensions of the splits:
+
+``` json
+{
+    "splits": [
+        ["train1.pgdata", "test1.pgdata", "val1.pgdata"],
+        ["train2.pgdata", "test2.pgdata", "val2.pgdata"],
+        ...
+    ]
+}
+```
+
+> Note: the index file format is just an example, the actual format can be
+> different. 
+
+### Decision matrix for splits archive
+
+| Option                            | Non-breaking | Separation of concerns | Efficient |
+| --------------------------------- | ------------ | ---------------------- | --------- |
+| Add a split index to the archive  | Medium       | Low                    | High      |
+| Splits archive                    | High         | Medium                 | High      |
+| `Subsets`: a dataset of datasets | High         | High                   | Low       |
+
+
+The splits archive allows is separate from the dataset archive, while reusing it.
+
+## Consequences
+
+The supersets have to be created from archives or directly from manifests.

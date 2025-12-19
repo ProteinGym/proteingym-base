@@ -44,6 +44,7 @@ class StructureManifestSection(BaseModel):
     """Additional metadata for the protein structure."""
 
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
@@ -127,8 +128,8 @@ class Structure:
     def from_manifest_section(cls, section: StructureManifestSection) -> "Structure":
         """Create a Structure instance from a manifest section.
 
-        Raises :
-            NotImplementedError if the file type is not supported.
+        Raises:
+            NotImplementedError: If the file type is not supported.
         """
         match section.path.suffix.lower():
             case StructureFormat.PDB:
@@ -154,7 +155,7 @@ class Structure:
         """Convert the structure to a manifest section.
 
         Args:
-            path (Path): The path to the structure file (as created by
+            path: The path to the structure file (as created by
                 `method:dump`).
 
         Returns:
@@ -168,7 +169,7 @@ class Structure:
         )
 
     def dump(
-        self, *, path: Path | None = None, format: StructureFormat = StructureFormat.PDB
+        self, *, path: Path | None = None, fmt: StructureFormat = StructureFormat.PDB
     ) -> Path:
         """Dump the structure to a file.
 
@@ -179,22 +180,22 @@ class Structure:
         Note that binary CIF files (.bcif) are not supported for writing.
 
         Args:
-            path (Path): The output directory path to dump the structure to. If
+            path: The output directory path to dump the structure to. If
                 None, the current working directory is used.
-            format (StructureFormat): The format to dump the structure in.
+            fmt: The format to dump the structure in.
 
         Raises:
-            NotImplementedError if the file type is not supported.
+            NotImplementedError: if the file type is not supported.
         """
         path = path or Path.cwd()
-        structure_path = path / f"{self.name}{format.value}"
-        match format:
+        structure_path = path / f"{self.name}{fmt.value}"
+        match fmt:
             case StructureFormat.PDB:
                 io = PDBIO()
             case StructureFormat.MMCIF:
                 io = MMCIFIO()
             case _:
-                raise NotImplementedError(f"Unsupported file type: {format.value}")
+                raise NotImplementedError(f"Unsupported file type: {fmt.value}")
         io.set_structure(self.value)
         with structure_path.open("w", encoding="utf-8") as file:
             io.save(file)

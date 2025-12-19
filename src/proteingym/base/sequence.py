@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
 
+import requests
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -15,6 +16,8 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+
+from .lookup_field import LookupField
 
 
 class SequenceFormat(StrEnum):
@@ -59,7 +62,7 @@ class SequenceAlphabet(StrEnum):
     """RNA sequence containing ACGU nucleotides"""
 
     AA = "AA"
-    """Amino acid sequence containing the twenty natural occuring nucleotides"""
+    """Amino acid sequence containing the twenty natural occurring nucleotides"""
 
 
 class SequenceManifestSection(BaseModel):
@@ -86,14 +89,28 @@ class SequenceManifestSection(BaseModel):
     path: FilePath
     """The path to the sequence file."""
 
+    uniprot_id: str | None = None
+    """The UniProt identifier for this sequence."""
+
+    taxon_root: str | None = None
+    """The root of taxonomic lineage information.
+    For grouping datasets into main taxons"""
+
+    molecule_name: str | None = None
+    """The molecule name."""
+
+    organism: str | None = None
+    """The organism information."""
+
     @field_validator("path", mode="before", check_fields=True)
+    @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
-        format = path.suffix[1:].lower()
-        if format not in SequenceFormat:
-            raise ValueError(f"Unsupported sequence format: {format}")
+        fmt = path.suffix[1:].lower()
+        if fmt not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {fmt}")
         return path
 
     @field_serializer("path", check_fields=True)
@@ -109,6 +126,37 @@ class SequenceManifestSection(BaseModel):
         return str_enum.value
 
 
+class UniprotField(LookupField):
+    """Query sequence data from uniprot.org."""
+
+    identifier: str = "uniprot_id"
+
+    def resolve(self, id_: str):
+        response = requests.get(
+            f"https://rest.uniprot.org/uniprotkb/{id_}",
+            headers={"Accept": "application/json"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        api_data = response.json()
+
+        lineage_list = api_data.get("organism", {}).get("lineage", [])
+        taxon_root = lineage_list[0] if lineage_list else None
+        molecule_name = (
+            api_data.get("proteinDescription", {})
+            .get("recommendedName", {})
+            .get("fullName", {})
+            .get("value")
+        )
+        organism = api_data.get("organism", {}).get("scientificName")
+
+        return {
+            "taxon_root": taxon_root,
+            "molecule_name": molecule_name,
+            "organism": organism,
+        }
+
+
 @dataclasses.dataclass
 class Sequence:
     """A sequence in the dataset."""
@@ -116,6 +164,7 @@ class Sequence:
     name: str
     """The name of the sequence."""
 
+    # TODO: make sequence and type also LookupFields
     value: Seq
     """The value of the sequence, a Seq object."""
 
@@ -127,6 +176,19 @@ class Sequence:
 
     description: str | None = None
     """The description of the sequence."""
+
+    uniprot_id: str | None = None
+    """The UniProt identifier for this sequence."""
+
+    taxon_root: str | None = dataclasses.field(default=UniprotField())
+    """The root of taxonomic lineage information.
+    Useful for grouping datasets into main taxons"""
+
+    molecule_name: str | None = dataclasses.field(default=UniprotField())
+    """The molecule name."""
+
+    organism: str | None = dataclasses.field(default=UniprotField())
+    """The organism information."""
 
     def __eq__(self, item: "Sequence") -> bool:
         """Implements the equality (==) operator for Sequence.
@@ -152,6 +214,16 @@ class Sequence:
 
         lines.append(f"\ttype: {self.type},")
         lines.append(f"\talphabet: {self.alphabet},")
+
+        if self.uniprot_id:
+            lines.append(f"\tuniprot_id: {self.uniprot_id},")
+        if self.taxon_root:
+            lines.append(f"\ttaxon_lineage: {self.taxon_root},")
+        if self.molecule_name:
+            lines.append(f"\tmolecule_name: {self.molecule_name},")
+        if self.organism:
+            lines.append(f"\torganism: {self.organism},")
+
         value_str = str(self.value)
         if len(value_str) > 60:
             value_str = value_str[:60] + "..."
@@ -166,7 +238,7 @@ class Sequence:
         """Create Sequence(s) from a sequence manifest section.
 
         Args:
-            section (SequenceManifestSection): The sequence manifest section to create
+            section: The sequence manifest section to create
                 the Sequence from.
 
         Yields:
@@ -180,24 +252,34 @@ class Sequence:
                 description=seq.description,
                 type=section.type,
                 alphabet=section.alphabet,
+                uniprot_id=section.uniprot_id,
+                taxon_root=section.taxon_root,
+                molecule_name=section.molecule_name,
+                organism=section.organism,
             )
 
     def as_manifest_section(self, *, path: Path) -> SequenceManifestSection:
         """Convert the sequence to a manifest section.
 
         Args:
-            path (Path): The path to the sequence file (as created by
+            path: The path to the sequence file (as created by
                 `method:dump`).
 
         Returns:
             SequenceManifestSection: The manifest section for the sequence.
         """
         return SequenceManifestSection(
-            path=path, alphabet=self.alphabet, type=self.type
+            path=path,
+            alphabet=self.alphabet,
+            type=self.type,
+            uniprot_id=self.uniprot_id,
+            taxon_root=self.taxon_root,
+            molecule_name=self.molecule_name,
+            organism=self.organism,
         )
 
     def dump(
-        self, *, path: Path | None = None, format: SequenceFormat = SequenceFormat.FASTA
+        self, *, path: Path | None = None, fmt: SequenceFormat = SequenceFormat.FASTA
     ) -> Path:
         """Dump the sequence to a file in `path` directory.
 
@@ -207,20 +289,20 @@ class Sequence:
         - FASTQ (.fastq)
 
         Args:
-            path (Path): The output directory path to dump the sequence to. If
+            path: The output directory path to dump the sequence to. If
                 None, the current working directory is used.
-            format (SequenceFormat): The format to dump the sequence in.
+            fmt (SequenceFormat): The format to dump the sequence in.
 
         Raises:
             ValueError: If the path does not have a valid sequence file extension.
         """
-        if format not in SequenceFormat:
-            raise ValueError(f"Unsupported sequence format: {format}")
+        if fmt not in SequenceFormat:
+            raise ValueError(f"Unsupported sequence format: {fmt}")
         path = path or Path.cwd()
         if path.is_dir():
-            path = path / f"{self.name}.{format.value}"
+            path /= f"{self.name}.{fmt.value}"
         record = SeqRecord(
             seq=self.value, id=self.name, name=self.name, description=self.description
         )
-        SeqIO.write(record, path, format.value)
+        SeqIO.write(record, path, fmt.value)
         return path

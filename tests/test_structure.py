@@ -67,7 +67,7 @@ def test_structure_manifest_section_missing_path() -> None:
         "Path does not point to a file"
     )
     with pytest.raises(ValidationError, match=match):
-        StructureManifestSection(path="non_existent.pdb")
+        StructureManifestSection(path="non_existent.pdb")  # noqa
 
 
 @pytest.mark.parametrize("field", ["name", "description"])
@@ -224,11 +224,11 @@ def test_structure_dump_to_cif(tmp_path: Path, bio_structure: BioStructure) -> N
     """A Structure can be dumped to a cif file."""
     structure = Structure(name="test", value=bio_structure)
 
-    path = structure.dump(path=tmp_path, format=StructureFormat.MMCIF)
+    path = structure.dump(path=tmp_path, fmt=StructureFormat.MMCIF)
 
     # There is an inconsistency in biopython that loads the full name of an Atom
     # differently for a PDB and CIF file - the full name is trimmed for the
-    # later. Hence, we overwrite the fullname here before the assertion.
+    # latter. Hence, we overwrite the fullname here before the assertion.
     list(bio_structure.get_atoms())[0].fullname = "CA"
     loaded_structure = MMCIFParser().get_structure("test", path)
     assert loaded_structure.strictly_equals(bio_structure)
@@ -327,7 +327,7 @@ def test_dataset_with_structure_dump_from_path_unit(
         assert loaded_structure.value == structure.value
 
 
-def test_dataset_failes_with_duplicate_structure_names() -> None:
+def test_dataset_fails_with_duplicate_structure_names() -> None:
     """A dataset fails if there are duplicate structure names."""
     duplicate_names = ["duplicate1", "duplicate2"]
     structure1 = Structure(name=duplicate_names[0], value=BioStructure("test"))
@@ -335,10 +335,10 @@ def test_dataset_failes_with_duplicate_structure_names() -> None:
     structure3 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
     structure4 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
 
-    with pytest.raises(
-        ValidationError,
-        match=rf"Duplicate names found in:.*Structures:.*{', '.join(duplicate_names)}",
-    ):
+    match = "Duplicate names found in `Dataset.structures`:.*" + ", ".join(
+        duplicate_names
+    )
+    with pytest.raises(ValidationError, match=match):
         Dataset(
             name="test", structures=[structure1, structure2, structure3, structure4]
         )

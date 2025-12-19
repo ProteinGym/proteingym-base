@@ -17,4 +17,4 @@ The bundles multiple files with the following layout:
 ```
 
 The [manifest](./manifest.md) contains the metadata that describes the protein
-data assets: `assays/`, `msas/`, `sequences/` and `structures/`. Read about the [data model](./data_model.md) for more details.
+data assets: `assays/`, `msas/`, `sequences/` and `structures/`. Read about the [manifest](./manifest.md) for more details.

@@ -5,13 +5,63 @@ from zipfile import ZipFile
 import pytest
 from Bio.Align import MultipleSeqAlignment
 from Bio.PDB.Structure import Structure as BioStructure
+from Bio.Seq import Seq
 from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
-from proteingym.base.dataset import Dataset
+from proteingym.base.assay import AssaySlice
+from proteingym.base.dataset import Dataset, DatasetSlice
 from proteingym.base.msa import MSA
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
+
+
+def test_dataset_slice_from_dict() -> None:
+    """Test that a dataset slice can be created from a JSON string."""
+    expected = DatasetSlice(
+        assays=[
+            AssaySlice(records=[True, False, True]),
+            AssaySlice(records=[False, True, False]),
+        ]
+    )
+    contents = {
+        "assays": [{"records": [True, False, True]}, {"records": [False, True, False]}]
+    }
+    slc = DatasetSlice.from_dict(contents)
+    assert slc == expected
+
+
+def test_dataset_slice_from_json_mask() -> None:
+    """Test that a dataset slice can be created from a JSON string."""
+    expected = DatasetSlice(
+        assays=[
+            AssaySlice(records=[True, False, True]),
+            AssaySlice(records=[False, True, False]),
+        ]
+    )
+    contents = (
+        '{"assays": ['
+        '{"records": [true, false, true]}, '
+        '{"records": [false, true, false]}]}'
+    )
+    slc = DatasetSlice.from_json(contents)
+    assert slc == expected
+
+
+def test_dataset_slice_dumps_mask() -> None:
+    """Test that a dataset slice with a boolean mask is correctly dumped to JSON."""
+    contents = (
+        '{"assays": ['
+        '{"columns": null, "records": [true, false, true]}, '
+        '{"columns": null, "records": [false, true, false]}]}'
+    )
+    slc = DatasetSlice(
+        assays=[
+            AssaySlice(records=[True, False, True]),
+            AssaySlice(records=[False, True, False]),
+        ]
+    )
+    assert slc.to_json() == contents
 
 
 def test_dataset_dump_extension(tmp_path: Path) -> None:
@@ -143,7 +193,7 @@ def test_list_datasets_invalid_format(runner: CliRunner, dataset_file: Path) -> 
 def test_list_datasets_json_serialization() -> None:
     sequence = Sequence(
         name="test",
-        value="test",
+        value=Seq("test"),
         type=SequenceType.WILD_TYPE,
         alphabet=SequenceAlphabet.AA,
     )
@@ -190,3 +240,25 @@ def test_dataset_repr() -> None:
     repr_str = repr(dataset)
     # Should be truncated to 60 chars + '...'
     assert f"\tdescription: {long_desc[:60]}..." in repr_str
+
+
+def test_reference_sequence_present_in_dataset() -> None:
+    seq = Sequence(
+        name="ref_seq",
+        value=Seq("TTTTTTT"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    dataset = Dataset(name="test", reference_sequence_name="ref_seq", sequences=[seq])
+    assert dataset.reference_sequence == seq
+
+
+def test_reference_sequence_not_present_errors() -> None:
+    seq = Sequence(
+        name="ref_seq",
+        value=Seq("TTTTTTT"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    with pytest.raises(ValueError, match="not present among the dataset's sequences"):
+        Dataset(name="test", reference_sequence_name="foo", sequences=[seq])

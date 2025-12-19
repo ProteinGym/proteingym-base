@@ -132,10 +132,10 @@ def adjust_target_with_two_dummy_features(
     target_new = target_old * (2 if bar=="a" else -1) - foo/50
 
     Args:
-        df (pl.DataFrame): Input DataFrame containing the target column.
-        target (str): Name of the target column to adjust.
-        feature_names (list[str] | None): Names for the two new features.
-        Must contain exactly 2 names. Defaults to ["foo", "bar"] if None.
+        df: Input DataFrame containing the target column.
+        target: Name of the target column to adjust.
+        feature_names: Names for the two new features.
+            Must contain exactly 2 names. Defaults to ["foo", "bar"] if None.
 
     Returns:
         pl.DataFrame: DataFrame with two new features added and
@@ -145,10 +145,9 @@ def adjust_target_with_two_dummy_features(
         ValueError: If feature_names doesn't contain exactly 2 names.
 
     Examples:
-    >>> import polars as pl
     >>> df = pl.DataFrame({'target': [10, 20, 30]})
     >>> result = adjust_target_with_two_dummy_features(df, 'target')
-    >>> result.columns.tolist()
+    >>> result.columns
     ['target', 'foo', 'bar']
     """
     feature_names = feature_names or ("foo", "bar")

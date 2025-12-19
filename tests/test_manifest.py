@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from proteingym.base.assay import FieldEncoding
 from proteingym.base.manifest import Manifest
 
 
@@ -13,10 +14,12 @@ def manifest_contents() -> str:
 version = "1.0.0"
 name = "Example Dataset"
 description = "This is an example dataset for demonstration purposes."
+reference_sequence_name = "abc"
 
 [[ assay_variables ]]
 name = "PH"
 description = "pH level of the samples"
+encoding = "numerical"
 unit = "pH"
 
 [[ assay_targets ]]
@@ -31,15 +34,30 @@ description = "DMS score bin of the samples"
 [[ assays ]]
 name = "assay"
 path = "assay.csv"
-sequence = "sequence"
 sequence_alphabet = "AA"
 
-[ assays.targets ]
-"DMS Score" = "DMS_score"
-"DMS Score Bin" = "DMS_score_bin"
+[[ assays.targets ]]
+name = "DMS Score"
+alias = "DMS_score"
+
+[[ assays.targets ]]
+name = "DMS Score Bin"
+alias = "DMS_score_bin"
+
+[[ assays.non_targets ]]
+name = "split"
 
 [ assays.variables ]
-PH = "7"
+PH = 7
+
+[[ assays_raw ]]
+name = "assay"
+path = "assay_raw.csv"
+
+[[ assays_raw.fields ]]
+name = "OD"
+unit = "log10(l0 / l)"
+description = "Optical density at 600nm"
 
 [[ sequences ]]
 type = "wild_type"
@@ -55,10 +73,10 @@ format = "fasta"
 num_significant = 10
 bit_score = 0.5
 theta = 0.8
-reference_sequence = "abc"
+reference_sequence_name = "abc"
 sequence_start = 1
 sequence_end = 10
-weights_path = "weights.npy"
+weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
 """
 
 
@@ -71,10 +89,19 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     msa_file = tmp_path / "msas.a3m"
     msa_weights_file = tmp_path / "weights.npy"
     assay_file = tmp_path / "assay.csv"
-    for path in sequence_file, structure_file, msa_file, msa_weights_file, assay_file:
+    assay_raw_file = tmp_path / "assay_raw.csv"
+    for path in (
+        sequence_file,
+        structure_file,
+        msa_file,
+        msa_weights_file,
+        assay_file,
+        assay_raw_file,
+    ):
         path.touch()
     # Write header in the assay file
-    assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
+    assay_file.write_text("sequence,DMS_score,DMS_score_bin,split\n")
+    assay_raw_file.write_text("OD\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")
     return manifest_file
@@ -191,9 +218,9 @@ def test_manifest_from_path_has_protein_data(
 
 
 def test_manifest_version() -> None:
-    """The manifest version should support comparisions."""
-    manifest_v1 = Manifest(name="test", version="1.0.0")
-    manifest_v2 = Manifest(name="test", version="2.0.0")
+    """The manifest version should support comparisons."""
+    manifest_v1 = Manifest(name="test", version="1.0.0")  # noqa
+    manifest_v2 = Manifest(name="test", version="2.0.0")  # noqa
 
     assert manifest_v1.version == manifest_v1.version
     assert manifest_v1.version <= manifest_v1.version
@@ -208,7 +235,7 @@ def test_manifest_version() -> None:
 
 def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
     """The manifest dump should create a file with content."""
-    manifest = Manifest(version="1.0.0", name="test")
+    manifest = Manifest(version="1.0.0", name="test")  # noqa
 
     path = manifest.dump(path=tmp_path)
 
@@ -218,7 +245,7 @@ def test_manifest_dump_creates_file_with_content(tmp_path: Path) -> None:
 
 def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
     """The manifest dump creates a file that can be loaded back with same content."""
-    manifest = Manifest(version="1.0.0", name="test")
+    manifest = Manifest(version="1.0.0", name="test")  # noqa
 
     path = manifest.dump(path=tmp_path)
 
@@ -232,6 +259,11 @@ def test_manifest_dump_from_path_unit(tmp_path: Path) -> None:
         assert loaded_manifest == manifest, (
             f"Loaded manifest does not match dumped manifest: {path.read_text()}"
         )
+
+
+def test_manifest_from_path_assay_variable_enum(manifest_path: Path):
+    manifest = Manifest.from_path(manifest_path)
+    assert manifest.assay_variables[0].encoding == FieldEncoding.NUMERICAL
 
 
 def test_manifest_dump_from_path_unit_docs_example(
@@ -258,7 +290,7 @@ def test_manifest_dump_from_path_unit_docs_example(
 
 def test_manifest_dump_version_string(tmp_path: Path) -> None:
     """The version should be dumped as a string."""
-    manifest = Manifest(name="test", version="1.0.0")
+    manifest = Manifest(name="test", version="1.0.0")  # noqa
 
     path = manifest.dump(path=tmp_path)
 

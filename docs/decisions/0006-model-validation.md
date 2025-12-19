@@ -7,10 +7,10 @@ Status: Accepted
 
 There are two roles in a model benchmarking system:
 * Model provider: They either provide a model with a GitHub repo, a distribution package or a Docker image, or only share its API for a remote call. To validate a model to see if it can be integrated in the `proteingym` universe, they want to have an easy-to-use tool to sanity check their models quickly for a feeling of confidence.
-* Model benchmarker: They need a uniform API to call each model to get the same format of result in return, so they can compare them on a equal basis. Since they need to validate all models, they want a tool to call these models, while models are running in a self-contained execution environent.
+* Model benchmarker: They need a uniform API to call each model to get the same format of result in return, so they can compare them on an equal basis. Since they need to validate all models, they want a tool to call these models, while models are running in a self-contained execution environment.
 
 In order for the benchmark to work for a variety of models, we need to validate if these models conform to a standard. Examples of validation checks include:
-- [x] If they have the model card defined as expected, so we can load the model's hyperparamters.
+- [x] If they have the model card defined as expected, so we can load the model's hyperparameters.
 - [x] If they have the mandatory entrypoint, with expected input and output.
 
 Given the above considerations, we will first set out to build a tool for model providers to let them do a self-check quickly.
@@ -23,13 +23,13 @@ Currently, we use the [Option 2: Install `proteingym-base` as a dev dependency a
 
 The decision drivers are based on the following constraints, since they cover the majority of models.
 
-| Contraint | Type |
-| --------- | ---- |
-| The model is implemented in Python | Required |
-| The model provides its source code | Required |
-| The model project has a [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) | Required |
-| The model exposes its entrypoints by CLI |  Nice to have |
-| The model is containerised which comes with its Dockerfile | Nice to have |
+| Constraint                                                                                                          | Type         |
+|---------------------------------------------------------------------------------------------------------------------|--------------|
+| The model is implemented in Python                                                                                  | Required     |
+| The model provides its source code                                                                                  | Required     |
+| The model project has a [src layout](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/) | Required     |
+| The model exposes its entrypoints by CLI                                                                            | Nice to have |
+| The model is containerised which comes with its Dockerfile                                                          | Nice to have |
 
 Thus, we come to the following drivers:
 
@@ -65,10 +65,10 @@ $ proteingym-base validate .
 
 ## Decision matrix
 
-| Option | Least dependencies | Work across platforms | No hardcoded paths and names | Least assumptions | Robustness | Insightfulness |
-|:-------|:------------------:|:---------------------:|:----------------------------:|:-----------------:|:----------:|:----------:|
-| Docker |                    | :white_check_mark:    | :white_check_mark:           |                   | :white_check_mark: | :white_check_mark: |
-| proteingym-base CLI | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Option              | Least dependencies | Work across platforms | No hardcoded paths and names | Least assumptions  |     Robustness     |   Insightfulness   |
+|:--------------------|:------------------:|:---------------------:|:----------------------------:|:------------------:|:------------------:|:------------------:|
+| Docker              |                    |  :white_check_mark:   |      :white_check_mark:      |                    | :white_check_mark: | :white_check_mark: |
+| proteingym-base CLI | :white_check_mark: |  :white_check_mark:   |      :white_check_mark:      | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 ## Consequences
 
