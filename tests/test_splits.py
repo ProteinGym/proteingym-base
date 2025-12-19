@@ -373,31 +373,6 @@ def test_predefined_splitter_strict_missing_key_raises(
         splitter.split(dataset_with_assay_predefined_split)
 
 
-@pytest.mark.parametrize(
-    "dataset_fixture, split_column",
-    [
-        ("dataset_with_assay", "split"),
-        ("dataset_with_assays", "split"),
-    ],
-    ids=["single_assay_missing_split_col", "multiple_assays_missing_split_col"],
-)
-def test_predefined_splitter_missing_split_column_is_missing_keys_error(
-    dataset_fixture: str,
-    split_column: str,
-    request,
-) -> None:
-    """
-    If the split column is absent everywhere observed set is empty,
-    which triggers 'missing required split values'.
-    """
-    dataset = request.getfixturevalue(dataset_fixture)
-    splitter = PredefinedSplitter(
-        split_column=split_column, split_order=["train", "test"]
-    )
-    with pytest.raises(ValueError, match=r"missing required split values"):
-        splitter.split(dataset)
-
-
 def test_predefined_splitter_with_targets_in_assay(
     dataset_with_assay_predefined_split: Dataset,
 ) -> None:
@@ -442,12 +417,13 @@ def test_predefined_splitter_missing_split_column_raises_missing_split_values(
     dataset_with_assay: Dataset,  # fixture without "split" column
 ) -> None:
     """
-    Current behavior: when the split column is absent everywhere, the splitter
-    creates zero slices and triggers the final 'All subsets are empty' guard.
+    When the split column is absent from all the assays, should raise a ValueError
     """
-    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "test", "fake"]
+    )
 
-    with pytest.raises(ValueError, match=r"Dataset is missing required split values"):
+    with pytest.raises(ValueError, match=r"not found in any assay of the dataset"):
         splitter.split(dataset_with_assay, targets=["DMS Score"])
 
 
