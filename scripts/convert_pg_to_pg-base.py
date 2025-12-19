@@ -41,7 +41,7 @@ import polars as pl
 import shutil
 
 from proteingym.base import Dataset, Manifest
-from templates import clinvar_subs, clinvar_indels, dms_subs
+from templates import clinvar_subs, clinvar_indels, dms_subs, gene_to_uniprot
 
 log_filename = f"proteingym_conversion.log"
 logging.basicConfig(
@@ -175,17 +175,26 @@ def create_manifest(DMS_id: str, references: pl.DataFrame, regime: str) -> str:
 
         manifest_template = dms_subs.template
 
+        # need to convert the uniprot ID/AC to uniprotKB for lookup
+        # created an conversion table in templates/gene_to_uniprot
+
+        gene_mapping = gene_to_uniprot.gene_mapping
+
+        if row_dict['UniProt_ID'] in gene_mapping:
+            uniprot_id = gene_mapping[row_dict['UniProt_ID']]
+
         manifest_content = manifest_template.substitute(
             dms_id=DMS_id,
             dms_filename=row_dict['DMS_filename'],
             first_author=row_dict['first_author'],
             year=row_dict['year'],
             publication=row_dict['title'],
+            doi=row_dict['jo'],
             coarse_selection_type=row_dict['coarse_selection_type'],
             selection_assay=row_dict['selection_assay'],
             selection_type=row_dict['selection_type'],
             molecule_name=row_dict['molecule_name'],
-            uniprot_id=row_dict['UniProt_ID'],
+            uniprot_id=uniprot_id,
             taxon=row_dict['taxon'],
             source_organism=row_dict['source_organism'],
             total_mutations=row_dict['DMS_total_number_mutants'],
@@ -193,6 +202,8 @@ def create_manifest(DMS_id: str, references: pl.DataFrame, regime: str) -> str:
             multiple_mutants=row_dict['DMS_number_multiple_mutants'],
             dms_binarization_cutoff=row_dict['DMS_binarization_cutoff'],
             dms_binarization_method=row_dict['DMS_binarization_method'],
+            raw_dms_phenotype=row_dict['raw_DMS_phenotype_name'],
+            raw_dms_directionality=row_dict['raw_DMS_directionality'],
             msa_filename=row_dict['MSA_filename'],
             weight_file_name=row_dict['weight_file_name'],
             msa_bitscore=row_dict['MSA_bitscore'],
@@ -233,7 +244,6 @@ def validate_manifest(manifest: Manifest) -> Dataset:
         dataset = Dataset.from_manifest(manifest)
     except Exception as e:
         log.error(e)
-
     return dataset
 
 def dump_dataset(dataset):

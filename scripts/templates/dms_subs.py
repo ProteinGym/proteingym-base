@@ -5,14 +5,19 @@ template = Template(
 description = "Dataset for $dms_id from $first_author $year for $publication"
 version = "1.0.0"
 
+[publication]
+doi = "$doi"
+
 [[ assays ]]
-sequence = "mutated_sequence"
+name = "$dms_id"
 path = "../../dms_substitutions_store/cv_folds_singles_substitutions/$dms_filename"
 sequence_alphabet = "AA"
+sequence_alias = "mutated_sequence"
 
 [[ assay_targets ]]
 name = "$coarse_selection_type"
 description = "$selection_assay measurement for $selection_type with $molecule_name"
+unit = "log fold change"
 
 [[ assay_variables ]]
 name = "DMS binarization cutoff"
@@ -22,24 +27,38 @@ description = "Cutoff value for determinating the DMS bins"
 name = "DMS binarization method"
 description = "Method for generating the DMS bins"
 
-[ assay.variables ]
+[[ assay_variables ]]
+name = "raw DMS phenotype"
+description = "Original DMS phenotype in the publication"
+
+[[ assay_variables ]]
+name = "raw DMS directionality"
+description = "Directionality of the original measurement"
+
+[ assays.variables ]
 "DMS binarization cutoff" = $dms_binarization_cutoff
-"DMS binarization method" = $dms_binarization_method
+"DMS binarization method" = "$dms_binarization_method"
+"raw DMS phenotype" = "$raw_dms_phenotype"
+"raw DMS directionality" = $raw_dms_directionality
 
-[ assays.targets ]
-"$coarse_selection_type" = "DMS_score"
+[[ assays.targets ]]
+name = "$coarse_selection_type"
+alias = "DMS_score"
 
-[ assays.metadata ]
-UniProt_ID = "$uniprot_id"
-taxon = "$taxon"
-organism = "$source_organism"
-selection_assay = "$selection_assay"
-selection_type = "$selection_type"
+[[ assays.non_targets ]]
+name = "fold_random_5"
+
+[[ assays.non_targets ]]
+name = "fold_modulo_5"
+
+[[ assays.non_targets ]]
+name = "fold_contiguous_5"
 
 [[ sequences ]]
 path = "../../fasta_store/$dms_id.fasta"
 type = "wild_type"
 alphabet = "AA"
+uniprot_id = "$uniprot_id"
 
 [[ msas ]]
 path = "../../dms_msa_alignment_store/DMS_msa_files/$msa_filename"
