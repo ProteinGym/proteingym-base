@@ -44,6 +44,9 @@ alias = "DMS_score"
 name = "DMS Score Bin"
 alias = "DMS_score_bin"
 
+[[ assays.non_targets ]]
+name = "split"
+
 [ assays.variables ]
 PH = 7
 
@@ -97,7 +100,7 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     ):
         path.touch()
     # Write header in the assay file
-    assay_file.write_text("sequence,DMS_score,DMS_score_bin\n")
+    assay_file.write_text("sequence,DMS_score,DMS_score_bin,split\n")
     assay_raw_file.write_text("OD\n")
     manifest_file = tmp_path / "manifest.toml"
     manifest_file.write_text(manifest_contents, encoding="utf-8")

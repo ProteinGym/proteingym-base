@@ -241,6 +241,9 @@ class AssayManifestSection(_ManifestSection):
     targets: list[Field] = pydantic.Field(default_factory=list)
     """The list of prediction targets in this assay."""
 
+    non_targets: list[Field] = pydantic.Field(default_factory=list)
+    """List of non-target fields that are included but are not prediction targets."""
+
     variables: dict[str, bool | int | float | str] = pydantic.Field(
         default_factory=dict
     )
@@ -254,7 +257,7 @@ class AssayManifestSection(_ManifestSection):
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
         sequence = Field(name="sequence", alias=self.sequence_alias)
-        for v in [sequence] + self.targets:
+        for v in [sequence] + self.targets + self.non_targets:
             if v.alias_ not in self._header:
                 raise ValueError(
                     f"Feature '{v.alias_}' not found in the file: {self.path}"
@@ -434,6 +437,9 @@ class Assay(AssayRaw):
     )
     """The variables of the assay, defined in the manifest."""
 
+    non_targets: list[Field] = dataclasses.field(default_factory=list)
+    """List of non-target feature names that are included but not targets."""
+
     @property
     def sequence_feature_name(self) -> str:
         """The sequence feature name.
@@ -446,7 +452,9 @@ class Assay(AssayRaw):
     @property
     def target_feature_names(self) -> list[str]:
         """Returns the target feature names in the assay records."""
-        return [f.name for f in self.fields[1:]]  # The first field is the sequence
+        all_names = [f.name for f in self.fields[1:]]  # Exclude sequence
+        non_target_names = [f.name for f in self.non_targets]
+        return [name for name in all_names if name not in non_target_names]
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -469,6 +477,7 @@ class Assay(AssayRaw):
             self.records == item.records
             and self.variables == item.variables
             and self.fields == item.fields
+            and self.non_targets == item.non_targets
         )
 
     @staticmethod
@@ -592,9 +601,11 @@ class Assay(AssayRaw):
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
+
         sequence_field = Field(name=SEQUENCE, alias=section.sequence_alias)
-        all_fields = [sequence_field] + section.targets
+        all_fields = [sequence_field] + section.targets + section.non_targets
         df = pl.read_csv(section.path, columns=[f.alias_ for f in all_fields])
+
         df = df.with_columns(
             # Sequences are created from sequence strings present in the file
             # The sequence name is taken from the string itself as the name is not
@@ -615,16 +626,19 @@ class Assay(AssayRaw):
         )
         records = list(
             df.select(
-                "sequence_object", *[f.alias_ for f in section.targets]
+                "sequence_object",
+                *[f.alias_ for f in section.targets],
+                *[f.name for f in section.non_targets],
             ).iter_rows()
         )
 
         return cls(
             name=section.name or section.path.stem,
             records=records,
-            fields=all_fields,
+            fields=[sequence_field] + section.targets + section.non_targets,
             description=section.description,
             variables=section.variables,
+            non_targets=section.non_targets,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -647,7 +661,12 @@ class Assay(AssayRaw):
             description=self.description,
             sequence_alias=None,
             sequence_alphabet=sequence_alphabet,
-            targets=[f.without_alias() for f in self.fields[1:]],
+            targets=[
+                f.without_alias()
+                for f in self.fields
+                if f.name in self.target_feature_names
+            ],
+            non_targets=self.non_targets,
             variables=self.variables,
             path=path,
         )
@@ -682,7 +701,6 @@ class Assay(AssayRaw):
             pl.lit(var_value).alias(var_name)
             for var_name, var_value in self.variables.items()
         ]
-
         schema = {f.name: f.polars_type for f in self.fields}
         df = (
             pl.DataFrame(self.records, schema=schema, orient="row")
