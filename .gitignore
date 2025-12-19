@@ -19,3 +19,4 @@ wheels/
 coverage
 coverage.*
 /.tox/
+/example_data/neime_2019_python_example.toml
