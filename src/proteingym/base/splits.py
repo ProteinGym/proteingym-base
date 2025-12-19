@@ -338,6 +338,16 @@ class PredefinedSplitter:
         self.split_column = split_column
         self.split_order = split_order
 
+    def _validate_split_column_is_present(self, dataset) -> None:
+        """Checks if the split column is present in atleast one assay of the dataset"""
+        for assay in dataset.assays:
+            field_names = [f.name for f in assay.fields]
+            if self.split_column in field_names:
+                return
+        raise ValueError(
+            f"Split column '{self.split_column}' not found in any assay of the dataset."
+        )
+
     def _collect_observed_values(self, dataset) -> set[str]:
         """Collect all unique split values from the dataset."""
         observed = set()
@@ -416,6 +426,7 @@ class PredefinedSplitter:
             ValueError: If the split column contains split values not in split order.
         """
 
+        self._validate_split_column_is_present(dataset)
         split_values = self._validate_split_values(dataset)
         self._validate_no_sequence_overlap(dataset, split_values)
 

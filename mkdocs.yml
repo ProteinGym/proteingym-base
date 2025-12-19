@@ -27,4 +27,5 @@ nav:
   - Creating a manifest: notebooks/02_Creating_Manifests_and_Archives.ipynb
   - Loading data: notebooks/03_Loading_and_Accessing_Data.ipynb
   - Using pgdata for ML: notebooks/04_Data_Access_for_ML.ipynb
+  - Splitting a pg dataset: notebooks/05_Creating_Dataset_Splits.ipynb
 
