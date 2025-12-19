@@ -10,6 +10,7 @@ from proteingym.base.dataset import Assay, Dataset, Sequence, Subsets
 from proteingym.base.sequence import SequenceAlphabet, SequenceType
 from proteingym.base.splits import (
     KFoldSplitter,
+    PredefinedSplitter,
     RandomSplitter,
     _cast_indices_to_mask,  # noqa
     _reshape_list,  # noqa
@@ -317,3 +318,191 @@ def test_splitters_combining_split_strategies(dataset_with_assays: Dataset) -> N
 
     assert "random" in subsets.slices and len(subsets.slices["random"]) == 2
     assert "kfold" in subsets.slices and len(subsets.slices["kfold"]) == 2
+
+
+def test_predefined_splitter_returns_in_user_defined_order(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
+    """
+    With required split_order, verify that returned subsets
+    follow the exact user-provided order.
+    """
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "val", "test"]
+    )
+    subsets = splitter.split(dataset_with_assay_predefined_split)
+
+    assert len(subsets) == 3
+
+    # fixture is train, test, val on purpose
+    # fixture sequences order: train="ACGT", test="TGCA", val="AAAA"
+    expected_sequences = ["ACGT", "AAAA", "TGCA"]
+    for subset, expected_seq in zip(subsets, expected_sequences, strict=False):
+        records = [r for assay in subset.assays for r in assay.records]
+        assert len(records) == 1
+        assert str(records[0][0].value) == expected_seq
+
+
+def test_predefined_splitter_strict_unknown_key_raises(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
+    """
+    If the dataset contains a split value not present in split_order, raise.
+    Example: dataset has 'val', but split_order is ['train', 'test'] only.
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+
+    with pytest.raises(
+        ValueError, match=r"Found split values in dataset not in split_order"
+    ):
+        splitter.split(dataset_with_assay_predefined_split)
+
+
+def test_predefined_splitter_strict_missing_key_raises(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
+    """
+    If split_order requires a value missing in the dataset, raise.
+    Example: split_order requires 'holdout' but data has only train/val/test.
+    """
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "val", "test", "holdout"]
+    )
+
+    with pytest.raises(ValueError, match=r"Dataset is missing required split values"):
+        splitter.split(dataset_with_assay_predefined_split)
+
+
+@pytest.mark.parametrize(
+    "dataset_fixture, split_column",
+    [
+        ("dataset_with_assay", "split"),
+        ("dataset_with_assays", "split"),
+    ],
+    ids=["single_assay_missing_split_col", "multiple_assays_missing_split_col"],
+)
+def test_predefined_splitter_missing_split_column_is_missing_keys_error(
+    dataset_fixture: str,
+    split_column: str,
+    request,
+) -> None:
+    """
+    If the split column is absent everywhere observed set is empty,
+    which triggers 'missing required split values'.
+    """
+    dataset = request.getfixturevalue(dataset_fixture)
+    splitter = PredefinedSplitter(
+        split_column=split_column, split_order=["train", "test"]
+    )
+    with pytest.raises(ValueError, match=r"missing required split values"):
+        splitter.split(dataset)
+
+
+def test_predefined_splitter_with_targets_in_assay(
+    dataset_with_assay_predefined_split: Dataset,
+) -> None:
+    """
+    Verify that when targets exist, slices include
+    the sequence and the requested target.
+    """
+    splitter = PredefinedSplitter(
+        split_column="split", split_order=["train", "val", "test"]
+    )
+    subsets = splitter.split(dataset_with_assay_predefined_split, targets=["target1"])
+
+    for subset in subsets:
+        for assay in subset.assays:
+            if not assay.is_empty():
+                field_names = [f.name for f in assay.fields]
+                assert "sequence" in field_names
+                assert "target1" in field_names
+
+
+def test_predefined_splitter_raises_on_sequence_overlap(
+    dataset_with_duplicates_sequences_across_splits: Dataset,
+) -> None:
+    """
+    Verifies the exact ValueError message when the
+    same sequence appears in multiple splits.
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+
+    with pytest.raises(ValueError) as exc:
+        splitter.split(
+            dataset_with_duplicates_sequences_across_splits, targets=["DMS Score"]
+        )
+
+    msg = str(exc.value)
+    assert "Sequence overlap detected" in msg
+    assert "'train'" in msg and "'test'" in msg
+    assert "Found 1 overlapping sequence(s)." in msg  # only seq1 overlaps
+
+
+def test_predefined_splitter_missing_split_column_raises_missing_split_values(
+    dataset_with_assay: Dataset,  # fixture without "split" column
+) -> None:
+    """
+    Current behavior: when the split column is absent everywhere, the splitter
+    creates zero slices and triggers the final 'All subsets are empty' guard.
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+
+    with pytest.raises(ValueError, match=r"Dataset is missing required split values"):
+        splitter.split(dataset_with_assay, targets=["DMS Score"])
+
+
+def test_predefined_splitter_targets_missing_in_assay_sets_empty_fields(
+    dataset_two_assays_with_split_and_mixed_targets: Dataset,
+) -> None:
+    """
+    If a requested target is not present in an assay, its slice should expose
+    no fields (empty fields list).
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+    subsets = splitter.split(
+        dataset_two_assays_with_split_and_mixed_targets, targets=["target_a"]
+    )
+
+    assert len(subsets) == 2
+
+    for subset in subsets:
+        assert len(subset.assays) == 2
+        slice_a = subset.assays[0]  # assay_a has target_a
+        slice_b = subset.assays[1]  # assay_b does NOT have target_a
+
+        fields_a = [f.name for f in slice_a.fields]
+        fields_b = [f.name for f in slice_b.fields]
+
+        # Assay A includes sequence + target_a (split is a non-target, so not included)
+        assert "sequence" in fields_a
+        assert "target_a" in fields_a
+
+        # Assay B should be empty
+        assert fields_b == []
+
+
+def test_predefined_splitter_assay_missing_split_column_yields_empty_view(
+    dataset_mixed_split_presence: Dataset,
+) -> None:
+    """
+    For assays missing the split column, the slice should be empty:
+    """
+    splitter = PredefinedSplitter(split_column="split", split_order=["train", "test"])
+    subsets = splitter.split(dataset_mixed_split_presence, targets=["DMS Score"])
+
+    assert len(subsets) == 2
+
+    for subset in subsets:
+        assert len(subset.assays) == 2
+
+        slice_missing = subset.assays[0]
+        slice_present = subset.assays[1]
+
+        assert slice_missing.is_empty()
+        assert len(slice_missing.records) == 0
+        assert len(slice_missing.fields) == 0
+
+        assert not slice_present.is_empty()
+        assert len(slice_present.records) == 1
+        present_field_names = [f.name for f in slice_present.fields]
+        assert "sequence" in present_field_names
