@@ -151,31 +151,6 @@ class MSAManifestSection(MSAMetadataManifestSection):
         """Serialize a StrEnum as a string."""
         return fmt.value
 
-    # def __eq__(self, other: Any) -> bool:
-    #     """Custom equality that excludes `weights_path` from comparison.
-
-    #     `weights_path` is an input-only field used to load weights from a file.
-    #     """
-
-    #     if not isinstance(other, MSAManifestSection):
-    #         return False
-
-    #     # Compare all fields except weights_path
-    #     return (
-    #         self.path == other.path
-    #         and self.name == other.name
-    #         and self.description == other.description
-    #         and self.format == other.format
-    #         and self.num_significant == other.num_significant
-    #         and self.bit_score == other.bit_score
-    #         and self.theta == other.theta
-    #         and self.reference_sequence == other.reference_sequence
-    #         and self.sequence_start == other.sequence_start
-    #         and self.sequence_end == other.sequence_end
-    #         and self.weights == other.weights
-    #         and self.metadata == other.metadata
-    #     )
-
 
 @dataclasses.dataclass
 class MSA:
