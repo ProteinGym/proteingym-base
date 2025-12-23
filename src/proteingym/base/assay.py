@@ -306,7 +306,44 @@ class AssaySlice:
         """
         return json.dumps(dataclasses.asdict(self))
 
+    def __repr__(self):
+        """Returns a concise string representation of the slice"""
 
+        if self.records is None:
+            return f"AssaySlice(columns={self.columns})"
+        
+        n_items = len(self.records)
+
+        if n_items <= 5:
+            records_repr = "[" + ", ".join(repr(x) for x in self.records) + "]"
+            return f"AssaySlice(columns={self.columns}, records={records_repr})"
+        else:
+            records_repr = f"[{self.records[0]}, ..., {self.records[-1]}] (len={n_items})"
+            return f"AssaySlice(columns={self.columns}, records={records_repr})"
+
+    def _format_list_truncated(seq: list[str | bool] | None) -> str:
+        """
+        Return a repr-like string for a possibly long sequence.
+        - None -> "None"
+        - len <= limit -> normal list repr with items' repr()
+        - len > limit -> first `limit` items followed by ", ...", and append " (len=N)"
+        """
+        if seq is None:
+            return "None"
+
+        # Convert to list once to support any iterable passed in the future.
+        items = list(seq)
+        n = len(items)
+
+        if n == 0:
+            return "[]"
+
+        if n <= limit:
+            return "[" + ", ".join(repr(x) for x in items) + "]"
+
+        head = ", ".join(repr(items[i]) for i in range(limit))
+        return f"[{head}, ...] (len={n})"
+   
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayRaw:
     """The raw data on which the assay is based."""
