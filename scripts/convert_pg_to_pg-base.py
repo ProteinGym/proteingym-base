@@ -12,21 +12,30 @@ After downloading this converts them to a proteingym-base dataset which you can 
 to your storage repository off preference.
 
 ---------------- TODO LOG ----------------
+NOTE: DMS subs needed slight cleaning before you can fully process it:
+- The UniProt_ID stored are not the UniProt accession numbers. I've 
+used uniprot.org/id-mapping to retrieve the accession numbers with some
+manual cleaning. See `templates/gene_to_uniprot.py` for the mapping
+result.
 
-NOTE: We do not incorporate the raw data in this version of the script.
-Raw could be added once we add measurements to the metrics and store raw as measurements.
-Furthermore raw is not as standardized over the original PG data.
+- ANCSZ_Hobbs_2022 does not have an associated UniProt, had to create 
+that one manually. Maybe we should just pop the line after creation before
+dataset loading.
 
-NOTE: Currently we store the reference sequence as the wild-type sequence.
-Should change this to reference sequence (after that feature is done)
+- CAR11_HUMAN_Meitlis_2020_gof and CAR11_HUMAN_Meitlis_2020_lof have a 
+dot after their doi that breaks the parsing. The doi is
+`10.1016/j.ajhg.2020.10.015.` but should be `10.1016/j.ajhg.2020.10.015`
+
+- RASK_HUMAN_Weng_2022_abundance and RASK_HUMAN_Weng_2022_binding-DARPin_K55
+point to 10.1101/2022.12.06.519122 and 10.1101/2022.12.06.519127 respectively.
+They should both point to `.519122`. Even better is to point them to
+`10.1038/s41586-023-06954-0` as this is the published version of the previous
+pre-print DOI.
 
 NOTE: ClinVar Indels are not set to datasets here as we require measurements
 
 NOTE: We only store the regular MSA weights, not the MSA Transformer weights
 See issue #362
-
-NOTE: I still think e.g. taxon, organism, amount of mutations etc 
-should be metadata properties of the dataset, not of the assay
 
 ---------------- TODO LOG ----------------
 
@@ -41,7 +50,7 @@ import polars as pl
 import shutil
 
 from proteingym.base import Dataset, Manifest
-from templates import clinvar_subs, clinvar_indels, dms_subs, gene_to_uniprot
+from templates import clinvar_subs, clinvar_indels, dms_subs, dms_indels, gene_to_uniprot
 
 log_filename = f"proteingym_conversion.log"
 logging.basicConfig(
@@ -228,7 +237,55 @@ def create_manifest(DMS_id: str, references: pl.DataFrame, regime: str) -> str:
         ### Think most of this can be stored as measurements. 
         pass
     elif regime == 'dms_indels':
-        pass
+        row_dict = references.filter(pl.col('DMS_id') == DMS_id).to_dicts()[0]
+        
+        write_sequence_to_fasta(row_dict['target_seq'], DMS_id, Path(f"./fasta_store/{DMS_id}.fasta"))
+
+        manifest_template = dms_indels.template
+
+        # need to convert the uniprot ID/AC to uniprotKB for lookup
+        # created an conversion table in templates/gene_to_uniprot
+
+        gene_mapping = gene_to_uniprot.gene_mapping
+
+        if row_dict['UniProt_ID'] in gene_mapping:
+            uniprot_id = gene_mapping[row_dict['UniProt_ID']]
+
+        manifest_content = manifest_template.substitute(
+            dms_id=DMS_id,
+            dms_filename=row_dict['DMS_filename'],
+            first_author=row_dict['first_author'],
+            year=row_dict['year'],
+            publication=row_dict['title'],
+            doi=row_dict['jo'],
+            coarse_selection_type=row_dict['coarse_selection_type'],
+            selection_assay=row_dict['selection_assay'],
+            selection_type=row_dict['selection_type'],
+            molecule_name=row_dict['molecule_name'],
+            uniprot_id=uniprot_id,
+            taxon=row_dict['taxon'],
+            source_organism=row_dict['source_organism'],
+            total_mutations=row_dict['DMS_total_number_mutants'],
+            dms_binarization_cutoff=row_dict['DMS_binarization_cutoff'],
+            dms_binarization_method=row_dict['DMS_binarization_method'],
+            raw_dms_phenotype=row_dict['raw_DMS_phenotype_name'],
+            raw_dms_directionality=row_dict['raw_DMS_directionality'],
+            msa_filename=row_dict['MSA_filename'],
+            weight_file_name=row_dict['weight_file_name'],
+            msa_bitscore=row_dict['MSA_bitscore'],
+            msa_theta=row_dict['MSA_theta'],
+            msa_start=row_dict['MSA_start'],
+            msa_end=row_dict['MSA_end'],
+            msa_len=row_dict['MSA_len'],
+            msa_num_seqs=row_dict['MSA_num_seqs'],
+            msa_n_eff=row_dict['MSA_N_eff'],
+            msa_n_eff_l=row_dict['MSA_Neff_L'],
+            msa_n_eff_l_category=row_dict['MSA_Neff_L_category'],
+            num_significant=row_dict['MSA_num_significant'],
+            num_significant_L=row_dict['MSA_num_significant_L'],
+            msa_perc_cov=row_dict['MSA_perc_cov'],
+            msa_num_cov=row_dict['MSA_num_cov'],
+        )
     else:
         log.error("Selected a regime that is not present in ProteinGym")
 
