@@ -311,14 +311,16 @@ class AssaySlice:
 
         if self.records is None:
             return f"AssaySlice(columns={self.columns})"
-        
+
         n_items = len(self.records)
 
         if n_items <= 5:
             records_repr = "[" + ", ".join(repr(x) for x in self.records) + "]"
             return f"AssaySlice(columns={self.columns}, records={records_repr})"
         else:
-            records_repr = f"[{self.records[0]}, ..., {self.records[-1]}] (len={n_items})"
+            records_repr = (
+                f"[{self.records[0]}, ..., {self.records[-1]}] (len={n_items})"
+            )
             return f"AssaySlice(columns={self.columns}, records={records_repr})"
 
 
