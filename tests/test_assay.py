@@ -1583,3 +1583,38 @@ def test_assay_repr() -> None:
     )
     repr_str = repr(assay)
     assert "\t\t<no records>" in repr_str
+
+
+def test_assay_slice_repr_records_none_columns_only():
+    """Assay slice mask records is None -> show columns only."""
+    slc = AssaySlice(columns=["sequence", "DMS Score"], records=None)
+    r = repr(slc)
+    assert r == "AssaySlice(columns=['sequence', 'DMS Score'])"
+
+    slc2 = AssaySlice(columns=None, records=None)
+    r2 = repr(slc2)
+    assert r2 == "AssaySlice(columns=None)"
+
+
+def test_assay_slice_repr_records_short_list():
+    """Assay slice mask len(records) <= 5 -> show full list."""
+    slc = AssaySlice(columns=["sequence"], records=[True, False, True, False, True])
+    r = repr(slc)
+    assert r == "AssaySlice(columns=['sequence'], records=[True, False, True, False, True])"
+
+    slc2 = AssaySlice(columns=None, records=[False, False, False, False, False])
+    r2 = repr(slc2)
+    assert r2 == "AssaySlice(columns=None, records=[False, False, False, False, False])"
+
+
+def test_assay_slice_repr_records_truncated():
+    """Assay slice mask len(records) > 5 -> truncate to [first, ..., last] (len=N)."""
+    records = [False, True, True, True, True, False, True, True, True, False]
+    slc = AssaySlice(columns=["sequence", "DMS Score"], records=records)
+    r = repr(slc)
+    assert r == "AssaySlice(columns=['sequence', 'DMS Score'], records=[False, ..., False] (len=10))"
+
+    records2 = [True] * 20
+    slc2 = AssaySlice(columns=None, records=records2)
+    r2 = repr(slc2)
+    assert r2 == "AssaySlice(columns=None, records=[True, ..., True] (len=20))"
