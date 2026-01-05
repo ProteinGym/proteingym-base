@@ -306,6 +306,23 @@ class AssaySlice:
         """
         return json.dumps(dataclasses.asdict(self))
 
+    def __repr__(self):
+        """Returns a concise string representation of the slice"""
+
+        if self.records is None:
+            return f"AssaySlice(columns={self.columns})"
+
+        n_items = len(self.records)
+
+        if n_items <= 5:
+            records_repr = "[" + ", ".join(repr(x) for x in self.records) + "]"
+            return f"AssaySlice(columns={self.columns}, records={records_repr})"
+        else:
+            records_repr = (
+                f"[{self.records[0]}, ..., {self.records[-1]}] (len={n_items})"
+            )
+            return f"AssaySlice(columns={self.columns}, records={records_repr})"
+
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class AssayRaw:
