@@ -258,7 +258,6 @@ The MSAs section contains a list of multiple sequence alignments included in the
 | `reference_sequence_name` | `string \| None`| No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
 | `sequence_start`          | `int \| None`   | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
 | `sequence_end`            | `int \| None`   | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
-| `weights_path`            | `string \| None`| No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`. (Deprecated: use `msa_weights` section instead)                                    |
 
 ### MSA Weights
 

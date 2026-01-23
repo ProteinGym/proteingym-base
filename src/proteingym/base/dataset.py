@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from .assay import SEQUENCE, Assay, AssayRaw, AssaySlice, Field
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
-from .msa import MSA
+from .msa import MSA, MSAWeights
 from .publication import Publication
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 from .structure import Structure
@@ -45,6 +45,9 @@ class DatasetArchiveLayout:
 
     MSAS_DIRECTORY = Path("msas/")
     """The directory for multiple sequence alignments (MSAs)."""
+
+    MSA_WEIGHTS_DIRECTORY = Path("msas/")
+    """The directory for MSA weights."""
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -158,6 +161,9 @@ class Dataset(BaseModel):
 
     msas: list[MSA] = pydantic.Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
+
+    msa_weights: list[MSAWeights] = pydantic.Field(default_factory=list)
+    """The MSA weights included in the dataset."""
 
     publication: Publication | None = pydantic.Field(default=None)
     """Publication information for the dataset."""
@@ -469,7 +475,13 @@ class Dataset(BaseModel):
             *[Sequence.from_manifest_section(s) for s in manifest.sequences]
         )
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
-        msas = [MSA.from_manifest_section(m) for m in manifest.msas]
+        
+        weights_by_name = {w.name: w for w in manifest.msa_weights}
+        msas = [
+            MSA.from_manifest_section(m, weights_by_name.get(m.name or m.path.stem))
+            for m in manifest.msas
+        ]
+        msa_weights = [MSAWeights.from_manifest_section(w) for w in manifest.msa_weights]
 
         return cls(
             name=manifest.name,
@@ -483,6 +495,7 @@ class Dataset(BaseModel):
             sequences=sequences,  # noqa
             structures=structures,
             msas=msas,
+            msa_weights=msa_weights,
         )
 
     @classmethod
@@ -536,12 +549,14 @@ class Dataset(BaseModel):
             (Sequence, DatasetArchiveLayout.SEQUENCES_DIRECTORY, self.sequences),
             (Structure, DatasetArchiveLayout.STRUCTURES_DIRECTORY, self.structures),
             (MSA, DatasetArchiveLayout.MSAS_DIRECTORY, self.msas),
+            (MSAWeights, DatasetArchiveLayout.MSA_WEIGHTS_DIRECTORY, self.msa_weights),
         ):
             subpath = temporary_directory / subdirectory
-            subpath.mkdir()
+            subpath.mkdir(exist_ok=True)
             for obj in objects:
                 data_path = obj.dump(path=subpath)
                 data_paths[type_].append(data_path)
+        
         return data_paths
 
     def _create_manifest(self, data_paths: dict[type, list[Path]]) -> Manifest:
@@ -586,6 +601,10 @@ class Dataset(BaseModel):
             msas=[
                 m.as_manifest_section(path=path)
                 for m, path in zip(self.msas, data_paths.get(MSA, []), strict=True)
+            ],
+            msa_weights=[
+                w.as_manifest_section(path=path)
+                for w, path in zip(self.msa_weights, data_paths.get(MSAWeights, []), strict=True)
             ],
         )
         return manifest
@@ -641,6 +660,11 @@ class Dataset(BaseModel):
                 zip_,
                 *[msa.path for msa in manifest.msas],
                 arcname_prefix=DatasetArchiveLayout.MSAS_DIRECTORY,
+            )
+            self._write_paths_to_zip(
+                zip_,
+                *[w.path for w in manifest.msa_weights],
+                arcname_prefix=DatasetArchiveLayout.MSA_WEIGHTS_DIRECTORY,
             )
         return archive_path
 

@@ -46,13 +46,27 @@ class MSAWeightsManifestSection(BaseModel):
     name: str
     """The name of the weights (should match an MSA name)."""
 
-    path: FilePath
+    path: FilePath | None = None
     """The path to the weights file."""
+
+    weights: list[float] | None = None
+    """The weights values (alternative to path)."""
+
+    @model_validator(mode="after")
+    def check_path_or_weights(self) -> "MSAWeightsManifestSection":
+        """Ensure that either path or weights is provided, but not both."""
+        if self.path is None and self.weights is None:
+            raise ValueError("Either path or weights must be provided.")
+        if self.path is not None and self.weights is not None:
+            raise ValueError("Only one of path or weights can be provided.")
+        return self
 
     @field_validator("path", mode="before", check_fields=True)
     @classmethod
-    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+    def validate_path(cls, path: Path | None, info: ValidationInfo) -> Path | None:
         """Extend the path with the `relative_to_path` from the context."""
+        if path is None:
+            return None
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         weights_format = path.suffix[1:].lower()
@@ -61,8 +75,10 @@ class MSAWeightsManifestSection(BaseModel):
         return path
 
     @field_serializer("path", check_fields=True)
-    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
+    def serialize_path(self, path: Path | None, info: SerializationInfo) -> str | None:
         """Serialize the path as a Posix path."""
+        if path is None:
+            return None
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
@@ -126,9 +142,6 @@ class MSAManifestSection(MSAMetadataManifestSection):
     format: MSAFormat = MSAFormat.FASTA
     """The format of the multiple sequence alignment file."""
 
-    weights_path: FilePath | None = Field(default=None, exclude=True)
-    """The weight file for each sequence in the MSA."""
-
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the multiple sequence alignment."""
 
@@ -140,25 +153,6 @@ class MSAManifestSection(MSAMetadataManifestSection):
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         return path
-
-    @field_validator("weights_path", mode="before", check_fields=True)
-    @classmethod
-    def validate_weights_path(
-        cls, weights_path: Path | None, info: ValidationInfo
-    ) -> Path | None:
-        """Extend the weights_path with the `relative_to_path` from the context."""
-
-        if (
-            weights_path is not None
-            and info.context
-            and info.context.get("relative_to_path")
-        ):
-            weights_path = info.context["relative_to_path"] / weights_path
-
-        weights_format = weights_path.suffix[1:].lower()
-        if weights_format not in MSAWeightFormat:
-            raise ValueError(f"Unsupported MSA weight file format: {weights_format}")
-        return weights_path
 
     @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
@@ -186,7 +180,12 @@ class MSAWeights:
     @classmethod
     def from_manifest_section(cls, section: MSAWeightsManifestSection) -> "MSAWeights":
         """Create an MSAWeights instance from a manifest section."""
-        weights = np.load(section.path).tolist()
+        if section.path:
+            weights = np.load(section.path).tolist()
+        elif section.weights:
+            weights = section.weights
+        else:
+            raise ValueError("Either path or weights must be provided.")
         return cls(name=section.name, value=weights)
 
     def as_manifest_section(self, *, path: Path) -> MSAWeightsManifestSection:
@@ -285,12 +284,7 @@ class MSA:
         """
         name = section.name or section.path.stem
         value = AlignIO.read(section.path, section.format.value)
-        if weights_section:
-            weights = np.load(weights_section.path).tolist()
-        elif section.weights_path:
-            weights = np.load(section.weights_path).tolist()
-        else:
-            weights = None
+        weights = np.load(weights_section.path).tolist() if weights_section else None
         return MSA(
             name=name,
             value=value,
