@@ -12,7 +12,12 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from proteingym.base import Dataset
-from proteingym.base.msa import MSA, MSAFormat, MSAManifestSection, MSAWeightsManifestSection
+from proteingym.base.msa import (
+    MSA,
+    MSAFormat,
+    MSAManifestSection,
+    MSAWeightsManifestSection,
+)
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
@@ -233,10 +238,10 @@ def test_msa_weights_manifest_section_raises_error_with_neither() -> None:
 def test_msa_weights_from_manifest_section_with_path(weights_file: Path) -> None:
     """MSAWeights can be created from a manifest section with path."""
     from proteingym.base.msa import MSAWeights
-    
+
     section = MSAWeightsManifestSection(name="test", path=weights_file)
     weights = MSAWeights.from_manifest_section(section)
-    
+
     assert weights.name == "test"
     assert weights.value == [0.1, 0.5, 0.4]
 
@@ -244,10 +249,10 @@ def test_msa_weights_from_manifest_section_with_path(weights_file: Path) -> None
 def test_msa_weights_from_manifest_section_with_weights() -> None:
     """MSAWeights can be created from a manifest section with weights."""
     from proteingym.base.msa import MSAWeights
-    
+
     section = MSAWeightsManifestSection(name="test", weights=[0.1, 0.5, 0.4])
     weights = MSAWeights.from_manifest_section(section)
-    
+
     assert weights.name == "test"
     assert weights.value == [0.1, 0.5, 0.4]
 
@@ -255,10 +260,10 @@ def test_msa_weights_from_manifest_section_with_weights() -> None:
 def test_msa_weights_dump_to_file(tmp_path: Path) -> None:
     """MSAWeights can be dumped to a file."""
     from proteingym.base.msa import MSAWeights
-    
+
     weights = MSAWeights(name="test", value=[0.1, 0.5, 0.4])
     path = weights.dump(path=tmp_path / "test_weights.npy")
-    
+
     loaded_weights = np.load(path).tolist()
     assert loaded_weights == [0.1, 0.5, 0.4]
 
@@ -266,10 +271,10 @@ def test_msa_weights_dump_to_file(tmp_path: Path) -> None:
 def test_msa_weights_dump_to_directory(tmp_path: Path) -> None:
     """MSAWeights can be dumped to a file inside a directory."""
     from proteingym.base.msa import MSAWeights
-    
+
     weights = MSAWeights(name="test", value=[0.1, 0.5, 0.4])
     path = weights.dump(path=tmp_path)
-    
+
     assert path.name == "test_weights.npy"
     loaded_weights = np.load(path).tolist()
     assert loaded_weights == [0.1, 0.5, 0.4]
@@ -278,12 +283,12 @@ def test_msa_weights_dump_to_directory(tmp_path: Path) -> None:
 def test_msa_weights_as_manifest_section(tmp_path: Path) -> None:
     """MSAWeights can be converted to a manifest section."""
     from proteingym.base.msa import MSAWeights
-    
+
     weights = MSAWeights(name="test", value=[0.1, 0.5, 0.4])
     weights_path = weights.dump(path=tmp_path)
-    
+
     section = weights.as_manifest_section(path=weights_path)
-    
+
     assert section.name == "test"
     assert section.path == weights_path
 

@@ -475,13 +475,15 @@ class Dataset(BaseModel):
             *[Sequence.from_manifest_section(s) for s in manifest.sequences]
         )
         structures = [Structure.from_manifest_section(s) for s in manifest.structures]
-        
+
         weights_by_name = {w.name: w for w in manifest.msa_weights}
         msas = [
             MSA.from_manifest_section(m, weights_by_name.get(m.name or m.path.stem))
             for m in manifest.msas
         ]
-        msa_weights = [MSAWeights.from_manifest_section(w) for w in manifest.msa_weights]
+        msa_weights = [
+            MSAWeights.from_manifest_section(w) for w in manifest.msa_weights
+        ]
 
         return cls(
             name=manifest.name,
@@ -556,7 +558,7 @@ class Dataset(BaseModel):
             for obj in objects:
                 data_path = obj.dump(path=subpath)
                 data_paths[type_].append(data_path)
-        
+
         return data_paths
 
     def _create_manifest(self, data_paths: dict[type, list[Path]]) -> Manifest:
@@ -604,7 +606,9 @@ class Dataset(BaseModel):
             ],
             msa_weights=[
                 w.as_manifest_section(path=path)
-                for w, path in zip(self.msa_weights, data_paths.get(MSAWeights, []), strict=True)
+                for w, path in zip(
+                    self.msa_weights, data_paths.get(MSAWeights, []), strict=True
+                )
             ],
         )
         return manifest

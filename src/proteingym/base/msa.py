@@ -271,7 +271,9 @@ class MSA:
 
     @classmethod
     def from_manifest_section(
-        cls, section: MSAManifestSection, weights_section: MSAWeightsManifestSection | None = None
+        cls,
+        section: MSAManifestSection,
+        weights_section: MSAWeightsManifestSection | None = None,
     ) -> "MSA":
         """Create an MSA instance from a manifest section.
 
