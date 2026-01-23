@@ -1,2 +1,0 @@
-*.splits.pgdata filter=lfs diff=lfs merge=lfs -text
-*.pgdata filter=lfs diff=lfs merge=lfs -text
