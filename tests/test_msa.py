@@ -201,23 +201,25 @@ def test_msa_weights_manifest_section_with_weights() -> None:
 def test_msa_weights_manifest_section_serialize_with_weights_only() -> None:
     """MSAWeightsManifestSection with only weights serializes path as None."""
     section = MSAWeightsManifestSection(name="test", weights=[0.1, 0.5, 0.4])
-    
+
     dumped = section.model_dump()
-    
+
     assert dumped["path"] is None
     assert dumped["weights"] == [0.1, 0.5, 0.4]
 
 
-def test_msa_weights_manifest_section_serialize_with_relative_path(tmp_path: Path) -> None:
+def test_msa_weights_manifest_section_serialize_with_relative_path(
+    tmp_path: Path,
+) -> None:
     """MSAWeightsManifestSection path is serialized relative to context."""
     weights_file = tmp_path / "weights.npy"
     np.save(weights_file, np.array([0.1, 0.5, 0.4]))
-    
+
     section = MSAWeightsManifestSection(name="test", path=weights_file)
     context = {"relative_to_path": tmp_path}
-    
+
     dumped = section.model_dump(context=context)
-    
+
     assert dumped["path"] == "weights.npy"
 
 
