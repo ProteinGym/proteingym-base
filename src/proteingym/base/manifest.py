@@ -19,7 +19,7 @@ from .assay import (
     AssayRawManifestSection,
     Field,
 )
-from .msa import MSAManifestSection
+from .msa import MSAManifestSection, MSAWeightsManifestSection
 from .publication import Publication
 from .sequence import SequenceManifestSection
 from .structure import StructureManifestSection
@@ -135,6 +135,9 @@ class Manifest(BaseModel):
 
     msas: list[MSAManifestSection] = pydantic.Field(default_factory=list)
     """The multiple sequence alignments included in the dataset."""
+
+    msa_weights: list[MSAWeightsManifestSection] = pydantic.Field(default_factory=list)
+    """The MSA weights included in the dataset."""
 
     publication: Publication | None = pydantic.Field(default=None)
     """Publication information for the dataset."""

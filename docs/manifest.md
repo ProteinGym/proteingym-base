@@ -118,7 +118,10 @@ theta = 0.8
 reference_sequence_name = "abc"
 sequence_start = 1
 sequence_end = 10
-weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
+
+[[ msa_weights ]]
+name = "msas"
+path = "msas_weights.npy"
 ```
 
 ### Top-level
@@ -138,6 +141,7 @@ the protein data types.
 | `sequences`               | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                                                                                                   |
 | `structures`              | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                                                                                                  |
 | `msas`                    | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                                                                                                                |
+| `msa_weights`             | `list[map[str, str]]` | No           | Empty list  | The MSA weights included in the dataset.                                                                                                                                                                                                                                                                                 |
 
 ### Assay Variables
 
@@ -244,17 +248,36 @@ The structures section contains a list of structures included in the dataset.
 
 The MSAs section contains a list of multiple sequence alignments included in the dataset.
 
-| **Field**                 | **Type**              | **Required** | **Default** | **Description**                                                                                                                                            |
-|---------------------------|-----------------------|--------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `path`                    | `string`              | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
-| `format`                  | `string`              | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
-| `num_significant`         | `int` \| None         | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
-| `bit_score`               | `float` \| None       | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
-| `theta`                   | `float` \| None       | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
-| `reference_sequence`      | `string` \| None      | No           | `None`      | The reference sequence identifier in the MSA.                                                                                                              |
-| `sequence_start`          | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
-| `sequence_end`            | `int` \| None         | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
-| `weights`                 | `list[float]` \| None | No           | `None`      | The weights for the MSA.                                                                                                                                   |
-| `weights_path`            | `string` \| None      | No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`.                                                                                    |
-| `reference_sequence_name` | `string` \| None      | No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
-| `sequence_start`          | `int` \| None         | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
+| **Field**                 | **Type**        | **Required** | **Default** | **Description**                                                                                                                                            |
+|---------------------------|-----------------|--------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `path`                    | `string`        | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
+| `format`                  | `string`        | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
+| `num_significant`         | `int \| None`   | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
+| `bit_score`               | `float \| None` | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
+| `theta`                   | `float \| None` | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
+| `reference_sequence_name` | `string \| None`| No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
+| `sequence_start`          | `int \| None`   | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
+| `sequence_end`            | `int \| None`   | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
+| `weights_path`            | `string \| None`| No           | `None`      | The path to the weights file for the MSA. Supported extensions: `.npy`. (Deprecated: use `msa_weights` section instead)                                    |
+
+### MSA Weights
+
+The MSA weights section contains a list of MSA weight files included in the dataset. Each weight file should correspond to an MSA by name.
+
+| **Field** | **Type** | **Required** | **Default** | **Description**                                                         |
+|-----------|----------|--------------|-------------|-------------------------------------------------------------------------|
+| `name`    | `string` | Yes          | N/A         | The name of the weights (should match an MSA name).                     |
+| `path`    | `string` | Yes          | N/A         | The path to the weights file. Supported extensions: `.npy`.             |
+
+Example:
+
+``` toml
+[[ msas ]]
+name = "msa1"
+path = "msas/msa1.a3m"
+format = "fasta"
+
+[[ msa_weights ]]
+name = "msa1"
+path = "msas/msa1_weights.npy"
+```
