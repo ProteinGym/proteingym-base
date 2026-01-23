@@ -182,10 +182,8 @@ class MSAWeights:
         """Create an MSAWeights instance from a manifest section."""
         if section.path:
             weights = np.load(section.path).tolist()
-        elif section.weights:
-            weights = section.weights
         else:
-            raise ValueError("Either path or weights must be provided.")
+            weights = section.weights
         return cls(name=section.name, value=weights)
 
     def as_manifest_section(self, *, path: Path) -> MSAWeightsManifestSection:
