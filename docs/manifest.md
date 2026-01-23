@@ -122,6 +122,8 @@ sequence_end = 10
 [[ msa_weights ]]
 name = "msas"
 path = "msas_weights.npy"
+# or
+# weights = [0, 1, 2, 3]
 ```
 
 ### Top-level
@@ -266,7 +268,9 @@ The MSA weights section contains a list of MSA weight files included in the data
 | **Field** | **Type** | **Required** | **Default** | **Description**                                                         |
 |-----------|----------|--------------|-------------|-------------------------------------------------------------------------|
 | `name`    | `string` | Yes          | N/A         | The name of the weights (should match an MSA name).                     |
-| `path`    | `string` | Yes          | N/A         | The path to the weights file. Supported extensions: `.npy`.             |
+| `path`    | `string` | Yes*         | N/A         | The path to the weights file. Supported extensions: `.npy`.             |
+| `weights` | `list`   | Yes*         | N/A         | A list of MSA weights.                                                  |
+\*Path and weights are mutually exclusive. If we load the weights from a path we cannot add the weights manually.
 
 Example:
 
@@ -279,4 +283,6 @@ format = "fasta"
 [[ msa_weights ]]
 name = "msa1"
 path = "msas/msa1_weights.npy"
+# or
+# weights = [0, 1, 2, 3]
 ```
