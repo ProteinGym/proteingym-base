@@ -48,7 +48,6 @@ def test_msa_manifest_section_with_relative_path(tmp_path: Path) -> None:
         assert True, "MSAManifestSection created successfully with minimal fields."
 
 
-
 def test_msa_manifest_section_missing_path() -> None:
     """A validation error is raised if path is missing."""
     match = (
@@ -177,7 +176,6 @@ def weights_file(tmp_path: Path) -> Path:
     path = tmp_path / "weights.npy"
     np.save(path, arr)
     return path
-
 
 
 def test_msa_weights_manifest_section_with_path(weights_file: Path) -> None:
