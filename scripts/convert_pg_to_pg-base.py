@@ -104,19 +104,21 @@ clinvar = {
     "clinvar_indels_csv" : "https://marks.hms.harvard.edu/proteingym/ProteinGym_v1.3/clinical_indels.csv",
 }
 
-def download_loop(mapping: dict) -> None:
+def download_loop(mapping: dict, download_dir: Path) -> None:
     """Downloads the ProteinGym data using a URL dictionary.
 
     Args:
         mapping (dict): dictionary containing the names as keys, and the download URLs as values.
+        download_dir (Path): directory to download files to
     """
+    download_dir.mkdir(parents=True, exist_ok=True)
 
     for key, url in mapping.items():
         response = requests.get(url, stream=True)
         total_size = int(response.headers.get('content-length', 0))
 
         file_ext = '.csv' if url.endswith('.csv') else '.zip'
-        file_path = Path(f"{key}{file_ext}").resolve()
+        file_path = download_dir / f"{key}{file_ext}"
         
         log.info(f'starting file download for {key}:')
 
@@ -125,7 +127,7 @@ def download_loop(mapping: dict) -> None:
             log.warning(f'Skipping download for {key}{file_ext}')
             continue
 
-        with open(f"{key}{file_ext}", "wb") as f, tqdm(
+        with open(file_path, "wb") as f, tqdm(
             total=total_size, 
             unit='iB', 
             unit_scale=True
@@ -137,21 +139,21 @@ def download_loop(mapping: dict) -> None:
     log.info('file download complete')
     return
 
-def extract_all(mapping: dict) -> None:
-    """Extracts ZIP files and copies CSV files to appropriate directories
+def extract_all(mapping: dict, download_dir: Path) -> None:
+    """Extracts ZIP files to download directory
 
     Args:
         mapping (dict): dictionary containing the names as keys, and the download URLs as values.
+        download_dir (Path): directory where files are downloaded
     """    
     for key, url in mapping.items():
-        if url.endswith('.csv'):
-            pass
-        else:
-            zip_file = Path(f"{key}.zip")
+        if not url.endswith('.csv'):
+            zip_file = download_dir / f"{key}.zip"
+            extract_dir = download_dir / f"{key}_store"
             if zip_file.exists():
                 with zipfile.ZipFile(zip_file, "r") as zip_ref:
-                    zip_ref.extractall(f"{key}_store")
-                    log.info(f"Extracted {key}.zip to {key}_store/")
+                    zip_ref.extractall(extract_dir)
+                    log.info(f"Extracted {key}.zip to {extract_dir}/")
     return
 
 def write_sequence_to_fasta(sequence: str, sequence_id: str, path: Path) -> None:
@@ -179,7 +181,8 @@ def create_dms_manifest(DMS_id: str, references: pl.DataFrame, variant_type: str
         str: filename of the created manifest
     """
     row_dict = references.filter(pl.col('DMS_id') == DMS_id).to_dicts()[0]
-    fasta_dir = Path("fasta_store")
+    fasta_dir = Path("downloads/fasta_store")
+    fasta_dir.mkdir(parents=True, exist_ok=True)
     write_sequence_to_fasta(row_dict['target_seq'], DMS_id, fasta_dir / f"{DMS_id}.fasta")
     
     if variant_type == 'subs':
@@ -256,7 +259,8 @@ def create_clinvar_manifest(DMS_id: str, references: pl.DataFrame, variant_type:
         str: filename of the created manifest
     """
     row_dict = references.filter(pl.col('DMS_id') == DMS_id).to_dicts()[0]
-    fasta_dir = Path("fasta_store")
+    fasta_dir = Path("downloads/fasta_store")
+    fasta_dir.mkdir(parents=True, exist_ok=True)
     write_sequence_to_fasta(row_dict['target_seq'], DMS_id, fasta_dir / f"{DMS_id}.fasta")
     
     common_params = {
@@ -272,14 +276,14 @@ def create_clinvar_manifest(DMS_id: str, references: pl.DataFrame, variant_type:
     if variant_type == 'subs':
         manifest_template = clinvar_subs.template
         common_params.update({
-            'store': "clinvar_substitutions_store",
+            'store': "downloads/clinvar_substitutions_store",
             'msa_weight_path': row_dict['weight_file_name'],
             'msa_length': row_dict['MSA_len'],
         })
     elif variant_type == 'indels':
         manifest_template = clinvar_indels.template
         common_params.update({
-            'store': "clinvar_indels_store",
+            'store': "downloads/clinvar_indels_store",
             'msa_weight_path': row_dict['weight_file_name'],
             'msa_length': row_dict.get('MSA_len', ''),
         })
@@ -395,15 +399,14 @@ if __name__ == "__main__":
     parser.add_argument('--all', action='store_true', help='Process all dataset and variant types')
     args = parser.parse_args()
     
+    download_dir = Path("downloads")
     datasets_output_dir = Path("output/datasets")
     manifests_output_dir = Path("output/manifests")
     splits_output_dir = Path("output/splits")
 
-    fasta_store_dir = Path("fasta_store")
     datasets_output_dir.mkdir(parents=True, exist_ok=True)
     manifests_output_dir.mkdir(parents=True, exist_ok=True)
     splits_output_dir.mkdir(parents=True, exist_ok=True)
-    fasta_store_dir.mkdir(exist_ok=True)
 
     if not args.all and (not args.dataset_type or not args.variant_type):
         parser.error("Either --all or both --dataset-type and --variant-type must be specified")
@@ -412,8 +415,8 @@ if __name__ == "__main__":
         temp_path = Path(temp_dir)
         
         # for mapping in [dms, clinvar]:
-        #     download_loop(mapping)
-        #     extract_all(mapping)
+        #     download_loop(mapping, download_dir)
+        #     extract_all(mapping, download_dir)
         
         if args.all:
             combinations = [('dms', 'subs'), ('dms', 'indels'), ('clinvar', 'subs'), ('clinvar', 'indels')]
@@ -423,11 +426,12 @@ if __name__ == "__main__":
         n_datasets = 0
         for dataset_type, variant_type in combinations:
             csv_name = f"{dataset_type}_{variant_type}_csv.csv"
-            if not Path(csv_name).exists():
+            csv_path = download_dir / csv_name
+            if not csv_path.exists():
                 log.warning(f"Skipping {csv_name} - file not found")
                 continue
                 
-            reference = pl.read_csv(csv_name)
+            reference = pl.read_csv(csv_path)
 
             # Fix for DOI errors:
             if csv_name == "dms_subs_csv.csv":
