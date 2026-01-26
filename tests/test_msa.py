@@ -12,7 +12,12 @@ from Bio.SeqRecord import SeqRecord
 from pydantic import ValidationError
 
 from proteingym.base import Dataset
-from proteingym.base.msa import MSA, MSAFormat, MSAManifestSection
+from proteingym.base.msa import (
+    MSA,
+    MSAFormat,
+    MSAManifestSection,
+    MSAWeightsManifestSection,
+)
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
 
@@ -41,37 +46,6 @@ def test_msa_manifest_section_with_relative_path(tmp_path: Path) -> None:
         raise AssertionError("Could not create MSAManifestSection") from e
     else:
         assert True, "MSAManifestSection created successfully with minimal fields."
-
-    weights_path = tmp_path / "weights.npy"
-    weights_path.touch()
-    context = {"relative_to_path": tmp_path}
-
-    try:
-        MSAManifestSection.model_validate(
-            {"path": "test.msa", "weights_path": "weights.npy"}, context=context
-        )
-    except ValidationError as e:
-        raise AssertionError(
-            "Could not create MSAManifestSection with weights_path"
-        ) from e
-    else:
-        assert True, "MSAManifestSection created successfully with weights_path."
-
-
-def test_msa_manifest_section_invalid_weight_path_format(tmp_path: Path) -> None:
-    """A validation error is raised if weights_path has invalid format."""
-    path = tmp_path / "test.msa"
-    path.touch()
-    weights_path = tmp_path / "weights.txt"
-    weights_path.touch()
-
-    with pytest.raises(
-        ValidationError, match="Unsupported MSA weight file format: txt"
-    ):
-        MSAManifestSection(
-            path=path,
-            weights_path=weights_path,
-        )
 
 
 def test_msa_manifest_section_missing_path() -> None:
@@ -204,50 +178,87 @@ def weights_file(tmp_path: Path) -> Path:
     return path
 
 
-def test_msa_from_manifest_section_with_weights_path(
-    fasta_file: Path, weights_file: Path
+def test_msa_weights_manifest_section_with_path(weights_file: Path) -> None:
+    """An MSAWeightsManifestSection can be created with a path."""
+    try:
+        MSAWeightsManifestSection(name="test", path=weights_file)
+    except ValidationError as e:
+        raise AssertionError("Could not create MSAWeightsManifestSection") from e
+    else:
+        assert True, "MSAWeightsManifestSection created successfully."
+
+
+def test_msa_weights_manifest_section_serialize_with_relative_path(
+    tmp_path: Path,
 ) -> None:
-    """An MSA can be created from a manifest section with weights_path."""
-    section = MSAManifestSection(
-        path=fasta_file,
-        weights_path=weights_file,
-    )
+    """MSAWeightsManifestSection path is serialized relative to context."""
+    weights_file = tmp_path / "weights.npy"
+    np.save(weights_file, np.array([0.1, 0.5, 0.4]))
 
-    msa = MSA.from_manifest_section(section)
+    section = MSAWeightsManifestSection(name="test", path=weights_file)
+    context = {"relative_to_path": tmp_path}
 
-    assert msa.weights == [0.1, 0.5, 0.4]
+    dumped = section.model_dump(context=context)
+
+    assert dumped["path"] == "weights.npy"
 
 
-def test_msa_manifest_section_raises_error_with_both_weights_and_weights_path(
-    fasta_file: Path, weights_file: Path
-) -> None:
-    """A ValueError is raised if both weights and weights_path are provided."""
+def test_msa_weights_manifest_section_invalid_format(tmp_path: Path) -> None:
+    """A validation error is raised if weights file has invalid format."""
+    weights_path = tmp_path / "weights.txt"
+    weights_path.touch()
 
     with pytest.raises(
-        ValueError,
-        match="Only one of weights and weights_path can be provided in the "
-        "manifest section.",
+        ValidationError, match="Unsupported MSA weight file format: txt"
     ):
-        MSAManifestSection(
-            path=fasta_file,
-            weights=[0.1, 0.5, 0.4],
-            weights_path=weights_file,
-        )
+        MSAWeightsManifestSection(name="test", path=weights_path)
 
 
-def test_msa_from_manifest_section_with_weights(
-    fasta_file: Path,
-) -> None:
-    """An MSA can be created from a manifest section with weights."""
-    arr = [0.1, 0.5, 0.4]
+def test_msa_weights_from_manifest_section_with_path(weights_file: Path) -> None:
+    """MSAWeights can be created from a manifest section with path."""
+    from proteingym.base.msa import MSAWeights
 
-    section = MSAManifestSection(
-        path=fasta_file,
-        weights=arr,
-    )
+    section = MSAWeightsManifestSection(name="test", path=weights_file)
+    weights = MSAWeights.from_manifest_section(section)
 
-    msa = MSA.from_manifest_section(section)
-    assert msa.weights == arr
+    assert weights.name == "test"
+    assert weights.value == [0.1, 0.5, 0.4]
+
+
+def test_msa_weights_dump_to_file(tmp_path: Path) -> None:
+    """MSAWeights can be dumped to a file."""
+    from proteingym.base.msa import MSAWeights
+
+    weights = MSAWeights(name="test", value=[0.1, 0.5, 0.4])
+    path = weights.dump(path=tmp_path / "test_weights.npy")
+
+    loaded_weights = np.load(path).tolist()
+    assert loaded_weights == [0.1, 0.5, 0.4]
+
+
+def test_msa_weights_dump_to_directory(tmp_path: Path) -> None:
+    """MSAWeights can be dumped to a file inside a directory."""
+    from proteingym.base.msa import MSAWeights
+
+    weights = MSAWeights(name="test", value=[0.1, 0.5, 0.4])
+    path = weights.dump(path=tmp_path)
+
+    assert path.name == "test_weights.npy"
+    loaded_weights = np.load(path).tolist()
+    assert loaded_weights == [0.1, 0.5, 0.4]
+
+
+def test_msa_weights_as_manifest_section(tmp_path: Path) -> None:
+    """MSAWeights can be converted to a manifest section."""
+    from proteingym.base.msa import MSAWeights
+
+    weights = MSAWeights(name="test", value=[0.1, 0.5, 0.4])
+    weights_path = weights.dump(path=tmp_path)
+
+    section = weights.as_manifest_section(path=weights_path)
+
+    assert section.name == "test"
+    assert section.path == weights_path
 
 
 def test_msa_as_manifest_section(fasta_file: Path) -> None:
