@@ -76,7 +76,10 @@ theta = 0.8
 reference_sequence_name = "abc"
 sequence_start = 1
 sequence_end = 10
-weights = [0.1, 0.2, 0.3]  # Can also be loaded from `weights_path`
+
+[[ msa_weights ]]
+name = "msas"
+path = "msas_weights.npy"
 """
 
 
@@ -87,7 +90,7 @@ def manifest_path(tmp_path: Path, manifest_contents: str) -> Path:
     sequence_file = tmp_path / "sequences.fasta"
     structure_file = tmp_path / "structures.pdb"
     msa_file = tmp_path / "msas.a3m"
-    msa_weights_file = tmp_path / "weights.npy"
+    msa_weights_file = tmp_path / "msas_weights.npy"
     assay_file = tmp_path / "assay.csv"
     assay_raw_file = tmp_path / "assay_raw.csv"
     for path in (

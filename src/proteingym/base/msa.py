@@ -15,7 +15,6 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
-    model_validator,
 )
 
 
@@ -31,6 +30,41 @@ class MSAWeightFormat(StrEnum):
 
     NPY = "npy"
     """NumPy binary file format."""
+
+
+class MSAWeightsManifestSection(BaseModel):
+    """The manifest section for MSA weights."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        use_attribute_docstrings=True,
+        str_min_length=1,
+    )
+
+    name: str
+    """The name of the weights (should match an MSA name)."""
+
+    path: FilePath
+    """The path to the weights file."""
+
+    @field_validator("path", mode="before", check_fields=True)
+    @classmethod
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
+        """Extend the path with the `relative_to_path` from the context."""
+        if info.context and info.context.get("relative_to_path"):
+            path = info.context["relative_to_path"] / path
+        weights_format = path.suffix[1:].lower()
+        if weights_format not in MSAWeightFormat:
+            raise ValueError(f"Unsupported MSA weight file format: {weights_format}")
+        return path
+
+    @field_serializer("path", check_fields=True)
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
+        """Serialize the path as a Posix path."""
+        if info.context and info.context.get("relative_to_path"):
+            path = path.relative_to(info.context["relative_to_path"])
+        return path.as_posix()
 
 
 class MSAMetadataManifestSection(BaseModel):
@@ -91,12 +125,6 @@ class MSAManifestSection(MSAMetadataManifestSection):
     format: MSAFormat = MSAFormat.FASTA
     """The format of the multiple sequence alignment file."""
 
-    weights_path: FilePath | None = Field(default=None, exclude=True)
-    """The weight file for each sequence in the MSA."""
-
-    weights: list[float] | None = None
-    """The weights for each sequence in the MSA (for internal manifest)."""
-
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the multiple sequence alignment."""
 
@@ -109,36 +137,6 @@ class MSAManifestSection(MSAMetadataManifestSection):
             path = info.context["relative_to_path"] / path
         return path
 
-    @field_validator("weights_path", mode="before", check_fields=True)
-    @classmethod
-    def validate_weights_path(
-        cls, weights_path: Path | None, info: ValidationInfo
-    ) -> Path | None:
-        """Extend the weights_path with the `relative_to_path` from the context."""
-
-        if (
-            weights_path is not None
-            and info.context
-            and info.context.get("relative_to_path")
-        ):
-            weights_path = info.context["relative_to_path"] / weights_path
-
-        weights_format = weights_path.suffix[1:].lower()
-        if weights_format not in MSAWeightFormat:
-            raise ValueError(f"Unsupported MSA weight file format: {weights_format}")
-        return weights_path
-
-    @model_validator(mode="after")
-    def check_weights_and_weights_path(self) -> "MSAManifestSection":
-        """Ensure that both weights and weights_path are not provided together."""
-
-        if self.weights and self.weights_path:
-            raise ValueError(
-                "Only one of weights and weights_path can be provided in the manifest"
-                " section."
-            )
-        return self
-
     @field_serializer("path", check_fields=True)
     def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
@@ -150,6 +148,35 @@ class MSAManifestSection(MSAMetadataManifestSection):
     def _serialize_str_enum(self, fmt: MSAFormat) -> str:
         """Serialize a StrEnum as a string."""
         return fmt.value
+
+
+@dataclasses.dataclass
+class MSAWeights:
+    """MSA weights model."""
+
+    name: str
+    """The name of the weights (should match an MSA name)."""
+
+    value: list[np.array]
+    """The weight values."""
+
+    @classmethod
+    def from_manifest_section(cls, section: MSAWeightsManifestSection) -> "MSAWeights":
+        """Create an MSAWeights instance from a manifest section."""
+        weights = np.load(section.path).tolist()
+        return cls(name=section.name, value=weights)
+
+    def as_manifest_section(self, *, path: Path) -> MSAWeightsManifestSection:
+        """Create a manifest section from the MSAWeights instance."""
+        return MSAWeightsManifestSection(name=self.name, path=path)
+
+    def dump(self, *, path: Path | None = None) -> Path:
+        """Dump the MSA weights to a file."""
+        path = path or Path.cwd()
+        if path.is_dir():
+            path /= f"{self.name}_weights.npy"
+        np.save(path, np.array(self.value))
+        return path
 
 
 @dataclasses.dataclass
@@ -221,21 +248,23 @@ class MSA:
         return "\n".join(lines)
 
     @classmethod
-    def from_manifest_section(cls, section: MSAManifestSection) -> "MSA":
+    def from_manifest_section(
+        cls,
+        section: MSAManifestSection,
+        weights_section: MSAWeightsManifestSection | None = None,
+    ) -> "MSA":
         """Create an MSA instance from a manifest section.
 
-        Raises :
+        Args:
+            section: The MSA manifest section.
+            weights_section: Optional weights manifest section.
+
+        Raises:
             NotImplementedError if the file type is not supported.
-            ValueError if both weights and weights_path are provided.
         """
         name = section.name or section.path.stem
         value = AlignIO.read(section.path, section.format.value)
-        if section.weights_path:
-            weights = np.load(section.weights_path).tolist()
-        elif section.weights:
-            weights = section.weights
-        else:
-            weights = None
+        weights = np.load(weights_section.path).tolist() if weights_section else None
         return MSA(
             name=name,
             value=value,
@@ -268,7 +297,6 @@ class MSA:
             reference_sequence_name=self.reference_sequence_name,
             sequence_start=self.sequence_start,
             sequence_end=self.sequence_end,
-            weights=self.weights,
         )
 
     def dump(
