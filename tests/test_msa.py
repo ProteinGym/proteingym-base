@@ -188,26 +188,6 @@ def test_msa_weights_manifest_section_with_path(weights_file: Path) -> None:
         assert True, "MSAWeightsManifestSection created successfully."
 
 
-def test_msa_weights_manifest_section_with_weights() -> None:
-    """An MSAWeightsManifestSection can be created with weights."""
-    try:
-        MSAWeightsManifestSection(name="test", weights=[0.1, 0.5, 0.4])
-    except ValidationError as e:
-        raise AssertionError("Could not create MSAWeightsManifestSection") from e
-    else:
-        assert True, "MSAWeightsManifestSection created successfully."
-
-
-def test_msa_weights_manifest_section_serialize_with_weights_only() -> None:
-    """MSAWeightsManifestSection with only weights serializes path as None."""
-    section = MSAWeightsManifestSection(name="test", weights=[0.1, 0.5, 0.4])
-
-    dumped = section.model_dump()
-
-    assert dumped["path"] is None
-    assert dumped["weights"] == [0.1, 0.5, 0.4]
-
-
 def test_msa_weights_manifest_section_serialize_with_relative_path(
     tmp_path: Path,
 ) -> None:
@@ -234,46 +214,11 @@ def test_msa_weights_manifest_section_invalid_format(tmp_path: Path) -> None:
         MSAWeightsManifestSection(name="test", path=weights_path)
 
 
-def test_msa_weights_manifest_section_raises_error_with_both(
-    weights_file: Path,
-) -> None:
-    """A ValueError is raised if both path and weights are provided."""
-    with pytest.raises(
-        ValueError,
-        match="Only one of path or weights can be provided.",
-    ):
-        MSAWeightsManifestSection(
-            name="test",
-            path=weights_file,
-            weights=[0.1, 0.5, 0.4],
-        )
-
-
-def test_msa_weights_manifest_section_raises_error_with_neither() -> None:
-    """A ValueError is raised if neither path nor weights are provided."""
-    with pytest.raises(
-        ValueError,
-        match="Either path or weights must be provided.",
-    ):
-        MSAWeightsManifestSection(name="test")
-
-
 def test_msa_weights_from_manifest_section_with_path(weights_file: Path) -> None:
     """MSAWeights can be created from a manifest section with path."""
     from proteingym.base.msa import MSAWeights
 
     section = MSAWeightsManifestSection(name="test", path=weights_file)
-    weights = MSAWeights.from_manifest_section(section)
-
-    assert weights.name == "test"
-    assert weights.value == [0.1, 0.5, 0.4]
-
-
-def test_msa_weights_from_manifest_section_with_weights() -> None:
-    """MSAWeights can be created from a manifest section with weights."""
-    from proteingym.base.msa import MSAWeights
-
-    section = MSAWeightsManifestSection(name="test", weights=[0.1, 0.5, 0.4])
     weights = MSAWeights.from_manifest_section(section)
 
     assert weights.name == "test"

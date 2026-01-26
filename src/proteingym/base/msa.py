@@ -15,7 +15,6 @@ from pydantic import (
     ValidationInfo,
     field_serializer,
     field_validator,
-    model_validator,
 )
 
 
@@ -46,27 +45,13 @@ class MSAWeightsManifestSection(BaseModel):
     name: str
     """The name of the weights (should match an MSA name)."""
 
-    path: FilePath | None = None
+    path: FilePath
     """The path to the weights file."""
-
-    weights: list[float] | None = None
-    """The weights values (alternative to path)."""
-
-    @model_validator(mode="after")
-    def check_path_or_weights(self) -> "MSAWeightsManifestSection":
-        """Ensure that either path or weights is provided, but not both."""
-        if self.path is None and self.weights is None:
-            raise ValueError("Either path or weights must be provided.")
-        if self.path is not None and self.weights is not None:
-            raise ValueError("Only one of path or weights can be provided.")
-        return self
 
     @field_validator("path", mode="before", check_fields=True)
     @classmethod
-    def validate_path(cls, path: Path | None, info: ValidationInfo) -> Path | None:
+    def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Extend the path with the `relative_to_path` from the context."""
-        if path is None:
-            return None
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         weights_format = path.suffix[1:].lower()
@@ -75,10 +60,8 @@ class MSAWeightsManifestSection(BaseModel):
         return path
 
     @field_serializer("path", check_fields=True)
-    def serialize_path(self, path: Path | None, info: SerializationInfo) -> str | None:
+    def serialize_path(self, path: Path, info: SerializationInfo) -> str:
         """Serialize the path as a Posix path."""
-        if path is None:
-            return None
         if info.context and info.context.get("relative_to_path"):
             path = path.relative_to(info.context["relative_to_path"])
         return path.as_posix()
@@ -174,16 +157,13 @@ class MSAWeights:
     name: str
     """The name of the weights (should match an MSA name)."""
 
-    value: list[float]
+    value: list[np.array]
     """The weight values."""
 
     @classmethod
     def from_manifest_section(cls, section: MSAWeightsManifestSection) -> "MSAWeights":
         """Create an MSAWeights instance from a manifest section."""
-        if section.path:
-            weights = np.load(section.path).tolist()
-        else:
-            weights = section.weights
+        weights = np.load(section.path).tolist()
         return cls(name=section.name, value=weights)
 
     def as_manifest_section(self, *, path: Path) -> MSAWeightsManifestSection:
