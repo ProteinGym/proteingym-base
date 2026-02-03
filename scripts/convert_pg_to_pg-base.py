@@ -56,6 +56,8 @@ be adapted:
 - VG08_BPP22_Tsuboyama_2023_2GP8_indels
 - VRPI_BPT7_Tsuboyama_2023_2WNM_indels
 
+################ Clinvar Subs #############################################
+
 """
 import requests
 from tqdm import tqdm
@@ -428,9 +430,9 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         
-        # for mapping in [dms, clinvar]:
-        #     download_loop(mapping, download_dir)
-        #     extract_all(mapping, download_dir)
+        for mapping in [dms, clinvar]:
+            download_loop(mapping, download_dir)
+            extract_all(mapping, download_dir)
         
         if args.all:
             combinations = [('dms', 'subs'), ('dms', 'indels'), ('clinvar', 'subs'), ('clinvar', 'indels')]
