@@ -65,3 +65,11 @@ link = "alphafold.ebi.ac.uk/entry/A0A1I9GEU1"
 [[ msas ]]
 path = "./NEIME_2019/MSA/msa.a2m"
 format = "fasta"
+
+[[ msa_weights ]]
+name = "msa"
+path = "./NEIME_2019/MSA/msa_weights.npy"
+
+[[ msa_weights ]]
+name = "transformer_msa"
+path = "./NEIME_2019/MSA/A0A1I9GEU1_NEIME_theta_0.2.npy"

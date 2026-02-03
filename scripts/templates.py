@@ -20,7 +20,7 @@ doi = "$doi"
 
 [[ assays ]]
 name = "$dms_id"
-path = "../../dms_substitutions_store/cv_folds_singles_substitutions/$dms_filename"
+path = "../../downloads/dms_substitutions_store/cv_folds_singles_substitutions/$dms_filename"
 sequence_alphabet = "AA"
 sequence_alias = "mutated_sequence"
 
@@ -65,15 +65,22 @@ name = "fold_modulo_5"
 name = "fold_contiguous_5"
 
 [[ sequences ]]
-path = "../../fasta_store/$dms_id.fasta"
+path = "../../downloads/fasta_store/$dms_id.fasta"
 type = "wild_type"
 alphabet = "AA"
 uniprot_id = "$uniprot_id"
 
 [[ msas ]]
-path = "../../dms_msa_alignment_store/DMS_msa_files/$msa_filename"
+path = "../../downloads/dms_msa_alignment_store/DMS_msa_files/$msa_filename"
 format = "fasta"
-weights_path = "../../dms_msa_weights_store/DMS_msa_weights/$weight_file_name"
+
+[[ msa_weights ]]
+name = "msa"
+path = "../../downloads/dms_msa_weights_store/DMS_msa_weights/$weight_file_name"
+
+[[ msa_weights ]]
+name = "msa_transformer"
+path = "../../downloads/dms_msa_weights_store/DMS_msa_weights/DMS_msa_weights_for_MSA_Transformer/$weight_file_name"
 
 [ msas.metadata ]
 bitscore = "$msa_bitscore"
@@ -91,7 +98,7 @@ perc_cov = "$msa_perc_cov"
 num_cov = "$msa_num_cov"
 
 [[ structures ]]
-path = "../../dms_protein_structures_store/ProteinGym_AF2_structures/$pdb_file"
+path = "../../downloads/dms_protein_structures_store/ProteinGym_AF2_structures/$pdb_file"
 
 [ structures.metadata ]
 pdb_range = "$pdb_range"
@@ -109,7 +116,7 @@ doi = "$doi"
 
 [[ assays ]]
 name = "$dms_id"
-path = "../../dms_substitutions_multiples_store/cv_folds_multiples_substitutions/$dms_filename"
+path = "../../downloads/dms_substitutions_multiples_store/cv_folds_multiples_substitutions/$dms_filename"
 sequence_alphabet = "AA"
 sequence_alias = "mutated_sequence"
 
@@ -148,15 +155,22 @@ alias = "DMS_score"
 name = "fold_rand_multiples"
 
 [[ sequences ]]
-path = "../../fasta_store/$dms_id.fasta"
+path = "../../downloads/fasta_store/$dms_id.fasta"
 type = "wild_type"
 alphabet = "AA"
 uniprot_id = "$uniprot_id"
 
 [[ msas ]]
-path = "../../dms_msa_alignment_store/DMS_msa_files/$msa_filename"
+path = "../../downloads/dms_msa_alignment_store/DMS_msa_files/$msa_filename"
 format = "fasta"
-weights_path = "../../dms_msa_weights_store/DMS_msa_weights/$weight_file_name"
+
+[[ msa_weights ]]
+name = "msa"
+path = "../../downloads/dms_msa_weights_store/DMS_msa_weights/$weight_file_name"
+
+[[ msa_weights ]]
+name = "msa_transformer"
+path = "../../downloads/dms_msa_weights_store/DMS_msa_weights/DMS_msa_weights_for_MSA_Transformer/$weight_file_name"
 
 [ msas.metadata ]
 bitscore = "$msa_bitscore"
@@ -174,7 +188,7 @@ perc_cov = "$msa_perc_cov"
 num_cov = "$msa_num_cov"
 
 [[ structures ]]
-path = "../../dms_protein_structures_store/ProteinGym_AF2_structures/$pdb_file"
+path = "../../downloads/dms_protein_structures_store/ProteinGym_AF2_structures/$pdb_file"
 
 [ structures.metadata ]
 pdb_range = "$pdb_range"
@@ -192,7 +206,7 @@ doi = "$doi"
 
 [[ assays ]]
 name = "$dms_id"
-path = "../../dms_indels_store/cv_folds_indels/$dms_filename"
+path = "../../downloads/dms_indels_store/cv_folds_indels/$dms_filename"
 sequence_alphabet = "AA"
 sequence_alias = "mutated_sequence"
 
@@ -231,15 +245,22 @@ alias = "DMS_score"
 name = "fold_random_5"
 
 [[ sequences ]]
-path = "../../fasta_store/$dms_id.fasta"
+path = "../../downloads/fasta_store/$dms_id.fasta"
 type = "wild_type"
 alphabet = "AA"
 uniprot_id = "$uniprot_id"
 
 [[ msas ]]
-path = "../../dms_msa_alignment_store/DMS_msa_files/$msa_filename"
+path = "../../downloads/dms_msa_alignment_store/DMS_msa_files/$msa_filename"
 format = "fasta"
-weights_path = "../../dms_msa_weights_store/DMS_msa_weights/$weight_file_name"
+
+[[ msa_weights ]]
+name = "msa"
+path = "../../downloads/dms_msa_weights_store/DMS_msa_weights/$weight_file_name"
+
+[[ msa_weights ]]
+name = "msa_transformer"
+path = "../../downloads/dms_msa_weights_store/DMS_msa_weights/DMS_msa_weights_for_MSA_Transformer/$weight_file_name"
 
 [ msas.metadata ]
 bitscore = "$msa_bitscore"
@@ -276,16 +297,19 @@ description = "Classification of ClinVar into Pathogenic or Benign"
 "DMS Score" = "DMS_bin_score"
 
 [[ sequences ]]
-path = "../../fasta_store/$dms_id.fasta"
+path = "../../downloads/fasta_store/$dms_id.fasta"
 type = "wild_type"
 alphabet = "AA"
 
 [[ msas ]]
-path = "../../msa_alignment_store/subs/$msa_filename"
+path = "../../downloads/msa_alignment_store/subs/$msa_filename"
 format = "fasta"
 sequence_start = "$msa_start"
 sequence_end = "$msa_end"
-weights_path = "../../msa_weights_store/subs/$msa_weight_path"
+
+[[ msa_weights ]]
+name = "msa"
+path = "../../downloads/clinvar_msa_weights_store/subs/$weight_file_name"
 
 [ msas.metadata ]
 EVE_model_path = "$eve_model_path"
@@ -321,7 +345,6 @@ path = "msa alignment_store/subs/$msa_filename"
 format = "fasta"
 sequence_start = "$msa_start"
 sequence_end = "$msa_end"
-weights_path = "$msa_weight_path"
 
 [ msas.metadata ]
 EVE_model_path = "$eve_model_path"

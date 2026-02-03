@@ -36,10 +36,25 @@ pre-print DOI.
 - F7YBW8_MESOW_Aakre_2015 contains only 4 splits for the Kfold splits. The same
 goes for SPG1_STRSG_Wu_2016
 
-NOTE: We only store the regular MSA weights, not the MSA Transformer weights
-See issue #362
+- HMDH_HUMAN_Jiang_2019 does not link back to a DOI but an unparsable URL. 
 
----------------- TODO LOG ----------------
+################ DMS INDELS #############################################
+
+- Tsuboyama's big paper where the majority of datasets come from contains a typo
+in the DOI. The DOI contains an extra 9 that shouldn't be there:
+`10.1038/s41586-023-06328-69` -> `10.1038/s41586-023-06328-6`
+
+Missing / wrongly annotated transformer weights:
+Some seem to either lack the msa transformer weight or have an weight file at different theta.
+We've followed the weight files as described in the main overview CSV. The following cases need to
+be adapted:
+- B1LPA6_ECOSM
+- HCP_LAMBD_Tsuboyama_2023_2L6Q_indels
+- POLG_PESV_Tsuboyama_2023_2MXD_indels
+- Q8EG35_SHEON_Campbell_2022_indels
+- RPC1_BP434_Tsuboyama_2023_1R69_indels
+- VG08_BPP22_Tsuboyama_2023_2GP8_indels
+- VRPI_BPT7_Tsuboyama_2023_2WNM_indels
 
 """
 import requests
@@ -269,23 +284,21 @@ def create_clinvar_manifest(DMS_id: str, references: pl.DataFrame, variant_type:
         'msa_filename': row_dict['MSA_filename'],
         'msa_start': row_dict['MSA_start'],
         'msa_end': row_dict['MSA_end'],
-        'eve_model_path': row_dict['EVE_model_path'],
-        'alignment_source': row_dict['alignment_source'],
     }
-    
+
     if variant_type == 'subs':
         manifest_template = clinvar_subs.template
         common_params.update({
             'store': "downloads/clinvar_substitutions_store",
             'msa_weight_path': row_dict['weight_file_name'],
-            'msa_length': row_dict['MSA_len'],
+            'eve_model_path': row_dict['EVE_model_path'],
+            'alignment_source': row_dict['alignment_source'],
         })
     elif variant_type == 'indels':
         manifest_template = clinvar_indels.template
         common_params.update({
             'store': "downloads/clinvar_indels_store",
-            'msa_weight_path': row_dict['weight_file_name'],
-            'msa_length': row_dict.get('MSA_len', ''),
+            'dataset_source': row_dict['dataset']
         })
     else:
         log.error(f"Unknown ClinVar variant type: {variant_type}")
@@ -399,6 +412,7 @@ if __name__ == "__main__":
     parser.add_argument('--all', action='store_true', help='Process all dataset and variant types')
     args = parser.parse_args()
     
+    #If you change this change template paths aswell.
     download_dir = Path("downloads")
     datasets_output_dir = Path("output/datasets")
     manifests_output_dir = Path("output/manifests")
@@ -442,34 +456,40 @@ if __name__ == "__main__":
                 reference = reference.with_columns(pl.col("jo").str.replace("10.1101/2022.12.06.519122", "10.1038/s41586-023-06954-0"))
                 reference = reference.with_columns(pl.col("jo").str.replace("10.1101/2022.12.06.519127", "10.1038/s41586-023-06954-0"))
 
+            if csv_name == "dms_indels_csv.csv":
+                # 9 after doi
+                reference = reference.with_columns(pl.col("jo").str.replace("10.1038/s41586-023-06328-69", "10.1038/s41586-023-06328-6"))
+
             datasets_to_create = reference['DMS_id'].to_list()
             
             for dataset_id in datasets_to_create:
                 if (datasets_output_dir / (dataset_id + '.pgdata')).exists():
+                    log.warning(f"Skipping {dataset_id} - already exists")
                     continue
                 
                 manifest_path = create_manifest(dataset_id, reference, dataset_type, variant_type, temp_path)
                 
                 # Handle multiples if they exist
                 # This creates a separate .pgdata for the multiples assay.
-                multiple_mutations = reference.filter(pl.col('DMS_id') == dataset_id)['DMS_number_multiple_mutants']
-                if dataset_type == 'dms' and variant_type == 'subs' and multiple_mutations[0] > 0:
-                    multiples_manifest_path = create_multiples_manifest(dataset_id, reference, temp_path)
-                    if multiples_manifest_path:
-                        final_multiples_path = manifests_output_dir / f"{dataset_id}_multiples.toml"
-                        shutil.move(multiples_manifest_path, final_multiples_path)
-                        
-                        multiples_dataset = validate_manifest(final_multiples_path)
-                        multiples_dataset_filepath = dump_dataset(multiples_dataset)
+                if dataset_type == 'dms' and variant_type == 'subs':
+                    multiple_mutations = reference.filter(pl.col('DMS_id') == dataset_id)['DMS_number_multiple_mutants']
+                    if multiple_mutations[0] > 0:
+                        multiples_manifest_path = create_multiples_manifest(dataset_id, reference, temp_path)
+                        if multiples_manifest_path:
+                            final_multiples_path = manifests_output_dir / f"{dataset_id}_multiples.toml"
+                            shutil.move(multiples_manifest_path, final_multiples_path)
+                            
+                            multiples_dataset = validate_manifest(final_multiples_path)
+                            multiples_dataset_filepath = dump_dataset(multiples_dataset)
 
-                        subsets = Subsets(dataset=multiples_dataset)
-                        random = PredefinedSplitter(split_column="fold_rand_multiples", split_order=range(5))
-                        subsets.update(random=random.split(dataset=multiples_dataset))
+                            subsets = Subsets(dataset=multiples_dataset)
+                            random = PredefinedSplitter(split_column="fold_rand_multiples", split_order=range(5))
+                            subsets.update(random=random.split(dataset=multiples_dataset))
 
-                        multiples_splits_filepath = subsets.dump()
+                            multiples_splits_filepath = subsets.dump()
 
-                        shutil.move(multiples_dataset_filepath, datasets_output_dir)
-                        shutil.move(multiples_splits_filepath, splits_output_dir)
+                            shutil.move(multiples_dataset_filepath, datasets_output_dir)
+                            shutil.move(multiples_splits_filepath, splits_output_dir)
 
                 if manifest_path:
                     final_manifest_path = manifests_output_dir / f"{dataset_id}.toml"
@@ -483,6 +503,30 @@ if __name__ == "__main__":
                         with open(final_manifest_path, 'w') as file:
                             file.write(content)
                     
+                    #Fix for no DOI in HMDH_HUMAN_Jiang:
+                    if dataset_id == 'HMDH_HUMAN_Jiang_2022':
+                        with open(final_manifest_path, 'r') as file:
+                            content = file.read()
+                            content = content.replace('[publication]', '')
+                            content = content.replace('doi = "https://hdl.handle.net/1807/98076"', '')
+                        with open(final_manifest_path, 'w') as file:
+                            file.write(content)
+
+                    #Fix for multiple datasets having no msa_transformer weights
+                    if dataset_id in [
+                        'B1LPA6_ECOSM_Russ_2020_indels',
+                        'HCP_LAMBD_Tsuboyama_2023_2L6Q_indels',
+                        'POLG_PESV_Tsuboyama_2023_2MXD_indels',
+                        'Q8EG35_SHEON_Campbell_2022_indels',
+                        'RPC1_BP434_Tsuboyama_2023_1R69_indels',
+                        'VG08_BPP22_Tsuboyama_2023_2GP8_indels',
+                        'VRPI_BPT7_Tsuboyama_2023_2WNM_indels',
+                        ]:
+                        with open(final_manifest_path, 'r') as file:
+                            lines = file.readlines()
+                        del lines[61:64] #remove msa_transformer weights
+                        with open(final_manifest_path, 'w') as file:
+                            file.writelines(lines)
 
                     dataset = validate_manifest(final_manifest_path)
                     dataset_filepath = dump_dataset(dataset)
@@ -509,7 +553,8 @@ if __name__ == "__main__":
                             subsets.update(random=random.split(dataset=dataset))
                         
                         if variant_type == "indels":
-                            random = PredefinedSplitter(split_column="fold_random_5")
+                            random = PredefinedSplitter(split_column="fold_random_5", split_order=range(5))
+                            subsets.update(random=random.split(dataset=dataset))
 
                     splits_filepath = subsets.dump()
 
