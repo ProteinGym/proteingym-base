@@ -22,3 +22,12 @@ coverage.*
 /example_data/neime_2019_python_example.toml
 /example_data/NEIME_2019.pgdata
 /example_data/neime_2019_complete.toml
+
+# Converting PG1 - PG2 in scripts folder
+# Ignore everything except original scripts
+/scripts
+!/scripts/templates.py
+!/scripts/conversion_tables.py
+!/scripts/convert_pg_to_pg-base.py
+# Ignore datasets, store PG datasets in benchmark
+/datasets

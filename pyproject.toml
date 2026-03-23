@@ -41,6 +41,7 @@ dev = [
     "mkdocstrings-python",
     "mkdocs-autoapi",
     "mkdocs-jupyter",
+    "tqdm",
 ]
 
 [tool.hatch.version]
