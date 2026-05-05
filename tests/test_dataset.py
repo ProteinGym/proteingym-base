@@ -4,7 +4,7 @@ from zipfile import ZipFile
 
 import pytest
 from Bio.Align import MultipleSeqAlignment
-from Bio.PDB.Structure import Structure as BioStructure
+from biotite.structure import AtomArray
 from Bio.Seq import Seq
 from typer.testing import CliRunner
 
@@ -200,7 +200,7 @@ def test_list_datasets_json_serialization() -> None:
 
     structure = Structure(
         name="test",
-        value=BioStructure("test"),
+        value=AtomArray(0),
     )
 
     msa = MSA(name="test", value=MultipleSeqAlignment([]))
@@ -214,7 +214,7 @@ def test_list_datasets_json_serialization() -> None:
 
     assert isinstance(dataset_obj, dict)
     assert dataset_obj["sequences"][0]["value"] == "test"
-    assert dataset_obj["structures"][0]["value"] == "<Structure id=test>"
+    assert dataset_obj["structures"][0]["value"] == ""
     assert dataset_obj["msas"][0]["value"] == "Alignment with 0 rows and 0 columns"
 
 

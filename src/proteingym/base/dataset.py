@@ -442,12 +442,12 @@ class Dataset(BaseModel):
         return self
 
     def model_dump_json(self, **kwargs) -> str:
-        """Override to ensure JSON serialization works with Bio objects.
+        """Override to ensure JSON serialization works with Bio and biotite objects.
 
-        Biopython objects: Seq, Structure, MultipleSeqAlignment,
+        Biopython and biotite objects: Seq, AtomArray, MultipleSeqAlignment,
         don't have custom JSONEncoder, thus we rely on their __str__ method
         to return a string representation in order for
-        Bio objects to be serializable.
+        these objects to be serializable.
 
         See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
         """

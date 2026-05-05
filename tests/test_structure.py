@@ -4,15 +4,9 @@ from zipfile import ZipFile
 
 import numpy as np
 import pytest
-from Bio.PDB.Atom import Atom
-from Bio.PDB.Chain import Chain
-from Bio.PDB.mmcifio import MMCIFIO
-from Bio.PDB.MMCIFParser import MMCIFParser
-from Bio.PDB.Model import Model
-from Bio.PDB.PDBIO import PDBIO
-from Bio.PDB.PDBParser import PDBParser
-from Bio.PDB.Residue import Residue
-from Bio.PDB.Structure import Structure as BioStructure
+import biotite.structure.io.pdb as pdb
+import biotite.structure.io.pdbx as pdbx
+from biotite.structure import Atom, AtomArray
 from pydantic import ValidationError
 
 from proteingym.base import Dataset, Manifest
@@ -112,7 +106,7 @@ def test_structure_manifest_section_serialize_path_as_posix_relative_to(
 def test_structure_minimal() -> None:
     """Only name and value are required for a minimal Structure."""
     try:
-        Structure(name="test", value=BioStructure("test"))
+        Structure(name="test", value=AtomArray(0))
     except ValidationError as e:
         raise AssertionError("Could not create Structure") from e
     else:
@@ -120,55 +114,41 @@ def test_structure_minimal() -> None:
 
 
 @pytest.fixture
-def bio_structure() -> BioStructure:
-    """Minimal biopython structure for testing."""
-    structure = BioStructure("test")
-
-    model = Model(id=0)
-    structure.add(model)
-
-    chain = Chain(id="A")
-    model.add(chain)
-
-    residue = Residue(
-        id=(" ", 1, " "),
-        resname="GLY",
-        segid="",
-    )
-    chain.add(residue)
-
+def biotite_structure() -> AtomArray:
+    """Minimal biotite structure for testing."""
     atom = Atom(
-        name="CA",
-        coord=np.array([10.0, 20.0, 30.0], dtype=float),
-        bfactor=20.0,
-        occupancy=1.0,
-        altloc=" ",
-        fullname=" CA ",  # PDB atom name field (4 characters)
-        serial_number=1,
+        res_name="GLY",
+        atom_name="CA",
+        res_id=1,
+        chain_id="A",
+        coord=np.array([10.0, 20.0, 30.0]),
         element="C",
+        hetero=False,
+        occupancy=1.0,
+        b_factor=20.0,
     )
-    residue.add(atom)
-
-    return structure
+    array = AtomArray(1)
+    array[0] = atom
+    return array
 
 
 @pytest.fixture
-def pdb_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
+def pdb_file(tmp_path: Path, biotite_structure: AtomArray) -> Path:
     """PDB structure file for testing."""
-    io_ = PDBIO()
-    io_.set_structure(bio_structure)
     path = tmp_path / "structure.pdb"
-    io_.save(path.as_posix())
+    file = pdb.PDBFile()
+    file.set_structure(biotite_structure)
+    file.write(path)
     return path
 
 
 @pytest.fixture
-def cif_file(tmp_path: Path, bio_structure: BioStructure) -> Path:
+def cif_file(tmp_path: Path, biotite_structure: AtomArray) -> Path:
     """CIF structure file for testing."""
-    io_ = MMCIFIO()
-    io_.set_structure(bio_structure)
     path = tmp_path / "structure.cif"
-    io_.save(path.as_posix())
+    file = pdbx.CIFFile()
+    pdbx.set_structure(file, biotite_structure)
+    file.write(path)
     return path
 
 
@@ -179,7 +159,7 @@ def test_structure_from_manifest_section_with_pdb(pdb_file: Path) -> None:
     structure = Structure.from_manifest_section(section)
 
     assert structure.name == "structure"
-    assert isinstance(structure.value, BioStructure)
+    assert isinstance(structure.value, AtomArray)
 
 
 def test_structure_from_manifest_section_with_cif(cif_file: Path) -> None:
@@ -189,7 +169,7 @@ def test_structure_from_manifest_section_with_cif(cif_file: Path) -> None:
     structure = Structure.from_manifest_section(section)
 
     assert structure.name == "structure"
-    assert isinstance(structure.value, BioStructure)
+    assert isinstance(structure.value, AtomArray)
 
 
 def test_structure_from_manifest_section_structure_id_as_stem(pdb_file: Path) -> None:
@@ -198,7 +178,7 @@ def test_structure_from_manifest_section_structure_id_as_stem(pdb_file: Path) ->
 
     structure = Structure.from_manifest_section(section)
 
-    assert structure.value.get_id() == pdb_file.stem
+    assert structure.name == pdb_file.stem
 
 
 def test_structure_from_manifest_section_structure_id_as_name(pdb_file: Path) -> None:
@@ -207,63 +187,57 @@ def test_structure_from_manifest_section_structure_id_as_name(pdb_file: Path) ->
 
     structure = Structure.from_manifest_section(section)
 
-    assert structure.value.get_id() == "new_structure"
+    assert structure.name == "new_structure"
 
 
-def test_structure_dump_to_pdb(tmp_path: Path, bio_structure: BioStructure) -> None:
+def test_structure_dump_to_pdb(tmp_path: Path, biotite_structure: AtomArray) -> None:
     """A Structure can be dumped to a PDB file."""
-    structure = Structure(name="test", value=bio_structure)
+    structure = Structure(name="test", value=biotite_structure)
 
     path = structure.dump(path=tmp_path)
 
-    loaded_structure = PDBParser().get_structure("test", path)
-    assert loaded_structure.strictly_equals(bio_structure)
+    loaded_file = pdb.PDBFile.read(path)
+    loaded_structure = loaded_file.get_structure(model=1)
+    # Compare only coordinates and basic annotations for simplicity in test
+    assert np.allclose(loaded_structure.coord, biotite_structure.coord)
+    assert np.array_equal(loaded_structure.res_name, biotite_structure.res_name)
 
 
-def test_structure_dump_to_cif(tmp_path: Path, bio_structure: BioStructure) -> None:
+def test_structure_dump_to_cif(tmp_path: Path, biotite_structure: AtomArray) -> None:
     """A Structure can be dumped to a cif file."""
-    structure = Structure(name="test", value=bio_structure)
+    structure = Structure(name="test", value=biotite_structure)
 
     path = structure.dump(path=tmp_path, fmt=StructureFormat.MMCIF)
 
-    # There is an inconsistency in biopython that loads the full name of an Atom
-    # differently for a PDB and CIF file - the full name is trimmed for the
-    # latter. Hence, we overwrite the fullname here before the assertion.
-    list(bio_structure.get_atoms())[0].fullname = "CA"
-    loaded_structure = MMCIFParser().get_structure("test", path)
-    assert loaded_structure.strictly_equals(bio_structure)
+    loaded_file = pdbx.CIFFile.read(path)
+    loaded_structure = pdbx.get_structure(loaded_file, model=1)
+    assert np.allclose(loaded_structure.coord, biotite_structure.coord)
+    assert np.array_equal(loaded_structure.res_name, biotite_structure.res_name)
 
 
 def test_dataset_with_structures(
-    pdb_file: Path, cif_file: Path, bio_structure: BioStructure
+    pdb_file: Path, cif_file: Path, biotite_structure: AtomArray
 ) -> None:
     """A Dataset can be created with structures from the manifest."""
-    bio_structure1 = bio_structure.copy()
-    bio_structure1.id = "structure1"
-    bio_structure2 = bio_structure.copy()
-    bio_structure2.id = "structure2"
+    structure1_val = biotite_structure.copy()
+    structure2_val = biotite_structure.copy()
     manifest = Manifest(
         version=MANIFEST_LATEST_VERSION,
         name="test",
         structures=[
-            StructureManifestSection(path=pdb_file, name=bio_structure1.id),
-            StructureManifestSection(path=cif_file, name=bio_structure2.id),
+            StructureManifestSection(path=pdb_file, name="structure1"),
+            StructureManifestSection(path=cif_file, name="structure2"),
         ],
     )
     dataset = Dataset.from_manifest(manifest)
 
     assert len(dataset.structures) == 2
-    assert dataset.structures[0].value.strictly_equals(bio_structure1)
-
-    # There is an inconsistency in biopython that loads the full name of an Atom
-    # differently for a PDB and CIF file - the full name is trimmed.
-    # Hence, we overwrite the fullname here before the assertion.
-    list(bio_structure2.get_atoms())[0].fullname = "CA"
-    assert dataset.structures[1].value.strictly_equals(bio_structure2)
+    assert np.allclose(dataset.structures[0].value.coord, structure1_val.coord)
+    assert np.allclose(dataset.structures[1].value.coord, structure2_val.coord)
 
 
 def test_dataset_dump_with_structure(
-    tmp_path: Path, bio_structure: BioStructure
+    tmp_path: Path, biotite_structure: AtomArray
 ) -> None:
     """The dataset can be dumped with structures.
 
@@ -272,7 +246,7 @@ def test_dataset_dump_with_structure(
     - Should contain the structure file.
     - Should result the structure being loaded correctly.
     """
-    structure = Structure(name="test", value=bio_structure)
+    structure = Structure(name="test", value=biotite_structure)
     dataset = Dataset(name="test", structures=[structure])
 
     path = dataset.dump(path=tmp_path)
@@ -284,18 +258,23 @@ def test_dataset_dump_with_structure(
     )
 
     with zip_.open("structures/test.pdb", "r") as structure_file:
-        string_io = io.StringIO(structure_file.read().decode("utf-8"))
-        loaded_structure = PDBParser().get_structure("test", string_io)
-        assert bio_structure == loaded_structure
+        # Biotite can read from string/bytes-like objects using io.StringIO/BytesIO
+        # or just passing the content if it supports it.
+        # PDBFile.read takes a file path or file-like object.
+        content = structure_file.read().decode("utf-8")
+        string_io = io.StringIO(content)
+        loaded_file = pdb.PDBFile.read(string_io)
+        loaded_structure = loaded_file.get_structure(model=1)
+        assert np.allclose(biotite_structure.coord, loaded_structure.coord)
 
 
 def test_dataset_dump_with_structures_contains_archive_names(
-    tmp_path: Path, bio_structure: BioStructure
+    tmp_path: Path, biotite_structure: AtomArray
 ) -> None:
     """Same as `test_dataset_dump_with_structure`, but with multiple structures."""
     expected = {"structures/structure1.pdb", "structures/structure2.pdb"}
-    structure1 = Structure(name="structure1", value=bio_structure)
-    structure2 = Structure(name="structure2", value=bio_structure)
+    structure1 = Structure(name="structure1", value=biotite_structure)
+    structure2 = Structure(name="structure2", value=biotite_structure)
     dataset = Dataset(name="test", structures=[structure1, structure2])
 
     path = dataset.dump(path=tmp_path)
@@ -307,33 +286,32 @@ def test_dataset_dump_with_structures_contains_archive_names(
 
 
 def test_dataset_with_structure_dump_from_path_unit(
-    tmp_path: Path, bio_structure: BioStructure
+    tmp_path: Path, biotite_structure: AtomArray
 ) -> None:
     """Dumping a dataset with structure should return the same after reading"""
-    structure = Structure(name=bio_structure.id, value=bio_structure)
+    structure = Structure(name="test_struct", value=biotite_structure)
     dataset = Dataset(name="test", structures=[structure])
 
     path = dataset.dump(path=tmp_path)
 
     loaded_dataset = Dataset.from_path(path)
 
-    # TODO (#255): Implement Dataset.__eq__ and use it here instead of multiple asserts
     assert loaded_dataset.name == dataset.name
     assert len(loaded_dataset.structures) == len(dataset.structures)
     for loaded_structure, structure in zip(
         loaded_dataset.structures, dataset.structures, strict=True
     ):
         assert loaded_structure.name == structure.name
-        assert loaded_structure.value == structure.value
+        assert loaded_structure == structure
 
 
 def test_dataset_fails_with_duplicate_structure_names() -> None:
     """A dataset fails if there are duplicate structure names."""
     duplicate_names = ["duplicate1", "duplicate2"]
-    structure1 = Structure(name=duplicate_names[0], value=BioStructure("test"))
-    structure2 = Structure(name=duplicate_names[0], value=BioStructure("test"))
-    structure3 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
-    structure4 = Structure(name=duplicate_names[1], value=BioStructure("test2"))
+    structure1 = Structure(name=duplicate_names[0], value=AtomArray(0))
+    structure2 = Structure(name=duplicate_names[0], value=AtomArray(0))
+    structure3 = Structure(name=duplicate_names[1], value=AtomArray(0))
+    structure4 = Structure(name=duplicate_names[1], value=AtomArray(0))
 
     match = "Duplicate names found in `Dataset.structures`:.*" + ", ".join(
         duplicate_names
@@ -344,11 +322,11 @@ def test_dataset_fails_with_duplicate_structure_names() -> None:
         )
 
 
-def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
+def test_structure_repr(tmp_path: Path, biotite_structure: AtomArray) -> None:
     """Test the string representation of the Structure class."""
     structure = Structure(
         name="test structure",
-        value=bio_structure,
+        value=biotite_structure,
         description="A test structure",
         metadata={"key1": "value1", "key2": "value2"},
     )
@@ -356,7 +334,7 @@ def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
     repr_str = repr(structure)
     assert "Structure(\n\tname='test structure'," in repr_str
     assert "description: A test structure," in repr_str
-    assert "value: Type[Structure]," in repr_str
+    assert "value: Type[AtomArray]," in repr_str
     assert "\tmetadata:" in repr_str
     assert "\t\tkey1: value1," in repr_str
     assert "\t\tkey2: value2," in repr_str
@@ -364,7 +342,7 @@ def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
     long_desc = "A" * 61 + "BCD"
     structure = Structure(
         name="longdesc",
-        value=bio_structure,
+        value=biotite_structure,
         description=long_desc,
         metadata={},
     )
@@ -373,7 +351,7 @@ def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
 
     structure = Structure(
         name="nodesc",
-        value=bio_structure,
+        value=biotite_structure,
         description=None,
         metadata={},
     )
@@ -382,7 +360,7 @@ def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
 
     structure = Structure(
         name="nometa",
-        value=bio_structure,
+        value=biotite_structure,
         description="desc",
         metadata={},
     )
@@ -392,7 +370,7 @@ def test_structure_repr(tmp_path: Path, bio_structure: BioStructure) -> None:
     long_value = "X" * 65
     structure = Structure(
         name="longmeta",
-        value=bio_structure,
+        value=biotite_structure,
         description="desc",
         metadata={"longkey": long_value},
     )

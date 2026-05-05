@@ -1,6 +1,6 @@
 import pytest
 from Bio.Align import MultipleSeqAlignment
-from Bio.PDB.Structure import Structure as BioStructure
+from biotite.structure import AtomArray
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -448,7 +448,7 @@ def dataset_with_structure() -> Dataset:
     """A dataset containing a single structure."""
     structure = Structure(
         name="structure1",
-        value=BioStructure("structure1"),
+        value=AtomArray(0),
         description="A test structure",
         metadata={"source": "test"},
     )
@@ -469,13 +469,13 @@ def dataset_with_structures() -> Dataset:
     """A dataset containing multiple structures."""
     structure1 = Structure(
         name="structure1",
-        value=BioStructure("structure1"),
+        value=AtomArray(0),
         description="A test structure",
         metadata={"source": "test"},
     )
     structure2 = Structure(
         name="structure2",
-        value=BioStructure("structure2"),
+        value=AtomArray(0),
         description="A test structure",
         metadata={"source": "test"},
     )
