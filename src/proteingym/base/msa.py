@@ -302,9 +302,7 @@ class MSA:
             sequence_end=self.sequence_end,
         )
 
-    def dump(
-        self, *, path: Path | None = None, fmt: MSAFormat = MSAFormat.A3M
-    ) -> Path:
+    def dump(self, *, path: Path | None = None, fmt: MSAFormat = MSAFormat.A3M) -> Path:
         """Dump the multiple sequence alignment to a file.
 
         Args:
