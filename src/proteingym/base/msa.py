@@ -20,12 +20,9 @@ from pydantic import (
 class MSAFormat(StrEnum):
     """Enumeration for MSA file formats."""
 
-    FASTA = "fasta"
-    """MSAs following the fasta format, also for a2m files."""
-
     A3M = "a3m"
     """MSAs following the a3m format."""
-    
+
 
 class MSAWeightFormat(StrEnum):
     """Enumeration for MSA weight file formats."""
@@ -189,7 +186,7 @@ class MSA:
     """The name of the MSA."""
 
     value: Sequences
-    """The value of the MSA, typically a file path or binary data."""
+    """The value of the MSA."""
 
     description: str | None = None
     """A brief description of the MSA."""
@@ -228,7 +225,7 @@ class MSA:
                 return False
             return all(
                 s1.id_ == s2.id_ and s1.seq == s2.seq
-                for s1, s2 in zip(self.value.seqs, item.value.seqs)
+                for s1, s2 in zip(self.value.seqs, item.value.seqs, strict=True)
             )
         return False
 

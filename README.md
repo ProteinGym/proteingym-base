@@ -134,10 +134,10 @@ To get the MSA as [`MultipleSeqAlignment` object](https://biopython.org/docs/lat
 
 ```python
 >>> from proteingym.base import Manifest, Dataset
->>> from Bio.Align import MultipleSeqAlignment
+>>> from evedesign.sequence import Sequences
 >>> mf = Manifest.from_path("example_data/neime_2019.toml")
 >>> dataset = Dataset.from_manifest(mf)
->>> isinstance(dataset.msas[0].value, MultipleSeqAlignment)  # The first MSA in the dataset
+>>> isinstance(dataset.msas[0].value, Sequences)  # The first MSA in the dataset
 True
 
 ```
