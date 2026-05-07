@@ -64,4 +64,4 @@ link = "alphafold.ebi.ac.uk/entry/A0A1I9GEU1"
 
 [[ msas ]]
 path = "./NEIME_2019/MSA/msa.a3m"
-format = "fasta"
+format = "a3m"

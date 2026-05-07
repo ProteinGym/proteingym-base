@@ -129,28 +129,6 @@ def multiple_sequence_alignment() -> Sequences:
 
 
 @pytest.fixture
-def fasta_file(
-    tmp_path: Path, multiple_sequence_alignment: Sequences
-) -> Path:
-    """FASTA structure file for testing."""
-    path = tmp_path / "structure.fasta"
-    with open(path, "w") as f:
-        for s in multiple_sequence_alignment.seqs:
-            f.write(f">{s.id_}\n{s.seq}\n")
-    return path
-
-
-def test_msa_from_manifest_section_with_fasta(fasta_file: Path) -> None:
-    """A MSA can be created from a manifest section with FASTA file."""
-    section = MSAManifestSection(path=fasta_file, format=MSAFormat.FASTA)
-
-    msa = MSA.from_manifest_section(section)
-
-    assert msa.name == "structure"
-    assert isinstance(msa.value, Sequences)
-
-
-@pytest.fixture
 def a3m_file(tmp_path: Path, multiple_sequence_alignment: Sequences) -> Path:
     """A3M structure file for testing."""
     path = tmp_path / "structure.a3m"
@@ -262,16 +240,16 @@ def test_msa_weights_as_manifest_section(tmp_path: Path) -> None:
     assert section.path == weights_path
 
 
-def test_msa_as_manifest_section(fasta_file: Path) -> None:
+def test_msa_as_manifest_section(a3m_file: Path) -> None:
     """An MSA can be converted to a manifest section."""
     expected = MSAManifestSection(
-        path=fasta_file,
+        path=a3m_file,
         name="test_msa",
         description=None,
     )
     msa = MSA(name="test_msa", value=Sequences([]))
 
-    section = msa.as_manifest_section(path=fasta_file)
+    section = msa.as_manifest_section(path=a3m_file)
 
     assert section == expected
 
@@ -279,12 +257,12 @@ def test_msa_as_manifest_section(fasta_file: Path) -> None:
 def test_msa_dump_to_file(
     tmp_path: Path, multiple_sequence_alignment: Sequences
 ) -> None:
-    """A MSA can be dumped to a FASTA file."""
+    """A MSA can be dumped to an A3M file."""
     msa = MSA(name="test", value=multiple_sequence_alignment)
 
-    path = msa.dump(path=tmp_path / "msa.fasta")
+    path = msa.dump(path=tmp_path / "msa.a3m")
 
-    loaded_msa_value = Sequences.from_file(path, format="fasta")
+    loaded_msa_value = Sequences.from_file(path, format="a3m")
     loaded_msa = MSA(name="test", value=loaded_msa_value)
     assert msa == loaded_msa
 
@@ -292,12 +270,12 @@ def test_msa_dump_to_file(
 def test_msa_dump_to_directory(
     tmp_path: Path, multiple_sequence_alignment: Sequences
 ) -> None:
-    """A MSA can be dumped to a FASTA file inside a directory."""
+    """A MSA can be dumped to an A3M file inside a directory."""
     msa = MSA(name="test", value=multiple_sequence_alignment)
 
     path = msa.dump(path=tmp_path)
 
-    loaded_msa_value = Sequences.from_file(path, format="fasta")
+    loaded_msa_value = Sequences.from_file(path, format="a3m")
     loaded_msa = MSA(name="test", value=loaded_msa_value)
     assert msa == loaded_msa
 
