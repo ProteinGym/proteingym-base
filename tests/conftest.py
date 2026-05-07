@@ -1,8 +1,8 @@
 import pytest
 from Bio.Align import MultipleSeqAlignment
-from biotite.structure import AtomArray
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from biotite.structure import AtomArray
 
 from proteingym.base.assay import Assay, AssayRaw, Field
 from proteingym.base.dataset import Dataset

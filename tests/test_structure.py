@@ -2,10 +2,10 @@ import io
 from pathlib import Path
 from zipfile import ZipFile
 
-import numpy as np
-import pytest
 import biotite.structure.io.pdb as pdb
 import biotite.structure.io.pdbx as pdbx
+import numpy as np
+import pytest
 from biotite.structure import Atom, AtomArray
 from pydantic import ValidationError
 
@@ -152,6 +152,16 @@ def cif_file(tmp_path: Path, biotite_structure: AtomArray) -> Path:
     return path
 
 
+@pytest.fixture
+def bcif_file(tmp_path: Path, biotite_structure: AtomArray) -> Path:
+    """Binary CIF structure file for testing."""
+    path = tmp_path / "structure.bcif"
+    file = pdbx.BinaryCIFFile()
+    pdbx.set_structure(file, biotite_structure)
+    file.write(path)
+    return path
+
+
 def test_structure_from_manifest_section_with_pdb(pdb_file: Path) -> None:
     """A Structure can be created from a manifest section with PDB file."""
     section = StructureManifestSection(path=pdb_file)
@@ -165,6 +175,16 @@ def test_structure_from_manifest_section_with_pdb(pdb_file: Path) -> None:
 def test_structure_from_manifest_section_with_cif(cif_file: Path) -> None:
     """A Structure can be created from a manifest section with CIF file."""
     section = StructureManifestSection(path=cif_file)
+
+    structure = Structure.from_manifest_section(section)
+
+    assert structure.name == "structure"
+    assert isinstance(structure.value, AtomArray)
+
+
+def test_structure_from_manifest_section_with_bcif(bcif_file: Path) -> None:
+    """A Structure can be created from a manifest section with Binary CIF file."""
+    section = StructureManifestSection(path=bcif_file)
 
     structure = Structure.from_manifest_section(section)
 
@@ -210,6 +230,18 @@ def test_structure_dump_to_cif(tmp_path: Path, biotite_structure: AtomArray) -> 
     path = structure.dump(path=tmp_path, fmt=StructureFormat.MMCIF)
 
     loaded_file = pdbx.CIFFile.read(path)
+    loaded_structure = pdbx.get_structure(loaded_file, model=1)
+    assert np.allclose(loaded_structure.coord, biotite_structure.coord)
+    assert np.array_equal(loaded_structure.res_name, biotite_structure.res_name)
+
+
+def test_structure_dump_to_bcif(tmp_path: Path, biotite_structure: AtomArray) -> None:
+    """A Structure can be dumped to a binary cif file."""
+    structure = Structure(name="test", value=biotite_structure)
+
+    path = structure.dump(path=tmp_path, fmt=StructureFormat.BINARY_CIF)
+
+    loaded_file = pdbx.BinaryCIFFile.read(path)
     loaded_structure = pdbx.get_structure(loaded_file, model=1)
     assert np.allclose(loaded_structure.coord, biotite_structure.coord)
     assert np.array_equal(loaded_structure.res_name, biotite_structure.res_name)

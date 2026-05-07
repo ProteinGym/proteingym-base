@@ -4,8 +4,8 @@ from zipfile import ZipFile
 
 import pytest
 from Bio.Align import MultipleSeqAlignment
-from biotite.structure import AtomArray
 from Bio.Seq import Seq
+from biotite.structure import AtomArray
 from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app

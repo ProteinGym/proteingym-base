@@ -103,11 +103,9 @@ class Structure:
         if self.value.array_length() != item.value.array_length():
             return False
 
-        # Compare coordinates
         if not np.array_equal(self.value.coord, item.value.coord):
             return False
 
-        # Compare annotations
         if set(self.value.get_annotation_categories()) != set(
             item.value.get_annotation_categories()
         ):
