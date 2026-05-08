@@ -408,3 +408,109 @@ def test_structure_repr(tmp_path: Path, biotite_structure: AtomArray) -> None:
     )
     repr_str = repr(structure)
     assert f"\t\tlongkey: {long_value[:60]}..." in repr_str
+
+@pytest.fixture
+def biotite_structure() -> AtomArray:
+    """Minimal biotite structure for testing."""
+    atom = Atom(
+        res_name="GLY",
+        atom_name="CA",
+        res_id=1,
+        chain_id="A",
+        coord=np.array([10.0, 20.0, 30.0]),
+        element="C",
+        hetero=False,
+        occupancy=1.0,
+        b_factor=20.0,
+    )
+    array = AtomArray(1)
+    array[0] = atom
+    return array
+
+def test_structure_equality_mismatch_type(biotite_structure):
+    s1 = Structure(name="s1", value=biotite_structure)
+    assert s1 != "not a structure"
+
+def test_structure_equality_mismatch_length(biotite_structure):
+    s1 = Structure(name="s1", value=biotite_structure)
+    
+    array2 = AtomArray(2)
+    array2[0] = biotite_structure[0]
+    array2[1] = biotite_structure[0]
+    s2 = Structure(name="s1", value=array2)
+    
+    assert s1 != s2
+
+def test_structure_equality_mismatch_coords(biotite_structure):
+    s1 = Structure(name="s1", value=biotite_structure)
+    
+    array2 = biotite_structure.copy()
+    array2.coord[0] = [0.0, 0.0, 0.0]
+    s2 = Structure(name="s1", value=array2)
+    
+    assert s1 != s2
+
+def test_structure_equality_mismatch_annotation_categories(biotite_structure):
+    s1 = Structure(name="s1", value=biotite_structure)
+    
+    array2 = biotite_structure.copy()
+    array2.add_annotation("new_cat", dtype=int)
+    array2.new_cat = np.array([1])
+    
+    s2 = Structure(name="s1", value=array2)
+    
+    assert s1 != s2
+
+def test_structure_equality_mismatch_annotation_values(biotite_structure):
+    s1 = Structure(name="s1", value=biotite_structure)
+    
+    array2 = biotite_structure.copy()
+    array2.res_id[0] = 999
+    
+    s2 = Structure(name="s1", value=array2)
+    
+    assert s1 != s2
+
+def test_structure_from_manifest_section_unsupported_format(tmp_path):
+    path = tmp_path / "test.unsupported"
+    path.touch()
+    section = StructureManifestSection(path=path)
+    with pytest.raises(NotImplementedError, match="Unsupported file type"):
+        Structure.from_manifest_section(section)
+
+def test_structure_dump_unsupported_format(biotite_structure):
+    s = Structure(name="test", value=biotite_structure)
+    class MockFormat:
+        value = ".xyz"
+    with pytest.raises(NotImplementedError, match="Unsupported file type"):
+        s.dump(fmt=MockFormat()) # type: ignore
+
+def test_structure_not_equals_integer():
+    """A structure should equal itself."""
+    structure = Structure(
+        name="Test Structure",
+        value=AtomArray(0),
+        description=None,
+        metadata={},
+    )
+    assert structure != 1
+
+def test_structure_equals_itself():
+    """A structure should equal itself."""
+    structure = Structure(
+        name="Test Structure",
+        value=AtomArray(0),
+        description=None,
+        metadata={},
+    )
+    assert structure == structure
+
+def test_structure_with_data_equals_itself():
+    """A structure with data should equal itself."""
+    structure = Structure(
+        name="Test Structure",
+        value=AtomArray(0),
+        description="A test structure",
+        metadata={"source": "test"},
+    )
+    assert structure == structure
