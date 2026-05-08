@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from Bio import AlignIO
-from Bio.Align import MultipleSeqAlignment
+from evedesign.sequence import Sequences
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -21,8 +20,8 @@ from pydantic import (
 class MSAFormat(StrEnum):
     """Enumeration for MSA file formats."""
 
-    FASTA = "fasta"
-    """MSAs following the fasta format, also for a2m files."""
+    A3M = "a3m"
+    """MSAs following the a3m format."""
 
 
 class MSAWeightFormat(StrEnum):
@@ -122,7 +121,7 @@ class MSAManifestSection(MSAMetadataManifestSection):
     description: str | None = None
     """The description of the multiple sequence alignment."""
 
-    format: MSAFormat = MSAFormat.FASTA
+    format: MSAFormat = MSAFormat.A3M
     """The format of the multiple sequence alignment file."""
 
     metadata: dict[str, str] = Field(default_factory=dict)
@@ -186,8 +185,8 @@ class MSA:
     name: str
     """The name of the MSA."""
 
-    value: MultipleSeqAlignment
-    """The value of the MSA, typically a file path or binary data."""
+    value: Sequences
+    """The value of the MSA."""
 
     description: str | None = None
     """A brief description of the MSA."""
@@ -222,7 +221,12 @@ class MSA:
         For equality, we only look at the msa value.
         """
         if isinstance(item, MSA):
-            return self.value.alignment == item.value.alignment
+            if len(self.value.seqs) != len(item.value.seqs):
+                return False
+            return all(
+                s1.id_ == s2.id_ and s1.seq == s2.seq
+                for s1, s2 in zip(self.value.seqs, item.value.seqs, strict=True)
+            )
         return False
 
     def __repr__(self) -> str:
@@ -239,10 +243,9 @@ class MSA:
             lines.append("\tdescription: None,")
 
         lines.append("\tvalue:")
-        alignment_lines = str(self.value).splitlines()
-        preview = alignment_lines[:3]
-        lines.extend([f"\t\t{line}" for line in preview])
-        if len(alignment_lines) > 3:
+        for seq_obj in self.value.seqs[:3]:
+            lines.append(f"\t\t{seq_obj.id_} {seq_obj.seq[:50]}")
+        if len(self.value.seqs) > 3:
             lines.append("\t\t...")
         lines.append(")")
         return "\n".join(lines)
@@ -263,7 +266,7 @@ class MSA:
             NotImplementedError if the file type is not supported.
         """
         name = section.name or section.path.stem
-        value = AlignIO.read(section.path, section.format.value)
+        value = Sequences.from_file(section.path, format=section.format.value)
         weights = np.load(weights_section.path).tolist() if weights_section else None
         return MSA(
             name=name,
@@ -299,19 +302,14 @@ class MSA:
             sequence_end=self.sequence_end,
         )
 
-    def dump(
-        self, *, path: Path | None = None, fmt: MSAFormat = MSAFormat.FASTA
-    ) -> Path:
+    def dump(self, *, path: Path | None = None, fmt: MSAFormat = MSAFormat.A3M) -> Path:
         """Dump the multiple sequence alignment to a file.
-
-        Biopython is used for writing the MSA to a file, see
-        :func:`Bio.AlignIO.write` for details.
 
         Args:
             path: The directory path to save the MSA file in.
                 Defaults to the current working directory.
             fmt: The format to save the MSA in. Defaults to
-                MSAFormat.FASTA.
+                MSAFormat.A3M.
 
         Raises:
             ValueError: If the format is not supported.
@@ -329,5 +327,7 @@ class MSA:
         path = path or Path.cwd()
         if path.is_dir():
             path /= f"{self.name}.{fmt.value}"
-        AlignIO.write(self.value, path, format=fmt.value)
+        with open(path, "w") as f:
+            for s in self.value.seqs:
+                f.write(f">{s.id_}\n{s.seq}\n")
         return path

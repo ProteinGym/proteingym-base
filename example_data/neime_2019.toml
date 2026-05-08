@@ -63,5 +63,5 @@ avg_plddt = "90"
 link = "alphafold.ebi.ac.uk/entry/A0A1I9GEU1"
 
 [[ msas ]]
-path = "./NEIME_2019/MSA/msa.a2m"
-format = "fasta"
+path = "./NEIME_2019/MSA/msa.a3m"
+format = "a3m"

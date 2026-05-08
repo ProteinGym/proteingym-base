@@ -111,7 +111,7 @@ path = "structures.pdb"
 
 [[ msas ]]
 path = "msas.a3m"
-format = "fasta"
+format = "a3m"
 num_significant = 10
 bit_score = 0.5
 theta = 0.8
@@ -257,7 +257,7 @@ The MSAs section contains a list of multiple sequence alignments included in the
 | `theta`                   | `float \| None` | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
 | `reference_sequence_name` | `string \| None`| No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
 | `sequence_start`          | `int \| None`   | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
-| `sequence_end`            | `int \| None`   | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
+| `format`                  | `string`        | No           | `"a3m"`     | The format of the MSA data. Supported formats: `"a3m"`                                                                                                     |
 
 ### MSA Weights
 
@@ -274,7 +274,7 @@ Example:
 [[ msas ]]
 name = "msa1"
 path = "msas/msa1.a3m"
-format = "fasta"
+format = "a3m"
 
 [[ msa_weights ]]
 name = "msa1"
