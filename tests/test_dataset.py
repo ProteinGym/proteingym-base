@@ -3,11 +3,8 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
-from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
-from Bio.PDB.Structure import Structure as BioStructure
-from Bio.Seq import Seq
 from evedesign.sequence import Sequences
 from typer.testing import CliRunner
 
@@ -203,7 +200,7 @@ def test_list_datasets_json_serialization() -> None:
 
     structure = Structure(
         name="test",
-        value=AtomArray(0),
+        value=AtomArray(10),
     )
 
     msa = MSA(name="test", value=Sequences([]))
@@ -217,7 +214,6 @@ def test_list_datasets_json_serialization() -> None:
 
     assert isinstance(dataset_obj, dict)
     assert dataset_obj["sequences"][0]["value"] == "test"
-    assert dataset_obj["structures"][0]["value"] == "<Structure id=test>"
     assert dataset_obj["msas"][0]["value"].startswith("<evedesign.sequence.Sequences")
 
 

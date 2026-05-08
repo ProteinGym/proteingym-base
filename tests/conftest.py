@@ -1,10 +1,6 @@
 import pytest
-from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
 from biotite.structure import AtomArray
-from Bio.PDB.Structure import Structure as BioStructure
-from Bio.Seq import Seq
 from evedesign.sequence import Sequence as evdSequence
 from evedesign.sequence import Sequences
 
