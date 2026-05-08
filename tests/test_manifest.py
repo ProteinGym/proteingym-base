@@ -69,7 +69,7 @@ path = "structures.pdb"
 
 [[ msas ]]
 path = "msas.a3m"
-format = "fasta"
+format = "a3m"
 num_significant = 10
 bit_score = 0.5
 theta = 0.8

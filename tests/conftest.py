@@ -3,6 +3,10 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from biotite.structure import AtomArray
+from Bio.PDB.Structure import Structure as BioStructure
+from Bio.Seq import Seq
+from evedesign.sequence import Sequence as evdSequence
+from evedesign.sequence import Sequences
 
 from proteingym.base.assay import Assay, AssayRaw, Field
 from proteingym.base.dataset import Dataset
@@ -494,10 +498,10 @@ def dataset_with_structures() -> Dataset:
 @pytest.fixture
 def dataset_with_msa() -> Dataset:
     """A dataset containing a single MSA."""
-    alignment = MultipleSeqAlignment(
+    alignment = Sequences(
         [
-            SeqRecord(Seq("ACDEFG"), id="seq1"),
-            SeqRecord(Seq("GFEDCA"), id="seq2"),
+            evdSequence("ACDEFG", id="seq1"),
+            evdSequence("GFEDCA", id="seq2"),
         ]
     )
     msa = MSA(
@@ -520,16 +524,16 @@ def dataset_with_msa() -> Dataset:
 @pytest.fixture
 def dataset_with_msas() -> Dataset:
     """A dataset containing multiple MSAs."""
-    alignment1 = MultipleSeqAlignment(
+    alignment1 = Sequences(
         [
-            SeqRecord(Seq("ACDEFG"), id="seq1"),
-            SeqRecord(Seq("GFEDCA"), id="seq2"),
+            evdSequence("ACDEFG", id="seq1"),
+            evdSequence("GFEDCA", id="seq2"),
         ]
     )
-    alignment2 = MultipleSeqAlignment(
+    alignment2 = Sequences(
         [
-            SeqRecord(Seq("ADCGFE"), id="seq3"),
-            SeqRecord(Seq("FEDCBA"), id="seq4"),
+            evdSequence("ADCGFE", id="seq3"),
+            evdSequence("FEDCBA", id="seq4"),
         ]
     )
     msa1 = MSA(name="msa1", value=alignment1, description="A test MSA")
