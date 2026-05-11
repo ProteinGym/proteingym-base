@@ -5,9 +5,10 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from Bio.PDB import MMCIFIO, PDBIO, MMCIFParser, PDBParser
-from Bio.PDB.binary_cif import BinaryCIFParser
-from Bio.PDB.Structure import Structure as BioStructure
+import biotite.structure.io.pdb as pdb
+import biotite.structure.io.pdbx as pdbx
+import numpy as np
+from biotite.structure import AtomArray
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -82,7 +83,7 @@ class Structure:
     name: str
     """The name of the protein structure."""
 
-    value: BioStructure
+    value: AtomArray
     """The value of the protein structure, typically a file path or binary data."""
 
     description: str | None = None
@@ -94,11 +95,29 @@ class Structure:
     def __eq__(self, item: Any) -> bool:
         """Implements the equality (==) operator for Structure.
 
-        For equality, we only look at the structure value.
+        For equality, we look at the structure coordinates and annotations.
         """
-        if isinstance(item, Structure):
-            return self.value == item.value
-        return False
+        if not isinstance(item, Structure):
+            return False
+
+        if self.value.array_length() != item.value.array_length():
+            return False
+
+        if not np.array_equal(self.value.coord, item.value.coord):
+            return False
+
+        if set(self.value.get_annotation_categories()) != set(
+            item.value.get_annotation_categories()
+        ):
+            return False
+
+        for category in self.value.get_annotation_categories():
+            if not np.array_equal(
+                self.value.get_annotation(category), item.value.get_annotation(category)
+            ):
+                return False
+
+        return True
 
     def __repr__(self) -> str:
         """Return a string representation of the Structure object."""
@@ -133,17 +152,19 @@ class Structure:
         """
         match section.path.suffix.lower():
             case StructureFormat.PDB:
-                parser = PDBParser()
+                parser = pdb.PDBFile.read(section.path)
+                value = parser.get_structure(model=1)
             case StructureFormat.MMCIF:
-                parser = MMCIFParser()
+                parser = pdbx.CIFFile.read(section.path)
+                value = pdbx.get_structure(parser, model=1)
             case StructureFormat.BINARY_CIF:
-                parser = BinaryCIFParser()
+                parser = pdbx.BinaryCIFFile.read(section.path)
+                value = pdbx.get_structure(parser, model=1)
             case _:
                 raise NotImplementedError(
                     f"Unsupported file type: {section.path.suffix}"
                 )
         name = section.name or section.path.stem
-        value = parser.get_structure(name, section.path)
         return Structure(
             name=name,
             value=value,
@@ -173,11 +194,11 @@ class Structure:
     ) -> Path:
         """Dump the structure to a file.
 
-        Biopython is used for writing the structure to a file. The following
+        Biotite is used for writing the structure to a file. The following
         formats are supported:
         - PDB (.pdb)
         - MMCIF (.cif)
-        Note that binary CIF files (.bcif) are not supported for writing.
+        - Binary CIF (.bcif)
 
         Args:
             path: The output directory path to dump the structure to. If
@@ -191,12 +212,16 @@ class Structure:
         structure_path = path / f"{self.name}{fmt.value}"
         match fmt:
             case StructureFormat.PDB:
-                io = PDBIO()
+                file = pdb.PDBFile()
+                file.set_structure(self.value)
             case StructureFormat.MMCIF:
-                io = MMCIFIO()
+                file = pdbx.CIFFile()
+                pdbx.set_structure(file, self.value)
+            case StructureFormat.BINARY_CIF:
+                file = pdbx.BinaryCIFFile()
+                pdbx.set_structure(file, self.value)
             case _:
                 raise NotImplementedError(f"Unsupported file type: {fmt.value}")
-        io.set_structure(self.value)
-        with structure_path.open("w", encoding="utf-8") as file:
-            io.save(file)
+
+        file.write(structure_path)
         return structure_path
