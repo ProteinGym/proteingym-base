@@ -3,8 +3,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+import biotite.sequence.io.fasta as fasta
 import numpy as np
-from evedesign.sequence import Sequences
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -185,7 +185,7 @@ class MSA:
     name: str
     """The name of the MSA."""
 
-    value: Sequences
+    value: fasta.FastaFile
     """The value of the MSA."""
 
     description: str | None = None
@@ -221,12 +221,7 @@ class MSA:
         For equality, we only look at the msa value.
         """
         if isinstance(item, MSA):
-            if len(self.value.seqs) != len(item.value.seqs):
-                return False
-            return all(
-                s1.id_ == s2.id_ and s1.seq == s2.seq
-                for s1, s2 in zip(self.value.seqs, item.value.seqs, strict=True)
-            )
+            return self.value == item.value
         return False
 
     def __repr__(self) -> str:
@@ -243,10 +238,11 @@ class MSA:
             lines.append("\tdescription: None,")
 
         lines.append("\tvalue:")
-        for seq_obj in self.value.seqs[:3]:
-            lines.append(f"\t\t{seq_obj.id_} {seq_obj.seq[:50]}")
-        if len(self.value.seqs) > 3:
-            lines.append("\t\t...")
+        for i, (header, sequence) in enumerate(self.value.items()):
+            if i >= 3:
+                lines.append("\t\t...")
+                break
+            lines.append(f"\t\t{header} {sequence[:50]}")
         lines.append(")")
         return "\n".join(lines)
 
@@ -266,7 +262,7 @@ class MSA:
             NotImplementedError if the file type is not supported.
         """
         name = section.name or section.path.stem
-        value = Sequences.from_file(section.path, format=section.format.value)
+        value = fasta.FastaFile.read(section.path)
         weights = np.load(weights_section.path).tolist() if weights_section else None
         return MSA(
             name=name,
@@ -327,7 +323,5 @@ class MSA:
         path = path or Path.cwd()
         if path.is_dir():
             path /= f"{self.name}.{fmt.value}"
-        with open(path, "w") as f:
-            for s in self.value.seqs:
-                f.write(f">{s.id_}\n{s.seq}\n")
+        self.value.write(path)
         return path

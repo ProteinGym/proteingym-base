@@ -1,8 +1,7 @@
+import biotite.sequence.io.fasta as fasta
 import pytest
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
-from evedesign.sequence import Sequence as evdSequence
-from evedesign.sequence import Sequences
 
 from proteingym.base.assay import Assay, AssayRaw, Field
 from proteingym.base.dataset import Dataset
@@ -494,12 +493,9 @@ def dataset_with_structures() -> Dataset:
 @pytest.fixture
 def dataset_with_msa() -> Dataset:
     """A dataset containing a single MSA."""
-    alignment = Sequences(
-        [
-            evdSequence("ACDEFG", id="seq1"),
-            evdSequence("GFEDCA", id="seq2"),
-        ]
-    )
+    alignment = fasta.FastaFile()
+    alignment["seq1"] = "ACDEFG"
+    alignment["seq2"] = "GFEDCA"
     msa = MSA(
         name="msa1",
         value=alignment,
@@ -520,18 +516,12 @@ def dataset_with_msa() -> Dataset:
 @pytest.fixture
 def dataset_with_msas() -> Dataset:
     """A dataset containing multiple MSAs."""
-    alignment1 = Sequences(
-        [
-            evdSequence("ACDEFG", id="seq1"),
-            evdSequence("GFEDCA", id="seq2"),
-        ]
-    )
-    alignment2 = Sequences(
-        [
-            evdSequence("ADCGFE", id="seq3"),
-            evdSequence("FEDCBA", id="seq4"),
-        ]
-    )
+    alignment1 = fasta.FastaFile()
+    alignment1["seq1"] = "ACDEFG"
+    alignment1["seq2"] = "GFEDCA"
+    alignment2 = fasta.FastaFile()
+    alignment2["seq3"] = "ADCGFE"
+    alignment2["seq4"] = "FEDCBA"
     msa1 = MSA(name="msa1", value=alignment1, description="A test MSA")
     msa2 = MSA(name="msa2", value=alignment2, description="A test MSA")
     dataset = Dataset(

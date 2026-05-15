@@ -2,20 +2,16 @@
 Module for testing MSA operators.
 """
 
-from evedesign.sequence import Sequence as evdSequence
-from evedesign.sequence import Sequences
+import biotite.sequence.io.fasta as fasta
 
 from proteingym.base.msa import MSA
 
 
 def test_msa_not_equals_integer():
     """An MSA should not equal an integer."""
-    alignment = Sequences(
-        [
-            evdSequence("ACDEFG", id="seq1"),
-            evdSequence("GFEDCA", id="seq2"),
-        ]
-    )
+    alignment = fasta.FastaFile()
+    alignment["seq1"] = "ACDEFG"
+    alignment["seq2"] = "GFEDCA"
     msa = MSA(
         name="Test MSA",
         value=alignment,
@@ -26,7 +22,7 @@ def test_msa_not_equals_integer():
 
 def test_msa_empty_equals_itself() -> None:
     """An empty msa should equal itself."""
-    alignment = Sequences([])
+    alignment = fasta.FastaFile()
     msa = MSA(
         name="Test MSA",
         value=alignment,
@@ -37,12 +33,9 @@ def test_msa_empty_equals_itself() -> None:
 
 def test_msa_with_data_equals_itself() -> None:
     """An MSA with data should equal itself."""
-    alignment = Sequences(
-        [
-            evdSequence("ACDEFG", id="seq1"),
-            evdSequence("GFEDCA", id="seq2"),
-        ]
-    )
+    alignment = fasta.FastaFile()
+    alignment["seq1"] = "ACDEFG"
+    alignment["seq2"] = "GFEDCA"
     msa = MSA(
         name="Test MSA",
         value=alignment,
@@ -53,8 +46,8 @@ def test_msa_with_data_equals_itself() -> None:
 
 def test_msa_compares_value() -> None:
     """An MSA should compare based on its value."""
-    alignment2 = Sequences([])
-    alignment1 = Sequences([])
+    alignment2 = fasta.FastaFile()
+    alignment1 = fasta.FastaFile()
     msa1 = MSA(name="msa1", value=alignment1, description="A test MSA")
     msa2 = MSA(name="msa2", value=alignment2, description="A test MSA")
     assert msa1 == msa2
