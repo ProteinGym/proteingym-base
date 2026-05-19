@@ -220,7 +220,5 @@ class Manifest(BaseModel):
         include = {key for key, value in self.model_dump(mode="json").items() if value}
         context = {"relative_to_path": path.parent}
         with path.open("w", encoding="utf-8") as f:
-            toml.dump(
-                self.model_dump(mode="json", include=include, context=context), f
-            )
+            toml.dump(self.model_dump(mode="json", include=include, context=context), f)
         return path
