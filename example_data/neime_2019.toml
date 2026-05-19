@@ -29,6 +29,10 @@ name = "NEIME_2019"
 path = "./NEIME_2019/Assays/Assay1.csv"
 sequence_alphabet = "AA"
 sequence_alias = "mutated_sequence"
+library_construction_method = "discrete"
+assay_method = "selection"
+readout = "sequencing"
+transformation = "non_parametric"
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -50,6 +54,7 @@ path = "./NEIME_2019/sequences/A0A1I9GEU1.fasta"
 type = "wild_type"
 alphabet = "AA"
 uniprot_id = "A0A1I9GEU1"
+pfams = "PF00114"
 
 [[ structures ]]
 path = "./NEIME_2019/Structures/computational.pdb"

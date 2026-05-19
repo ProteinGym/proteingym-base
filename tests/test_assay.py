@@ -14,11 +14,15 @@ from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
+    AssayMethod,
     AssayRaw,
     AssayRawManifestSection,
+    AssayReadout,
     AssaySlice,
+    AssayTransformation,
     Field,
     FieldEncoding,
+    LibraryConstructionMethod,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -327,6 +331,45 @@ def test_assay_manifest_section(assay_file: Path) -> None:
             content = f.read()
         assert section.sequence_alias in content
         assert all(target.alias_ in content for target in section.targets)
+
+
+def test_assay_manifest_section_descriptors(assay_file: Path) -> None:
+    """Test AssayManifestSection with descriptors."""
+    section = AssayManifestSection(
+        name="test",
+        path=assay_file,
+        readout=AssayReadout.SEQUENCING,
+        library_construction_method=LibraryConstructionMethod.RANDOM_MUTAGENESIS,
+        assay_method=AssayMethod.SELECTION,
+        transformation=AssayTransformation.NONE,
+    )
+    assert section.readout == AssayReadout.SEQUENCING
+    assert (
+        section.library_construction_method
+        == LibraryConstructionMethod.RANDOM_MUTAGENESIS
+    )
+    assert section.assay_method == AssayMethod.SELECTION
+    assert section.transformation == AssayTransformation.NONE
+
+
+def test_assay_from_manifest_section_with_descriptors(assay_file: Path):
+    """Test Assay.from_manifest_section with descriptors."""
+    section = AssayManifestSection(
+        name="test",
+        path=assay_file,
+        readout=AssayReadout.FLUORESCENCE,
+        library_construction_method=LibraryConstructionMethod.SITE_SATURATED_MUTAGENESIS,
+        assay_method=AssayMethod.SCREEN,
+        transformation=AssayTransformation.FIT,
+    )
+    assay = Assay.from_manifest_section(section)
+    assert assay.readout == AssayReadout.FLUORESCENCE
+    assert (
+        assay.library_construction_method
+        == LibraryConstructionMethod.SITE_SATURATED_MUTAGENESIS
+    )
+    assert assay.assay_method == AssayMethod.SCREEN
+    assert assay.transformation == AssayTransformation.FIT
 
 
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:

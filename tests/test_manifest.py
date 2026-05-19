@@ -35,6 +35,10 @@ description = "DMS score bin of the samples"
 name = "assay"
 path = "assay.csv"
 sequence_alphabet = "AA"
+library_construction_method = "discrete"
+assay_method = "selection"
+readout = "sequencing"
+transformation = "non_parametric"
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -63,6 +67,7 @@ description = "Optical density at 600nm"
 type = "wild_type"
 alphabet = "DNA"
 path = "sequences.fasta"
+pfams = "PF00114"
 
 [[ structures ]]
 path = "structures.pdb"

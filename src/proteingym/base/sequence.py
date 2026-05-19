@@ -92,6 +92,9 @@ class SequenceManifestSection(BaseModel):
     uniprot_id: str | None = None
     """The UniProt identifier for this sequence."""
 
+    pfams: str | None = None
+    """The Pfam accession strings for this sequence."""
+
     taxon_root: str | None = None
     """The root of taxonomic lineage information.
     For grouping datasets into main taxons"""
@@ -180,6 +183,9 @@ class Sequence:
     uniprot_id: str | None = None
     """The UniProt identifier for this sequence."""
 
+    pfams: str | None = None
+    """The Pfam accession strings for this sequence."""
+
     taxon_root: str | None = dataclasses.field(default=UniprotField())
     """The root of taxonomic lineage information.
     Useful for grouping datasets into main taxons"""
@@ -217,6 +223,8 @@ class Sequence:
 
         if self.uniprot_id:
             lines.append(f"\tuniprot_id: {self.uniprot_id},")
+        if self.pfams:
+            lines.append(f"\tpfams: {self.pfams},")
         if self.taxon_root:
             lines.append(f"\ttaxon_lineage: {self.taxon_root},")
         if self.molecule_name:
@@ -253,6 +261,7 @@ class Sequence:
                 type=section.type,
                 alphabet=section.alphabet,
                 uniprot_id=section.uniprot_id,
+                pfams=section.pfams,
                 taxon_root=section.taxon_root,
                 molecule_name=section.molecule_name,
                 organism=section.organism,
@@ -273,6 +282,7 @@ class Sequence:
             alphabet=self.alphabet,
             type=self.type,
             uniprot_id=self.uniprot_id,
+            pfams=self.pfams,
             taxon_root=self.taxon_root,
             molecule_name=self.molecule_name,
             organism=self.organism,

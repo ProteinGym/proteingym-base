@@ -46,6 +46,69 @@ class FieldEncoding(StrEnum):
     NUMERICAL = "numerical"
 
 
+class LibraryConstructionMethod(StrEnum):
+    """The method used to construct the protein library.
+
+    random mutagenesis: uncontrolled introduction of
+    mutations across random positions (ex. epPCR)
+
+    site-saturated mutageneisis: introduction of mutants
+    at specific sites with complete coverage (ex. NNK/S)
+
+    discrete: designed libraries targeting specific positions
+    and specific amino acid coverage (ex. oligo pools)
+
+    shuffling: random motif splitting/assembly-based methods"""
+
+    RANDOM_MUTAGENESIS = "random_mutagenesis"
+    SITE_SATURATED_MUTAGENESIS = "site_saturated_mutagenesis"
+    DISCRETE = "discrete"
+    SHUFFLING = "shuffling"
+
+
+class AssayMethod(StrEnum):
+    """The type of assay used to measure variant fitness.
+
+    selection: fitness measurement is coupled to cell growth
+
+    screen: fitness measurement is not coupled to cell growth"""
+
+    SELECTION = "selection"
+    SCREEN = "screen"
+
+
+class AssayReadout(StrEnum):
+    """The readout method used in the assay.
+
+    sequencing: fitness is estimated from RNA sequencing
+
+    fluorescence: fitness is estimated from product and/or
+    reporter fluorescence
+
+    product: fitness is estimated from product concentration
+    measured in some manner other than fluorescence"""
+
+    SEQUENCING = "sequencing"
+    FLUORESCENCE = "fluorescence"
+    PRODUCT = "product"
+
+
+class AssayTransformation(StrEnum):
+    """The transformation applied to the raw assay data.
+
+    none: raw read counts, product amounts, etc.
+
+    non-parametric: some basic data transformation applied
+    (ex. ratio of read counts, log transformation, etc.)
+
+    fit: some regression/ML-based fit applied to data
+    (ex. MoCHI, Enrich2, etc.)"""
+
+    NONE = "None"
+    NON_PARAMETRIC = "non_parametric"
+    FIT = "fit"
+
+
 @dataclasses.dataclass(kw_only=True, frozen=False)
 class Field:
     """A data field for an assay associated quantity or protein property.
@@ -253,6 +316,18 @@ class AssayManifestSection(_ManifestSection):
     path: FilePath
     """The path to the assay file, csv only."""
 
+    readout: AssayReadout | None = None
+    """The readout method used in the assay."""
+
+    library_construction_method: LibraryConstructionMethod | None = None
+    """The method used to construct the protein library."""
+
+    assay_method: AssayMethod | None = None
+    """The type of assay used to measure variant fitness."""
+
+    transformation: AssayTransformation | None = None
+    """The transformation applied to the raw assay data."""
+
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
@@ -457,6 +532,18 @@ class Assay(AssayRaw):
     non_targets: list[Field] = dataclasses.field(default_factory=list)
     """List of non-target feature names that are included but not targets."""
 
+    readout: AssayReadout | None = None
+    """The readout method used in the assay."""
+
+    library_construction_method: LibraryConstructionMethod | None = None
+    """The method used to construct the protein library."""
+
+    assay_method: AssayMethod | None = None
+    """The type of assay used to measure variant fitness."""
+
+    transformation: AssayTransformation | None = None
+    """The transformation applied to the raw assay data."""
+
     @property
     def sequence_feature_name(self) -> str:
         """The sequence feature name.
@@ -495,6 +582,10 @@ class Assay(AssayRaw):
             and self.variables == item.variables
             and self.fields == item.fields
             and self.non_targets == item.non_targets
+            and self.readout == item.readout
+            and self.library_construction_method == item.library_construction_method
+            and self.assay_method == item.assay_method
+            and self.transformation == item.transformation
         )
 
     @staticmethod
@@ -656,6 +747,10 @@ class Assay(AssayRaw):
             description=section.description,
             variables=section.variables,
             non_targets=section.non_targets,
+            readout=section.readout,
+            library_construction_method=section.library_construction_method,
+            assay_method=section.assay_method,
+            transformation=section.transformation,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -686,6 +781,10 @@ class Assay(AssayRaw):
             non_targets=self.non_targets,
             variables=self.variables,
             path=path,
+            readout=self.readout,
+            library_construction_method=self.library_construction_method,
+            assay_method=self.assay_method,
+            transformation=self.transformation,
         )
 
     def to_df(
