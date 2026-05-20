@@ -13,6 +13,7 @@ import logging
 import numbers
 
 import numpy as np
+import numpy.typing as npt
 from Bio.Seq import Seq
 
 from .assay import AssaySlice
@@ -95,6 +96,41 @@ def _sequences_to_mask(selection: list[Seq], *, all_sequences: list[Seq]) -> lis
     return mask
 
 
+def _subsample_mask(
+    mask: npt.NDArray,
+    fraction: float,
+    random_state: int | np.random.RandomState | None = None,
+) -> npt.NDArray:
+    """
+    Subsample True values in a boolean mask.
+
+    Parameters
+    ----------
+    mask : npt.NDArray
+        Boolean array to subsample
+    fraction : float
+        Fraction of True values to keep (0.0 to 1.0)
+        E.g., 0.8 means keep 80% and flip 20% to False
+    random_state: Seed or random state for
+        reproducibility. If None, the global numpy random state is used.
+
+    Returns
+    -------
+    npt.NDArray
+        New boolean mask with subsampled True values
+    """
+    if not 0 <= fraction <= 1:
+        raise ValueError("Fraction must be between 0 and 1")
+    true_indices = np.where(mask)[0]
+    n_true = len(true_indices)
+    n_keep = int(n_true * fraction)
+    random_state = _check_random_state(random_state)
+    keep_indices = random_state.choice(true_indices, size=n_keep, replace=False)
+    new_mask = np.zeros_like(mask, dtype=bool)
+    new_mask[keep_indices] = True
+    return new_mask
+
+
 def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
     """Reshape to a two-dimensional list with varying sizes of the sublists.
 
@@ -144,6 +180,79 @@ def _unique_sequences_for_targets(
             }
 
     return list(sequences)
+
+
+class QuantileSplitter:
+    """Split a dataset a random training set and a test set with a sample of hit
+    variants defined as values exceeding a quantile threshold. This split is only
+    defined for a single target in the dataset, because the quantile threshold can only
+    be defined for a single target.
+    Args:
+        quantile: A float between 0 and 1 used to derive the percentile that will be
+            used as a threshold. Values exceeding the threshold are considered the hit
+            variants.
+        random_state: Seed or random state for
+            reproducibility. If None, the global numpy random state is used.
+    """
+
+    def __init__(
+        self,
+        quantile: float,
+        fraction: float,
+        *,
+        random_state: int | np.random.RandomState | None = None,
+    ) -> None:
+        if not 0 <= quantile <= 1:
+            raise ValueError("Quantile must lie between 0 and 1.")
+        if not 0 <= fraction <= 1:
+            raise ValueError("Fraction must lie between 0 and 1.")
+        self.quantile = quantile
+        self.fraction = fraction
+        self.random_state = _check_random_state(random_state)
+
+    def split(self, dataset: Dataset, *, target: str) -> Subsets:
+        """Splits the dataset into a subsets.
+        Args:
+            dataset: The dataset to split.
+            target: Target field name to include in the
+                splits.
+
+        Returns:
+            Subsets: The subsets containing the splits.
+        """
+        train_assay_slices = []
+        test_assay_slices = []
+        for assay in dataset.assays:
+            target_names_in_assay = [e.name for e in assay.fields]
+            if not target in target_names_in_assay:
+                columns = []
+                train_assay_slices.append(AssaySlice(records=None, columns=columns))
+                test_assay_slices.append(AssaySlice(records=None, columns=columns))
+            else:
+                columns = [assay.sequence_feature_name, target]
+                df = assay.to_df(target_names=[target])
+                target_values = df[target]
+                threshold = target_values.quantile(self.quantile)
+                lower_mask = (
+                    target_values.is_not_null() & (target_values <= threshold)
+                ).to_numpy()
+                upper_mask = (
+                    target_values.is_not_null() & (target_values > threshold)
+                ).to_numpy()
+                train_mask = _subsample_mask(
+                    lower_mask, fraction=self.fraction, random_state=self.random_state
+                )
+                test_mask = _subsample_mask(
+                    upper_mask, fraction=1 - self.fraction, random_state=self.random_state
+                ) | (~train_mask & lower_mask)
+                train_assay_slices.append(AssaySlice(records=train_mask, columns=columns))
+                test_assay_slices.append(AssaySlice(records=test_mask, columns=columns))
+        train_dataset_slice = DatasetSlice(assays=train_assay_slices)
+        test_dataset_slice = DatasetSlice(assays=test_assay_slices)
+        subsets = Subsets(
+            dataset=dataset, slices=[train_dataset_slice, test_dataset_slice]
+        )
+        return subsets
 
 
 class RandomSplitter:

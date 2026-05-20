@@ -3,6 +3,7 @@ import functools
 import polars as pl
 import polars.testing
 import pytest
+import numpy as np
 from Bio.Seq import Seq
 
 from proteingym.base.assay import Field
@@ -12,8 +13,10 @@ from proteingym.base.splits import (
     KFoldSplitter,
     PredefinedSplitter,
     RandomSplitter,
+    QuantileSplitter,
     _cast_indices_to_mask,  # noqa
     _reshape_list,  # noqa
+    _subsample_mask, # noqa
     _unique_sequences_for_targets,  # noqa
 )
 
@@ -48,6 +51,11 @@ def test_reshape_list(
     assert _reshape_list(flat_list, shape) == expected
 
 
+def test_subsample_mask_raise_value_error_if_fraction_not_a_fraction() -> None:
+    with pytest.raises(ValueError, match="Fraction must be between 0 and 1"):
+        _subsample_mask(np.array([True, False, True, True]), fraction=1.1)
+
+
 def test_random_splitter_raises_value_error_if_fractions_do_not_sum_to_one() -> None:
     """Test that RandomSplitter raises ValueError if fractions do not sum to 1."""
     with pytest.raises(ValueError, match="Fractions must sum to 1."):
@@ -66,6 +74,59 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
     splitter = RandomSplitter(fractions)
     subsets = splitter.split(dataset_empty)
     assert len(subsets) == len(fractions)
+
+
+def test_quantile_splitter_raises_value_error_if_quantile_not_a_fraction() -> None:
+    """Test that QuantileSplitter raises ValueError if the quantile is not a value between 0 and 1"""
+    with pytest.raises(ValueError, match="Quantile must lie between 0 and 1."):
+        QuantileSplitter(quantile=1.1, fraction=0.8)
+
+
+def test_quantile_splitter_raises_value_error_if_fraction_not_a_fraction() -> None:
+    """Test that QuantileSplitter raises ValueError if the quantile is not a value between 0 and 1"""
+    with pytest.raises(ValueError, match="Fraction must lie between 0 and 1."):
+        QuantileSplitter(quantile=0.75, fraction=1.1)
+
+
+def test_quantile_splitter_creates_two_subsets(dataset_empty: Dataset) -> None:
+    """Test that QuantileSplitter splits the dataset into two slices."""
+    quantile = 0.75
+    fraction = 0.5
+    splitter = QuantileSplitter(quantile, fraction)
+    subsets = splitter.split(dataset_empty, target="DMS Score")
+    assert len(subsets) == 2
+
+
+def test_quantile_splitter_test_slice_target_values_exceed_all_train_targets(
+    dataset_with_realistic_assays: Dataset,
+) -> None:
+    """Test that test slice contains the hit variants — values that exceed the
+    quantile threshold and therefore the maximum value in the train slice."""
+    import numpy as np
+
+    target = "DMS Score"
+    quantile = 0.75
+    fraction = 0.5
+    splitter = QuantileSplitter(quantile, fraction, random_state=42)
+    subsets = splitter.split(dataset_with_realistic_assays, target=target)
+
+    train_slice, test_slice = subsets.slices
+    for assay, train_assay_slice, test_assay_slice in zip(
+        dataset_with_realistic_assays.assays,
+        train_slice.assays,
+        test_slice.assays,
+        strict=True,
+    ):
+        target_idx = [f.name for f in assay.fields].index(target)
+        all_values = np.array([r[target_idx] for r in assay.records], dtype=float)
+        train_mask = np.asarray(train_assay_slice.records, dtype=bool)
+        test_mask = np.asarray(test_assay_slice.records, dtype=bool)
+        train_values = all_values[train_mask]
+        test_values = all_values[test_mask]
+        threshold = float(pl.Series(all_values).quantile(quantile))
+        n_hits = int(np.sum(all_values > threshold) * (1 - fraction))
+        train_max = float(train_values.max())
+        assert int(np.sum(test_values > train_max)) >= n_hits
 
 
 @pytest.fixture
@@ -275,6 +336,22 @@ def test_splitter_splits_with_target_not_in_all_assays(
 ) -> None:
     """If a target is not in all assays, the assays without the targets are empty."""
     splits = splitter.split(dataset_with_assays, targets=["stability"])
+    assays = [assay for split in splits for assay in split.assays]
+    assert all(
+        assay.is_empty()
+        for assay in assays
+        if Field(name="stability") not in assay.fields
+    )
+    # Make sure we do not lose all data
+    assert any(not split.to_df().is_empty() for split in splits)
+
+
+def test_quantile_splitter_splits_with_target_not_in_all_assays(
+    dataset_with_assays: Dataset,
+) -> None:
+    """If a target is not in all assays, the assays without the targets are empty."""
+    splitter = QuantileSplitter(quantile=0.75, fraction=0.5)
+    splits = splitter.split(dataset_with_assays, target="stability")
     assays = [assay for split in splits for assay in split.assays]
     assert all(
         assay.is_empty()

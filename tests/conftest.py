@@ -211,6 +211,73 @@ def dataset_with_assays() -> Dataset:
 
 
 @pytest.fixture
+def dataset_with_realistic_assays() -> Dataset:
+    """A dataset containing multiple assays with varied target distributions."""
+    sequences = [
+        Sequence(
+            name=f"seq{i}",
+            value=Seq(s),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        )
+        for i, s in enumerate(
+            ["AA", "CC", "DD", "EE", "FF", "GG", "HH", "II", "JJ", "KK"]
+        )
+    ]
+    assay1 = Assay(
+        name="assay2",
+        records=[
+            (sequences[0], 0.12, 1.83),
+            (sequences[0], 0.47, 1.21),  # duplicate sequence to handle that
+            (sequences[1], 1.05, 2.44),
+            (sequences[2], -0.38, 0.67),
+            (sequences[3], 2.19, 3.02),
+            (sequences[4], 0.74, 1.56),
+            (sequences[5], -1.12, 0.31),
+            (sequences[6], 1.63, 2.78),
+            (sequences[7], 0.29, 1.04),
+            (sequences[8], -0.55, 1.92),
+            (sequences[9], 1.87, 2.15),
+        ],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="stability"),
+        ],
+    )
+    assay2 = Assay(
+        name="assay3",
+        records=[
+            (sequences[0], 0.34),
+            (sequences[1], 1.21),
+            (sequences[2], -0.78),
+            (sequences[3], 2.05),
+            (sequences[4], 0.91),
+            (sequences[5], -1.43),
+            (sequences[6], 1.67),
+            (sequences[7], 0.08),
+            (sequences[8], -0.26),
+            (sequences[9], 1.94),
+        ],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+    )
+    dataset = Dataset(
+        name="dataset_with_realistic_assays",
+        description="A dataset containing multiple assays with varied target distributions.",
+        assay_variables=[Field(name="var1", description="A test variable")],
+        assay_targets=[
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
+        ],
+        assays=[assay1, assay2],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
 def dataset_with_assay_predefined_split() -> Dataset:
     """A dataset containing an assay with predefined split column."""
     sequences = [
