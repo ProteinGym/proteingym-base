@@ -1,9 +1,9 @@
 import functools
 
+import numpy as np
 import polars as pl
 import polars.testing
 import pytest
-import numpy as np
 from Bio.Seq import Seq
 
 from proteingym.base.assay import Field
@@ -12,11 +12,11 @@ from proteingym.base.sequence import SequenceAlphabet, SequenceType
 from proteingym.base.splits import (
     KFoldSplitter,
     PredefinedSplitter,
-    RandomSplitter,
     QuantileSplitter,
+    RandomSplitter,
     _cast_indices_to_mask,  # noqa
     _reshape_list,  # noqa
-    _subsample_mask, # noqa
+    _subsample_mask,  # noqa
     _unique_sequences_for_targets,  # noqa
 )
 
@@ -77,13 +77,15 @@ def test_random_splitter_splits_length(dataset_empty: Dataset) -> None:
 
 
 def test_quantile_splitter_raises_value_error_if_quantile_not_a_fraction() -> None:
-    """Test that QuantileSplitter raises ValueError if the quantile is not a value between 0 and 1"""
+    """Test that QuantileSplitter raises ValueError if the quantile is not a value
+    between 0 and 1."""
     with pytest.raises(ValueError, match="Quantile must lie between 0 and 1."):
         QuantileSplitter(quantile=1.1, fraction=0.8)
 
 
 def test_quantile_splitter_raises_value_error_if_fraction_not_a_fraction() -> None:
-    """Test that QuantileSplitter raises ValueError if the quantile is not a value between 0 and 1"""
+    """Test that QuantileSplitter raises ValueError if the quantile is not a value
+    between 0 and 1."""
     with pytest.raises(ValueError, match="Fraction must lie between 0 and 1."):
         QuantileSplitter(quantile=0.75, fraction=1.1)
 
