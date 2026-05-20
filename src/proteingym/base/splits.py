@@ -224,7 +224,7 @@ class QuantileSplitter:
         test_assay_slices = []
         for assay in dataset.assays:
             target_names_in_assay = [e.name for e in assay.fields]
-            if not target in target_names_in_assay:
+            if target not in target_names_in_assay:
                 columns = []
                 train_assay_slices.append(AssaySlice(records=None, columns=columns))
                 test_assay_slices.append(AssaySlice(records=None, columns=columns))
@@ -243,9 +243,13 @@ class QuantileSplitter:
                     lower_mask, fraction=self.fraction, random_state=self.random_state
                 )
                 test_mask = _subsample_mask(
-                    upper_mask, fraction=1 - self.fraction, random_state=self.random_state
+                    upper_mask,
+                    fraction=1 - self.fraction,
+                    random_state=self.random_state,
                 ) | (~train_mask & lower_mask)
-                train_assay_slices.append(AssaySlice(records=train_mask, columns=columns))
+                train_assay_slices.append(
+                    AssaySlice(records=train_mask, columns=columns)
+                )
                 test_assay_slices.append(AssaySlice(records=test_mask, columns=columns))
         train_dataset_slice = DatasetSlice(assays=train_assay_slices)
         test_dataset_slice = DatasetSlice(assays=test_assay_slices)

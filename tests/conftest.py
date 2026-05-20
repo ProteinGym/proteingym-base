@@ -263,7 +263,8 @@ def dataset_with_realistic_assays() -> Dataset:
     )
     dataset = Dataset(
         name="dataset_with_realistic_assays",
-        description="A dataset containing multiple assays with varied target distributions.",
+        description="A dataset containing multiple assays with varied target "
+                    "distributions.",
         assay_variables=[Field(name="var1", description="A test variable")],
         assay_targets=[
             Field(name="DMS Score", description="The DMS score"),
