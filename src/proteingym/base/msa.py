@@ -5,7 +5,7 @@ from typing import Any
 
 import biotite.sequence.io.fasta as fasta
 import numpy as np
-from biotite.sequence.seqtypes import ProteinSequence
+from biotite.sequence import LetterAlphabet, Sequence
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -16,6 +16,60 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+
+
+class PSequence(Sequence):
+    def get_alphabet(self):
+        return LetterAlphabet(
+            (
+                "A",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "K",
+                "L",
+                "M",
+                "N",
+                "P",
+                "Q",
+                "R",
+                "S",
+                "T",
+                "V",
+                "W",
+                "Y",
+                "a",
+                "c",
+                "d",
+                "e",
+                "f",
+                "g",
+                "h",
+                "i",
+                "k",
+                "l",
+                "m",
+                "n",
+                "p",
+                "q",
+                "r",
+                "s",
+                "t",
+                "v",
+                "w",
+                "y",
+                "X",
+                "x",
+                "-",
+            )
+        )
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}("{str(self)}")'
 
 
 class MSAFormat(StrEnum):
@@ -186,7 +240,7 @@ class MSA:
     name: str
     """The name of the MSA."""
 
-    value: list[ProteinSequence]
+    value: list[PSequence]
     """The value of the MSA."""
 
     description: str | None = None
@@ -265,7 +319,7 @@ class MSA:
         name = section.name or section.path.stem
         a3m = fasta.FastaFile.read(section.path)
         seq_iter = iter(a3m.values())
-        value = [ProteinSequence(seq.replace("-", "").upper()) for seq in seq_iter]
+        value = [PSequence(seq) for seq in seq_iter]
         weights = np.load(weights_section.path).tolist() if weights_section else None
         return MSA(
             name=name,
