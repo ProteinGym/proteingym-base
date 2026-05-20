@@ -37,8 +37,9 @@ path = "assay.csv"
 sequence_alphabet = "AA"
 library_construction_method = "discrete"
 assay_method = "selection"
-readout = "sequencing"
+readout = "rna_sequencing"
 transformation = "non_parametric"
+target_phenotype = "activity"
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -194,12 +195,17 @@ def test_manifest_from_path_like_version_field_is_semantic() -> None:
 
 def test_manifest_from_path(manifest_path: Path) -> None:
     """Happy flow for loading a Manifest from a file path."""
-    try:
-        Manifest.from_path(manifest_path)
-    except ValidationError as e:
-        raise ValidationError(f"ValidationError raised {e}") from e
-    else:
-        assert True, "Manifest loaded successfully from path-like object."
+    Manifest.from_path(manifest_path)
+
+
+def test_manifest_from_path_assay_enums(manifest_path: Path):
+    manifest = Manifest.from_path(manifest_path)
+    assay = manifest.assays[0]
+    assert assay.library_construction_method == "discrete"
+    assert assay.assay_method == "selection"
+    assert assay.readout == "rna_sequencing"
+    assert assay.transformation == "non_parametric"
+    assert assay.target_phenotype == "activity"
 
 
 def test_manifest_from_non_existing_path(tmp_path: Path) -> None:

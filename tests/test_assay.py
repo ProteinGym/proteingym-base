@@ -338,12 +338,12 @@ def test_assay_manifest_section_descriptors(assay_file: Path) -> None:
     section = AssayManifestSection(
         name="test",
         path=assay_file,
-        readout=AssayReadout.SEQUENCING,
+        readout=AssayReadout.DNA_SEQUENCING,
         library_construction_method=LibraryConstructionMethod.RANDOM_MUTAGENESIS,
         assay_method=AssayMethod.SELECTION,
         transformation=AssayTransformation.NONE,
     )
-    assert section.readout == AssayReadout.SEQUENCING
+    assert section.readout == AssayReadout.DNA_SEQUENCING
     assert (
         section.library_construction_method
         == LibraryConstructionMethod.RANDOM_MUTAGENESIS
@@ -587,6 +587,31 @@ def test_assay() -> None:
         assert all(
             target_name in ["DMS Score"] for target_name in assay.target_feature_names
         )
+
+
+def test_assay_number_of_variants():
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    assay = Assay(
+        name="assay",
+        records=[
+            (seq1, 1.56),
+            (seq2, 2.0),
+        ],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+    )
+    assert assay.number_of_variants == 2
+    assert assay.number_of_variants == len(assay.to_df())
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:

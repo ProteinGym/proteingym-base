@@ -31,8 +31,9 @@ sequence_alphabet = "AA"
 sequence_alias = "mutated_sequence"
 library_construction_method = "discrete"
 assay_method = "selection"
-readout = "sequencing"
+readout = "dna_sequencing"
 transformation = "non_parametric"
+target_phenotype = "activity"
 
 [[ assays.targets ]]
 name = "DMS Score"

@@ -79,8 +79,9 @@ path = "assay.csv"
 sequence_alphabet = "AA"
 library_construction_method = "discrete"
 assay_method = "selection"
-readout = "sequencing"
+readout = "rna_sequencing"
 transformation = "non_parametric"
+target_phenotype = "activity"
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -186,7 +187,9 @@ The assays section contains a list of assays included in the dataset.
 | `readout`                      | `string \| None` | No           | `None`       | The readout method used in the assay.                                                                     |
 | `library_construction_method`  | `string \| None` | No           | `None`       | The method used to construct the protein library.                                                         |
 | `assay_method`                 | `string \| None` | No           | `None`       | The type of assay used to measure protein properties.                                                     |
-| `transformation`               | `string \| None` | No           | `None`       | The transformation applied to the assay data.                                                             |
+| `transformation`               | `string | None` | No           | `None`       | The transformation applied to the assay data.                                                             |
+| `target_phenotype`             | `string | None` | No           | `None`       | The property the assay attempts to capture.                                                               |
+
 
 Example of an assay file:
 

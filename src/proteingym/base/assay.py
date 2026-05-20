@@ -88,7 +88,8 @@ class AssayReadout(StrEnum):
     product: fitness is estimated from product concentration
     measured in some manner other than fluorescence"""
 
-    SEQUENCING = "sequencing"
+    RNA_SEQUENCING = "rna_sequencing"
+    DNA_SEQUENCING = "dna_sequencing"
     FLUORESCENCE = "fluorescence"
     PRODUCT = "product"
 
@@ -107,6 +108,30 @@ class AssayTransformation(StrEnum):
     NONE = "None"
     NON_PARAMETRIC = "non_parametric"
     FIT = "fit"
+
+
+class TargetPhenotype(StrEnum):
+    """Target phenotype the assay attempts to capture.
+    This language will probably be updated soon.
+
+    activity: some chemical reaction the protein performs
+
+    abundance: measurement of protein/RNA abundance
+
+    expression: measurement of protein expression
+
+    stability: thermostability measurements
+
+    binding: protein binding to sometehing
+
+    other: placeholder for things that don't fit above"""
+
+    BINDING = "binding"
+    ACTIVITY = "activity"
+    ABUNDANCE = "abundance"
+    EXPRESSION = "expression"
+    STABILITY = "stability"
+    OTHER = "other"
 
 
 @dataclasses.dataclass(kw_only=True, frozen=False)
@@ -328,6 +353,9 @@ class AssayManifestSection(_ManifestSection):
     transformation: AssayTransformation | None = None
     """The transformation applied to the raw assay data."""
 
+    target_phenotype: TargetPhenotype | None = None
+    """The property the assay attempts to capture."""
+
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
@@ -544,6 +572,9 @@ class Assay(AssayRaw):
     transformation: AssayTransformation | None = None
     """The transformation applied to the raw assay data."""
 
+    target_phenotype: TargetPhenotype | None = None
+    """The property the assay attempts to capture."""
+
     @property
     def sequence_feature_name(self) -> str:
         """The sequence feature name.
@@ -559,6 +590,11 @@ class Assay(AssayRaw):
         all_names = [f.name for f in self.fields[1:]]  # Exclude sequence
         non_target_names = [f.name for f in self.non_targets]
         return [name for name in all_names if name not in non_target_names]
+
+    @property
+    def number_of_variants(self) -> int:
+        """Returns the number of variants in the assay."""
+        return len(self)
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -586,6 +622,7 @@ class Assay(AssayRaw):
             and self.library_construction_method == item.library_construction_method
             and self.assay_method == item.assay_method
             and self.transformation == item.transformation
+            and self.target_phenotype == item.target_phenotype
         )
 
     @staticmethod
@@ -751,6 +788,7 @@ class Assay(AssayRaw):
             library_construction_method=section.library_construction_method,
             assay_method=section.assay_method,
             transformation=section.transformation,
+            target_phenotype=section.target_phenotype,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -785,6 +823,7 @@ class Assay(AssayRaw):
             library_construction_method=self.library_construction_method,
             assay_method=self.assay_method,
             transformation=self.transformation,
+            target_phenotype=self.target_phenotype,
         )
 
     def to_df(
