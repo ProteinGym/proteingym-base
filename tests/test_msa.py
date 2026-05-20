@@ -6,8 +6,8 @@ import biotite.sequence.io.fasta as fasta
 import numpy as np
 import pytest
 import toml
-from biotite.sequence.seqtypes import ProteinSequence
 from Bio.Seq import Seq
+from biotite.sequence.seqtypes import ProteinSequence
 from pydantic import ValidationError
 
 from proteingym.base import Dataset
@@ -276,7 +276,7 @@ def test_msa_dump_to_file(tmp_path: Path, msa_value: list[ProteinSequence]) -> N
     assert msa == loaded_msa
 
 
-def test_msa_dump_to_directory(tmp_path: Path, msa_value: list[ProteinSequence]) -> None:
+def test_msa_dump_to_dir(tmp_path: Path, msa_value: list[ProteinSequence]) -> None:
     """A MSA can be dumped to an A3M file inside a directory."""
     msa = MSA(name="test", value=msa_value)
 
@@ -332,7 +332,7 @@ def test_msa_reference_sequence_not_present_in_dataset(
         Dataset(name="test", msas=[msa], sequences=[])
 
 
-def test_dataset_dump_with_msa(tmp_path: Path, msa_value: list[ProteinSequence]) -> None:
+def test_data_dump_with_msa(tmp_path: Path, msa_value: list[ProteinSequence]) -> None:
     """Test the zip file created by the Dataset dump with MSAs.
 
     The created archive:
