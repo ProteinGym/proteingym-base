@@ -6,6 +6,7 @@ import biotite.sequence.io.fasta as fasta
 import numpy as np
 import pytest
 import toml
+from biotite.sequence.seqtypes import ProteinSequence
 from Bio.Seq import Seq
 from pydantic import ValidationError
 
@@ -110,8 +111,8 @@ def test_msa_manifest_section_serialize_path_as_posix_relative_to(
 def test_msa_minimal() -> None:
     """Only name and value are required for a minimal MSA."""
     try:
-        MSA(name="test", value=fasta.FastaFile())
-    except ValidationError as e:
+        MSA(name="test", value=[])
+    except Exception as e:
         raise AssertionError("Could not create MSA") from e
     else:
         assert True, "MSA created successfully with minimal fields."
@@ -128,6 +129,16 @@ def multiple_sequence_alignment() -> fasta.FastaFile:
 
 
 @pytest.fixture
+def msa_value() -> list[ProteinSequence]:
+    """Minimal list of ProteinSequences for testing."""
+    return [
+        ProteinSequence("AAAACGT"),
+        ProteinSequence("AAACGT"),
+        ProteinSequence("AAAAGGT"),
+    ]
+
+
+@pytest.fixture
 def a3m_file(tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile) -> Path:
     """A3M structure file for testing."""
     path = tmp_path / "structure.a3m"
@@ -135,14 +146,18 @@ def a3m_file(tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile) -> Pa
     return path
 
 
-def test_msa_from_manifest_section_with_a3m(a3m_file: Path) -> None:
+def test_msa_from_manifest_section_with_a3m(
+    a3m_file: Path, msa_value: list[ProteinSequence]
+) -> None:
     """An MSA can be created from a manifest section with A3M file."""
     section = MSAManifestSection(path=a3m_file, format=MSAFormat.A3M)
 
     msa = MSA.from_manifest_section(section)
 
     assert msa.name == "structure"
-    assert isinstance(msa.value, fasta.FastaFile)
+    assert isinstance(msa.value, list)
+    assert all(isinstance(s, ProteinSequence) for s in msa.value)
+    assert msa.value == msa_value
 
 
 @pytest.fixture
@@ -244,41 +259,35 @@ def test_msa_as_manifest_section(a3m_file: Path) -> None:
         name="test_msa",
         description=None,
     )
-    msa = MSA(name="test_msa", value=fasta.FastaFile())
+    msa = MSA(name="test_msa", value=[])
 
     section = msa.as_manifest_section(path=a3m_file)
 
     assert section == expected
 
 
-def test_msa_dump_to_file(
-    tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile
-) -> None:
+def test_msa_dump_to_file(tmp_path: Path, msa_value: list[ProteinSequence]) -> None:
     """A MSA can be dumped to an A3M file."""
-    msa = MSA(name="test", value=multiple_sequence_alignment)
+    msa = MSA(name="test", value=msa_value)
 
     path = msa.dump(path=tmp_path / "msa.a3m")
 
-    loaded_msa_value = fasta.FastaFile.read(path)
-    loaded_msa = MSA(name="test", value=loaded_msa_value)
+    loaded_msa = MSA.from_manifest_section(MSAManifestSection(path=path))
     assert msa == loaded_msa
 
 
-def test_msa_dump_to_directory(
-    tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile
-) -> None:
+def test_msa_dump_to_directory(tmp_path: Path, msa_value: list[ProteinSequence]) -> None:
     """A MSA can be dumped to an A3M file inside a directory."""
-    msa = MSA(name="test", value=multiple_sequence_alignment)
+    msa = MSA(name="test", value=msa_value)
 
     path = msa.dump(path=tmp_path)
 
-    loaded_msa_value = fasta.FastaFile.read(path)
-    loaded_msa = MSA(name="test", value=loaded_msa_value)
+    loaded_msa = MSA.from_manifest_section(MSAManifestSection(path=path))
     assert msa == loaded_msa
 
 
 def test_msa_reference_sequence_present_in_dataset(
-    multiple_sequence_alignment: fasta.FastaFile,
+    msa_value: list[ProteinSequence],
 ) -> None:
     """A ValueError is raised if the reference sequence is not in the MSA."""
     seq = Sequence(
@@ -289,7 +298,7 @@ def test_msa_reference_sequence_present_in_dataset(
     )
     msa = MSA(
         name="test",
-        value=multiple_sequence_alignment,
+        value=msa_value,
         reference_sequence_name="ref_seq",
     )
 
@@ -306,12 +315,12 @@ def test_msa_reference_sequence_present_in_dataset(
 
 
 def test_msa_reference_sequence_not_present_in_dataset(
-    multiple_sequence_alignment: fasta.FastaFile,
+    msa_value: list[ProteinSequence],
 ) -> None:
     """A ValueError is raised if the reference sequence is not in the MSA."""
     msa = MSA(
         name="test",
-        value=multiple_sequence_alignment,
+        value=msa_value,
         reference_sequence_name="ref_seq",
     )
 
@@ -323,9 +332,7 @@ def test_msa_reference_sequence_not_present_in_dataset(
         Dataset(name="test", msas=[msa], sequences=[])
 
 
-def test_dataset_dump_with_msa(
-    tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile
-) -> None:
+def test_dataset_dump_with_msa(tmp_path: Path, msa_value: list[ProteinSequence]) -> None:
     """Test the zip file created by the Dataset dump with MSAs.
 
     The created archive:
@@ -333,7 +340,7 @@ def test_dataset_dump_with_msa(
     - Should contain the sequence file.
     - Should result the sequence being loaded correctly.
     """
-    msa = MSA(name="msa", value=multiple_sequence_alignment)
+    msa = MSA(name="msa", value=msa_value)
     dataset = Dataset(name="test", msas=[msa])
 
     path = dataset.dump(path=tmp_path)
@@ -347,18 +354,17 @@ def test_dataset_dump_with_msa(
         # Manual write to file and then read with fasta.FastaFile
         temp_file = tmp_path / "temp_msa.a3m"
         temp_file.write_text(string_io.getvalue())
-        loaded_msa_value = fasta.FastaFile.read(temp_file)
-        loaded_msa = MSA(name="msa", value=loaded_msa_value)
+        loaded_msa = MSA.from_manifest_section(MSAManifestSection(path=temp_file))
         assert msa == loaded_msa
 
 
 def test_dataset_dump_with_msas_contains_archive_names(
-    tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile
+    tmp_path: Path, msa_value: list[ProteinSequence]
 ) -> None:
     """Same as `test_dataset_dump_with_msa`, but with MSAs."""
     expected = {"msas/msa1.a3m", "msas/msa2.a3m"}
-    msa1 = MSA(name="msa1", value=multiple_sequence_alignment)
-    msa2 = MSA(name="msa2", value=multiple_sequence_alignment)
+    msa1 = MSA(name="msa1", value=msa_value)
+    msa2 = MSA(name="msa2", value=msa_value)
     dataset = Dataset(name="test", msas=[msa1, msa2])
 
     path = dataset.dump(path=tmp_path)
@@ -370,11 +376,11 @@ def test_dataset_dump_with_msas_contains_archive_names(
 
 
 def test_dataset_with_msas_dump_from_path_unit(
-    tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile
+    tmp_path: Path, msa_value: list[ProteinSequence]
 ) -> None:
     """Dumping a dataset with MSAs should return the same after reading"""
-    msa1 = MSA(name="msa1", value=multiple_sequence_alignment)
-    msa2 = MSA(name="msa2", value=multiple_sequence_alignment)
+    msa1 = MSA(name="msa1", value=msa_value)
+    msa2 = MSA(name="msa2", value=msa_value)
     dataset = Dataset(name="test", msas=[msa1, msa2])
 
     path = dataset.dump(path=tmp_path)
@@ -390,14 +396,14 @@ def test_dataset_with_msas_dump_from_path_unit(
 
 
 def test_dataset_fails_with_duplicate_msa_names(
-    multiple_sequence_alignment: fasta.FastaFile,
+    msa_value: list[ProteinSequence],
 ) -> None:
     """A dataset with duplicate MSA names should raise a ValidationError."""
     duplicate_names = ["duplicate1", "duplicate2"]
-    msa1 = MSA(name=duplicate_names[0], value=multiple_sequence_alignment)
-    msa2 = MSA(name=duplicate_names[0], value=multiple_sequence_alignment)
-    msa3 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
-    msa4 = MSA(name=duplicate_names[1], value=multiple_sequence_alignment)
+    msa1 = MSA(name=duplicate_names[0], value=msa_value)
+    msa2 = MSA(name=duplicate_names[0], value=msa_value)
+    msa3 = MSA(name=duplicate_names[1], value=msa_value)
+    msa4 = MSA(name=duplicate_names[1], value=msa_value)
 
     match = "Duplicate names found in `Dataset.msas`:.*" + ", ".join(duplicate_names)
     with pytest.raises(ValidationError, match=match):
@@ -405,13 +411,11 @@ def test_dataset_fails_with_duplicate_msa_names(
 
 
 def test_msa_repr(
-    multiple_sequence_alignment: fasta.FastaFile,
+    msa_value: list[ProteinSequence],
 ) -> None:
     """The MSA __repr__ method should return a concise representation."""
     description = "This is a test MSA used to verify the __repr__ method."
-    msa = MSA(
-        name="test_msa", value=multiple_sequence_alignment, description=description
-    )
+    msa = MSA(name="test_msa", value=msa_value, description=description)
 
     repr_str = repr(msa)
 
@@ -424,19 +428,16 @@ def test_msa_repr(
     assert "value:" in repr_str
 
     long_desc = "A" * 61 + "BCD"
-    msa = MSA(
-        name="long_desc_msa", value=multiple_sequence_alignment, description=long_desc
-    )
+    msa = MSA(name="long_desc_msa", value=msa_value, description=long_desc)
     repr_str = repr(msa)
     assert f"description: {long_desc[:60]}..." in repr_str
 
-    msa = MSA(name="no_desc_msa", value=multiple_sequence_alignment, description=None)
+    msa = MSA(name="no_desc_msa", value=msa_value, description=None)
     repr_str = repr(msa)
     assert "description: None," in repr_str
 
-    for header, sequence in list(multiple_sequence_alignment.items())[:3]:
-        assert header in repr_str
-        assert sequence[:50] in repr_str
+    for sequence in msa_value[:3]:
+        assert str(sequence)[:50] in repr_str
 
-    if len(multiple_sequence_alignment) > 3:
+    if len(msa_value) > 3:
         assert "\t\t..." in repr_str

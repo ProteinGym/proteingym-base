@@ -5,6 +5,7 @@ from typing import Any
 
 import biotite.sequence.io.fasta as fasta
 import numpy as np
+from biotite.sequence.seqtypes import ProteinSequence
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -185,7 +186,7 @@ class MSA:
     name: str
     """The name of the MSA."""
 
-    value: fasta.FastaFile
+    value: list[ProteinSequence]
     """The value of the MSA."""
 
     description: str | None = None
@@ -238,11 +239,11 @@ class MSA:
             lines.append("\tdescription: None,")
 
         lines.append("\tvalue:")
-        for i, (header, sequence) in enumerate(self.value.items()):
+        for i, sequence in enumerate(self.value):
             if i >= 3:
                 lines.append("\t\t...")
                 break
-            lines.append(f"\t\t{header} {sequence[:50]}")
+            lines.append(f"\t\t{sequence[:50]}")
         lines.append(")")
         return "\n".join(lines)
 
@@ -262,7 +263,9 @@ class MSA:
             NotImplementedError if the file type is not supported.
         """
         name = section.name or section.path.stem
-        value = fasta.FastaFile.read(section.path)
+        a3m = fasta.FastaFile.read(section.path)
+        seq_iter = iter(a3m.values())
+        value = [ProteinSequence(seq.replace("-", "").upper()) for seq in seq_iter]
         weights = np.load(weights_section.path).tolist() if weights_section else None
         return MSA(
             name=name,
@@ -323,5 +326,13 @@ class MSA:
         path = path or Path.cwd()
         if path.is_dir():
             path /= f"{self.name}.{fmt.value}"
-        self.value.write(path)
+
+        a3m_file = fasta.FastaFile()
+
+        for i, s in enumerate(self.value):
+            header = f"seq_{i}"
+            a3m_file[header] = str(s)
+
+        a3m_file.write(path)
+
         return path
