@@ -104,20 +104,14 @@ def _subsample_mask(
     """
     Subsample True values in a boolean mask.
 
-    Parameters
-    ----------
-    mask : npt.NDArray
-        Boolean array to subsample
-    fraction : float
-        Fraction of True values to keep (0.0 to 1.0)
-        E.g., 0.8 means keep 80% and flip 20% to False
-    random_state: Seed or random state for
-        reproducibility. If None, the global numpy random state is used.
+    args
+        mask: Boolean array to subsample
+        fraction: Fraction of True values to keep (0.0 to 1.0)
+            E.g., 0.8 means keep 80% and flip 20% to False
+        random_state: reproducibility. If None, the global numpy random state is used.
 
-    Returns
-    -------
-    npt.NDArray
-        New boolean mask with subsampled True values
+    Returns:
+        npt.NDArray: New boolean mask with subsampled True values
     """
     if not 0 <= fraction <= 1:
         raise ValueError("Fraction must be between 0 and 1")
