@@ -412,6 +412,42 @@ def test_dataset_fails_with_duplicate_msa_names(
         Dataset(name="test", msas=[msa1, msa2, msa3, msa4])
 
 
+def test_msa_weights_manifest_serialize_path_as_posix(weights_file: Path) -> None:
+    """MSAWeightsManifestSection path is serialized as Posix path by default."""
+    section = MSAWeightsManifestSection(name="test", path=weights_file)
+    assert section.model_dump().get("path") == weights_file.as_posix()
+
+
+def test_msa_weights_manifest_section_validate_relative_path(tmp_path: Path) -> None:
+    """MSAWeightsManifestSection can validate a relative path with context."""
+    weights_file = tmp_path / "weights.npy"
+    np.save(weights_file, np.array([0.1, 0.5, 0.4]))
+    context = {"relative_to_path": tmp_path}
+    section = MSAWeightsManifestSection.model_validate(
+        {"name": "test", "path": "weights.npy"}, context=context
+    )
+    assert section.path == weights_file
+
+
+def test_psequence_repr() -> None:
+    """The PSequence __repr__ method should return a concise representation."""
+    sequence = PSequence("AAAACGT")
+    assert repr(sequence) == 'PSequence("AAAACGT")'
+
+
+def test_msa_eq_with_non_msa(msa_value: list[PSequence]) -> None:
+    """The MSA __eq__ method should return False when comparing with non-MSA."""
+    msa = MSA(name="test", value=msa_value)
+    assert msa != "not an msa"
+
+
+def test_msa_eq_w_different_values(msa_value: list[PSequence]) -> None:
+    """The MSA __eq__ method should return False when vals different."""
+    msa1 = MSA(name="test1", value=msa_value)
+    msa2 = MSA(name="test2", value=msa_value[:-1])
+    assert msa1 != msa2
+
+
 def test_msa_repr(
     msa_value: list[PSequence],
 ) -> None:
@@ -441,5 +477,8 @@ def test_msa_repr(
     for sequence in msa_value[:3]:
         assert str(sequence)[:50] in repr_str
 
-    if len(msa_value) > 3:
-        assert "\t\t..." in repr_str
+    # Test ellipsis with more than 3 sequences
+    more_sequences = msa_value + [PSequence("TTTTTTT")]
+    msa_more = MSA(name="more_msa", value=more_sequences)
+    repr_more = repr(msa_more)
+    assert "\t\t..." in repr_more
