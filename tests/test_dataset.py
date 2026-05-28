@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from zipfile import ZipFile
 
-import biotite.sequence.io.fasta as fasta
 import pytest
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
@@ -11,7 +10,7 @@ from typer.testing import CliRunner
 from proteingym.base.__main__ import app
 from proteingym.base.assay import AssaySlice
 from proteingym.base.dataset import Dataset, DatasetSlice
-from proteingym.base.msa import MSA
+from proteingym.base.msa import MSA, MsaProteinSequence
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
 
@@ -203,7 +202,7 @@ def test_list_datasets_json_serialization() -> None:
         value=AtomArray(10),
     )
 
-    msa = MSA(name="test", value=fasta.FastaFile())
+    msa = MSA(name="test", value=list[MsaProteinSequence])
 
     dataset = Dataset(
         name="dataset", sequences=[sequence], structures=[structure], msas=[msa]

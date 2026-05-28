@@ -14,8 +14,8 @@ from proteingym.base.msa import (
     MSA,
     MSAFormat,
     MSAManifestSection,
+    MsaProteinSequence,
     MSAWeightsManifestSection,
-    PSequence,
 )
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 
@@ -113,7 +113,7 @@ def test_msa_minimal() -> None:
     try:
         MSA(name="test", value=[])
     except Exception as e:
-        raise AssertionError("Could not create MSA") from e
+        raise ValidationError("Could not create MSA") from e
     else:
         assert True, "MSA created successfully with minimal fields."
 
@@ -129,12 +129,12 @@ def multiple_sequence_alignment() -> fasta.FastaFile:
 
 
 @pytest.fixture
-def msa_value() -> list[PSequence]:
-    """Minimal list of PSequences for testing."""
+def msa_value() -> list[MsaProteinSequence]:
+    """Minimal list of MsaProteinSequences for testing."""
     return [
-        PSequence("AAAACGT"),
-        PSequence("AAA-CGT"),
-        PSequence("AAAAGGT"),
+        MsaProteinSequence("AAAACGT"),
+        MsaProteinSequence("AAA-CGT"),
+        MsaProteinSequence("AAAAGGT"),
     ]
 
 
@@ -147,7 +147,7 @@ def a3m_file(tmp_path: Path, multiple_sequence_alignment: fasta.FastaFile) -> Pa
 
 
 def test_msa_from_manifest_section_with_a3m(
-    a3m_file: Path, msa_value: list[PSequence]
+    a3m_file: Path, msa_value: list[MsaProteinSequence]
 ) -> None:
     """An MSA can be created from a manifest section with A3M file."""
     section = MSAManifestSection(path=a3m_file, format=MSAFormat.A3M)
@@ -156,7 +156,7 @@ def test_msa_from_manifest_section_with_a3m(
 
     assert msa.name == "structure"
     assert isinstance(msa.value, list)
-    assert all(isinstance(s, PSequence) for s in msa.value)
+    assert all(isinstance(s, MsaProteinSequence) for s in msa.value)
     assert msa.value == msa_value
 
 
@@ -266,7 +266,7 @@ def test_msa_as_manifest_section(a3m_file: Path) -> None:
     assert section == expected
 
 
-def test_msa_dump_to_file(tmp_path: Path, msa_value: list[PSequence]) -> None:
+def test_msa_dump_to_file(tmp_path: Path, msa_value: list[MsaProteinSequence]) -> None:
     """A MSA can be dumped to an A3M file."""
     msa = MSA(name="test", value=msa_value)
 
@@ -276,7 +276,7 @@ def test_msa_dump_to_file(tmp_path: Path, msa_value: list[PSequence]) -> None:
     assert msa == loaded_msa
 
 
-def test_msa_dump_to_dir(tmp_path: Path, msa_value: list[PSequence]) -> None:
+def test_msa_dump_to_dir(tmp_path: Path, msa_value: list[MsaProteinSequence]) -> None:
     """A MSA can be dumped to an A3M file inside a directory."""
     msa = MSA(name="test", value=msa_value)
 
@@ -287,7 +287,7 @@ def test_msa_dump_to_dir(tmp_path: Path, msa_value: list[PSequence]) -> None:
 
 
 def test_msa_reference_sequence_present_in_dataset(
-    msa_value: list[PSequence],
+    msa_value: list[MsaProteinSequence],
 ) -> None:
     """A ValueError is raised if the reference sequence is not in the MSA."""
     seq = Sequence(
@@ -315,7 +315,7 @@ def test_msa_reference_sequence_present_in_dataset(
 
 
 def test_msa_reference_sequence_not_present_in_dataset(
-    msa_value: list[PSequence],
+    msa_value: list[MsaProteinSequence],
 ) -> None:
     """A ValueError is raised if the reference sequence is not in the MSA."""
     msa = MSA(
@@ -332,7 +332,9 @@ def test_msa_reference_sequence_not_present_in_dataset(
         Dataset(name="test", msas=[msa], sequences=[])
 
 
-def test_data_dump_with_msa(tmp_path: Path, msa_value: list[PSequence]) -> None:
+def test_data_dump_with_msa(
+    tmp_path: Path, msa_value: list[MsaProteinSequence]
+) -> None:
     """Test the zip file created by the Dataset dump with MSAs.
 
     The created archive:
@@ -361,7 +363,7 @@ def test_data_dump_with_msa(tmp_path: Path, msa_value: list[PSequence]) -> None:
 
 
 def test_dataset_dump_with_msas_contains_archive_names(
-    tmp_path: Path, msa_value: list[PSequence]
+    tmp_path: Path, msa_value: list[MsaProteinSequence]
 ) -> None:
     """Same as `test_dataset_dump_with_msa`, but with MSAs."""
     expected = {"msas/msa1.a3m", "msas/msa2.a3m"}
@@ -378,7 +380,7 @@ def test_dataset_dump_with_msas_contains_archive_names(
 
 
 def test_dataset_with_msas_dump_from_path_unit(
-    tmp_path: Path, msa_value: list[PSequence]
+    tmp_path: Path, msa_value: list[MsaProteinSequence]
 ) -> None:
     """Dumping a dataset with MSAs should return the same after reading"""
     msa1 = MSA(name="msa1", value=msa_value)
@@ -398,7 +400,7 @@ def test_dataset_with_msas_dump_from_path_unit(
 
 
 def test_dataset_fails_with_duplicate_msa_names(
-    msa_value: list[PSequence],
+    msa_value: list[MsaProteinSequence],
 ) -> None:
     """A dataset with duplicate MSA names should raise a ValidationError."""
     duplicate_names = ["duplicate1", "duplicate2"]
@@ -429,19 +431,19 @@ def test_msa_weights_manifest_section_validate_relative_path(tmp_path: Path) -> 
     assert section.path == weights_file
 
 
-def test_psequence_repr() -> None:
-    """The PSequence __repr__ method should return a concise representation."""
-    sequence = PSequence("AAAACGT")
-    assert repr(sequence) == 'PSequence("AAAACGT")'
+def test_msaproteinsequence_repr() -> None:
+    """The MsaProteinSequence __repr__ method should return a concise representation."""
+    sequence = MsaProteinSequence("AAAACGT")
+    assert repr(sequence) == 'MsaProteinSequence("AAAACGT")'
 
 
-def test_msa_eq_with_non_msa(msa_value: list[PSequence]) -> None:
+def test_msa_eq_with_non_msa(msa_value: list[MsaProteinSequence]) -> None:
     """The MSA __eq__ method should return False when comparing with non-MSA."""
     msa = MSA(name="test", value=msa_value)
     assert msa != "not an msa"
 
 
-def test_msa_eq_w_different_values(msa_value: list[PSequence]) -> None:
+def test_msa_eq_w_different_values(msa_value: list[MsaProteinSequence]) -> None:
     """The MSA __eq__ method should return False when vals different."""
     msa1 = MSA(name="test1", value=msa_value)
     msa2 = MSA(name="test2", value=msa_value[:-1])
@@ -449,7 +451,7 @@ def test_msa_eq_w_different_values(msa_value: list[PSequence]) -> None:
 
 
 def test_msa_repr(
-    msa_value: list[PSequence],
+    msa_value: list[MsaProteinSequence],
 ) -> None:
     """The MSA __repr__ method should return a concise representation."""
     description = "This is a test MSA used to verify the __repr__ method."
@@ -478,7 +480,7 @@ def test_msa_repr(
         assert str(sequence)[:50] in repr_str
 
     # Test ellipsis with more than 3 sequences
-    more_sequences = msa_value + [PSequence("TTTTTTT")]
+    more_sequences = msa_value + [MsaProteinSequence("TTTTTTT")]
     msa_more = MSA(name="more_msa", value=more_sequences)
     repr_more = repr(msa_more)
     assert "\t\t..." in repr_more

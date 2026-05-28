@@ -18,55 +18,14 @@ from pydantic import (
 )
 
 
-class PSequence(Sequence):
+class MsaProteinSequence(Sequence):
+    """biotite.sequence.ProteinSequence does not support insertion/gap states,
+    motivating the use of a custom biotite.sequence.Sequence class for a3m
+    handling."""
+
     def get_alphabet(self):
-        return LetterAlphabet(
-            (
-                "A",
-                "C",
-                "D",
-                "E",
-                "F",
-                "G",
-                "H",
-                "I",
-                "K",
-                "L",
-                "M",
-                "N",
-                "P",
-                "Q",
-                "R",
-                "S",
-                "T",
-                "V",
-                "W",
-                "Y",
-                "a",
-                "c",
-                "d",
-                "e",
-                "f",
-                "g",
-                "h",
-                "i",
-                "k",
-                "l",
-                "m",
-                "n",
-                "p",
-                "q",
-                "r",
-                "s",
-                "t",
-                "v",
-                "w",
-                "y",
-                "X",
-                "x",
-                "-",
-            )
-        )
+        residues = "ACDEFGHIKLMNPQRSTWVYX"
+        return LetterAlphabet(tuple(residues) + tuple(residues.lower() + "-"))
 
     def __repr__(self):
         return f'{self.__class__.__name__}("{str(self)}")'
@@ -240,7 +199,7 @@ class MSA:
     name: str
     """The name of the MSA."""
 
-    value: list[PSequence]
+    value: list[MsaProteinSequence]
     """The value of the MSA."""
 
     description: str | None = None
@@ -319,7 +278,7 @@ class MSA:
         name = section.name or section.path.stem
         a3m = fasta.FastaFile.read(section.path)
         seq_iter = iter(a3m.values())
-        value = [PSequence(seq) for seq in seq_iter]
+        value = [MsaProteinSequence(seq) for seq in seq_iter]
         weights = np.load(weights_section.path).tolist() if weights_section else None
         return MSA(
             name=name,
