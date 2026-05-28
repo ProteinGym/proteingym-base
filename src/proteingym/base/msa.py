@@ -1,5 +1,6 @@
 import dataclasses
 from enum import StrEnum
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -229,6 +230,9 @@ class MSA:
     weights: list[float] | None = None
     """The weights for each sequence in the MSA."""
 
+    file: BytesIO | None = None
+    """The raw file data of the MSA."""
+
     def __eq__(self, item: Any) -> bool:
         """Implements the equality (==) operator for MSA.
 
@@ -280,6 +284,8 @@ class MSA:
         seq_iter = iter(a3m.values())
         value = [MsaProteinSequence(seq) for seq in seq_iter]
         weights = np.load(weights_section.path).tolist() if weights_section else None
+        with open(section.path, "rb") as f:
+            file_data = BytesIO(f.read())
         return MSA(
             name=name,
             value=value,
@@ -291,6 +297,7 @@ class MSA:
             sequence_start=section.sequence_start,
             sequence_end=section.sequence_end,
             weights=weights,
+            file=file_data,
         )
 
     def as_manifest_section(self, *, path: Path) -> MSAManifestSection:

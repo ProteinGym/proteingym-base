@@ -160,6 +160,21 @@ def test_msa_from_manifest_section_with_a3m(
     assert msa.value == msa_value
 
 
+def test_msa_file_attribute(a3m_file: Path) -> None:
+    """The MSA should have a 'file' attribute with the raw file data."""
+    section = MSAManifestSection(path=a3m_file)
+    msa = MSA.from_manifest_section(section)
+
+    assert msa.file is not None
+    msa.file.seek(0)
+    content = msa.file.read()
+
+    with open(a3m_file, "rb") as f:
+        expected_content = f.read()
+
+    assert content == expected_content
+
+
 @pytest.fixture
 def weights_file(tmp_path: Path) -> Path:
     """Weights file for testing."""
