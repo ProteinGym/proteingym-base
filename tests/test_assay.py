@@ -14,15 +14,11 @@ from proteingym.base.assay import (
     Assay,
     AssayFormat,
     AssayManifestSection,
-    AssayMethod,
     AssayRaw,
     AssayRawManifestSection,
-    AssayReadout,
     AssaySlice,
-    AssayTransformation,
     Field,
     FieldEncoding,
-    LibraryConstructionMethod,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -333,43 +329,19 @@ def test_assay_manifest_section(assay_file: Path) -> None:
         assert all(target.alias_ in content for target in section.targets)
 
 
-def test_assay_manifest_section_descriptors(assay_file: Path) -> None:
-    """Test AssayManifestSection with descriptors."""
+def test_assay_from_manifest_section_has_uncertainty(assay_file: Path):
+    """Test Assay.from_manifest_section with has_uncertainty."""
     section = AssayManifestSection(
         name="test",
         path=assay_file,
-        readout=AssayReadout.DNA_SEQUENCING,
-        library_construction_method=LibraryConstructionMethod.RANDOM_MUTAGENESIS,
-        assay_method=AssayMethod.SELECTION,
-        transformation=AssayTransformation.NONE,
-    )
-    assert section.readout == AssayReadout.DNA_SEQUENCING
-    assert (
-        section.library_construction_method
-        == LibraryConstructionMethod.RANDOM_MUTAGENESIS
-    )
-    assert section.assay_method == AssayMethod.SELECTION
-    assert section.transformation == AssayTransformation.NONE
-
-
-def test_assay_from_manifest_section_with_descriptors(assay_file: Path):
-    """Test Assay.from_manifest_section with descriptors."""
-    section = AssayManifestSection(
-        name="test",
-        path=assay_file,
-        readout=AssayReadout.FLUORESCENCE,
-        library_construction_method=LibraryConstructionMethod.SITE_SATURATED_MUTAGENESIS,
-        assay_method=AssayMethod.SCREEN,
-        transformation=AssayTransformation.FIT,
+        has_uncertainty=True,
     )
     assay = Assay.from_manifest_section(section)
-    assert assay.readout == AssayReadout.FLUORESCENCE
-    assert (
-        assay.library_construction_method
-        == LibraryConstructionMethod.SITE_SATURATED_MUTAGENESIS
-    )
-    assert assay.assay_method == AssayMethod.SCREEN
-    assert assay.transformation == AssayTransformation.FIT
+    assert assay.has_uncertainty is True
+
+    # Test as_manifest_section
+    new_section = assay.as_manifest_section(path=assay_file)
+    assert new_section.has_uncertainty is True
 
 
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
@@ -589,7 +561,7 @@ def test_assay() -> None:
         )
 
 
-def test_assay_number_of_variants():
+def test_assay_number_of_records():
     seq1 = Sequence(
         name="seq1",
         value=Seq("APC"),
@@ -610,8 +582,7 @@ def test_assay_number_of_variants():
         ],
         fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
-    assert assay.number_of_variants == 2
-    assert assay.number_of_variants == len(assay.to_df())
+    assert assay.number_of_records == 2
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:

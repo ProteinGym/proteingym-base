@@ -110,7 +110,7 @@ description = "Optical density at 600nm"
 type = "wild_type"
 alphabet = "DNA"
 path = "sequences.fasta"
-pfams = "PF00114"
+pfams = ["PF00114"]
 
 [[ structures ]]
 path = "structures.pdb"

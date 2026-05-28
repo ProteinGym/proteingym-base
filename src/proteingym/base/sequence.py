@@ -92,7 +92,7 @@ class SequenceManifestSection(BaseModel):
     uniprot_id: str | None = None
     """The UniProt identifier for this sequence."""
 
-    pfams: str | None = None
+    pfams: list | None = None
     """The Pfam accession strings for this sequence."""
 
     taxon_root: str | None = None
@@ -183,7 +183,7 @@ class Sequence:
     uniprot_id: str | None = None
     """The UniProt identifier for this sequence."""
 
-    pfams: str | None = None
+    pfams: list | None = None
     """The Pfam accession strings for this sequence."""
 
     taxon_root: str | None = dataclasses.field(default=UniprotField())

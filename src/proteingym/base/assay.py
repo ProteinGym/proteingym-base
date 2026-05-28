@@ -29,109 +29,129 @@ RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
 
 
 class AssayFormat(StrEnum):
-    """Supported assay file formats."""
+    """AssayFormat
+
+    Supported assay file formats.
+    """
 
     CSV = ".csv"
     """A comma separated text file"""
 
 
 class FieldEncoding(StrEnum):
-    """How to encode the variable when used as regression input.
+    """FieldEncoding
+
+    How to encode the variable when used as regression input.
 
     A variable may be best represented as a categorical, e.g., 1-hot encoded,
     or directly as a numerical float.
     """
 
     CATEGORICAL = "categorical"
+    """Categorical: e.g., 1-hot encoded"""
+
     NUMERICAL = "numerical"
+    """Numerical: e.g., float"""
 
 
 class LibraryConstructionMethod(StrEnum):
-    """The method used to construct the protein library.
+    """LibraryConstructionMethod
 
-    random mutagenesis: uncontrolled introduction of
-    mutations across random positions (ex. epPCR)
-
-    site-saturated mutageneisis: introduction of mutants
-    at specific sites with complete coverage (ex. NNK/S)
-
-    discrete: designed libraries targeting specific positions
-    and specific amino acid coverage (ex. oligo pools)
-
-    shuffling: random motif splitting/assembly-based methods"""
+    The method used to construct the protein library.
+    """
 
     RANDOM_MUTAGENESIS = "random_mutagenesis"
+    """random mutagenesis: uncontrolled introduction of
+    mutations across random positions (ex. epPCR)"""
+
     SITE_SATURATED_MUTAGENESIS = "site_saturated_mutagenesis"
+    """site-saturated mutageneisis: introduction of mutants
+    at specific sites with complete coverage (ex. NNK/S)"""
+
     DISCRETE = "discrete"
+    """discrete: designed libraries targeting specific positions
+    and specific amino acid coverage (ex. oligo pools)"""
+
     SHUFFLING = "shuffling"
+    """shuffling: random motif splitting/assembly-based methods"""
 
 
 class AssayMethod(StrEnum):
-    """The type of assay used to measure variant fitness.
+    """AssayMethod
 
-    selection: fitness measurement is coupled to cell growth
-
-    screen: fitness measurement is not coupled to cell growth"""
+    The type of assay used to measure variant fitness.
+    """
 
     SELECTION = "selection"
+    """selection: fitness measurement is coupled to cell growth"""
+
     SCREEN = "screen"
+    """screen: fitness measurement is not coupled to cell growth"""
 
 
 class AssayReadout(StrEnum):
-    """The readout method used in the assay.
+    """AssayReadout
 
-    sequencing: fitness is estimated from RNA sequencing
-
-    fluorescence: fitness is estimated from product and/or
-    reporter fluorescence
-
-    product: fitness is estimated from product concentration
-    measured in some manner other than fluorescence"""
+    The readout method used in the assay.
+    """
 
     RNA_SEQUENCING = "rna_sequencing"
+    """rna_sequencing: fitness is estimated from RNA sequencing"""
+
     DNA_SEQUENCING = "dna_sequencing"
+    """dna_sequencing: fitness is estimated from DNA sequencing"""
+
     FLUORESCENCE = "fluorescence"
+    """fluorescence: fitness is estimated from product and/or
+    reporter fluorescence"""
+
     PRODUCT = "product"
+    """product: fitness is estimated from product concentration
+    measured in some manner other than fluorescence"""
 
 
 class AssayTransformation(StrEnum):
-    """The transformation applied to the raw assay data.
+    """AssayTransformation
 
-    none: raw read counts, product amounts, etc.
+    The transformation applied to the raw assay data.
+    """
 
-    non-parametric: some basic data transformation applied
-    (ex. ratio of read counts, log transformation, etc.)
+    NONE = "none"
+    """none: raw read counts, product amounts, etc."""
 
-    fit: some regression/ML-based fit applied to data
-    (ex. MoCHI, Enrich2, etc.)"""
-
-    NONE = "None"
     NON_PARAMETRIC = "non_parametric"
+    """non-parametric: some basic data transformation applied
+    (ex. ratio of read counts, log transformation, etc.)"""
+
     FIT = "fit"
+    """fit: some regression/ML-based fit applied to data
+    (ex. MoCHI, Enrich2, etc.)"""
 
 
 class TargetPhenotype(StrEnum):
-    """Target phenotype the assay attempts to capture.
+    """TargetPhenotype
+
+    Target phenotype the assay attempts to capture.
     This language will probably be updated soon.
-
-    activity: some chemical reaction the protein performs
-
-    abundance: measurement of protein/RNA abundance
-
-    expression: measurement of protein expression
-
-    stability: thermostability measurements
-
-    binding: protein binding to sometehing
-
-    other: placeholder for things that don't fit above"""
+    """
 
     BINDING = "binding"
+    """binding: protein binding to something"""
+
     ACTIVITY = "activity"
+    """activity: some chemical reaction the protein performs"""
+
     ABUNDANCE = "abundance"
+    """abundance: measurement of protein/RNA abundance"""
+
     EXPRESSION = "expression"
+    """expression: measurement of protein expression"""
+
     STABILITY = "stability"
+    """stability: thermostability measurements"""
+
     OTHER = "other"
+    """other: placeholder for things that don't fit above"""
 
 
 @dataclasses.dataclass(kw_only=True, frozen=False)
@@ -356,6 +376,10 @@ class AssayManifestSection(_ManifestSection):
     target_phenotype: TargetPhenotype | None = None
     """The property the assay attempts to capture."""
 
+    has_uncertainty: bool | None = None
+    """Authors include some form of assay uncertainty measure (they have replicate
+    experiments and/or correlation to low-throughput data)"""
+
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
@@ -575,6 +599,10 @@ class Assay(AssayRaw):
     target_phenotype: TargetPhenotype | None = None
     """The property the assay attempts to capture."""
 
+    has_uncertainty: bool | None = None
+    """Authors include some form of assay uncertainty measure (they have replicate
+    experiments and/or correlation to low-throughput data)"""
+
     @property
     def sequence_feature_name(self) -> str:
         """The sequence feature name.
@@ -592,9 +620,9 @@ class Assay(AssayRaw):
         return [name for name in all_names if name not in non_target_names]
 
     @property
-    def number_of_variants(self) -> int:
+    def number_of_records(self) -> int:
         """Returns the number of variants in the assay."""
-        return len(self)
+        return len({str(e[0]) for e in self.records})
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -623,6 +651,7 @@ class Assay(AssayRaw):
             and self.assay_method == item.assay_method
             and self.transformation == item.transformation
             and self.target_phenotype == item.target_phenotype
+            and self.has_uncertainty == item.has_uncertainty
         )
 
     @staticmethod
@@ -789,6 +818,7 @@ class Assay(AssayRaw):
             assay_method=section.assay_method,
             transformation=section.transformation,
             target_phenotype=section.target_phenotype,
+            has_uncertainty=section.has_uncertainty,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -824,6 +854,7 @@ class Assay(AssayRaw):
             assay_method=self.assay_method,
             transformation=self.transformation,
             target_phenotype=self.target_phenotype,
+            has_uncertainty=self.has_uncertainty,
         )
 
     def to_df(
