@@ -40,6 +40,7 @@ assay_method = "selection"
 readout = "rna_sequencing"
 transformation = "non_parametric"
 target_phenotype = "activity"
+has_uncertainty = true
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -68,7 +69,7 @@ description = "Optical density at 600nm"
 type = "wild_type"
 alphabet = "DNA"
 path = "sequences.fasta"
-pfams = ["PF00114"]
+pfam_ids = ["PF00114"]
 
 [[ structures ]]
 path = "structures.pdb"

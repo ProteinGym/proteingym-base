@@ -561,7 +561,7 @@ def test_assay() -> None:
         )
 
 
-def test_assay_number_of_records():
+def test_assay_number_of_variants():
     seq1 = Sequence(
         name="seq1",
         value=Seq("APC"),
@@ -582,7 +582,7 @@ def test_assay_number_of_records():
         ],
         fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
-    assert assay.number_of_records == 2
+    assert assay.number_of_variants == 2
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:
