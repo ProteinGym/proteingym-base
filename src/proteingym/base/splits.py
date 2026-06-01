@@ -104,7 +104,11 @@ def _subsample_mask(
     """
     Subsample True values in a boolean mask.
 
-    args
+    Calculates the number of True values to keep using the fraction argument, checks
+    which indices in the mask are set to True, uniformly samples those indices, and
+    then creates a new mask with True values at the sampled indices.
+
+    Args:
         mask: Boolean array to subsample
         fraction: Fraction of True values to keep (0.0 to 1.0)
             E.g., 0.8 means keep 80% and flip 20% to False
@@ -177,10 +181,13 @@ def _unique_sequences_for_targets(
 
 
 class QuantileSplitter:
-    """Split a dataset a random training set and a test set with a sample of hit
+    """Splits the data by reserving samples with high property values for the test set.
+
+    Split a dataset a random training set and a test set with a sample of hit
     variants defined as values exceeding a quantile threshold. This split is only
     defined for a single target in the dataset, because the quantile threshold can only
     be defined for a single target.
+
     Args:
         quantile: A float between 0 and 1 used to derive the percentile that will be
             used as a threshold. Values exceeding the threshold are considered the hit
@@ -205,7 +212,15 @@ class QuantileSplitter:
         self.random_state = _check_random_state(random_state)
 
     def split(self, dataset: Dataset, *, target: str) -> Subsets:
-        """Splits the dataset into a subsets.
+        """Splits the dataset into a Subsets object storing a training set and a test
+        set.
+
+        For a single target, the quantile threshold is calculated based on
+        self.quantile. The threshold is used to divide the data into an upper and lower
+        interval. The training set is composed by sampling self.fraction from the lower
+        interval, and the test set is composed by sampling 1 - self.fraction from the
+        upper interval, and 1 - self.fraction from the lower interval.
+
         Args:
             dataset: The dataset to split.
             target: Target field name to include in the
