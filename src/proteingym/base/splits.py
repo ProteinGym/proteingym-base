@@ -224,15 +224,14 @@ class QuantileSplitter:
                 test_assay_slices.append(AssaySlice(records=None, columns=columns))
             else:
                 columns = [assay.sequence_feature_name, target]
-                df = assay.to_df(target_names=[target])
-                target_values = df[target]
-                threshold = target_values.quantile(self.quantile)
-                lower_mask = (
-                    target_values.is_not_null() & (target_values <= threshold)
-                ).to_numpy()
-                upper_mask = (
-                    target_values.is_not_null() & (target_values > threshold)
-                ).to_numpy()
+                target_index = next(
+                    i for i, field in enumerate(assay.fields) if field.name == target
+                )
+                target_values = np.array([r[target_index] for r in assay.records])
+
+                threshold = np.quantile(target_values, self.quantile)
+                lower_mask = ~np.isnan(target_values) & (target_values <= threshold)
+                upper_mask = ~np.isnan(target_values) & (target_values > threshold)
                 train_mask = _subsample_mask(
                     lower_mask, fraction=self.fraction, random_state=self.random_state
                 )
