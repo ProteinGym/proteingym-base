@@ -100,7 +100,7 @@ def test_quantile_splitter_creates_two_subsets(dataset_empty: Dataset) -> None:
 
 
 def test_quantile_splitter_test_slice_target_values_exceed_all_train_targets(
-    dataset_with_realistic_assays: Dataset,
+    dataset_with_varying_targets: Dataset,
 ) -> None:
     """Test that test slice contains the hit variants — values that exceed the
     quantile threshold and therefore the maximum value in the train slice."""
@@ -110,11 +110,11 @@ def test_quantile_splitter_test_slice_target_values_exceed_all_train_targets(
     quantile = 0.75
     fraction = 0.5
     splitter = QuantileSplitter(quantile, fraction, random_state=42)
-    subsets = splitter.split(dataset_with_realistic_assays, target=target)
+    subsets = splitter.split(dataset_with_varying_targets, target=target)
 
     train_slice, test_slice = subsets.slices
     for assay, train_assay_slice, test_assay_slice in zip(
-        dataset_with_realistic_assays.assays,
+        dataset_with_varying_targets.assays,
         train_slice.assays,
         test_slice.assays,
         strict=True,
