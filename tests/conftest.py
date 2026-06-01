@@ -211,7 +211,7 @@ def dataset_with_assays() -> Dataset:
 
 
 @pytest.fixture
-def dataset_with_realistic_assays() -> Dataset:
+def dataset_with_varying_targets() -> Dataset:
     """A dataset containing multiple assays with varied target distributions."""
     sequences = [
         Sequence(
