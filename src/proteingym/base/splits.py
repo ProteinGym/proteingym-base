@@ -234,9 +234,8 @@ class QuantileSplitter:
         for assay in dataset.assays:
             target_names_in_assay = [e.name for e in assay.fields]
             if target not in target_names_in_assay:
-                columns = []
-                train_assay_slices.append(AssaySlice(records=None, columns=columns))
-                test_assay_slices.append(AssaySlice(records=None, columns=columns))
+                train_assay_slices.append(AssaySlice(records=None, columns=[]))
+                test_assay_slices.append(AssaySlice(records=None, columns=[]))
             else:
                 columns = [assay.sequence_feature_name, target]
                 target_index = next(
