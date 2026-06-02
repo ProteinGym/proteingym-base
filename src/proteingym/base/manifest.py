@@ -217,8 +217,8 @@ class Manifest(BaseModel):
             path /= f"{self.name}.toml"
         # Empty or None values indicate the fields were not set, hence excluded
         # them from the dump.
-        include = {key for key, value in self.model_dump().items() if value}
+        include = {key for key, value in self.model_dump(mode="json").items() if value}
         context = {"relative_to_path": path.parent}
         with path.open("w", encoding="utf-8") as f:
-            toml.dump(self.model_dump(include=include, context=context), f)
+            toml.dump(self.model_dump(mode="json", include=include, context=context), f)
         return path

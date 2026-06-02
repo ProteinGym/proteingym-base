@@ -329,6 +329,21 @@ def test_assay_manifest_section(assay_file: Path) -> None:
         assert all(target.alias_ in content for target in section.targets)
 
 
+def test_assay_from_manifest_section_has_uncertainty(assay_file: Path):
+    """Test Assay.from_manifest_section with has_uncertainty."""
+    section = AssayManifestSection(
+        name="test",
+        path=assay_file,
+        has_uncertainty=True,
+    )
+    assay = Assay.from_manifest_section(section)
+    assert assay.has_uncertainty is True
+
+    # Test as_manifest_section
+    new_section = assay.as_manifest_section(path=assay_file)
+    assert new_section.has_uncertainty is True
+
+
 def test_assay_manifest_section_with_relative_path(tmp_path: Path) -> None:
     """Test AssayManifestSection with a relative path."""
     path = tmp_path / "assay.csv"
@@ -544,6 +559,30 @@ def test_assay() -> None:
         assert all(
             target_name in ["DMS Score"] for target_name in assay.target_feature_names
         )
+
+
+def test_assay_number_of_variants():
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("APC"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("DEF"),
+        type=SequenceType.STANDARD,
+        alphabet=SequenceAlphabet.DNA,
+    )
+    assay = Assay(
+        name="assay",
+        records=[
+            (seq1, 1.56),
+            (seq2, 2.0),
+        ],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+    )
+    assert assay.number_of_variants == 2
 
 
 def test_assay_from_manifest_section(assay_file: Path) -> None:

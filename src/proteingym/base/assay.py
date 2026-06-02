@@ -29,21 +29,166 @@ RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
 
 
 class AssayFormat(StrEnum):
-    """Supported assay file formats."""
+    """AssayFormat
+
+    Supported assay file formats.
+    """
 
     CSV = ".csv"
     """A comma separated text file"""
 
 
 class FieldEncoding(StrEnum):
-    """How to encode the variable when used as regression input.
+    """FieldEncoding
+
+    How to encode the variable when used as regression input.
 
     A variable may be best represented as a categorical, e.g., 1-hot encoded,
     or directly as a numerical float.
     """
 
     CATEGORICAL = "categorical"
+    """Categorical: e.g., 1-hot encoded"""
+
     NUMERICAL = "numerical"
+    """Numerical: e.g., float"""
+
+
+class LibraryConstructionMethod(StrEnum):
+    """LibraryConstructionMethod
+
+    The method used to construct the protein library.
+    """
+
+    RANDOM_MUTAGENESIS = "random_mutagenesis"
+    """Random mutagenesis
+
+    Uncontrolled introduction of
+    mutations across random positions (ex. epPCR)"""
+
+    SITE_SATURATED_MUTAGENESIS = "site_saturated_mutagenesis"
+    """Site-saturated mutageneisis
+
+    Introduction of mutants
+    at specific sites with complete coverage (ex. NNK/S)"""
+
+    DISCRETE = "discrete"
+    """Discrete
+
+    Designed libraries targeting specific positions
+    and specific amino acid coverage (ex. oligo pools)"""
+
+    SHUFFLING = "shuffling"
+    """Shuffling
+
+    Random motif splitting/assembly-based methods"""
+
+
+class AssayMethod(StrEnum):
+    """AssayMethod
+
+    The type of assay used to measure variant fitness.
+    """
+
+    SELECTION = "selection"
+    """Selection
+
+    Fitness measurement is coupled to cell growth"""
+
+    SCREEN = "screen"
+    """Screen
+
+    Fitness measurement is not coupled to cell growth"""
+
+
+class AssayReadout(StrEnum):
+    """AssayReadout
+
+    The readout method used in the assay.
+    """
+
+    RNA_SEQUENCING = "rna_sequencing"
+    """RNA sequencing
+
+    Fitness is estimated from RNA sequencing"""
+
+    DNA_SEQUENCING = "dna_sequencing"
+    """DNA sequencing
+
+    Fitness is estimated from DNA sequencing"""
+
+    FLUORESCENCE = "fluorescence"
+    """Fluorescence
+
+    Fitness is estimated from product and/or
+    reporter fluorescence"""
+
+    PRODUCT = "product"
+    """Product
+
+    Fitness is estimated from product concentration
+    measured in some manner other than fluorescence"""
+
+
+class AssayTransformation(StrEnum):
+    """AssayTransformation
+
+    The transformation applied to the raw assay data.
+    """
+
+    NONE = "none"
+    """none
+
+    Raw read counts, product amounts, etc."""
+
+    NON_PARAMETRIC = "non_parametric"
+    """Non-parametric
+
+    Some basic data transformation applied
+    (ex. ratio of read counts, log transformation, etc.)"""
+
+    FIT = "fit"
+    """Fit
+
+    Some regression/ML-based fit applied to data
+    (ex. MoCHI, Enrich2, etc.)"""
+
+
+class TargetPhenotype(StrEnum):
+    """Target phenotype
+
+    Target phenotype the assay attempts to capture.
+    """
+
+    BINDING = "binding"
+    """Binding
+
+    Protein binding to something"""
+
+    ACTIVITY = "activity"
+    """Activity
+
+    Some chemical reaction the protein performs"""
+
+    ABUNDANCE = "abundance"
+    """Abundance
+
+    Measurement of protein/RNA abundance"""
+
+    EXPRESSION = "expression"
+    """Expression
+
+    Measurement of protein expression"""
+
+    STABILITY = "stability"
+    """Stability
+
+    Thermostability measurements"""
+
+    OTHER = "other"
+    """Other
+
+    Placeholder for things that don't fit above"""
 
 
 @dataclasses.dataclass(kw_only=True, frozen=False)
@@ -253,6 +398,27 @@ class AssayManifestSection(_ManifestSection):
     path: FilePath
     """The path to the assay file, csv only."""
 
+    readout: AssayReadout | None = None
+    """The readout method used in the assay."""
+
+    library_construction_method: LibraryConstructionMethod | None = None
+    """The method used to construct the protein library."""
+
+    assay_method: AssayMethod | None = None
+    """The type of assay used to measure variant fitness."""
+
+    transformation: AssayTransformation | None = None
+    """The transformation applied to the raw assay data."""
+
+    target_phenotype: TargetPhenotype | None = None
+    """The property the assay attempts to capture."""
+
+    has_uncertainty: bool | None = None
+    """Has uncertainty
+
+    Authors include some form of assay uncertainty measure (they have replicate
+    experiments and/or correlation to low-throughput data)"""
+
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
@@ -457,6 +623,27 @@ class Assay(AssayRaw):
     non_targets: list[Field] = dataclasses.field(default_factory=list)
     """List of non-target feature names that are included but not targets."""
 
+    readout: AssayReadout | None = None
+    """The readout method used in the assay."""
+
+    library_construction_method: LibraryConstructionMethod | None = None
+    """The method used to construct the protein library."""
+
+    assay_method: AssayMethod | None = None
+    """The type of assay used to measure variant fitness."""
+
+    transformation: AssayTransformation | None = None
+    """The transformation applied to the raw assay data."""
+
+    target_phenotype: TargetPhenotype | None = None
+    """The property the assay attempts to capture."""
+
+    has_uncertainty: bool | None = None
+    """Has uncertainty
+
+    Authors include some form of assay uncertainty measure (they have replicate
+    experiments and/or correlation to low-throughput data)"""
+
     @property
     def sequence_feature_name(self) -> str:
         """The sequence feature name.
@@ -472,6 +659,11 @@ class Assay(AssayRaw):
         all_names = [f.name for f in self.fields[1:]]  # Exclude sequence
         non_target_names = [f.name for f in self.non_targets]
         return [name for name in all_names if name not in non_target_names]
+
+    @property
+    def number_of_variants(self) -> int:
+        """Returns the number of variants in the assay."""
+        return len({str(e[0]) for e in self.records})
 
     def __contains__(self, item: "Assay") -> bool:
         """Implements the 'in' operator for Assay.
@@ -495,6 +687,12 @@ class Assay(AssayRaw):
             and self.variables == item.variables
             and self.fields == item.fields
             and self.non_targets == item.non_targets
+            and self.readout == item.readout
+            and self.library_construction_method == item.library_construction_method
+            and self.assay_method == item.assay_method
+            and self.transformation == item.transformation
+            and self.target_phenotype == item.target_phenotype
+            and self.has_uncertainty == item.has_uncertainty
         )
 
     @staticmethod
@@ -656,6 +854,12 @@ class Assay(AssayRaw):
             description=section.description,
             variables=section.variables,
             non_targets=section.non_targets,
+            readout=section.readout,
+            library_construction_method=section.library_construction_method,
+            assay_method=section.assay_method,
+            transformation=section.transformation,
+            target_phenotype=section.target_phenotype,
+            has_uncertainty=section.has_uncertainty,
         )
 
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
@@ -686,6 +890,12 @@ class Assay(AssayRaw):
             non_targets=self.non_targets,
             variables=self.variables,
             path=path,
+            readout=self.readout,
+            library_construction_method=self.library_construction_method,
+            assay_method=self.assay_method,
+            transformation=self.transformation,
+            target_phenotype=self.target_phenotype,
+            has_uncertainty=self.has_uncertainty,
         )
 
     def to_df(

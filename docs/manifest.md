@@ -77,6 +77,12 @@ description = "DMS score bin of the samples"
 name = "assay"
 path = "assay.csv"
 sequence_alphabet = "AA"
+library_construction_method = "discrete"
+assay_method = "selection"
+readout = "rna_sequencing"
+transformation = "non_parametric"
+target_phenotype = "activity"
+has_uncertainty = true
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -105,6 +111,7 @@ description = "Optical density at 600nm"
 type = "wild_type"
 alphabet = "DNA"
 path = "sequences.fasta"
+pfam_ids = ["PF00114"]
 
 [[ structures ]]
 path = "structures.pdb"
@@ -169,15 +176,21 @@ The assay targets section contains a list of assay targets defined in the datase
 
 The assays section contains a list of assays included in the dataset.
 
-| **Field**           | **Type**         | **Required** | **Default**  | **Description**                                                          |
-|---------------------|------------------|--------------|--------------|--------------------------------------------------------------------------|
-| `name`              | `string`         | No           | `None`       | The name of the assay.                                                   |
-| `path`              | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.           |
-| `targets`           | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay. |
-| `non_targets`       | `list[Field]`    | No           | Empty list   | List of non-target fields that are included but not prediction targets. E.g., predefined CV split allocations                |
-| `sequence_alias`    | `string`         | No           | `"sequence"` | The name of the column with sequences in the provided data.              |
-| `sequence_alphabet` | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                    |
-| `variables`         | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                              |
+| **Field**                      | **Type**         | **Required** | **Default**  | **Description**                                                                                           |
+|--------------------------------|------------------|--------------|--------------|-----------------------------------------------------------------------------------------------------------|
+| `name`                         | `string`         | No           | `None`       | The name of the assay.                                                                                    |
+| `path`                         | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.                                            |
+| `targets`                      | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay.                                  |
+| `non_targets`                  | `list[Field]`    | No           | Empty list   | List of non-target fields that are included but not prediction targets. E.g., predefined CV split allocations |
+| `sequence_alias`               | `string`         | No           | `"sequence"` | The name of the column with sequences in the provided data.                                               |
+| `sequence_alphabet`            | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                                                     |
+| `variables`                    | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                                                               |
+| `readout`                      | `string \| None` | No           | `None`       | The readout method used in the assay.                                                                     |
+| `library_construction_method`  | `string \| None` | No           | `None`       | The method used to construct the protein library.                                                         |
+| `assay_method`                 | `string \| None` | No           | `None`       | The type of assay used to measure protein properties.                                                     |
+| `transformation`               | `string | None` | No           | `None`       | The transformation applied to the assay data.                                                             |
+| `target_phenotype`             | `string | None` | No           | `None`       | The property the assay attempts to capture.                                                               |
+
 
 Example of an assay file:
 
