@@ -5,13 +5,12 @@ from zipfile import ZipFile
 import pytest
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
-from evedesign.sequence import Sequences
 from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
 from proteingym.base.assay import AssaySlice
 from proteingym.base.dataset import Dataset, DatasetSlice
-from proteingym.base.msa import MSA
+from proteingym.base.msa import MSA, MsaProteinSequence
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
 
@@ -203,7 +202,7 @@ def test_list_datasets_json_serialization() -> None:
         value=AtomArray(10),
     )
 
-    msa = MSA(name="test", value=Sequences([]))
+    msa = MSA(name="test", value=list[MsaProteinSequence])
 
     dataset = Dataset(
         name="dataset", sequences=[sequence], structures=[structure], msas=[msa]
@@ -214,7 +213,7 @@ def test_list_datasets_json_serialization() -> None:
 
     assert isinstance(dataset_obj, dict)
     assert dataset_obj["sequences"][0]["value"] == "test"
-    assert dataset_obj["msas"][0]["value"].startswith("<evedesign.sequence.Sequences")
+    assert isinstance(dataset_obj["msas"][0]["value"], str)
 
 
 def test_dataset_repr() -> None:

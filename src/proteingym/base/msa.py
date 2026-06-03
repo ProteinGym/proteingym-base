@@ -1,10 +1,12 @@
 import dataclasses
 from enum import StrEnum
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
+import biotite.sequence.io.fasta as fasta
 import numpy as np
-from evedesign.sequence import Sequences
+from biotite.sequence import LetterAlphabet, Sequence
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -15,6 +17,19 @@ from pydantic import (
     field_serializer,
     field_validator,
 )
+
+
+class MsaProteinSequence(Sequence):
+    """biotite.sequence.ProteinSequence does not support insertion/gap states,
+    motivating the use of a custom biotite.sequence.Sequence class for a3m
+    handling."""
+
+    def get_alphabet(self):
+        residues = "ACDEFGHIKLMNPQRSTWVYX"
+        return LetterAlphabet(tuple(residues) + tuple(residues.lower() + "-"))
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}("{str(self)}")'
 
 
 class MSAFormat(StrEnum):
@@ -185,7 +200,7 @@ class MSA:
     name: str
     """The name of the MSA."""
 
-    value: Sequences
+    value: list[MsaProteinSequence]
     """The value of the MSA."""
 
     description: str | None = None
@@ -215,18 +230,16 @@ class MSA:
     weights: list[float] | None = None
     """The weights for each sequence in the MSA."""
 
+    file: BytesIO | None = None
+    """The raw file data of the MSA."""
+
     def __eq__(self, item: Any) -> bool:
         """Implements the equality (==) operator for MSA.
 
         For equality, we only look at the msa value.
         """
         if isinstance(item, MSA):
-            if len(self.value.seqs) != len(item.value.seqs):
-                return False
-            return all(
-                s1.id_ == s2.id_ and s1.seq == s2.seq
-                for s1, s2 in zip(self.value.seqs, item.value.seqs, strict=True)
-            )
+            return self.value == item.value
         return False
 
     def __repr__(self) -> str:
@@ -243,10 +256,11 @@ class MSA:
             lines.append("\tdescription: None,")
 
         lines.append("\tvalue:")
-        for seq_obj in self.value.seqs[:3]:
-            lines.append(f"\t\t{seq_obj.id_} {seq_obj.seq[:50]}")
-        if len(self.value.seqs) > 3:
-            lines.append("\t\t...")
+        for i, sequence in enumerate(self.value):
+            if i >= 3:
+                lines.append("\t\t...")
+                break
+            lines.append(f"\t\t{sequence[:50]}")
         lines.append(")")
         return "\n".join(lines)
 
@@ -266,8 +280,12 @@ class MSA:
             NotImplementedError if the file type is not supported.
         """
         name = section.name or section.path.stem
-        value = Sequences.from_file(section.path, format=section.format.value)
+        a3m = fasta.FastaFile.read(section.path)
+        seq_iter = iter(a3m.values())
+        value = [MsaProteinSequence(seq) for seq in seq_iter]
         weights = np.load(weights_section.path).tolist() if weights_section else None
+        with open(section.path, "rb") as f:
+            file_data = BytesIO(f.read())
         return MSA(
             name=name,
             value=value,
@@ -279,6 +297,7 @@ class MSA:
             sequence_start=section.sequence_start,
             sequence_end=section.sequence_end,
             weights=weights,
+            file=file_data,
         )
 
     def as_manifest_section(self, *, path: Path) -> MSAManifestSection:
@@ -327,7 +346,13 @@ class MSA:
         path = path or Path.cwd()
         if path.is_dir():
             path /= f"{self.name}.{fmt.value}"
-        with open(path, "w") as f:
-            for s in self.value.seqs:
-                f.write(f">{s.id_}\n{s.seq}\n")
+
+        a3m_file = fasta.FastaFile()
+
+        for i, s in enumerate(self.value):
+            header = f"seq_{i}"
+            a3m_file[header] = str(s)
+
+        a3m_file.write(path)
+
         return path
