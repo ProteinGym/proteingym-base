@@ -10,6 +10,7 @@ from proteingym.base.assay import Field
 from proteingym.base.dataset import Assay, Dataset, Sequence, Subsets
 from proteingym.base.sequence import SequenceAlphabet, SequenceType
 from proteingym.base.splits import (
+    KFoldQuantileSplitter,
     KFoldSplitter,
     PredefinedSplitter,
     QuantileSplitter,
@@ -354,6 +355,173 @@ def test_quantile_splitter_splits_with_target_not_in_all_assays(
     """If a target is not in all assays, the assays without the targets are empty."""
     splitter = QuantileSplitter(quantile=0.75, fraction=0.5)
     splits = splitter.split(dataset_with_assays, target="stability")
+    assays = [assay for split in splits for assay in split.assays]
+    assert all(
+        assay.is_empty()
+        for assay in assays
+        if Field(name="stability") not in assay.fields
+    )
+    # Make sure we do not lose all data
+    assert any(not split.to_df().is_empty() for split in splits)
+
+
+def test_kfold_quantile_splitter_raises_value_error_if_n_splits_below_two() -> None:
+    """Test that KFoldQuantileSplitter raises ValueError if n_splits is below 2."""
+    with pytest.raises(ValueError, match="Number of splits must be at least 2."):
+        KFoldQuantileSplitter(quantile=0.75, n_splits=1)
+
+
+@pytest.mark.parametrize("n_splits", [2, 3, 5])
+def test_kfold_quantile_splitter_splits_length(
+    dataset_empty: Dataset, n_splits: int
+) -> None:
+    """Test that KFoldQuantileSplitter splits the dataset into the correct number of
+    folds."""
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=n_splits)
+    subsets = splitter.split(dataset_empty, target="DMS Score")
+    assert len(subsets["train_folds"]) == n_splits
+    assert len(subsets["test_folds"]) == n_splits
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        "dataset_with_single_assay",
+        "dataset_with_multiple_assays",
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize("n_splits", [2, 3, 5])
+def test_kfold_quantile_splitter_splits_in_dataset(
+    dataset: Dataset, n_splits: int
+) -> None:
+    """Test that KFoldQuantileSplitter splits the dataset into the correct number of
+    slices."""
+    target = "DMS Score"
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=n_splits)
+    subsets = splitter.split(dataset, target=target)
+
+    # The splits only retain the sequence and target columns, so we compare the
+    # (sequence, target value) records against those of the original dataset.
+    original = set()
+    for assay in dataset.assays:
+        target_idx = [f.name for f in assay.fields].index(target)
+        for record in assay.records:
+            original.add((str(record[0].value), record[target_idx]))
+
+    for key in ("train_folds", "test_folds"):
+        for split in subsets[key]:
+            for assay in split.assays:
+                for record in assay.records:
+                    assert (str(record[0].value), record[1]) in original
+
+
+def test_kfold_quantile_splitter_splits_are_disjoint(
+    dataset_with_assays: Dataset,
+) -> None:
+    """Test that KFoldQuantileSplitter splits are disjoint."""
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
+    subsets = splitter.split(dataset_with_assays, target="DMS Score")
+    for train, test in zip(
+        subsets["train_folds"], subsets["test_folds"], strict=True
+    ):
+        assert train not in test
+        assert test not in train
+
+
+@pytest.mark.parametrize("n_splits", [2, 3, 5])
+def test_kfold_quantile_splitter_splits_contain_all_records(
+    dataset_with_assays: Dataset, n_splits: int
+) -> None:
+    """Test that KFoldQuantileSplitter splits contain all records from the original
+    dataset."""
+    target = "DMS Score"
+    splitter = KFoldQuantileSplitter(
+        quantile=0.75, n_splits=n_splits, shuffle=True, random_state=42
+    )
+    subsets = splitter.split(dataset_with_assays, target=target)
+
+    def records_of(subset: Subsets) -> set[tuple[str, float]]:
+        return {
+            (str(record[0].value), record[1])
+            for split in subset
+            for assay in split.assays
+            for record in assay.records
+        }
+
+    covered = records_of(subsets["train_folds"]) | records_of(subsets["test_folds"])
+
+    original = set()
+    for assay in dataset_with_assays.assays:
+        target_idx = [f.name for f in assay.fields].index(target)
+        for record in assay.records:
+            original.add((str(record[0].value), record[target_idx]))
+
+    assert covered == original
+
+
+def test_kfold_quantile_splitter_test_folds_contain_hit_variants(
+    dataset_with_varying_targets: Dataset,
+) -> None:
+    """Test that test folds contains the hit variants — values that exceed the
+    quantile threshold and therefore the maximum value in the corresponding
+    training folds."""
+    target = "DMS Score"
+    quantile = 0.75
+    splitter = KFoldQuantileSplitter(
+        quantile=quantile, n_splits=2, shuffle=True, random_state=42
+    )
+    subsets = splitter.split(dataset_with_varying_targets, target=target)
+
+    for train_slice, test_slice in zip(
+        subsets.slices["train_folds"], subsets.slices["test_folds"], strict=True
+    ):
+        for assay, train_assay_slice, test_assay_slice in zip(
+            dataset_with_varying_targets.assays,
+            train_slice.assays,
+            test_slice.assays,
+            strict=True,
+        ):
+            if not test_assay_slice.columns:
+                continue  # Assay without the target is empty.
+            target_idx = [f.name for f in assay.fields].index(target)
+            all_values = np.array([r[target_idx] for r in assay.records], dtype=float)
+            threshold = float(np.quantile(all_values, quantile))
+            train_mask = np.asarray(train_assay_slice.records, dtype=bool)
+            test_mask = np.asarray(test_assay_slice.records, dtype=bool)
+            train_values = all_values[train_mask]
+            hits = all_values[test_mask][all_values[test_mask] > threshold]
+            if train_values.size and hits.size:
+                assert hits.min() > train_values.max()
+
+
+def test_kfold_quantile_splitter_splits_with_target_columns(
+    dataset_with_assay: Dataset,
+) -> None:
+    """A split with targets should contain the target and sequence columns."""
+    expected_field_names = ["sequence", "DMS Score"]
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
+    subsets = splitter.split(dataset_with_assay, target="DMS Score")
+    assays = [
+        assay
+        for key in ("train_folds", "test_folds")
+        for split in subsets[key]
+        for assay in split.assays
+    ]
+    assert all(
+        expected_field_names == [e.name for e in assay.fields]
+        for assay in assays
+        if assay.fields
+    )
+
+
+def test_kfold_quantile_splitter_splits_with_target_not_in_all_assays(
+    dataset_with_assays: Dataset,
+) -> None:
+    """If a target is not in all assays, the assays without the targets are empty."""
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
+    subsets = splitter.split(dataset_with_assays, target="stability")
+    splits = [split for key in ("train_folds", "test_folds") for split in subsets[key]]
     assays = [assay for split in splits for assay in split.assays]
     assert all(
         assay.is_empty()

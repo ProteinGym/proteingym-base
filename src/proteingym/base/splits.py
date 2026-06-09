@@ -10,6 +10,7 @@ Todo:
 
 import logging
 import numbers
+from collections import defaultdict
 
 import numpy as np
 import numpy.typing as npt
@@ -412,10 +413,10 @@ class KFoldQuantileSplitter:
                     if other != fold:
                         train_mask |= lower_folds[other]
                 train_assay_slices[fold].append(
-                    AssaySlice(records=train_mask, columns=columns)
+                    AssaySlice(records=train_mask.tolist(), columns=columns)
                 )
                 test_assay_slices[fold].append(
-                    AssaySlice(records=test_mask, columns=columns)
+                    AssaySlice(records=test_mask.tolist(), columns=columns)
                 )
 
         slices = defaultdict(list)
