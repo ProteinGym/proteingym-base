@@ -365,6 +365,15 @@ def test_quantile_splitter_splits_with_target_not_in_all_assays(
     assert any(not split.to_df().is_empty() for split in splits)
 
 
+def test_kfold_quantile_splitter_raises_value_error_if_quantile_not_a_fraction() -> (
+    None
+):
+    """Test that KFoldQuantileSplitter raises ValueError if the quantile is not a value
+    between 0 and 1."""
+    with pytest.raises(ValueError, match="Quantile must lie between 0 and 1."):
+        KFoldQuantileSplitter(quantile=1.1, n_splits=3)
+
+
 def test_kfold_quantile_splitter_raises_value_error_if_n_splits_below_two() -> None:
     """Test that KFoldQuantileSplitter raises ValueError if n_splits is below 2."""
     with pytest.raises(ValueError, match="Number of splits must be at least 2."):
