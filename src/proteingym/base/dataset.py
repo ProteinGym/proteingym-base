@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable, Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Iterator
+from typing import Any, Iterator, Union
 from zipfile import ZipFile
 
 import polars as pl
@@ -65,6 +65,9 @@ class DatasetSlice:
     assays: list[AssaySlice | list[bool | str]] | None = None
     """The list of assay slices. If None, all assays are included."""
 
+    metadata: dict[str, Union[str, float]] | None = None
+    """Metadata associated with the DatasetSlice."""
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DatasetSlice":
         """Create a dataset slice from a dictionary.
@@ -81,7 +84,7 @@ class DatasetSlice:
             assays = None
         else:
             assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
-        return cls(assays=assays)
+        return cls(assays=assays, metadata=data.get("metadata"))
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
@@ -105,6 +108,7 @@ class DatasetSlice:
         data = {}
         if self.assays is not None:
             data["assays"] = [dataclasses.asdict(slc) for slc in self.assays]
+        data["metadata"] = self.metadata
         return json.dumps(data)
 
 
