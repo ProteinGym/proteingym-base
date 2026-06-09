@@ -127,6 +127,48 @@ def _subsample_mask(
     return new_mask
 
 
+def _split_mask_into_folds(
+    mask: npt.NDArray,
+    n_splits: int,
+    *,
+    shuffle: bool = False,
+    random_state: int | np.random.RandomState | None = None,
+) -> list[npt.NDArray]:
+    """Split the True values of a boolean mask into folds.
+
+    The indices where the mask is True are partitioned into ``n_splits`` folds of
+    approximately equal size (the remainder is distributed over the first folds).
+    Each returned mask is True only at the indices belonging to that fold, so the
+    folds are mutually exclusive and their union equals the input mask.
+
+    Args:
+        mask: Boolean array to split.
+        n_splits: Number of folds to create.
+        shuffle: Whether to shuffle the True indices before splitting.
+        random_state: reproducibility. If None, the global numpy random state is used.
+
+    Returns:
+        list[npt.NDArray]: A list of ``n_splits`` boolean masks, one per fold.
+    """
+    true_indices = np.where(mask)[0]
+    if shuffle:
+        random_state = _check_random_state(random_state)
+        random_state.shuffle(true_indices)
+
+    n_true = len(true_indices)
+    sizes = [n_true // n_splits] * n_splits
+    for i in range(n_true % n_splits):
+        sizes[i] += 1
+
+    folds, offset = [], 0
+    for size in sizes:
+        fold_mask = np.zeros_like(mask, dtype=bool)
+        fold_mask[true_indices[offset : offset + size]] = True
+        folds.append(fold_mask)
+        offset += size
+    return folds
+
+
 def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
     """Reshape to a two-dimensional list with varying sizes of the sublists.
 
@@ -260,6 +302,128 @@ class QuantileSplitter:
         subsets = Subsets(
             dataset=dataset, slices=[train_dataset_slice, test_dataset_slice]
         )
+        return subsets
+
+
+class KFoldQuantileSplitter:
+    """Split a dataset into k folds, reserving high-property variants for testing.
+
+    Like the QuantileSplitter, a quantile threshold divides the data for a single
+    target into a lower and an upper interval. Both intervals are then randomly split
+    into k folds, similar to the KFoldSplitter. For each fold, a dedicated training
+    set and test set are created: the test set of fold i combines fold i of the upper
+    interval with fold i of the lower interval, while the training set of fold i
+    combines every fold except fold i from only the lower interval.
+
+    This split is only defined for a single target in the dataset, because the
+    quantile threshold can only be defined for a single target.
+
+    Args:
+        quantile: A float between 0 and 1 used to derive the percentile that will be
+            used as a threshold. Values exceeding the threshold are considered the hit
+            variants.
+        n_splits: Number of folds. Must be at least 2.
+        shuffle: Whether to shuffle the masks before splitting them into folds.
+            Defaults to False.
+        random_state: Seed or random state for reproducibility. If None, the global
+            numpy random state is used.
+    """
+
+    def __init__(
+        self,
+        quantile: float,
+        n_splits: int,
+        *,
+        shuffle: bool = False,
+        random_state: int | np.random.RandomState | None = None,
+    ) -> None:
+        if not 0 <= quantile <= 1:
+            raise ValueError("Quantile must lie between 0 and 1.")
+        if n_splits < 2:
+            raise ValueError("Number of splits must be at least 2.")
+        if not shuffle and random_state is not None:
+            logger.warning("random_state is ignored when shuffle is False.")
+        self.quantile = quantile
+        self.n_splits = n_splits
+        self.shuffle = shuffle
+        self.random_state = _check_random_state(random_state)
+
+    def split(self, dataset: Dataset, *, target: str) -> Subsets:
+        """Splits the dataset into a Subsets object storing k training and test sets.
+
+        For a single target, the quantile threshold is calculated based on
+        self.quantile. The threshold is used to divide the data into an upper and lower
+        interval. Both intervals are split into self.n_splits folds. For fold i, the
+        test set is composed of fold i of the upper interval and fold i of the lower
+        interval, while the training set is composed of every fold except fold i from
+        only the lower interval.
+
+        The resulting Subsets stores its slices as a dictionary keyed by
+        "train_fold_0", "test_fold_0", "train_fold_1", "test_fold_1", and so on.
+
+        Args:
+            dataset: The dataset to split.
+            target: Target field name to include in the splits.
+
+        Returns:
+            Subsets: The subsets containing the splits.
+        """
+        train_assay_slices = [[] for _ in range(self.n_splits)]
+        test_assay_slices = [[] for _ in range(self.n_splits)]
+        for assay in dataset.assays:
+            target_names_in_assay = [e.name for e in assay.fields]
+            if target not in target_names_in_assay:
+                for fold in range(self.n_splits):
+                    train_assay_slices[fold].append(
+                        AssaySlice(records=None, columns=[])
+                    )
+                    test_assay_slices[fold].append(
+                        AssaySlice(records=None, columns=[])
+                    )
+                continue
+
+            columns = [assay.sequence_feature_name, target]
+            target_index = next(
+                i for i, field in enumerate(assay.fields) if field.name == target
+            )
+            target_values = np.array([r[target_index] for r in assay.records])
+
+            threshold = np.quantile(target_values, self.quantile)
+            lower_mask = ~np.isnan(target_values) & (target_values <= threshold)
+            upper_mask = ~np.isnan(target_values) & (target_values > threshold)
+
+            lower_folds = _split_mask_into_folds(
+                lower_mask,
+                self.n_splits,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
+            )
+            upper_folds = _split_mask_into_folds(
+                upper_mask,
+                self.n_splits,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
+            )
+
+            for fold in range(self.n_splits):
+                test_mask = upper_folds[fold] | lower_folds[fold]
+                train_mask = np.zeros_like(lower_mask, dtype=bool)
+                for other in range(self.n_splits):
+                    if other != fold:
+                        train_mask |= lower_folds[other]
+                train_assay_slices[fold].append(
+                    AssaySlice(records=train_mask, columns=columns)
+                )
+                test_assay_slices[fold].append(
+                    AssaySlice(records=test_mask, columns=columns)
+                )
+
+        slices = defaultdict(list)
+        for fold in range(self.n_splits):
+            slices["train_folds"].append(DatasetSlice(assays=train_assay_slices[fold]))
+            slices["test_folds"].append(DatasetSlice(assays=test_assay_slices[fold]))
+
+        subsets = Subsets(dataset=dataset, slices=slices)
         return subsets
 
 
