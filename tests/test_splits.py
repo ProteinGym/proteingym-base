@@ -422,9 +422,7 @@ def test_kfold_quantile_splitter_splits_are_disjoint(
     """Test that KFoldQuantileSplitter splits are disjoint."""
     splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
     subsets = splitter.split(dataset_with_assays, target="DMS Score")
-    for train, test in zip(
-        subsets["train_folds"], subsets["test_folds"], strict=True
-    ):
+    for train, test in zip(subsets["train_folds"], subsets["test_folds"], strict=True):
         assert train not in test
         assert test not in train
 

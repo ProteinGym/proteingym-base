@@ -378,9 +378,7 @@ class KFoldQuantileSplitter:
                     train_assay_slices[fold].append(
                         AssaySlice(records=None, columns=[])
                     )
-                    test_assay_slices[fold].append(
-                        AssaySlice(records=None, columns=[])
-                    )
+                    test_assay_slices[fold].append(AssaySlice(records=None, columns=[]))
                 continue
 
             columns = [assay.sequence_feature_name, target]
