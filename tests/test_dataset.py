@@ -22,11 +22,11 @@ def test_dataset_slice_from_dict() -> None:
             AssaySlice(records=[True, False, True]),
             AssaySlice(records=[False, True, False]),
         ],
-        metadata={"fraction": 0.8}
+        metadata={"fraction": 0.8},
     )
     contents = {
         "assays": [{"records": [True, False, True]}, {"records": [False, True, False]}],
-        "metadata": {"fraction": 0.8}
+        "metadata": {"fraction": 0.8},
     }
     slc = DatasetSlice.from_dict(contents)
     assert slc == expected

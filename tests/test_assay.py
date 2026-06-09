@@ -413,7 +413,10 @@ def test_assay_slice_from_json_mask_records_only(contents: str) -> None:
 
 def test_assay_slice_to_json_columns_and_records_and_metadata() -> None:
     """Test that an assay slice is correctly dumped to JSON."""
-    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true], "metadata": {"k": 14}}'
+    contents = (
+        '{"columns": ["sequence", "DMS Score"], "records": [true, false, true], '
+        '"metadata": {"k": 14}}'
+    )
     slc = AssaySlice(
         columns=["sequence", "DMS Score"],
         records=[True, False, True],
@@ -423,8 +426,12 @@ def test_assay_slice_to_json_columns_and_records_and_metadata() -> None:
 
 
 def test_assay_slice_to_json_columns_and_records() -> None:
-    """Test that an assay slice with only columns and records is correctly dumped to JSON."""
-    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true], "metadata": null}'
+    """Test that an assay slice with only columns and records is correctly dumped to
+    JSON."""
+    contents = (
+        '{"columns": ["sequence", "DMS Score"], "records": [true, false, true], '
+        '"metadata": null}'
+    )
     slc = AssaySlice(columns=["sequence", "DMS Score"], records=[True, False, True])
     assert slc.to_json() == contents
 
@@ -1669,14 +1676,15 @@ def test_assay_slice_repr_records_short_list():
     r = repr(slc)
     assert (
         r
-        == "AssaySlice(columns=['sequence'], records=[True, False, True, False, True], metadata=None)"
+        == "AssaySlice(columns=['sequence'], records=[True, False, True, False, True], "
+        "metadata=None)"
     )
 
     slc2 = AssaySlice(columns=None, records=[False, False, False, False, False])
     r2 = repr(slc2)
     assert (
-        r2
-        == "AssaySlice(columns=None, records=[False, False, False, False, False], metadata=None)"
+        r2 == "AssaySlice(columns=None, records=[False, False, False, False, False], "
+        "metadata=None)"
     )
 
 
