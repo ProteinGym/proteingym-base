@@ -297,7 +297,9 @@ class QuantileSplitter:
                 train_assay_slices.append(
                     AssaySlice(records=train_mask.tolist(), columns=columns)
                 )
-                test_assay_slices.append(AssaySlice(records=test_mask.tolist(), columns=columns))
+                test_assay_slices.append(
+                    AssaySlice(records=test_mask.tolist(), columns=columns)
+                )
         train_dataset_slice = DatasetSlice(assays=train_assay_slices)
         test_dataset_slice = DatasetSlice(assays=test_assay_slices)
         subsets = Subsets(
