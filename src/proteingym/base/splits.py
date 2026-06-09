@@ -295,9 +295,9 @@ class QuantileSplitter:
                     random_state=self.random_state,
                 ) | (~train_mask & lower_mask)
                 train_assay_slices.append(
-                    AssaySlice(records=train_mask, columns=columns)
+                    AssaySlice(records=train_mask.tolist(), columns=columns)
                 )
-                test_assay_slices.append(AssaySlice(records=test_mask, columns=columns))
+                test_assay_slices.append(AssaySlice(records=test_mask.tolist(), columns=columns))
         train_dataset_slice = DatasetSlice(assays=train_assay_slices)
         test_dataset_slice = DatasetSlice(assays=test_assay_slices)
         subsets = Subsets(
