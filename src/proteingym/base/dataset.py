@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable, Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Iterator, Union
+from typing import Any, Iterator
 from zipfile import ZipFile
 
 import polars as pl
@@ -65,12 +65,12 @@ class DatasetSlice:
     assays: list[AssaySlice | list[bool | str]] | None = None
     """The list of assay slices. If None, all assays are included."""
 
-    metadata: dict[str, Union[str, float]] | None = None
+    metadata: dict[str, str | float] | None = None
     """Metadata associated with the DatasetSlice. The metadata can be used to describe
-    details about the slice, for instance properties of the slice, like the number of 
-    top performing variants contained in the dataset slice, or with what kind of 
-    splitting parameters the slice was created, or any other information relevant to the 
-    user."""
+    details about the slice, for instance properties of the slice, like the number of
+    top performing variants contained in the dataset slice, or with what kind of
+    splitting parameters the slice was created, or any other information relevant to
+    the user."""
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DatasetSlice":

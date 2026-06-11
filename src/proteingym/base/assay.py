@@ -5,7 +5,7 @@ import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Union
+from typing import Annotated
 
 import annotated_types
 import polars as pl
@@ -452,10 +452,10 @@ class AssaySlice:
     records: list[bool] | None = None
     """The boolean mask for the records. If None, all records are included."""
 
-    metadata: dict[str, Union[str, float]] | None = None
+    metadata: dict[str, str | float] | None = None
     """Metadata associated with the AssaySlice. The metadata can be used to describe
-    details about the slice, for instance properties of the slice, like the number of 
-    top performing variants contained in the assay slice, or any other information 
+    details about the slice, for instance properties of the slice, like the number of
+    top performing variants contained in the assay slice, or any other information
     relevant to the user."""
 
     @classmethod
