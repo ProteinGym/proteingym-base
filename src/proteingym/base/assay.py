@@ -453,7 +453,10 @@ class AssaySlice:
     """The boolean mask for the records. If None, all records are included."""
 
     metadata: dict[str, Union[str, float]] | None = None
-    """Metadata associated with the AssaySlice."""
+    """Metadata associated with the AssaySlice. The metadata can be used to describe
+    details about the slice, for instance properties of the slice, like the number of 
+    top performing variants contained in the assay slice, or any other information 
+    relevant to the user."""
 
     @classmethod
     def from_json(cls, contents: str) -> "AssaySlice":
