@@ -53,7 +53,6 @@ def peptide_charge(seq: str, ph: float = 7.0, amide: bool = False) -> float:
     Returns:
         float:  value of the global charge of the sequence
     """
-
     if not AA_GAP_PATTERN.match(seq):
         raise ValueError(
             "sequence does not match aa-sequence regular expression %s" % seq

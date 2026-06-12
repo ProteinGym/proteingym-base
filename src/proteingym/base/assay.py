@@ -29,7 +29,7 @@ RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
 
 
 class AssayFormat(StrEnum):
-    """AssayFormat
+    """AssayFormat.
 
     Supported assay file formats.
     """
@@ -39,7 +39,7 @@ class AssayFormat(StrEnum):
 
 
 class FieldEncoding(StrEnum):
-    """FieldEncoding
+    """FieldEncoding.
 
     How to encode the variable when used as regression input.
 
@@ -55,7 +55,7 @@ class FieldEncoding(StrEnum):
 
 
 class LibraryConstructionMethod(StrEnum):
-    """LibraryConstructionMethod
+    """LibraryConstructionMethod.
 
     The method used to construct the protein library.
     """
@@ -85,7 +85,7 @@ class LibraryConstructionMethod(StrEnum):
 
 
 class AssayMethod(StrEnum):
-    """AssayMethod
+    """AssayMethod.
 
     The type of assay used to measure variant fitness.
     """
@@ -102,7 +102,7 @@ class AssayMethod(StrEnum):
 
 
 class AssayReadout(StrEnum):
-    """AssayReadout
+    """AssayReadout.
 
     The readout method used in the assay.
     """
@@ -131,7 +131,7 @@ class AssayReadout(StrEnum):
 
 
 class AssayTransformation(StrEnum):
-    """AssayTransformation
+    """AssayTransformation.
 
     The transformation applied to the raw assay data.
     """
@@ -155,7 +155,7 @@ class AssayTransformation(StrEnum):
 
 
 class TargetPhenotype(StrEnum):
-    """Target phenotype
+    """Target phenotype.
 
     Target phenotype the assay attempts to capture.
     """
@@ -198,7 +198,7 @@ class Field:
     A field is used to describe assay variables, e.g., assay conditions such as the
     pH, or the prediction target, e.g., the observed activity or stability.
 
-    TODO
+    Todo:
     ----
     Add field for setting the type.
     """
@@ -473,8 +473,7 @@ class AssaySlice:
         return json.dumps(dataclasses.asdict(self))
 
     def __repr__(self):
-        """Returns a concise string representation of the slice"""
-
+        """Returns a concise string representation of the slice."""
         if self.records is None:
             return f"AssaySlice(columns={self.columns})"
 
@@ -816,7 +815,6 @@ class Assay(AssayRaw):
     @classmethod
     def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
         """Create an Assay instance from a manifest section."""
-
         sequence_field = Field(name=SEQUENCE, alias=section.sequence_alias)
         all_fields = [sequence_field] + section.targets + section.non_targets
         df = pl.read_csv(section.path, columns=[f.alias_ for f in all_fields])
@@ -871,7 +869,6 @@ class Assay(AssayRaw):
         Returns:
             AssayManifestSection: The manifest section for the assay.
         """
-
         # Get the sequence alphabet from the first record
         if self.is_empty():
             sequence_alphabet = None
@@ -959,7 +956,6 @@ class Assay(AssayRaw):
         Raises:
             NotImplementedError: if the file type is not supported.
         """
-
         path = path or Path.cwd()
         if path.is_dir():
             path /= f"{self.name}{fmt.value}"

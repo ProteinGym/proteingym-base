@@ -60,7 +60,19 @@ filterwarnings = [
 line-length = 88
 
 [tool.ruff.lint]
-ignore = ["N805"]
+# Ignore rules that require docstrings to be present
+# Only check format/style of existing docstrings
+ignore = [
+    "N805",
+    "D100",  # Missing docstring in public module
+    "D101",  # Missing docstring in public class
+    "D102",  # Missing docstring in public method
+    "D103",  # Missing docstring in public function
+    "D104",  # Missing docstring in public package
+    "D105",  # Missing docstring in magic method
+    "D106",  # Missing docstring in public nested class
+    "D107",  # Missing docstring in __init__
+]
 select = [
     "E", # pycodestyle errors
     "W", # pycodestyle warnings
@@ -70,7 +82,15 @@ select = [
     # "C", # flake8-comprehensions
     "B", # flake8-bugbear
     "A", # flake8-builtins
+    "D", # pydocstyle
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+ignore-decorators = ["typing.overload"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D"]  # Ignore all docstring rules in tests
 
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = ["X"]

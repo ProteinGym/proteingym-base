@@ -16,10 +16,12 @@ from pydantic import (
 
 
 class ModelCard(BaseModel):
-    """A model card representing configuration for a machine learning model
-    in the proteingym space.
+    """Model Card.
 
-    This class loads and validates model configuration from markdown files, containing
+    A model card representing configuration for a machine learning
+    model in the proteingym space.
+
+    This class loads and validates model configuration from Markdown files, containing
     model metadata and hyperparameters in the front matter for benchmarking tasks.
 
     The model allows extra fields beyond the defined attributes to accommodate
@@ -73,7 +75,6 @@ class ModelProject(BaseModel):
     @property
     def entry_points(self) -> list[EntryPoint]:
         """Discover entry points for the project based on project_name."""
-
         console_scripts = [
             ep
             for ep in metadata.entry_points()

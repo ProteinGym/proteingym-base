@@ -97,7 +97,6 @@ def build(
     Outputs:
         A zip file containing the dataset, saved in the specified path.
     """
-
     typer.echo("Loading manifest...")
     dataset_manifest = Manifest.from_path(manifest_path)
 
@@ -121,7 +120,6 @@ def validate_model(
     ],
 ):
     """Validate a model from path."""
-
     logger = logging.getLogger("proteingym.base")
 
     try:
