@@ -452,6 +452,12 @@ class AssaySlice:
     records: list[bool] | None = None
     """The boolean mask for the records. If None, all records are included."""
 
+    metadata: dict[str, str | float] | None = None
+    """Metadata associated with the AssaySlice. The metadata can be used to describe
+    details about the slice, for instance properties of the slice, like the number of
+    top performing variants contained in the assay slice, or any other information
+    relevant to the user."""
+
     @classmethod
     def from_json(cls, contents: str) -> "AssaySlice":
         """Create an assay slice from a JSON string.
@@ -481,12 +487,18 @@ class AssaySlice:
 
         if n_items <= 5:
             records_repr = "[" + ", ".join(repr(x) for x in self.records) + "]"
-            return f"AssaySlice(columns={self.columns}, records={records_repr})"
+            return (
+                f"AssaySlice(columns={self.columns}, records={records_repr}, "
+                f"metadata={self.metadata})"
+            )
         else:
             records_repr = (
                 f"[{self.records[0]}, ..., {self.records[-1]}] (len={n_items})"
             )
-            return f"AssaySlice(columns={self.columns}, records={records_repr})"
+            return (
+                f"AssaySlice(columns={self.columns}, records={records_repr}, "
+                f"metadata={self.metadata})"
+            )
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)

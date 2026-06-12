@@ -21,10 +21,12 @@ def test_dataset_slice_from_dict() -> None:
         assays=[
             AssaySlice(records=[True, False, True]),
             AssaySlice(records=[False, True, False]),
-        ]
+        ],
+        metadata={"fraction": 0.8},
     )
     contents = {
-        "assays": [{"records": [True, False, True]}, {"records": [False, True, False]}]
+        "assays": [{"records": [True, False, True]}, {"records": [False, True, False]}],
+        "metadata": {"fraction": 0.8},
     }
     slc = DatasetSlice.from_dict(contents)
     assert slc == expected
@@ -51,8 +53,9 @@ def test_dataset_slice_dumps_mask() -> None:
     """Test that a dataset slice with a boolean mask is correctly dumped to JSON."""
     contents = (
         '{"assays": ['
-        '{"columns": null, "records": [true, false, true]}, '
-        '{"columns": null, "records": [false, true, false]}]}'
+        '{"columns": null, "records": [true, false, true], "metadata": null}, '
+        '{"columns": null, "records": [false, true, false], "metadata": null}], '
+        '"metadata": null}'
     )
     slc = DatasetSlice(
         assays=[

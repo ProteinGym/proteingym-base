@@ -65,6 +65,13 @@ class DatasetSlice:
     assays: list[AssaySlice | list[bool | str]] | None = None
     """The list of assay slices. If None, all assays are included."""
 
+    metadata: dict[str, str | float] | None = None
+    """Metadata associated with the DatasetSlice. The metadata can be used to describe
+    details about the slice, for instance properties of the slice, like the number of
+    top performing variants contained in the dataset slice, or with what kind of
+    splitting parameters the slice was created, or any other information relevant to
+    the user."""
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DatasetSlice":
         """Create a dataset slice from a dictionary.
@@ -81,7 +88,7 @@ class DatasetSlice:
             assays = None
         else:
             assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
-        return cls(assays=assays)
+        return cls(assays=assays, metadata=data.get("metadata"))
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
@@ -105,6 +112,7 @@ class DatasetSlice:
         data = {}
         if self.assays is not None:
             data["assays"] = [dataclasses.asdict(slc) for slc in self.assays]
+        data["metadata"] = self.metadata
         return json.dumps(data)
 
 

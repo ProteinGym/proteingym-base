@@ -372,6 +372,21 @@ def test_assay_manifest_section_validate_feature_names(assay_file: Path) -> None
         )
 
 
+def test_assay_slice_from_json_columns_and_records_and_metadata() -> None:
+    """Test that an assay slice can be created from a JSON string."""
+    expected = AssaySlice(
+        columns=["sequence", "DMS Score"],
+        records=[True, False, True],
+        metadata={"k": 14},
+    )
+    contents = (
+        '{"columns": ["sequence", "DMS Score"], "records": [true, false, true], '
+        '"metadata": {"k": 14}}'
+    )
+    slc = AssaySlice.from_json(contents)
+    assert slc == expected
+
+
 def test_assay_slice_from_json_columns_and_records() -> None:
     """Test that an assay slice can be created from a JSON string."""
     expected = AssaySlice(
@@ -396,16 +411,36 @@ def test_assay_slice_from_json_mask_records_only(contents: str) -> None:
     assert slc == expected
 
 
-def test_assay_slice_to_json_columns_and_records() -> None:
+def test_assay_slice_to_json_columns_and_records_and_metadata() -> None:
     """Test that an assay slice is correctly dumped to JSON."""
-    contents = '{"columns": ["sequence", "DMS Score"], "records": [true, false, true]}'
+    contents = (
+        '{"columns": ["sequence", "DMS Score"], "records": [true, false, true], '
+        '"metadata": {"k": 14}}'
+    )
+    slc = AssaySlice(
+        columns=["sequence", "DMS Score"],
+        records=[True, False, True],
+        metadata={"k": 14},
+    )
+    assert slc.to_json() == contents
+
+
+def test_assay_slice_to_json_columns_and_records() -> None:
+    """Test that an assay slice with only columns and records is correctly dumped to
+    JSON."""
+    contents = (
+        '{"columns": ["sequence", "DMS Score"], "records": [true, false, true], '
+        '"metadata": null}'
+    )
     slc = AssaySlice(columns=["sequence", "DMS Score"], records=[True, False, True])
     assert slc.to_json() == contents
 
 
 def test_assay_slice_to_json_with_columns_only() -> None:
     """Test that an assay slice with columns only is correctly dumped to JSON."""
-    contents = '{"columns": ["sequence", "DMS Score"], "records": null}'
+    contents = (
+        '{"columns": ["sequence", "DMS Score"], "records": null, "metadata": null}'
+    )
     slc = AssaySlice(columns=["sequence", "DMS Score"])
     assert slc.to_json() == contents
 
@@ -1641,12 +1676,16 @@ def test_assay_slice_repr_records_short_list():
     r = repr(slc)
     assert (
         r
-        == "AssaySlice(columns=['sequence'], records=[True, False, True, False, True])"
+        == "AssaySlice(columns=['sequence'], records=[True, False, True, False, True], "
+        "metadata=None)"
     )
 
     slc2 = AssaySlice(columns=None, records=[False, False, False, False, False])
     r2 = repr(slc2)
-    assert r2 == "AssaySlice(columns=None, records=[False, False, False, False, False])"
+    assert (
+        r2 == "AssaySlice(columns=None, records=[False, False, False, False, False], "
+        "metadata=None)"
+    )
 
 
 def test_assay_slice_repr_records_truncated():
@@ -1656,10 +1695,14 @@ def test_assay_slice_repr_records_truncated():
     r = repr(slc)
     assert r == (
         "AssaySlice(columns=['sequence', 'DMS Score'], "
-        "records=[False, ..., False] (len=10))"
+        "records=[False, ..., False] (len=10), "
+        "metadata=None)"
     )
 
     records2 = [True] * 20
     slc2 = AssaySlice(columns=None, records=records2)
     r2 = repr(slc2)
-    assert r2 == "AssaySlice(columns=None, records=[True, ..., True] (len=20))"
+    assert (
+        r2
+        == "AssaySlice(columns=None, records=[True, ..., True] (len=20), metadata=None)"
+    )
