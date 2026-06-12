@@ -39,7 +39,7 @@ class _VersionPydanticAnnotation:
         source_type: Any,
         handler: Callable[[Any], core_schema.CoreSchema],
     ) -> core_schema.CoreSchema:
-        """See https://docs.pydantic.dev/latest/concepts/types/#customizing-validation-with-__get_pydantic_core_schema__"""
+        """See https://docs.pydantic.dev/latest/concepts/types/#customizing-validation-with-__get_pydantic_core_schema__."""
         _ = source_type
         _ = handler
 
@@ -68,7 +68,7 @@ class _VersionPydanticAnnotation:
     def __get_pydantic_json_schema__(
         cls, core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
     ) -> JsonSchemaValue:
-        """See https://docs.pydantic.dev/latest/concepts/json_schema/#implementing-__get_pydantic_json_schema__"""
+        """See https://docs.pydantic.dev/latest/concepts/json_schema/#implementing-__get_pydantic_json_schema__."""
         _ = core_schema
         return handler(core_schema.str_schema())
 

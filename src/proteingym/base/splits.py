@@ -1,10 +1,9 @@
-"""
-The splits module provides functionality for splitting datasets.
+"""The splits module provides functionality for splitting datasets.
 
 For example, split dataset for machine learning into training, validation, and
 test sets.
 
-TODO
+Todo:
 ----
 - Introduce parent Splitter class when splitter patterns emerge.
 """
@@ -101,8 +100,7 @@ def _subsample_mask(
     fraction: float,
     random_state: int | np.random.RandomState | None = None,
 ) -> npt.NDArray:
-    """
-    Subsample True values in a boolean mask.
+    """Subsample True values in a boolean mask.
 
     Calculates the number of True values to keep using the fraction argument, checks
     which indices in the mask are set to True, uniformly samples those indices, and
@@ -212,8 +210,7 @@ class QuantileSplitter:
         self.random_state = _check_random_state(random_state)
 
     def split(self, dataset: Dataset, *, target: str) -> Subsets:
-        """Splits the dataset into a Subsets object storing a training set and a test
-        set.
+        """Splits the dataset into training and test sets based on quantile thresholds.
 
         For a single target, the quantile threshold is calculated based on
         self.quantile. The threshold is used to divide the data into an upper and lower
@@ -459,7 +456,7 @@ class PredefinedSplitter:
         self.split_order = split_order
 
     def _validate_split_column_is_present(self, dataset) -> None:
-        """Checks if the split column is present in atleast one assay of the dataset"""
+        """Checks if the split column is present in atleast one assay of the dataset."""
         for assay in dataset.assays:
             field_names = [f.name for f in assay.fields]
             if self.split_column in field_names:
@@ -480,7 +477,7 @@ class PredefinedSplitter:
         return observed
 
     def _validate_split_values(self, dataset) -> list[str]:
-        """Checks if all observed values are in split_order and orders accordingly"""
+        """Checks if all observed values are in split_order and orders accordingly."""
         observed = self._collect_observed_values(dataset)
         order_set = set(self.split_order)
 
@@ -545,7 +542,6 @@ class PredefinedSplitter:
             ValueError: If sequences appear in multiple splits.
             ValueError: If the split column contains split values not in split order.
         """
-
         self._validate_split_column_is_present(dataset)
         split_values = self._validate_split_values(dataset)
         self._validate_no_sequence_overlap(dataset, split_values)

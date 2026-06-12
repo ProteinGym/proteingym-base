@@ -20,9 +20,12 @@ from pydantic import (
 
 
 class MsaProteinSequence(Sequence):
-    """biotite.sequence.ProteinSequence does not support insertion/gap states,
+    """Custom protein sequence class supporting insertion/gap states for a3m handling.
+
+    biotite.sequence.ProteinSequence does not support insertion/gap states,
     motivating the use of a custom biotite.sequence.Sequence class for a3m
-    handling."""
+    handling.
+    """
 
     def get_alphabet(self):
         residues = "ACDEFGHIKLMNPQRSTWVYX"
@@ -146,7 +149,6 @@ class MSAManifestSection(MSAMetadataManifestSection):
     @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Extend the path with the `relative_to_path` from the context."""
-
         if info.context and info.context.get("relative_to_path"):
             path = info.context["relative_to_path"] / path
         return path

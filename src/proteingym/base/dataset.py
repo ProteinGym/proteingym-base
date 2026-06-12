@@ -451,7 +451,6 @@ class Dataset(BaseModel):
 
         See https://github.com/biopython/biopython/blob/master/Bio/Seq.py#L408.
         """
-
         data = self.model_dump(**kwargs)
         # Converts any non-serializable objects to their string representation.
         return json.dumps(data, default=str)
