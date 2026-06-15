@@ -387,9 +387,9 @@ def test_kfold_quantile_splitter_splits_length(
     """Test that KFoldQuantileSplitter splits the dataset into the correct number of
     folds."""
     splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=n_splits)
-    subsets = splitter.split(dataset_empty, target="DMS Score")
-    assert len(subsets["train_folds"]) == n_splits
-    assert len(subsets["test_folds"]) == n_splits
+    train_subsets, test_subsets = splitter.split(dataset_empty, target="DMS Score")
+    assert len(train_subsets) == n_splits
+    assert len(test_subsets) == n_splits
 
 
 @pytest.mark.parametrize(
@@ -408,7 +408,7 @@ def test_kfold_quantile_splitter_splits_in_dataset(
     slices."""
     target = "DMS Score"
     splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=n_splits)
-    subsets = splitter.split(dataset, target=target)
+    train_subsets, test_subsets = splitter.split(dataset, target=target)
 
     # The splits only retain the sequence and target columns, so we compare the
     # (sequence, target value) records against those of the original dataset.
@@ -418,8 +418,8 @@ def test_kfold_quantile_splitter_splits_in_dataset(
         for record in assay.records:
             original.add((str(record[0].value), record[target_idx]))
 
-    for key in ("train_folds", "test_folds"):
-        for split in subsets[key]:
+    for subsets in (train_subsets, test_subsets):
+        for split in subsets:
             for assay in split.assays:
                 for record in assay.records:
                     assert (str(record[0].value), record[1]) in original
@@ -430,8 +430,10 @@ def test_kfold_quantile_splitter_splits_are_disjoint(
 ) -> None:
     """Test that KFoldQuantileSplitter splits are disjoint."""
     splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
-    subsets = splitter.split(dataset_with_assays, target="DMS Score")
-    for train, test in zip(subsets["train_folds"], subsets["test_folds"], strict=True):
+    train_subsets, test_subsets = splitter.split(
+        dataset_with_assays, target="DMS Score"
+    )
+    for train, test in zip(train_subsets, test_subsets, strict=True):
         assert train not in test
         assert test not in train
 
@@ -446,7 +448,7 @@ def test_kfold_quantile_splitter_splits_contain_all_records(
     splitter = KFoldQuantileSplitter(
         quantile=0.75, n_splits=n_splits, shuffle=True, random_state=42
     )
-    subsets = splitter.split(dataset_with_assays, target=target)
+    train_subsets, test_subsets = splitter.split(dataset_with_assays, target=target)
 
     def records_of(subset: Subsets) -> set[tuple[str, float]]:
         return {
@@ -456,7 +458,7 @@ def test_kfold_quantile_splitter_splits_contain_all_records(
             for record in assay.records
         }
 
-    covered = records_of(subsets["train_folds"]) | records_of(subsets["test_folds"])
+    covered = records_of(train_subsets) | records_of(test_subsets)
 
     original = set()
     for assay in dataset_with_assays.assays:
@@ -478,10 +480,12 @@ def test_kfold_quantile_splitter_test_folds_contain_hit_variants(
     splitter = KFoldQuantileSplitter(
         quantile=quantile, n_splits=2, shuffle=True, random_state=42
     )
-    subsets = splitter.split(dataset_with_varying_targets, target=target)
+    train_subsets, test_subsets = splitter.split(
+        dataset_with_varying_targets, target=target
+    )
 
     for train_slice, test_slice in zip(
-        subsets.slices["train_folds"], subsets.slices["test_folds"], strict=True
+        train_subsets.slices, test_subsets.slices, strict=True
     ):
         for assay, train_assay_slice, test_assay_slice in zip(
             dataset_with_varying_targets.assays,
@@ -508,11 +512,11 @@ def test_kfold_quantile_splitter_splits_with_target_columns(
     """A split with targets should contain the target and sequence columns."""
     expected_field_names = ["sequence", "DMS Score"]
     splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
-    subsets = splitter.split(dataset_with_assay, target="DMS Score")
+    train_subsets, test_subsets = splitter.split(dataset_with_assay, target="DMS Score")
     assays = [
         assay
-        for key in ("train_folds", "test_folds")
-        for split in subsets[key]
+        for subsets in (train_subsets, test_subsets)
+        for split in subsets
         for assay in split.assays
     ]
     assert all(
@@ -527,8 +531,10 @@ def test_kfold_quantile_splitter_splits_with_target_not_in_all_assays(
 ) -> None:
     """If a target is not in all assays, the assays without the targets are empty."""
     splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
-    subsets = splitter.split(dataset_with_assays, target="stability")
-    splits = [split for key in ("train_folds", "test_folds") for split in subsets[key]]
+    train_subsets, test_subsets = splitter.split(
+        dataset_with_assays, target="stability"
+    )
+    splits = [split for subsets in (train_subsets, test_subsets) for split in subsets]
     assays = [assay for split in splits for assay in split.assays]
     assert all(
         assay.is_empty()
@@ -736,3 +742,261 @@ def test_predefined_splitter_assay_missing_split_column_yields_empty_view(
         assert len(slice_present.records) == 1
         present_field_names = [f.name for f in slice_present.fields]
         assert "sequence" in present_field_names
+
+
+@pytest.fixture
+def dataset_shared_sequence_across_assays() -> Dataset:
+    """Two assays sharing a sequence whose target value differs between them.
+
+    The shared sequence ``AA`` measures high in one assay and low in the other, so its
+    aggregated is in the middle. A correct, aggregation-aware split must therefore
+    treat it as a mid-property variant despite the high single-assay measurement.
+    """
+    sequences = [
+        Sequence(
+            name=f"seq{i}",
+            value=Seq(s),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        )
+        for i, s in enumerate(["AA", "CC", "DD", "EE", "FF", "GG", "HH", "II"])
+    ]
+    assay1 = Assay(
+        name="assay1",
+        records=[
+            (sequences[0], 5.0),  # AA measures high here ...
+            (sequences[1], 0.1),
+            (sequences[2], 0.2),
+            (sequences[3], 0.3),
+            (sequences[4], 0.4),
+            (sequences[5], 0.5),
+            (sequences[6], 0.6),
+            (sequences[7], 0.7),
+        ],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+    )
+    assay2 = Assay(
+        name="assay2",
+        records=[
+            (sequences[0], -5.0),  # ... and low here, averaging to 0.0
+            (sequences[1], 0.1),
+        ],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+    )
+    return Dataset(
+        name="dataset_shared_sequence",
+        assay_targets=[Field(name="DMS Score")],
+        assays=[assay1, assay2],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+
+
+def _aggregated_hits(dataset: Dataset, slice_, target: str, threshold: float) -> int:
+    """Number of aggregated variants in a slice whose target exceeds the threshold."""
+    df = dataset[slice_].to_df(target_names=[target])
+    if df.is_empty():
+        return 0
+    return int((df[target] > threshold).sum())
+
+
+def test_quantile_splitter_threshold_uses_combined_target(
+    dataset_shared_sequence_across_assays: Dataset,
+) -> None:
+    """The threshold is computed on the aggregated target across all assays.
+
+    The shared sequence ``AA`` aggregates to 0.0, so it must never be counted as a
+    high-property (hit) variant even though it measures 5.0 in a single assay.
+    """
+    target = "DMS Score"
+    splitter = QuantileSplitter(quantile=0.75, fraction=0.5, random_state=0)
+    subsets = splitter.split(dataset_shared_sequence_across_assays, target=target)
+    _, test_slice = subsets.slices
+
+    test_df = dataset_shared_sequence_across_assays[test_slice].to_df(
+        target_names=[target]
+    )
+    aa_rows = test_df.filter(pl.col("sequence") == "AA")
+    assert all(value == 0.0 for value in aa_rows[target])
+
+
+def test_quantile_splitter_top_k_matches_aggregated_hits(
+    dataset_with_varying_targets: Dataset,
+) -> None:
+    """The ``top_k`` metadata equals the hits seen in the aggregated test slice."""
+    target = "DMS Score"
+    quantile = 0.75
+    splitter = QuantileSplitter(quantile, fraction=0.5, random_state=42)
+    subsets = splitter.split(dataset_with_varying_targets, target=target)
+    _, test_slice = subsets.slices
+
+    threshold = float(
+        np.quantile(
+            dataset_with_varying_targets.to_df(target_names=[target])[
+                target
+            ].to_numpy(),
+            quantile,
+        )
+    )
+    expected = _aggregated_hits(
+        dataset_with_varying_targets, test_slice, target, threshold
+    )
+    assert test_slice.metadata["top_k"] == expected
+
+
+def test_quantile_splitter_does_not_split_variant_across_train_and_test(
+    dataset_shared_sequence_across_assays: Dataset,
+) -> None:
+    """A sequence shared across assays lands entirely on one side of the split."""
+    target = "DMS Score"
+    splitter = QuantileSplitter(quantile=0.75, fraction=0.5, random_state=0)
+    train_slice, test_slice = splitter.split(
+        dataset_shared_sequence_across_assays, target=target
+    ).slices
+
+    train_sequences = set(
+        dataset_shared_sequence_across_assays[train_slice].to_df(target_names=[target])[
+            "sequence"
+        ]
+    )
+    test_sequences = set(
+        dataset_shared_sequence_across_assays[test_slice].to_df(target_names=[target])[
+            "sequence"
+        ]
+    )
+    assert train_sequences.isdisjoint(test_sequences)
+
+
+def test_quantile_splitter_raises_on_non_numeric_target(
+    dataset_with_non_numeric_target,
+) -> None:
+    """A non-numeric target cannot be thresholded and raises a clear error."""
+    splitter = QuantileSplitter(quantile=0.75, fraction=0.5)
+    with pytest.raises(ValueError, match="requires a numeric target"):
+        splitter.split(dataset_with_non_numeric_target, target="category")
+
+
+@pytest.fixture
+def dataset_with_non_numeric_target() -> Dataset:
+    """Dataset containing a non-numeric``category`` field to be used as the target."""
+    seq = Sequence(
+        name="seq0",
+        value=Seq("AA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay = Assay(
+        name="assay1",
+        records=[(seq, "low"), (seq, "high")],
+        fields=[Field(name="sequence"), Field(name="category")],
+    )
+    return Dataset(
+        name="categorical_dataset",
+        assay_targets=[Field(name="category")],
+        assays=[assay],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+
+
+@pytest.fixture
+def dataset_with_varying_variables() -> Dataset:
+    """Two assays measuring the same target under different variable combinations.
+
+    The assays share the target ``DMS Score`` but were measured at a different ``pH``.
+    """
+    sequences = [
+        Sequence(
+            name=f"seq{i}",
+            value=Seq(s),
+            type=SequenceType.WILD_TYPE,
+            alphabet=SequenceAlphabet.AA,
+        )
+        for i, s in enumerate(["AA", "CC", "DD", "EE"])
+    ]
+    assay_low_ph = Assay(
+        name="assay_ph3",
+        variables={"pH": 3},
+        records=[(sequences[0], 0.1), (sequences[1], 0.2)],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+    )
+    assay_high_ph = Assay(
+        name="assay_ph7",
+        variables={"pH": 7},
+        records=[(sequences[2], 0.3), (sequences[3], 0.4)],
+        fields=[Field(name="sequence"), Field(name="DMS Score")],
+    )
+    return Dataset(
+        name="dataset_varying_variables",
+        assay_variables=[Field(name="pH")],
+        assay_targets=[Field(name="DMS Score")],
+        assays=[assay_low_ph, assay_high_ph],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+
+
+def test_quantile_splitter_raises_on_varying_variables(
+    dataset_with_varying_variables: Dataset,
+) -> None:
+    """Combining assays with different variable combinations is rejected."""
+    splitter = QuantileSplitter(quantile=0.75, fraction=0.5)
+    with pytest.raises(ValueError, match="varying assay variables"):
+        splitter.split(dataset_with_varying_variables, target="DMS Score")
+
+
+def test_kfold_quantile_splitter_raises_on_varying_variables(
+    dataset_with_varying_variables: Dataset,
+) -> None:
+    """Combining assays with different variable combinations is rejected."""
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=2)
+    with pytest.raises(ValueError, match="varying assay variables"):
+        splitter.split(dataset_with_varying_variables, target="DMS Score")
+
+
+def test_kfold_quantile_splitter_top_k_matches_aggregated_hits(
+    dataset_with_varying_targets: Dataset,
+) -> None:
+    """Each test fold's ``top_k`` equals the hits in its aggregated slice."""
+    target = "DMS Score"
+    quantile = 0.75
+    splitter = KFoldQuantileSplitter(
+        quantile=quantile, n_splits=2, shuffle=True, random_state=42
+    )
+    _, test_subsets = splitter.split(dataset_with_varying_targets, target=target)
+
+    threshold = float(
+        np.quantile(
+            dataset_with_varying_targets.to_df(target_names=[target])[
+                target
+            ].to_numpy(),
+            quantile,
+        )
+    )
+    for test_slice in test_subsets.slices:
+        expected = _aggregated_hits(
+            dataset_with_varying_targets, test_slice, target, threshold
+        )
+        assert test_slice.metadata["top_k"] == expected
+
+
+def test_kfold_quantile_splitter_top_k_total_equals_all_hits(
+    dataset_with_varying_targets: Dataset,
+) -> None:
+    """Across folds, every high-property variant appears in exactly one test fold."""
+    target = "DMS Score"
+    quantile = 0.75
+    splitter = KFoldQuantileSplitter(
+        quantile=quantile, n_splits=2, shuffle=True, random_state=42
+    )
+    _, test_subsets = splitter.split(dataset_with_varying_targets, target=target)
+
+    df = dataset_with_varying_targets.to_df(target_names=[target])
+    threshold = float(np.quantile(df[target].to_numpy(), quantile))
+    total_hits = int((df[target] > threshold).sum())
+
+    summed = sum(test_slice.metadata["top_k"] for test_slice in test_subsets.slices)
+    assert summed == total_hits
