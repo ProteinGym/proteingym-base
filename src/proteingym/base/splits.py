@@ -257,7 +257,8 @@ def _check_single_variable_combination(
     if len(combinations) > 1:
         raise ValueError(
             "Quantile splitting does not support combining assays with varying assay "
-            "variables."
+            "variables. Attempted to form a dataset with the following combinations of"
+            f"variables: {combinations}."
         )
 
 
@@ -338,6 +339,10 @@ class QuantileSplitter:
         quantile: A float between 0 and 1 used to derive the percentile that will be
             used as a threshold. Values exceeding the threshold are considered the hit
             variants.
+        fraction: A float between 0 and 1 to decide the fraction of the lower interval
+            that will form the training set. The test set will be formed by sampling
+            1- fraction from the lower interval and 1 - fraction from the upper
+            interval.
         random_state: Seed or random state for
             reproducibility. If None, the global numpy random state is used.
     """
@@ -503,26 +508,27 @@ class KFoldQuantileSplitter:
         self.quantile. The threshold is used to divide the data into an upper and lower
         interval. Both intervals are split into self.n_splits folds. For fold i, the
         test set is composed of fold i of the upper interval and fold i of the lower
-        interval, while the training set is composed of every fold except fold i from
-        only the lower interval.
+        interval, while the training set is composed of every lower interval fold except
+        fold i.
 
-        The two resulting Subsets stores their slices as lists of folds with paired
-        ordering. The former contains all training folds, and the latter all tests
-        folds.
+        The two resulting Subsets objects stores their slices as lists of folds with
+        paired ordering. The former contains all training folds, and the latter all
+        tests folds.
 
         Args:
             dataset: The dataset to split.
             target: Target field name to include in the splits.
 
         Returns:
-            Subsets: The subsets containing the splits.
+            Tuple of Subsets: The subsets containing the training folds and test folds.
         """
         assays_contain_target = _assays_contain_target(dataset, target)
         train_slices = []
         test_slices = []
         if not any(assays_contain_target):
+            empty_assay_slice = AssaySlice(records=None, columns=[])
             for _ in range(self.n_splits):
-                empty = [AssaySlice(records=None, columns=[]) for _ in dataset.assays]
+                empty = [empty_assay_slice for _ in dataset.assays]
                 train_slices.append(DatasetSlice(assays=empty))
                 test_slices.append(DatasetSlice(assays=empty, metadata={"top_k": 0}))
             return Subsets(dataset=dataset, slices=train_slices), Subsets(
@@ -539,7 +545,7 @@ class KFoldQuantileSplitter:
                 f"{df[target].dtype}."
             )
         target_values = df[target].to_numpy()
-        sequences = [Seq(s) for s in df[SEQUENCE].to_list()]
+        sequences = [Seq(s) for s in df[SEQUENCE]]
         threshold = float(np.quantile(target_values, self.quantile))
 
         lower_mask = target_values <= threshold

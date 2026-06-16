@@ -105,7 +105,6 @@ def test_quantile_splitter_test_slice_target_values_exceed_all_train_targets(
 ) -> None:
     """Test that test slice contains the hit variants — values that exceed the
     quantile threshold and therefore the maximum value in the train slice."""
-    import numpy as np
 
     target = "DMS Score"
     quantile = 0.75
@@ -114,22 +113,17 @@ def test_quantile_splitter_test_slice_target_values_exceed_all_train_targets(
     subsets = splitter.split(dataset_with_varying_targets, target=target)
 
     train_slice, test_slice = subsets.slices
-    for assay, train_assay_slice, test_assay_slice in zip(
-        dataset_with_varying_targets.assays,
-        train_slice.assays,
-        test_slice.assays,
-        strict=True,
-    ):
-        target_idx = [f.name for f in assay.fields].index(target)
-        all_values = np.array([r[target_idx] for r in assay.records], dtype=float)
-        train_mask = np.asarray(train_assay_slice.records, dtype=bool)
-        test_mask = np.asarray(test_assay_slice.records, dtype=bool)
-        train_values = all_values[train_mask]
-        test_values = all_values[test_mask]
-        threshold = float(pl.Series(all_values).quantile(quantile))
-        n_hits = int(np.sum(all_values > threshold) * (1 - fraction))
-        train_max = float(train_values.max())
-        assert int(np.sum(test_values > train_max)) >= n_hits
+    all_values = dataset_with_varying_targets.to_df(target_names=[target])[target]
+    train_values = dataset_with_varying_targets[train_slice].to_df(
+        target_names=[target]
+    )[target]
+    test_values = dataset_with_varying_targets[test_slice].to_df(target_names=[target])[
+        target
+    ]
+    threshold = float(pl.Series(all_values).quantile(quantile))
+    n_hits = int(np.sum(all_values.to_numpy() > threshold) * (1 - fraction))
+    train_max = float(train_values.max())
+    assert int(np.sum(test_values.to_numpy() > train_max)) >= n_hits
 
 
 @pytest.fixture
@@ -472,9 +466,14 @@ def test_kfold_quantile_splitter_splits_contain_all_records(
 def test_kfold_quantile_splitter_test_folds_contain_hit_variants(
     dataset_with_varying_targets: Dataset,
 ) -> None:
-    """Test that test folds contains the hit variants — values that exceed the
-    quantile threshold and therefore the maximum value in the corresponding
-    training folds."""
+    """Test that, at the aggregated level, test folds hold the hit variants.
+
+    The threshold is defined on the combined, aggregated target (the same view a user
+    consumes via ``to_df``), and hit variants - those whose aggregated value exceeds
+    the threshold - are reserved for the test folds. Training folds are drawn only from
+    the lower interval, so every aggregated hit in a test fold must exceed the maximum
+    aggregated training value of the corresponding fold.
+    """
     target = "DMS Score"
     quantile = 0.75
     splitter = KFoldQuantileSplitter(
@@ -484,26 +483,28 @@ def test_kfold_quantile_splitter_test_folds_contain_hit_variants(
         dataset_with_varying_targets, target=target
     )
 
+    threshold = float(
+        np.quantile(
+            dataset_with_varying_targets.to_df(target_names=[target])[
+                target
+            ].to_numpy(),
+            quantile,
+        )
+    )
+
     for train_slice, test_slice in zip(
         train_subsets.slices, test_subsets.slices, strict=True
     ):
-        for assay, train_assay_slice, test_assay_slice in zip(
-            dataset_with_varying_targets.assays,
-            train_slice.assays,
-            test_slice.assays,
-            strict=True,
-        ):
-            if not test_assay_slice.columns:
-                continue  # Assay without the target is empty.
-            target_idx = [f.name for f in assay.fields].index(target)
-            all_values = np.array([r[target_idx] for r in assay.records], dtype=float)
-            threshold = float(np.quantile(all_values, quantile))
-            train_mask = np.asarray(train_assay_slice.records, dtype=bool)
-            test_mask = np.asarray(test_assay_slice.records, dtype=bool)
-            train_values = all_values[train_mask]
-            hits = all_values[test_mask][all_values[test_mask] > threshold]
-            if train_values.size and hits.size:
-                assert hits.min() > train_values.max()
+        train_values = dataset_with_varying_targets[train_slice].to_df(
+            target_names=[target]
+        )[target]
+        test_values = dataset_with_varying_targets[test_slice].to_df(
+            target_names=[target]
+        )[target]
+        assert (train_values <= threshold).all()
+        hits = test_values.filter(test_values > threshold)
+        if train_values.len() and hits.len():
+            assert hits.min() > train_values.max()
 
 
 def test_kfold_quantile_splitter_splits_with_target_columns(
@@ -804,21 +805,41 @@ def _aggregated_hits(dataset: Dataset, slice_, target: str, threshold: float) ->
 def test_quantile_splitter_threshold_uses_combined_target(
     dataset_shared_sequence_across_assays: Dataset,
 ) -> None:
-    """The threshold is computed on the aggregated target across all assays.
+    """The threshold is derived from the aggregated target, not per-assay values.
 
-    The shared sequence ``AA`` aggregates to 0.0, so it must never be counted as a
-    high-property (hit) variant even though it measures 5.0 in a single assay.
+    The shared sequence ``AA`` measures 5.0 in one assay but aggregates to 0.0 across
+    the combined assays. A per-assay threshold would wrongly flag that 5.0 as a hit; an
+    aggregation-aware threshold must classify ``AA`` as a low-property (non-hit) variant
+    and never count it towards ``top_k`` - even when ``AA`` falls in the test set.
     """
     target = "DMS Score"
-    splitter = QuantileSplitter(quantile=0.75, fraction=0.5, random_state=0)
-    subsets = splitter.split(dataset_shared_sequence_across_assays, target=target)
-    _, test_slice = subsets.slices
+    quantile = 0.75
+    splitter = QuantileSplitter(quantile=quantile, fraction=0.5, random_state=0)
+    _, test_slice = splitter.split(
+        dataset_shared_sequence_across_assays, target=target
+    ).slices
 
+    df = dataset_shared_sequence_across_assays.to_df(target_names=[target])
+    threshold = float(np.quantile(df[target].to_numpy(), quantile))
+
+    # AA aggregates to 0.0, which is below the combined threshold: not a hit variant.
+    aa_value = df.filter(pl.col("sequence") == "AA")[target].item()
+    assert aa_value == 0.0
+    hit_variants = set(df.filter(pl.col(target) > threshold)["sequence"])
+    assert hit_variants, (
+        "fixture must contain hit variants for this test to be meaningful"
+    )
+    assert "AA" not in hit_variants
+
+    # The splitter's top_k counts exactly the hits present in the test slice, and AA -
+    # a non-hit that nonetheless falls in the test set - is never among them.
     test_df = dataset_shared_sequence_across_assays[test_slice].to_df(
         target_names=[target]
     )
-    aa_rows = test_df.filter(pl.col("sequence") == "AA")
-    assert all(value == 0.0 for value in aa_rows[target])
+    assert "AA" in set(test_df["sequence"]), "AA expected in the test set for this seed"
+    test_hits = test_df.filter(pl.col(target) > threshold)
+    assert "AA" not in set(test_hits["sequence"])
+    assert test_slice.metadata["top_k"] == test_hits.height
 
 
 def test_quantile_splitter_top_k_matches_aggregated_hits(
@@ -842,6 +863,7 @@ def test_quantile_splitter_top_k_matches_aggregated_hits(
     expected = _aggregated_hits(
         dataset_with_varying_targets, test_slice, target, threshold
     )
+    assert expected > 0
     assert test_slice.metadata["top_k"] == expected
 
 
@@ -1000,3 +1022,22 @@ def test_kfold_quantile_splitter_top_k_total_equals_all_hits(
 
     summed = sum(test_slice.metadata["top_k"] for test_slice in test_subsets.slices)
     assert summed == total_hits
+
+
+def test_kfold_quantile_splitter_all_test_folds_disjoint(
+    dataset_with_varying_targets: Dataset,
+) -> None:
+    """Across folds, every variant appears in exactly one test fold."""
+    target = "DMS Score"
+    quantile = 0.75
+    splitter = KFoldQuantileSplitter(
+        quantile=quantile, n_splits=2, shuffle=True, random_state=42
+    )
+    _, test_subsets = splitter.split(dataset_with_varying_targets, target=target)
+    test_fold_sequences = [
+        test_slice.to_df(target_names=[target])["sequence"].to_list()
+        for test_slice in test_subsets
+    ]
+    joined_test_sequences = list(seq for seqs in test_fold_sequences for seq in seqs)
+    unique_test_sequences = set(seq for seqs in test_fold_sequences for seq in seqs)
+    assert len(joined_test_sequences) == len(unique_test_sequences)
