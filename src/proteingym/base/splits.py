@@ -394,12 +394,7 @@ class QuantileSplitter:
         """
         assays_contain_target = _assays_contain_target(dataset, target)
         if not any(assays_contain_target):
-            empty = [AssaySlice(records=None, columns=[]) for _ in dataset.assays]
-            train_dataset_slice = DatasetSlice(assays=empty)
-            test_dataset_slice = DatasetSlice(assays=empty, metadata={"top_k": 0})
-            return Subsets(
-                dataset=dataset, slices=[train_dataset_slice, test_dataset_slice]
-            )
+            raise ValueError(f"Target {target} not found in any of the assays.")
 
         _check_single_variable_combination(
             dataset, assays_contain_target=assays_contain_target
@@ -526,14 +521,7 @@ class KFoldQuantileSplitter:
         train_slices = []
         test_slices = []
         if not any(assays_contain_target):
-            empty_assay_slice = AssaySlice(records=None, columns=[])
-            for _ in range(self.n_splits):
-                empty = [empty_assay_slice for _ in dataset.assays]
-                train_slices.append(DatasetSlice(assays=empty))
-                test_slices.append(DatasetSlice(assays=empty, metadata={"top_k": 0}))
-            return Subsets(dataset=dataset, slices=train_slices), Subsets(
-                dataset=dataset, slices=test_slices
-            )
+            raise ValueError(f"Target {target} not found in any of the assays.")
 
         _check_single_variable_combination(
             dataset, assays_contain_target=assays_contain_target

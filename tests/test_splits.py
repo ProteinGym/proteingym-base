@@ -91,12 +91,12 @@ def test_quantile_splitter_raises_value_error_if_fraction_not_a_fraction() -> No
         QuantileSplitter(quantile=0.75, fraction=1.1)
 
 
-def test_quantile_splitter_creates_two_subsets(dataset_empty: Dataset) -> None:
+def test_quantile_splitter_creates_two_subsets(dataset_with_assays: Dataset) -> None:
     """Test that QuantileSplitter splits the dataset into two slices."""
     quantile = 0.75
     fraction = 0.5
     splitter = QuantileSplitter(quantile, fraction)
-    subsets = splitter.split(dataset_empty, target="DMS Score")
+    subsets = splitter.split(dataset_with_assays, target="DMS Score")
     assert len(subsets) == 2
 
 
@@ -376,12 +376,14 @@ def test_kfold_quantile_splitter_raises_value_error_if_n_splits_below_two() -> N
 
 @pytest.mark.parametrize("n_splits", [2, 3, 5])
 def test_kfold_quantile_splitter_splits_length(
-    dataset_empty: Dataset, n_splits: int
+    dataset_with_assays: Dataset, n_splits: int
 ) -> None:
     """Test that KFoldQuantileSplitter splits the dataset into the correct number of
     folds."""
     splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=n_splits)
-    train_subsets, test_subsets = splitter.split(dataset_empty, target="DMS Score")
+    train_subsets, test_subsets = splitter.split(
+        dataset_with_assays, target="DMS Score"
+    )
     assert len(train_subsets) == n_splits
     assert len(test_subsets) == n_splits
 
@@ -1041,3 +1043,21 @@ def test_kfold_quantile_splitter_all_test_folds_disjoint(
     joined_test_sequences = list(seq for seqs in test_fold_sequences for seq in seqs)
     unique_test_sequences = set(seq for seqs in test_fold_sequences for seq in seqs)
     assert len(joined_test_sequences) == len(unique_test_sequences)
+
+
+def test_quantile_splitter_raises_value_error_if_targets_not_present(
+    dataset_empty: Dataset,
+) -> None:
+    """Raise value error when target is not present in any of the assays"""
+    splitter = QuantileSplitter(quantile=0.75, fraction=0.5)
+    with pytest.raises(ValueError, match=r"not found in any of the assays."):
+        splitter.split(dataset_empty, target="DMS Score")
+
+
+def test_kfold_quantile_splitter_raises_value_error_if_targets_not_present(
+    dataset_empty: Dataset,
+) -> None:
+    """Raise value error when target is not present in any of the assays"""
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=5)
+    with pytest.raises(ValueError, match=r"not found in any of the assays."):
+        splitter.split(dataset_empty, target="DMS Score")
