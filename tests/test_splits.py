@@ -901,6 +901,15 @@ def test_quantile_splitter_raises_on_non_numeric_target(
         splitter.split(dataset_with_non_numeric_target, target="category")
 
 
+def test_kfold_quantile_splitter_raises_on_non_numeric_target(
+    dataset_with_non_numeric_target,
+) -> None:
+    """A non-numeric target cannot be thresholded and raises a clear error."""
+    splitter = KFoldQuantileSplitter(quantile=0.75, n_splits=5)
+    with pytest.raises(ValueError, match="requires a numeric target"):
+        splitter.split(dataset_with_non_numeric_target, target="category")
+
+
 @pytest.fixture
 def dataset_with_non_numeric_target() -> Dataset:
     """Dataset containing a non-numeric``category`` field to be used as the target."""
