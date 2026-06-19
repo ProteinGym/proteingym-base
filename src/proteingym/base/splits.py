@@ -15,7 +15,7 @@ import numpy as np
 import numpy.typing as npt
 from Bio.Seq import Seq
 
-from .assay import AssaySlice
+from .assay import SEQUENCE, AssaySlice
 from .dataset import Dataset, DatasetSlice, Subsets
 
 logger = logging.getLogger(__name__)
@@ -127,6 +127,48 @@ def _subsample_mask(
     return new_mask
 
 
+def _split_mask_into_folds(
+    mask: npt.NDArray,
+    n_splits: int,
+    *,
+    shuffle: bool = False,
+    random_state: int | np.random.RandomState | None = None,
+) -> list[npt.NDArray]:
+    """Split the True values of a boolean mask into folds.
+
+    The indices where the mask is True are partitioned into ``n_splits`` folds of
+    approximately equal size (the remainder is distributed over the first folds).
+    Each returned mask is True only at the indices belonging to that fold, so the
+    folds are mutually exclusive and their union equals the input mask.
+
+    Args:
+        mask: Boolean array to split.
+        n_splits: Number of folds to create.
+        shuffle: Whether to shuffle the True indices before splitting.
+        random_state: reproducibility. If None, the global numpy random state is used.
+
+    Returns:
+        list[npt.NDArray]: A list of ``n_splits`` boolean masks, one per fold.
+    """
+    true_indices = np.where(mask)[0]
+    if shuffle:
+        random_state = _check_random_state(random_state)
+        random_state.shuffle(true_indices)
+
+    n_true = len(true_indices)
+    sizes = [n_true // n_splits] * n_splits
+    for i in range(n_true % n_splits):
+        sizes[i] += 1
+
+    folds, offset = [], 0
+    for size in sizes:
+        fold_mask = np.zeros_like(mask, dtype=bool)
+        fold_mask[true_indices[offset : offset + size]] = True
+        folds.append(fold_mask)
+        offset += size
+    return folds
+
+
 def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
     """Reshape to a two-dimensional list with varying sizes of the sublists.
 
@@ -178,6 +220,113 @@ def _unique_sequences_for_targets(
     return list(sequences)
 
 
+def _assays_contain_target(dataset: Dataset, target: str) -> list[bool]:
+    """For each assay in the dataset, whether it contains the given target field."""
+    return [
+        target in [field.name for field in assay.fields] for assay in dataset.assays
+    ]
+
+
+def _check_single_variable_combination(
+    dataset: Dataset, *, assays_contain_target: list[bool]
+) -> None:
+    """Validate that the assays combined for a target share one variable combination.
+
+    Quantile splitting derives a single threshold from the target values pooled across
+    all assays that contain the target. That threshold is only meaningful if those
+    values are comparable. When the combined assays differ in their ``variables`` (e.g.
+    measured at different pH), a target value carries a different meaning under each
+    combination and a shared threshold is ill-defined.
+
+    Args:
+        dataset: The dataset to split.
+        assays_contain_target: Per-assay flag whether the assay contains the target,
+            aligned with ``dataset.assays``.
+
+    Raises:
+        ValueError: If the combined assays span more than one variable combination.
+    """
+    variable_names = [variable.name for variable in dataset.assay_variables]
+    combinations = {
+        tuple((name, assay.variables.get(name)) for name in variable_names)
+        for assay, contains_target in zip(
+            dataset.assays, assays_contain_target, strict=True
+        )
+        if contains_target
+    }
+    if len(combinations) > 1:
+        raise ValueError(
+            "Quantile splitting does not support combining assays with varying assay "
+            "variables. Attempted to form a dataset with the following combinations of"
+            f"variables: {combinations}."
+        )
+
+
+def _target_assay_slices(
+    dataset: Dataset,
+    *,
+    target: str,
+    selected_sequences: set[Seq],
+    assays_contain_target: list[bool],
+) -> list[AssaySlice]:
+    """Build per-assay slices selecting the records of the given variant sequences.
+
+    Every record of a selected sequence is included in every assay the sequence appears
+    in. This keeps a variant on a single side of the split.
+
+    Args:
+        dataset: The dataset whose assays are sliced.
+        target: Target field name retained in the slices.
+        selected_sequences: The sequence strings of the variants to include.
+        assays_contain_target: Per-assay flag whether the assay contains the target,
+            aligned with ``dataset.assays``.
+
+    Returns:
+        list[AssaySlice]: One slice per assay, positionally aligned with
+        ``dataset.assays``. Assays without the target yield an empty slice.
+    """
+    assay_slices = []
+    for assay, contains_target in zip(
+        dataset.assays, assays_contain_target, strict=True
+    ):
+        if not contains_target:
+            assay_slices.append(AssaySlice(records=None, columns=[]))
+            continue
+        assay_sequences = [Seq(record[0].value) for record in assay.records]
+        mask = _sequences_to_mask(
+            list(selected_sequences), all_sequences=assay_sequences
+        )
+        assay_slices.append(
+            AssaySlice(records=mask, columns=[assay.sequence_feature_name, target])
+        )
+    return assay_slices
+
+
+def _count_high_property_variants(
+    dataset: Dataset, test_slice: DatasetSlice, *, target: str, threshold: float
+) -> int:
+    """Count the high-property variants present in a test slice.
+
+    The count is computed from the same aggregated view the user consumes, i.e.
+    ``Dataset.to_df``, so it remains correct even when assays sharing sequences are
+    combined and their measurements aggregated. A high-property variant is an
+    aggregated record whose target value exceeds ``threshold``.
+
+    Args:
+        dataset: The dataset that is sliced.
+        test_slice: The test slice to inspect.
+        target: Target field name on which the threshold is defined.
+        threshold: The quantile threshold separating low- and high-property variants.
+
+    Returns:
+        int: The number of high-property variants in the test slice.
+    """
+    df = dataset[test_slice].to_df(target_names=[target])
+    if df.is_empty():
+        return 0
+    return int((df[target] > threshold).sum())
+
+
 class QuantileSplitter:
     """Splits the data by reserving samples with high property values for the test set.
 
@@ -190,6 +339,10 @@ class QuantileSplitter:
         quantile: A float between 0 and 1 used to derive the percentile that will be
             used as a threshold. Values exceeding the threshold are considered the hit
             variants.
+        fraction: A float between 0 and 1 to decide the fraction of the lower interval
+            that will form the training set. The test set will be formed by sampling
+            1- fraction from the lower interval and 1 - fraction from the upper
+            interval.
         random_state: Seed or random state for
             reproducibility. If None, the global numpy random state is used.
     """
@@ -201,7 +354,7 @@ class QuantileSplitter:
         *,
         random_state: int | np.random.RandomState | None = None,
     ) -> None:
-        if not 0 <= quantile <= 1:
+        if not 0 < quantile < 1:
             raise ValueError("Quantile must lie between 0 and 1.")
         if not 0 <= fraction <= 1:
             raise ValueError("Fraction must lie between 0 and 1.")
@@ -212,11 +365,24 @@ class QuantileSplitter:
     def split(self, dataset: Dataset, *, target: str) -> Subsets:
         """Splits the dataset into training and test sets based on quantile thresholds.
 
-        For a single target, the quantile threshold is calculated based on
-        self.quantile. The threshold is used to divide the data into an upper and lower
-        interval. The training set is composed by sampling self.fraction from the lower
-        interval, and the test set is composed by sampling 1 - self.fraction from the
-        upper interval, and 1 - self.fraction from the lower interval.
+        The quantile threshold is calculated on the combined, aggregated view of the
+        target obtained from :meth:`Dataset.to_df`, so that assays sharing the target
+        contribute to a single threshold rather than one threshold each. The threshold
+        divides the unique variants into a lower and an upper interval. The training set
+        is composed by sampling self.fraction from the lower interval, and the test set
+        is composed by sampling 1 - self.fraction from the upper interval, and the
+        remaining lower-interval variants.
+
+        Splitting is done per variant (identified by its sequence): a variant is
+        assigned to a single side of the split together with all of its records across
+        all assays. The resulting test slice is tagged with ``top_k`` in its metadata,
+        the number of high-property variants (aggregated target value exceeding the
+        threshold) it contains.
+
+        Note:
+            ``top_k`` is defined with respect to the default aggregation used by
+            :meth:`Dataset.to_df` (mean for numeric targets). Variants are identified by
+            sequence, consistent with the other splitters.
 
         Args:
             dataset: The dataset to split.
@@ -226,41 +392,203 @@ class QuantileSplitter:
         Returns:
             Subsets: The subsets containing the splits.
         """
-        train_assay_slices = []
-        test_assay_slices = []
-        for assay in dataset.assays:
-            target_names_in_assay = [e.name for e in assay.fields]
-            if target not in target_names_in_assay:
-                train_assay_slices.append(AssaySlice(records=None, columns=[]))
-                test_assay_slices.append(AssaySlice(records=None, columns=[]))
-            else:
-                columns = [assay.sequence_feature_name, target]
-                target_index = next(
-                    i for i, field in enumerate(assay.fields) if field.name == target
-                )
-                target_values = np.array([r[target_index] for r in assay.records])
+        assays_contain_target = _assays_contain_target(dataset, target)
+        if not any(assays_contain_target):
+            raise ValueError(f"Target {target} not found in any of the assays.")
 
-                threshold = np.quantile(target_values, self.quantile)
-                lower_mask = ~np.isnan(target_values) & (target_values <= threshold)
-                upper_mask = ~np.isnan(target_values) & (target_values > threshold)
-                train_mask = _subsample_mask(
-                    lower_mask, fraction=self.fraction, random_state=self.random_state
-                )
-                test_mask = _subsample_mask(
-                    upper_mask,
-                    fraction=1 - self.fraction,
-                    random_state=self.random_state,
-                ) | (~train_mask & lower_mask)
-                train_assay_slices.append(
-                    AssaySlice(records=train_mask, columns=columns)
-                )
-                test_assay_slices.append(AssaySlice(records=test_mask, columns=columns))
+        _check_single_variable_combination(
+            dataset, assays_contain_target=assays_contain_target
+        )
+        df = dataset.to_df(target_names=[target])
+        if not df[target].dtype.is_numeric():
+            raise ValueError(
+                f"QuantileSplitter requires a numeric target, but '{target}' is "
+                f"{df[target].dtype}."
+            )
+        target_values = df[target].to_numpy()
+        sequences = [Seq(s) for s in df[SEQUENCE]]
+        threshold = float(np.quantile(target_values, self.quantile))
+
+        lower_mask = target_values <= threshold
+        upper_mask = target_values > threshold
+        train_mask = _subsample_mask(
+            lower_mask, fraction=self.fraction, random_state=self.random_state
+        )
+        test_upper_mask = _subsample_mask(
+            upper_mask, fraction=1 - self.fraction, random_state=self.random_state
+        )
+        test_mask = test_upper_mask | (lower_mask & ~train_mask)
+
+        train_sequences = {
+            s for s, keep in zip(sequences, train_mask, strict=True) if keep
+        }
+        test_sequences = {
+            s for s, keep in zip(sequences, test_mask, strict=True) if keep
+        }
+
+        train_assay_slices = _target_assay_slices(
+            dataset,
+            target=target,
+            selected_sequences=train_sequences,
+            assays_contain_target=assays_contain_target,
+        )
+        test_assay_slices = _target_assay_slices(
+            dataset,
+            target=target,
+            selected_sequences=test_sequences,
+            assays_contain_target=assays_contain_target,
+        )
+
         train_dataset_slice = DatasetSlice(assays=train_assay_slices)
         test_dataset_slice = DatasetSlice(assays=test_assay_slices)
+        top_k = _count_high_property_variants(
+            dataset, test_dataset_slice, target=target, threshold=threshold
+        )
+        test_dataset_slice = DatasetSlice(
+            assays=test_assay_slices, metadata={"top_k": top_k}
+        )
         subsets = Subsets(
             dataset=dataset, slices=[train_dataset_slice, test_dataset_slice]
         )
         return subsets
+
+
+class KFoldQuantileSplitter:
+    """Split a dataset into k folds, reserving high-property variants for testing.
+
+    Like the QuantileSplitter, a quantile threshold divides the data for a single
+    target into a lower and an upper interval. Both intervals are then randomly split
+    into k folds, similar to the KFoldSplitter. For each fold, a dedicated training
+    set and test set are created: the test set of fold i combines fold i of the upper
+    interval with fold i of the lower interval, while the training set of fold i
+    combines every fold except fold i from only the lower interval.
+
+    This split is only defined for a single target in the dataset, because the
+    quantile threshold can only be defined for a single target.
+
+    Args:
+        quantile: A float between 0 and 1 used to derive the percentile that will be
+            used as a threshold. Values exceeding the threshold are considered the hit
+            variants.
+        n_splits: Number of folds. Must be at least 2.
+        shuffle: Whether to shuffle the masks before splitting them into folds.
+            Defaults to False.
+        random_state: Seed or random state for reproducibility. If None, the global
+            numpy random state is used.
+    """
+
+    def __init__(
+        self,
+        quantile: float,
+        n_splits: int,
+        *,
+        shuffle: bool = False,
+        random_state: int | np.random.RandomState | None = None,
+    ) -> None:
+        if not 0 < quantile < 1:
+            raise ValueError("Quantile must lie between 0 and 1.")
+        if n_splits < 2:
+            raise ValueError("Number of splits must be at least 2.")
+        if not shuffle and random_state is not None:
+            logger.warning("random_state is ignored when shuffle is False.")
+        self.quantile = quantile
+        self.n_splits = n_splits
+        self.shuffle = shuffle
+        self.random_state = _check_random_state(random_state)
+
+    def split(self, dataset: Dataset, *, target: str) -> tuple[Subsets, Subsets]:
+        """Splits the dataset into a Subsets object storing k training and test sets.
+
+        For a single target, the quantile threshold is calculated based on
+        self.quantile. The threshold is used to divide the data into an upper and lower
+        interval. Both intervals are split into self.n_splits folds. For fold i, the
+        test set is composed of fold i of the upper interval and fold i of the lower
+        interval, while the training set is composed of every lower interval fold except
+        fold i.
+
+        The two resulting Subsets objects stores their slices as lists of folds with
+        paired ordering. The former contains all training folds, and the latter all
+        tests folds.
+
+        Args:
+            dataset: The dataset to split.
+            target: Target field name to include in the splits.
+
+        Returns:
+            Tuple of Subsets: The subsets containing the training folds and test folds.
+        """
+        assays_contain_target = _assays_contain_target(dataset, target)
+        train_slices = []
+        test_slices = []
+        if not any(assays_contain_target):
+            raise ValueError(f"Target {target} not found in any of the assays.")
+
+        _check_single_variable_combination(
+            dataset, assays_contain_target=assays_contain_target
+        )
+        df = dataset.to_df(target_names=[target])
+        if not df[target].dtype.is_numeric():
+            raise ValueError(
+                f"KFoldQuantileSplitter requires a numeric target, but '{target}' is "
+                f"{df[target].dtype}."
+            )
+        target_values = df[target].to_numpy()
+        sequences = [Seq(s) for s in df[SEQUENCE]]
+        threshold = float(np.quantile(target_values, self.quantile))
+
+        lower_mask = target_values <= threshold
+        upper_mask = target_values > threshold
+        lower_folds = _split_mask_into_folds(
+            lower_mask,
+            self.n_splits,
+            shuffle=self.shuffle,
+            random_state=self.random_state,
+        )
+        upper_folds = _split_mask_into_folds(
+            upper_mask,
+            self.n_splits,
+            shuffle=self.shuffle,
+            random_state=self.random_state,
+        )
+
+        for fold in range(self.n_splits):
+            test_mask = upper_folds[fold] | lower_folds[fold]
+            train_mask = np.zeros_like(lower_mask, dtype=bool)
+            for other in range(self.n_splits):
+                if other != fold:
+                    train_mask |= lower_folds[other]
+
+            train_sequences = {
+                s for s, keep in zip(sequences, train_mask, strict=True) if keep
+            }
+            test_sequences = {
+                s for s, keep in zip(sequences, test_mask, strict=True) if keep
+            }
+
+            train_assay_slices = _target_assay_slices(
+                dataset,
+                target=target,
+                selected_sequences=train_sequences,
+                assays_contain_target=assays_contain_target,
+            )
+            test_assay_slices = _target_assay_slices(
+                dataset,
+                target=target,
+                selected_sequences=test_sequences,
+                assays_contain_target=assays_contain_target,
+            )
+
+            test_dataset_slice = DatasetSlice(assays=test_assay_slices)
+            top_k = _count_high_property_variants(
+                dataset, test_dataset_slice, target=target, threshold=threshold
+            )
+            train_slices.append(DatasetSlice(assays=train_assay_slices))
+            test_slices.append(
+                DatasetSlice(assays=test_assay_slices, metadata={"top_k": top_k})
+            )
+        train_subsets = Subsets(dataset=dataset, slices=train_slices)
+        test_subsets = Subsets(dataset=dataset, slices=test_slices)
+        return train_subsets, test_subsets
 
 
 class RandomSplitter:
