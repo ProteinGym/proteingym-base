@@ -81,7 +81,7 @@ def test_quantile_splitter_raises_value_error_if_quantile_not_a_fraction() -> No
     """Test that QuantileSplitter raises ValueError if the quantile is not a value
     between 0 and 1."""
     with pytest.raises(ValueError, match="Quantile must lie between 0 and 1."):
-        QuantileSplitter(quantile=1.1, fraction=0.8)
+        QuantileSplitter(quantile=1, fraction=0.8)
 
 
 def test_quantile_splitter_raises_value_error_if_fraction_not_a_fraction() -> None:
@@ -365,7 +365,7 @@ def test_kfold_quantile_splitter_raises_value_error_if_quantile_not_a_fraction()
     """Test that KFoldQuantileSplitter raises ValueError if the quantile is not a value
     between 0 and 1."""
     with pytest.raises(ValueError, match="Quantile must lie between 0 and 1."):
-        KFoldQuantileSplitter(quantile=1.1, n_splits=3)
+        KFoldQuantileSplitter(quantile=1, n_splits=3)
 
 
 def test_kfold_quantile_splitter_raises_value_error_if_n_splits_below_two() -> None:
@@ -799,8 +799,6 @@ def dataset_shared_sequence_across_assays() -> Dataset:
 def _aggregated_hits(dataset: Dataset, slice_, target: str, threshold: float) -> int:
     """Number of aggregated variants in a slice whose target exceeds the threshold."""
     df = dataset[slice_].to_df(target_names=[target])
-    if df.is_empty():
-        return 0
     return int((df[target] > threshold).sum())
 
 

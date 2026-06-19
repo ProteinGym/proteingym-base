@@ -354,7 +354,7 @@ class QuantileSplitter:
         *,
         random_state: int | np.random.RandomState | None = None,
     ) -> None:
-        if not 0 <= quantile <= 1:
+        if not 0 < quantile < 1:
             raise ValueError("Quantile must lie between 0 and 1.")
         if not 0 <= fraction <= 1:
             raise ValueError("Fraction must lie between 0 and 1.")
@@ -485,7 +485,7 @@ class KFoldQuantileSplitter:
         shuffle: bool = False,
         random_state: int | np.random.RandomState | None = None,
     ) -> None:
-        if not 0 <= quantile <= 1:
+        if not 0 < quantile < 1:
             raise ValueError("Quantile must lie between 0 and 1.")
         if n_splits < 2:
             raise ValueError("Number of splits must be at least 2.")
