@@ -77,7 +77,7 @@ path = "structures.pdb"
 [[ msas ]]
 path = "msas.a3m"
 format = "a3m"
-Neff_per_L = 10.0
+neff_per_l = 10.0
 bit_score = 0.5
 theta = 0.8
 reference_sequence_name = "abc"
