@@ -94,7 +94,7 @@ class MSAMetadataManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    Neff_per_L: float | None = None
+    neff_per_l: float | None = None
     """Number of effective sequences normalized by the length of the alignment."""
 
     bit_score: float | None = None
@@ -208,7 +208,7 @@ class MSA:
     description: str | None = None
     """A brief description of the MSA."""
 
-    Neff_per_L: float | None = None
+    neff_per_l: float | None = None
     """Number of effective sequences normalized by the length of the alignment."""
 
     bit_score: float | None = None
@@ -292,7 +292,7 @@ class MSA:
             name=name,
             value=value,
             description=section.description,
-            Neff_per_L=section.Neff_per_L,
+            neff_per_l=section.neff_per_l,
             bit_score=section.bit_score,
             theta=section.theta,
             reference_sequence_name=section.reference_sequence_name,
@@ -315,7 +315,7 @@ class MSA:
             path=path,
             name=self.name,
             description=self.description,
-            Neff_per_L=self.Neff_per_L,
+            neff_per_l=self.neff_per_l,
             bit_score=self.bit_score,
             theta=self.theta,
             reference_sequence_name=self.reference_sequence_name,
