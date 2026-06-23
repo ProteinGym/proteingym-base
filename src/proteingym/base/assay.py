@@ -419,6 +419,11 @@ class AssayManifestSection(_ManifestSection):
     Authors include some form of assay uncertainty measure (they have replicate
     experiments and/or correlation to low-throughput data)"""
 
+    number_of_variants: int | None = None
+    """The number of unique variants (sequences) in the assay.
+
+    Computed at manifest construction time from the assay records."""
+
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
@@ -905,6 +910,7 @@ class Assay(AssayRaw):
             transformation=self.transformation,
             target_phenotype=self.target_phenotype,
             has_uncertainty=self.has_uncertainty,
+            number_of_variants=self.number_of_variants,
         )
 
     def to_df(

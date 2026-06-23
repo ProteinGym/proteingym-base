@@ -190,6 +190,7 @@ The assays section contains a list of assays included in the dataset.
 | `assay_method`                 | `string \| None` | No           | `None`       | The type of assay used to measure protein properties.                                                     |
 | `transformation`               | `string | None` | No           | `None`       | The transformation applied to the assay data.                                                             |
 | `target_phenotype`             | `string | None` | No           | `None`       | The property the assay attempts to capture.                                                               |
+| `number_of_variants`           | `int \| None`    | No           | `None`       | The number of unique variants (sequences) in the assay. Computed at manifest construction time.           |
 
 
 Example of an assay file:
