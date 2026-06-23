@@ -119,7 +119,7 @@ path = "structures.pdb"
 [[ msas ]]
 path = "msas.a3m"
 format = "a3m"
-num_significant = 10
+Neff_per_L = 10.0
 bit_score = 0.5
 theta = 0.8
 reference_sequence_name = "abc"
@@ -265,7 +265,7 @@ The MSAs section contains a list of multiple sequence alignments included in the
 |---------------------------|-----------------|--------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `path`                    | `string`        | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
 | `format`                  | `string`        | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
-| `num_significant`         | `int \| None`   | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
+| `Neff_per_L`              | `float \| None` | No           | `None`      | The number of effective sequences normalized by the length of the alignment.                                                                               |
 | `bit_score`               | `float \| None` | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
 | `theta`                   | `float \| None` | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
 | `reference_sequence_name` | `string \| None`| No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
