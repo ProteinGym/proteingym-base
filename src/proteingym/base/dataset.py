@@ -867,6 +867,172 @@ class Dataset(BaseModel):
         df = df.group_by(group_cols).agg(agg_exprs).sort(group_cols)
         return df
 
+    def predictions_delta(
+        self,
+        df: pl.DataFrame,
+        *,
+        target: str,
+    ) -> "Dataset":
+        """Return a delta dataset with target values replaced by predictions from `df`.
+
+        This method creates a minimal "predictions" dataset suitable for scoring against
+        the ground truth. The delta preserves the exact assay structure (count, order,
+        and per-assay record count/order) to enable applying the same `DatasetSlice`
+        objects used for cross-validation, but strips all metadata and non-predicted
+        attributes.
+
+        Records are matched to predictions by the sequence string. Records without a
+        matching prediction receive `None` (null) for the target value.
+
+        IMPORTANT: Because this method matches records to predictions only using the
+        sequence string, this means that sequences measured under varying assay
+        variables will be assigned the same value. This mirrors the behavior from the
+        `to_df` method.
+
+        Args:
+            df: A DataFrame containing predictions. Must have:
+                - A ``sequence`` column with protein sequence strings
+                - A column named ``target`` with the predicted values
+                Rows in ``df`` that don't match any sequence in the dataset are ignored.
+            target: The name of the target being predicted. Must be a valid assay target
+                name (present in ``self.assay_targets``).
+
+        Returns:
+            Dataset: A new dataset with:
+                - Identical assay structure (same count, order, record counts)
+                - Target values replaced with predictions (or null if no prediction)
+                - Only ``sequence`` and ``target`` fields per assay
+                - Stripped metadata (sequences, structures, MSAs, publication, etc.)
+
+        Raises:
+            ValueError: If ``target`` is not a valid assay target name.
+            ValueError: If ``df`` is missing required columns (``sequence`` or
+            ``target``).
+
+        Examples:
+            >>> dataset = dummy_dataset()
+            >>> predictions_df = pl.DataFrame({
+            ...     "sequence": ["ACDEFG", "GFEDCA"],
+            ...     "numerical": [1.2, 2.3]
+            ... })
+            >>> delta = dataset.predictions_delta(predictions_df, target="numerical")
+            >>> delta.to_df(target_names="numerical")
+            shape: (2, 3)
+            ┌──────────┬──────┬───────────┐
+            │ sequence ┆ var1 ┆ numerical │
+            │ ---      ┆ ---  ┆ ---       │
+            │ str      ┆ i32  ┆ f64       │
+            ╞══════════╪══════╪═══════════╡
+            │ ACDEFG   ┆ 2    ┆ 1.2       │
+            │ GFEDCA   ┆ 2    ┆ 2.3       │
+            └──────────┴──────┴───────────┘
+        """
+        # Validate target
+        valid_target_names = {t.name for t in self.assay_targets}
+        if target not in valid_target_names:
+            raise ValueError(
+                f"Target '{target}' is not a valid assay target. "
+                f"Valid targets: {', '.join(sorted(valid_target_names))}"
+            )
+
+        # Validate DataFrame columns
+        if SEQUENCE not in df.columns:
+            raise ValueError(f"DataFrame must have a '{SEQUENCE}' column.")
+        if target not in df.columns:
+            raise ValueError(f"DataFrame must have a '{target}' column.")
+
+        # Get the target field
+        target_field = next(t for t in self.assay_targets if t.name == target)
+
+        # Sanitize target_field: empty string descriptions cause manifest validation
+        # errors, so convert them to None
+        if target_field.description == "":
+            target_field = dataclasses.replace(target_field, description=None)
+
+        # Sanitize assay_variables: same issue with empty descriptions
+        sanitized_variables = [
+            dataclasses.replace(v, description=None) if v.description == "" else v
+            for v in self.assay_variables
+        ]
+
+        # Build prediction lookup from df (sequence string -> predicted value)
+        # Use a dict for O(1) lookup per record
+        predictions = {
+            row[0]: row[1] for row in df.select([SEQUENCE, target]).iter_rows()
+        }
+
+        # Warn if many predictions don't match any assay sequences
+        all_sequences = set()
+        for assay in self.assays:
+            all_sequences.update(str(record[0].value) for record in assay.records)
+        unused = set(predictions.keys()) - all_sequences
+        if unused and len(unused) / len(predictions) > 0.1:
+            warnings.warn(
+                f"{len(unused)}/{len(predictions)} predictions "
+                f"({len(unused) / len(predictions):.1%}) don't match any sequence in "
+                f"the dataset.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        # Create new assays with predictions
+        new_assays = []
+        sequence_field = Field(name=SEQUENCE)
+
+        for assay in self.assays:
+            if target not in assay.target_feature_names:
+                # This assay doesn't have the target — create records with all nulls
+                new_records = [(record[0], None) for record in assay.records]
+                new_fields = [sequence_field, target_field]
+                new_assays.append(
+                    dataclasses.replace(
+                        assay,
+                        records=new_records,
+                        fields=new_fields,
+                        non_targets=[],
+                    )
+                )
+                continue
+
+            # Create new records: reuse Sequence object, lookup prediction
+            new_records = []
+            for record in assay.records:
+                sequence_obj = record[0]
+                seq_str = str(sequence_obj.value)
+                predicted_value = predictions.get(seq_str)
+                new_records.append((sequence_obj, predicted_value))
+
+            # Build new fields: sequence + sanitized target field
+            # Use the sanitized target_field to ensure description consistency
+            new_fields = [sequence_field, target_field]
+
+            new_assays.append(
+                dataclasses.replace(
+                    assay,
+                    records=new_records,
+                    fields=new_fields,
+                    non_targets=[],
+                )
+            )
+
+        # Return delta dataset with stripped metadata
+        return self.model_copy(
+            update={
+                "name": f"{self.name}_predictions",
+                "description": None,
+                "reference_sequence_name": None,
+                "assay_variables": sanitized_variables,
+                "assay_targets": [target_field],
+                "assays": new_assays,
+                "assays_raw": [],
+                "sequences": [],
+                "structures": [],
+                "msas": [],
+                "msa_weights": [],
+                "publication": None,
+            }
+        )
+
 
 def dummy_dataset() -> Dataset:
     """Create a trivial dataset for illustrative purposes."""

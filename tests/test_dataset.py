@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from zipfile import ZipFile
 
+import polars as pl
 import pytest
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
@@ -9,7 +10,7 @@ from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
 from proteingym.base.assay import AssaySlice
-from proteingym.base.dataset import Dataset, DatasetSlice
+from proteingym.base.dataset import Dataset, DatasetSlice, dummy_dataset
 from proteingym.base.msa import MSA, MsaProteinSequence
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
@@ -124,6 +125,11 @@ def dataset_file(tmp_path: Path) -> Path:
     dataset = Dataset(name="test_dataset")
     dataset_path = dataset.dump(path=tmp_path)
     return dataset_path
+
+
+@pytest.fixture
+def dummy_example_dataset():
+    return dummy_dataset()
 
 
 def test_list_datasets_command(runner: CliRunner, dataset_file: Path) -> None:
@@ -263,3 +269,128 @@ def test_reference_sequence_not_present_errors() -> None:
     )
     with pytest.raises(ValueError, match="not present among the dataset's sequences"):
         Dataset(name="test", reference_sequence_name="foo", sequences=[seq])
+
+
+def test_predictions_delta_basic(dummy_example_dataset) -> None:
+    """Test basic predictions_delta functionality."""
+    # Create predictions DataFrame
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "numerical": [1.2, 2.3]}
+    )
+
+    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+
+    # Check structure preservation
+    assert len(delta.assays) == len(dummy_example_dataset.assays)
+    assert all(
+        len(d.records) == len(o.records)
+        for d, o in zip(delta.assays, dummy_example_dataset.assays, strict=True)
+    )
+
+    # Check metadata stripped
+    assert delta.description is None
+    assert delta.reference_sequence_name is None
+    assert len(delta.sequences) == 0
+    assert len(delta.structures) == 0
+    assert len(delta.msas) == 0
+    assert delta.publication is None
+
+    # Check assay_targets only contains predicted target
+    assert len(delta.assay_targets) == 1
+    assert delta.assay_targets[0].name == "numerical"
+
+    # Check predictions placed correctly
+    result_df = delta.to_df(target_names="numerical")
+    assert len(result_df) == 2
+    assert result_df["numerical"].to_list() == [1.2, 2.3]
+
+
+def test_predictions_delta_round_trip(dummy_example_dataset, tmp_path: Path) -> None:
+    """Test that predictions_delta output can be dumped and reloaded."""
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "numerical": [1.5, 2.5]}
+    )
+
+    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+
+    # Dump and reload
+    path = delta.dump(path=tmp_path)
+    reloaded = Dataset.from_path(path)
+
+    # Check structure preserved after reload
+    assert len(reloaded.assays) == len(delta.assays)
+    assert reloaded.to_df(target_names="numerical").equals(
+        delta.to_df(target_names="numerical")
+    )
+
+
+def test_predictions_delta_missing_predictions(dummy_example_dataset) -> None:
+    """Test that records without predictions get null values."""
+    # Only predict for one sequence
+    predictions_df = pl.DataFrame({"sequence": ["ACDEFG"], "numerical": [1.2]})
+
+    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+
+    # to_df drops all-null rows, so we should only see the predicted sequence
+    result_df = delta.to_df(target_names="numerical")
+    assert len(result_df) == 1
+    assert result_df["sequence"].to_list() == ["ACDEFG"]
+    assert result_df["numerical"].to_list() == [1.2]
+
+
+def test_predictions_delta_invalid_target_raises(dummy_example_dataset) -> None:
+    """Test that invalid target name raises ValueError."""
+    predictions_df = pl.DataFrame({"sequence": ["ACDEFG"], "numerical": [1.2]})
+
+    with pytest.raises(ValueError, match="not a valid assay target"):
+        dummy_example_dataset.predictions_delta(predictions_df, target="invalid_target")
+
+
+def test_predictions_delta_missing_sequence_column_raises(
+    dummy_example_dataset,
+) -> None:
+    """Test that missing sequence column raises ValueError."""
+    predictions_df = pl.DataFrame({"numerical": [1.2]})
+
+    with pytest.raises(ValueError, match="must have a 'sequence' column"):
+        dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+
+
+def test_predictions_delta_missing_target_column_raises(dummy_example_dataset) -> None:
+    """Test that missing target column raises ValueError."""
+    predictions_df = pl.DataFrame({"sequence": ["ACDEFG"]})
+
+    with pytest.raises(ValueError, match="must have a 'numerical' column"):
+        dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+
+
+def test_predictions_delta_preserves_sequence_objects(dummy_example_dataset) -> None:
+    """Test that Sequence objects are preserved from the original dataset."""
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "numerical": [1.2, 2.3]}
+    )
+
+    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+
+    # Check that Sequence objects are reused
+    original_seq = dummy_example_dataset.assays[0].records[0][0]
+    delta_seq = delta.assays[0].records[0][0]
+
+    assert delta_seq.name == original_seq.name
+    assert delta_seq.value == original_seq.value
+    assert delta_seq.type == original_seq.type
+    assert delta_seq.alphabet == original_seq.alphabet
+
+
+def test_predictions_delta_warns_on_many_unused(dummy_example_dataset) -> None:
+    """Test that a warning is issued when many predictions don't match."""
+    # Create predictions with many extra sequences
+    predictions_df = pl.DataFrame(
+        {
+            "sequence": ["ACDEFG", "GFEDCA"] + [f"SEQ{i}" for i in range(20)],
+            "numerical": [1.2, 2.3] + [float(i) for i in range(20)],
+        }
+    )
+
+    with pytest.warns(UserWarning, match="don't match any sequence"):
+        _ = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
