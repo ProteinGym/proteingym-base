@@ -944,17 +944,6 @@ class Dataset(BaseModel):
         # Get the target field
         target_field = next(t for t in self.assay_targets if t.name == target)
 
-        # Sanitize target_field: empty string descriptions cause manifest validation
-        # errors, so convert them to None
-        if target_field.description == "":
-            target_field = dataclasses.replace(target_field, description=None)
-
-        # Sanitize assay_variables: same issue with empty descriptions
-        sanitized_variables = [
-            dataclasses.replace(v, description=None) if v.description == "" else v
-            for v in self.assay_variables
-        ]
-
         # Build prediction lookup from df (sequence string -> predicted value)
         # Use a dict for O(1) lookup per record
         predictions = {
@@ -1002,8 +991,7 @@ class Dataset(BaseModel):
                 predicted_value = predictions.get(seq_str)
                 new_records.append((sequence_obj, predicted_value))
 
-            # Build new fields: sequence + sanitized target field
-            # Use the sanitized target_field to ensure description consistency
+            # Build new fields: sequence + target field
             new_fields = [sequence_field, target_field]
 
             new_assays.append(
@@ -1021,7 +1009,7 @@ class Dataset(BaseModel):
                 "name": f"{self.name}_predictions",
                 "description": None,
                 "reference_sequence_name": None,
-                "assay_variables": sanitized_variables,
+                "assay_variables": self.assay_variables,
                 "assay_targets": [target_field],
                 "assays": new_assays,
                 "assays_raw": [],
@@ -1037,9 +1025,9 @@ class Dataset(BaseModel):
 def dummy_dataset() -> Dataset:
     """Create a trivial dataset for illustrative purposes."""
     fields = [
-        Field(name=SEQUENCE, description=""),
-        Field(name="numerical", description=""),
-        Field(name="categorical", description=""),
+        Field(name=SEQUENCE, description="Protein sequence field."),
+        Field(name="numerical", description="Numerical assay variable field."),
+        Field(name="categorical", description="Categorical assay variable field."),
     ]
     sequence1 = Sequence(
         name="seq1",
@@ -1067,10 +1055,10 @@ def dummy_dataset() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[Field(name="var1", description="")],
+        assay_variables=[Field(name="var1", description="Assay variable.")],
         assay_targets=[
-            Field(name="numerical", description=""),
-            Field(name="categorical", description=""),
+            Field(name="numerical", description="Numerical assay measurement."),
+            Field(name="categorical", description="Numerical assay measurement."),
         ],
         assays=[assay],
         sequences=[],
