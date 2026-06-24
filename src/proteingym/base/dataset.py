@@ -887,12 +887,12 @@ class Dataset(BaseModel):
         IMPORTANT: Because this method matches records to predictions only using the
         sequence string, this means that sequences measured under varying assay
         variables will be assigned the same value. This mirrors the behavior from the
-        `to_df` method.
+        ``to_df`` method.
 
         Args:
             df: A DataFrame containing predictions. Must have:
                 - A ``sequence`` column with protein sequence strings
-                - A column named ``target`` with the predicted values
+                - A column named with the value of ``target`` with the predicted values
                 Rows in ``df`` that don't match any sequence in the dataset are ignored.
             target: The name of the target being predicted. Must be a valid assay target
                 name (present in ``self.assay_targets``).

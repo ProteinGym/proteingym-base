@@ -3,7 +3,7 @@ import pytest
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
 
-from proteingym.base.assay import Assay, AssayRaw, Field, SEQUENCE
+from proteingym.base.assay import SEQUENCE, Assay, AssayRaw, Field
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.publication import Publication
