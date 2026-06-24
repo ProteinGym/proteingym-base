@@ -3,7 +3,7 @@ import pytest
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
 
-from proteingym.base.assay import Assay, AssayRaw, Field
+from proteingym.base.assay import Assay, AssayRaw, Field, SEQUENCE
 from proteingym.base.dataset import Dataset
 from proteingym.base.msa import MSA
 from proteingym.base.publication import Publication
@@ -506,6 +506,47 @@ def dataset_with_duplicates_sequences_across_splits() -> Dataset:
         sequences=[],
         structures=[],
         msas=[],
+    )
+    return dataset
+
+
+@pytest.fixture
+def datasets_with_different_targets_across_assays() -> Dataset:
+    seq1 = Sequence(
+        name="seq1",
+        value=Seq("ACDEFG"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    seq2 = Sequence(
+        name="seq2",
+        value=Seq("GFEDCA"),
+        type=SequenceType.WILD_TYPE,
+        alphabet=SequenceAlphabet.AA,
+    )
+    assay1 = Assay(
+        name="assay_with_target_A",
+        records=[(seq1, 1.0), (seq2, 2.0)],
+        fields=[
+            Field(name=SEQUENCE, description=None),
+            Field(name="target_A", description=None),
+        ],
+    )
+    assay2 = Assay(
+        name="assay_with_target_B",
+        records=[(seq1, 10.0), (seq2, 20.0)],
+        fields=[
+            Field(name=SEQUENCE, description=None),
+            Field(name="target_B", description=None),
+        ],
+    )
+    dataset = Dataset(
+        name="multi_assay_dataset",
+        assay_targets=[
+            Field(name="target_A", description=None),
+            Field(name="target_B", description=None),
+        ],
+        assays=[assay1, assay2],
     )
     return dataset
 

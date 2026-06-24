@@ -394,3 +394,29 @@ def test_predictions_delta_warns_on_many_unused(dummy_example_dataset) -> None:
 
     with pytest.warns(UserWarning, match="don't match any sequence"):
         _ = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+
+
+def test_predictions_delta_null_records_when_target_not_in_assay(
+    datasets_with_different_targets_across_assays,
+) -> None:
+    """Test that assays without the target get null-valued records."""
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "target_A": [1.5, 2.5]}
+    )
+
+    delta = datasets_with_different_targets_across_assays.predictions_delta(
+        predictions_df, target="target_A"
+    )
+    assert len(delta.assays) == 2
+    assay1_records = delta.assays[0].records
+    assert assay1_records[0][1] == 1.5  # seq1 prediction
+    assert assay1_records[1][1] == 2.5  # seq2 prediction
+
+    assay2_records = delta.assays[1].records
+    assert assay2_records[0][1] is None  # seq1 null
+    assert assay2_records[1][1] is None  # seq2 null
+
+    assert len(delta.assays[0].fields) == 2
+    assert len(delta.assays[1].fields) == 2
+    assert delta.assays[0].fields[1].name == "target_A"
+    assert delta.assays[1].fields[1].name == "target_A"
