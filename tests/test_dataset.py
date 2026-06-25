@@ -9,7 +9,7 @@ from biotite.structure import AtomArray
 from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
-from proteingym.base.assay import AssaySlice
+from proteingym.base.assay import SEQUENCE, AssaySlice, Field
 from proteingym.base.dataset import Dataset, DatasetSlice, dummy_dataset
 from proteingym.base.msa import MSA, MsaProteinSequence
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -127,9 +127,7 @@ def dataset_file(tmp_path: Path) -> Path:
     return dataset_path
 
 
-@pytest.fixture
-def dummy_example_dataset():
-    return dummy_dataset()
+dummy_dataset = pytest.fixture(dummy_dataset)
 
 
 def test_list_datasets_command(runner: CliRunner, dataset_file: Path) -> None:
@@ -271,49 +269,56 @@ def test_reference_sequence_not_present_errors() -> None:
         Dataset(name="test", reference_sequence_name="foo", sequences=[seq])
 
 
-def test_predictions_delta_basic(dummy_example_dataset) -> None:
+def test_predictions_delta_basic(dummy_dataset) -> None:
     """Test basic predictions_delta functionality."""
-    # Create predictions DataFrame
+    from proteingym.base.assay import Assay
+
     predictions_df = pl.DataFrame(
         {"sequence": ["ACDEFG", "GFEDCA"], "numerical": [1.2, 2.3]}
     )
 
-    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+    delta = dummy_dataset.predictions_delta(predictions_df, target="numerical")
 
-    # Check structure preservation
-    assert len(delta.assays) == len(dummy_example_dataset.assays)
-    assert all(
-        len(d.records) == len(o.records)
-        for d, o in zip(delta.assays, dummy_example_dataset.assays, strict=True)
+    seq1 = dummy_dataset.assays[0].records[0][0]
+    seq2 = dummy_dataset.assays[0].records[2][0]
+
+    expected_assay = Assay(
+        name="assay1",
+        records=[(seq1, 1.2), (seq1, 1.2), (seq2, 2.3), (seq2, 2.3)],
+        fields=[
+            Field(name=SEQUENCE, description=None),
+            Field(name="numerical", description=None),
+        ],
+        variables={"var1": 2},
+        non_targets=[],
     )
 
-    # Check metadata stripped
-    assert delta.description is None
-    assert delta.reference_sequence_name is None
-    assert len(delta.sequences) == 0
-    assert len(delta.structures) == 0
-    assert len(delta.msas) == 0
-    assert delta.publication is None
+    expected_dataset = Dataset(
+        name="dataset_with_single_assay_predictions",
+        description=None,
+        reference_sequence_name=None,
+        assay_variables=[Field(name="var1", description=None)],
+        assay_targets=[Field(name="numerical", description=None)],
+        assays=[expected_assay],
+        assays_raw=[],
+        sequences=[],
+        structures=[],
+        msas=[],
+        msa_weights=[],
+        publication=None,
+    )
 
-    # Check assay_targets only contains predicted target
-    assert len(delta.assay_targets) == 1
-    assert delta.assay_targets[0].name == "numerical"
-
-    # Check predictions placed correctly
-    result_df = delta.to_df(target_names="numerical")
-    assert len(result_df) == 2
-    assert result_df["numerical"].to_list() == [1.2, 2.3]
+    assert delta == expected_dataset
 
 
-def test_predictions_delta_round_trip(dummy_example_dataset, tmp_path: Path) -> None:
+def test_predictions_delta_round_trip(dummy_dataset, tmp_path: Path) -> None:
     """Test that predictions_delta output can be dumped and reloaded."""
     predictions_df = pl.DataFrame(
         {"sequence": ["ACDEFG", "GFEDCA"], "numerical": [1.5, 2.5]}
     )
 
-    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+    delta = dummy_dataset.predictions_delta(predictions_df, target="numerical")
 
-    # Dump and reload
     path = delta.dump(path=tmp_path)
     reloaded = Dataset.from_path(path)
 
@@ -324,65 +329,56 @@ def test_predictions_delta_round_trip(dummy_example_dataset, tmp_path: Path) -> 
     )
 
 
-def test_predictions_delta_missing_predictions(dummy_example_dataset) -> None:
+def test_predictions_delta_missing_predictions(dummy_dataset) -> None:
     """Test that records without predictions get null values."""
     # Only predict for one sequence
     predictions_df = pl.DataFrame({"sequence": ["ACDEFG"], "numerical": [1.2]})
-
-    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
-
-    # to_df drops all-null rows, so we should only see the predicted sequence
+    delta = dummy_dataset.predictions_delta(predictions_df, target="numerical")
+    expected_df = pl.DataFrame(
+        {"sequence": ["ACDEFG"], "var1": [2], "numerical": [1.2]}
+    )
     result_df = delta.to_df(target_names="numerical")
-    assert len(result_df) == 1
-    assert result_df["sequence"].to_list() == ["ACDEFG"]
-    assert result_df["numerical"].to_list() == [1.2]
+    assert result_df.equals(expected_df)
 
 
-def test_predictions_delta_invalid_target_raises(dummy_example_dataset) -> None:
+def test_predictions_delta_invalid_target_raises(dummy_dataset) -> None:
     """Test that invalid target name raises ValueError."""
     predictions_df = pl.DataFrame({"sequence": ["ACDEFG"], "numerical": [1.2]})
 
     with pytest.raises(ValueError, match="not a valid assay target"):
-        dummy_example_dataset.predictions_delta(predictions_df, target="invalid_target")
+        dummy_dataset.predictions_delta(predictions_df, target="invalid_target")
 
 
 def test_predictions_delta_missing_sequence_column_raises(
-    dummy_example_dataset,
+    dummy_dataset,
 ) -> None:
     """Test that missing sequence column raises ValueError."""
     predictions_df = pl.DataFrame({"numerical": [1.2]})
 
     with pytest.raises(ValueError, match="must have a 'sequence' column"):
-        dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+        dummy_dataset.predictions_delta(predictions_df, target="numerical")
 
 
-def test_predictions_delta_missing_target_column_raises(dummy_example_dataset) -> None:
+def test_predictions_delta_missing_target_column_raises(dummy_dataset) -> None:
     """Test that missing target column raises ValueError."""
     predictions_df = pl.DataFrame({"sequence": ["ACDEFG"]})
 
     with pytest.raises(ValueError, match="must have a 'numerical' column"):
-        dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+        dummy_dataset.predictions_delta(predictions_df, target="numerical")
 
 
-def test_predictions_delta_preserves_sequence_objects(dummy_example_dataset) -> None:
+def test_predictions_delta_preserves_sequence_objects(dummy_dataset) -> None:
     """Test that Sequence objects are preserved from the original dataset."""
     predictions_df = pl.DataFrame(
         {"sequence": ["ACDEFG", "GFEDCA"], "numerical": [1.2, 2.3]}
     )
-
-    delta = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
-
-    # Check that Sequence objects are reused
-    original_seq = dummy_example_dataset.assays[0].records[0][0]
+    delta = dummy_dataset.predictions_delta(predictions_df, target="numerical")
+    original_seq = dummy_dataset.assays[0].records[0][0]
     delta_seq = delta.assays[0].records[0][0]
-
-    assert delta_seq.name == original_seq.name
-    assert delta_seq.value == original_seq.value
-    assert delta_seq.type == original_seq.type
-    assert delta_seq.alphabet == original_seq.alphabet
+    assert delta_seq == original_seq
 
 
-def test_predictions_delta_warns_on_unused(dummy_example_dataset) -> None:
+def test_predictions_delta_raises_on_unused(dummy_dataset) -> None:
     """Test that a warning is issued when many predictions don't match."""
     # Create predictions with extra sequences
     predictions_df = pl.DataFrame(
@@ -392,31 +388,38 @@ def test_predictions_delta_warns_on_unused(dummy_example_dataset) -> None:
         }
     )
 
-    with pytest.warns(UserWarning, match="don't match any sequence"):
-        _ = dummy_example_dataset.predictions_delta(predictions_df, target="numerical")
+    with pytest.raises(ValueError, match="don't match any sequence"):
+        _ = dummy_dataset.predictions_delta(
+            predictions_df, target="numerical", allow_extra_predictions=False
+        )
 
 
-def test_predictions_delta_null_records_when_target_not_in_assay(
+def test_predictions_delta_no_target_records_when_target_not_in_assay(
     datasets_with_different_targets_across_assays,
 ) -> None:
-    """Test that assays without the target get null-valued records."""
+    """Test that assays without the target only store sequence records."""
     predictions_df = pl.DataFrame(
         {"sequence": ["ACDEFG", "GFEDCA"], "target_A": [1.5, 2.5]}
     )
-
     delta = datasets_with_different_targets_across_assays.predictions_delta(
         predictions_df, target="target_A"
     )
+    # Check assay structure
     assert len(delta.assays) == 2
-    assay1_records = delta.assays[0].records
-    assert assay1_records[0][1] == 1.5  # seq1 prediction
-    assert assay1_records[1][1] == 2.5  # seq2 prediction
 
-    assay2_records = delta.assays[1].records
-    assert assay2_records[0][1] is None  # seq1 null
-    assert assay2_records[1][1] is None  # seq2 null
+    # Check assay 1 has predictions
+    seq1 = datasets_with_different_targets_across_assays.assays[0].records[0][0]
+    seq2 = datasets_with_different_targets_across_assays.assays[0].records[1][0]
+    expected_records_assay1 = [(seq1, 1.5), (seq2, 2.5)]
+    assert delta.assays[0].records == expected_records_assay1
 
-    assert len(delta.assays[0].fields) == 2
-    assert len(delta.assays[1].fields) == 2
-    assert delta.assays[0].fields[1].name == "target_A"
-    assert delta.assays[1].fields[1].name == "target_A"
+    # Check assay 1 fields
+    expected_fields_assay1 = [
+        Field(name=SEQUENCE, description=None),
+        Field(name="target_A", description=None),
+    ]
+    assert delta.assays[0].fields == expected_fields_assay1
+
+    # Check assay 2 only has sequence field (no target since target_A not in assay 2)
+    expected_fields_assay2 = [Field(name=SEQUENCE, description=None)]
+    assert delta.assays[1].fields == expected_fields_assay2

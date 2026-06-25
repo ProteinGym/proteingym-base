@@ -872,6 +872,7 @@ class Dataset(BaseModel):
         df: pl.DataFrame,
         *,
         target: str,
+        allow_extra_predictions: bool = False,
     ) -> "Dataset":
         """Return a delta dataset with target values replaced by predictions from `df`.
 
@@ -896,6 +897,9 @@ class Dataset(BaseModel):
                 Rows in ``df`` that don't match any sequence in the dataset are ignored.
             target: The name of the target being predicted. Must be a valid assay target
                 name (present in ``self.assay_targets``).
+            allow_extra_predictions: Whether to allow the dataframe to contain
+                predictions for sequences that are not in the original data (i.e.,
+                can't be matched to sequences in the assays containing ``target``).
 
         Returns:
             Dataset: A new dataset with:
@@ -927,7 +931,6 @@ class Dataset(BaseModel):
             │ GFEDCA   ┆ 2    ┆ 2.3       │
             └──────────┴──────┴───────────┘
         """
-        # Validate target
         valid_target_names = {t.name for t in self.assay_targets}
         if target not in valid_target_names:
             raise ValueError(
@@ -935,44 +938,36 @@ class Dataset(BaseModel):
                 f"Valid targets: {', '.join(sorted(valid_target_names))}"
             )
 
-        # Validate DataFrame columns
         if SEQUENCE not in df.columns:
             raise ValueError(f"DataFrame must have a '{SEQUENCE}' column.")
         if target not in df.columns:
             raise ValueError(f"DataFrame must have a '{target}' column.")
 
-        # Get the target field
         target_field = next(t for t in self.assay_targets if t.name == target)
 
-        # Build prediction lookup from df (sequence string -> predicted value)
-        # Use a dict for O(1) lookup per record
         predictions = {
             row[0]: row[1] for row in df.select([SEQUENCE, target]).iter_rows()
         }
 
-        # Warn if predictions don't match any assay sequences
         all_sequences = set()
         for assay in self.assays:
             all_sequences.update(str(record[0].value) for record in assay.records)
         unused = set(predictions.keys()) - all_sequences
         if unused:
-            warnings.warn(
-                f"{len(unused)}/{len(predictions)} predictions "
-                f"({len(unused) / len(predictions):.1%}) don't match any sequence in "
-                f"the dataset.",
-                UserWarning,
-                stacklevel=2,
-            )
+            if not allow_extra_predictions:
+                raise ValueError(
+                    f"{len(unused)}/{len(predictions)} predictions "
+                    f"({len(unused) / len(predictions):.1%}) don't match any sequence "
+                    f"in the dataset."
+                )
 
-        # Create new assays with predictions
         new_assays = []
         sequence_field = Field(name=SEQUENCE)
 
         for assay in self.assays:
             if target not in assay.target_feature_names:
-                # This assay doesn't have the target — create records with all nulls
-                new_records = [(record[0], None) for record in assay.records]
-                new_fields = [sequence_field, target_field]
+                new_records = [(record[0],) for record in assay.records]
+                new_fields = [sequence_field]
                 new_assays.append(
                     dataclasses.replace(
                         assay,
@@ -983,7 +978,6 @@ class Dataset(BaseModel):
                 )
                 continue
 
-            # Create new records: reuse Sequence object, lookup prediction
             new_records = []
             for record in assay.records:
                 sequence_obj = record[0]
@@ -991,7 +985,6 @@ class Dataset(BaseModel):
                 predicted_value = predictions.get(seq_str)
                 new_records.append((sequence_obj, predicted_value))
 
-            # Build new fields: sequence + target field
             new_fields = [sequence_field, target_field]
 
             new_assays.append(
@@ -1003,7 +996,6 @@ class Dataset(BaseModel):
                 )
             )
 
-        # Return delta dataset with stripped metadata
         return self.model_copy(
             update={
                 "name": f"{self.name}_predictions",
