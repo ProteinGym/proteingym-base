@@ -620,6 +620,30 @@ def test_assay_number_of_variants():
     assert assay.number_of_variants == 2
 
 
+def test_assay_manifest_section_number_of_variants_computed(assay_file: Path) -> None:
+    """number_of_variants is computed from the assay file at construction time."""
+    section = AssayManifestSection(
+        name="test_assay",
+        sequence_alphabet=SequenceAlphabet.AA,
+        path=assay_file,
+    )
+    assert section.number_of_variants == 2
+
+
+def test_assay_manifest_section_number_of_variants_not_user_specified(
+    assay_file: Path,
+) -> None:
+    """user-provided number_of_variants is silently overwritten by the computed
+    value"""
+    section = AssayManifestSection(
+        name="test_assay",
+        sequence_alphabet=SequenceAlphabet.AA,
+        path=assay_file,
+        number_of_variants=999,
+    )
+    assert section.number_of_variants == 2
+
+
 def test_assay_from_manifest_section(assay_file: Path) -> None:
     """Test creating an Assay from a manifest section."""
     try:

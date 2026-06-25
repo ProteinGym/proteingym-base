@@ -422,7 +422,8 @@ class AssayManifestSection(_ManifestSection):
     number_of_variants: int | None = None
     """The number of unique variants (sequences) in the assay.
 
-    Computed at manifest construction time from the assay records."""
+    This value is not user-specified (any value provided at 
+    construction is overwritten with computed count)"""
 
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
@@ -433,6 +434,17 @@ class AssayManifestSection(_ManifestSection):
                 raise ValueError(
                     f"Feature '{v.alias_}' not found in the file: {self.path}"
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _compute_number_of_variants(self) -> "AssayManifestSection":
+        """Compute number_of_variants from the assay file.
+
+        The value is derived from assay records via
+        Assay.number_of_variants
+        """
+        number_of_variants = Assay.from_manifest_section(self).number_of_variants
+        object.__setattr__(self, "number_of_variants", number_of_variants)
         return self
 
     @field_serializer("sequence_alphabet")
@@ -910,7 +922,6 @@ class Assay(AssayRaw):
             transformation=self.transformation,
             target_phenotype=self.target_phenotype,
             has_uncertainty=self.has_uncertainty,
-            number_of_variants=self.number_of_variants,
         )
 
     def to_df(
