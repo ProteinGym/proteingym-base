@@ -911,7 +911,9 @@ class Dataset(BaseModel):
         Raises:
             ValueError: If ``target`` is not a valid assay target name.
             ValueError: If ``df`` is missing required columns (``sequence`` or
-            ``target``).
+                ``target``).
+            ValueError: If``df`` contains predictions for sequences that are not in the
+                original data and ``allow_extra_predictions`` set to false.
 
         Examples:
             >>> dataset = dummy_dataset()
