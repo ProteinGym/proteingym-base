@@ -955,13 +955,12 @@ class Dataset(BaseModel):
         for assay in self.assays:
             all_sequences.update(str(record[0].value) for record in assay.records)
         unused = set(predictions.keys()) - all_sequences
-        if unused:
-            if not allow_extra_predictions:
-                raise ValueError(
-                    f"{len(unused)}/{len(predictions)} predictions "
-                    f"({len(unused) / len(predictions):.1%}) don't match any sequence "
-                    f"in the dataset."
-                )
+        if unused and not allow_extra_predictions:
+            raise ValueError(
+                f"{len(unused)}/{len(predictions)} predictions "
+                f"({len(unused) / len(predictions):.1%}) don't match any sequence "
+                f"in the dataset."
+            )
 
         new_assays = []
         sequence_field = Field(name=SEQUENCE)
