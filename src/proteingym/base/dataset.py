@@ -1025,9 +1025,9 @@ class Dataset(BaseModel):
 def dummy_dataset() -> Dataset:
     """Create a trivial dataset for illustrative purposes."""
     fields = [
-        Field(name=SEQUENCE, description="Protein sequence field."),
-        Field(name="numerical", description="Numerical assay variable field."),
-        Field(name="categorical", description="Categorical assay variable field."),
+        Field(name=SEQUENCE, description=None),
+        Field(name="numerical", description=None),
+        Field(name="categorical", description=None),
     ]
     sequence1 = Sequence(
         name="seq1",
@@ -1055,10 +1055,10 @@ def dummy_dataset() -> Dataset:
     dataset = Dataset(
         name="dataset_with_single_assay",
         description="A dataset containing a single assay.",
-        assay_variables=[Field(name="var1", description="Assay variable.")],
+        assay_variables=[Field(name="var1", description=None)],
         assay_targets=[
-            Field(name="numerical", description="Numerical assay measurement."),
-            Field(name="categorical", description="Numerical assay measurement."),
+            Field(name="numerical", description=None),
+            Field(name="categorical", description=None),
         ],
         assays=[assay],
         sequences=[],
