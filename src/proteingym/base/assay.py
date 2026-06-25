@@ -422,7 +422,7 @@ class AssayManifestSection(_ManifestSection):
     number_of_variants: int | None = None
     """The number of unique variants (sequences) in the assay.
 
-    This value is not user-specified (any value provided at 
+    This value is not user-specified (any value provided at
     construction is overwritten with computed count)"""
 
     @model_validator(mode="after")
