@@ -382,9 +382,9 @@ def test_predictions_delta_preserves_sequence_objects(dummy_example_dataset) -> 
     assert delta_seq.alphabet == original_seq.alphabet
 
 
-def test_predictions_delta_warns_on_many_unused(dummy_example_dataset) -> None:
+def test_predictions_delta_warns_on_unused(dummy_example_dataset) -> None:
     """Test that a warning is issued when many predictions don't match."""
-    # Create predictions with many extra sequences
+    # Create predictions with extra sequences
     predictions_df = pl.DataFrame(
         {
             "sequence": ["ACDEFG", "GFEDCA"] + [f"SEQ{i}" for i in range(20)],

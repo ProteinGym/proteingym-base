@@ -950,12 +950,12 @@ class Dataset(BaseModel):
             row[0]: row[1] for row in df.select([SEQUENCE, target]).iter_rows()
         }
 
-        # Warn if many predictions don't match any assay sequences
+        # Warn if predictions don't match any assay sequences
         all_sequences = set()
         for assay in self.assays:
             all_sequences.update(str(record[0].value) for record in assay.records)
         unused = set(predictions.keys()) - all_sequences
-        if unused and len(unused) / len(predictions) > 0.1:
+        if unused:
             warnings.warn(
                 f"{len(unused)}/{len(predictions)} predictions "
                 f"({len(unused) / len(predictions):.1%}) don't match any sequence in "
