@@ -32,7 +32,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "jupyterlab>=4.5.7",
+    "jupyterlab>=4.5.9",
     "pre-commit>=4.2.0",
     "pytest>=9.0.3",
     "pytest-cov>=6.2.1",
