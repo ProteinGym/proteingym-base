@@ -783,13 +783,13 @@ class Assay(AssayRaw):
 
         assay = self
         if isinstance(slc, AssaySlice):
-            # An empty list is treated as an empty records slice. If you want to
-            # have an empty column slice use `AssaySlice(columns=[])`
             assay = self._slice_columns(assay, slc.columns)
             assay = self._slice_records(assay, slc.records)
-        elif is_str_list(slc):
+        elif _is_str_list(slc):
             assay = self._slice_columns(assay, slc)
-        elif is_bool_list(slc):
+        elif _is_bool_or_empty_list(slc):
+            # An empty list is treated as an empty records slice. If you want to
+            # have an empty column slice use `AssaySlice(columns=[])`
             assay = self._slice_records(assay, slc)
 
         return assay
@@ -999,9 +999,13 @@ class Assay(AssayRaw):
         return path
 
 
-def is_bool_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[bool]]:
-    return isinstance(x, list) and len(x) > 0 and isinstance(x[0], bool)
+def _is_bool_or_empty_list(
+    x: AssaySlice | list[bool] | list[str],
+) -> TypeGuard[list[bool]]:
+    return isinstance(x, list) and (
+        (len(x) == 0) or (len(x) > 0 and isinstance(x[0], bool))
+    )
 
 
-def is_str_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[str]]:
-    return isinstance(x, list) and len(x) > 0 and isinstance(x[0], bool)
+def _is_str_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[str]]:
+    return isinstance(x, list) and len(x) > 0 and isinstance(x[0], str)
