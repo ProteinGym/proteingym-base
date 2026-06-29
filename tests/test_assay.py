@@ -553,7 +553,7 @@ def test_assay_raw_to_df_with_fields() -> None:
         records=[(0.3, 10e9), (0.9, 20e9)],
         fields=[Field(name="OD"), Field(name="PPM")],
     )
-    df = assay_raw.to_df(fields=[Field(name="OD")])
+    df = assay_raw.to_df(field_names=["OD"])
     pl.testing.assert_frame_equal(df, expected)
 
 
@@ -747,7 +747,7 @@ def test_assay_to_df_single_string_target():
         ],
         fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
-    df = assay.to_df(target_names="DMS Score")
+    df = assay.to_df(field_names="DMS Score")
     assert "DMS Score" in df.columns
     assert df.shape == (2, 2)
     assert df["DMS Score"].to_list() == [1.56, 2.0]
@@ -780,7 +780,7 @@ def test_assay_to_df_invalid_target_name_returns_empty_df() -> None:
         fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     try:
-        df = assay.to_df(target_names=["Invalid Target"])
+        df = assay.to_df(field_names=["Invalid Target"])
     except ValueError as e:
         raise ValueError(f"Failed to convert assay to DataFrame: {e}") from e
     else:

@@ -603,17 +603,25 @@ class AssayRaw:
                 raise NotImplementedError(f"Unsupported file format: {fmt}")
         return path
 
-    def to_df(self, *, fields: list[Field] | None = None) -> pl.DataFrame:
+    def to_df(self, *, field_names: Collection[str] | str | None = None) -> pl.DataFrame:
         """Returns the assay records as a Polars DataFrame.
 
         Args:
-            fields: The fields to include.
+            field_names: The fields to include.
                 If None, all fields are included. Defaults to None.
 
         Returns:
             pl.DataFrame: The DataFrame containing the assay data.
         """
-        fields = fields or self.fields
+        if field_names:
+            if isinstance(field_names, str):
+                field_names = {field_names}
+            else:
+                field_names = set(field_names).intersection({e.name for e in self.fields})
+        else:
+            field_names = [e.name for e in self.fields]
+
+        fields = [f for f in self.fields if f.name in field_names]
         data = {
             f.name: [r[i] for r in self.records]
             for i, f in enumerate(self.fields)
@@ -915,12 +923,12 @@ class Assay(AssayRaw):
         )
 
     def to_df(
-        self, *, target_names: Collection[str] | str | None = None
+        self, *, field_names: Collection[str] | str | None = None
     ) -> pl.DataFrame:
         """Returns the assay records with assay variables as a Polars DataFrame.
 
         Args:
-            target_names: The target name(s) to include.
+            field_names: The target name(s) to include.
                 If None, all target names are included. Defaults to None.
 
         Returns:
@@ -929,16 +937,16 @@ class Assay(AssayRaw):
         if self.is_empty():
             # If no records are present, return empty DataFrame
             return pl.DataFrame(schema=[SEQUENCE])
-        if target_names:
-            if isinstance(target_names, str):
-                target_names = {target_names}
+        if field_names:
+            if isinstance(field_names, str):
+                field_names = {field_names}
             else:
-                target_names = set(target_names).intersection(self.target_feature_names)
-            if not target_names:
+                field_names = set(field_names).intersection(self.target_feature_names)
+            if not field_names:
                 # If not matching target names, return empty DataFrame
                 return pl.DataFrame(schema=[SEQUENCE])
         else:
-            target_names = self.target_feature_names
+            field_names = self.target_feature_names
 
         variables = [
             pl.lit(var_value).alias(var_name)
@@ -947,7 +955,7 @@ class Assay(AssayRaw):
         schema = {f.name: f.polars_type for f in self.fields}
         df = (
             pl.DataFrame(self.records, schema=schema, orient="row")
-            .select([self.sequence_feature_name] + list(target_names))
+            .select([self.sequence_feature_name] + list(field_names))
             .with_columns(
                 pl.col(self.sequence_feature_name).map_elements(
                     lambda seq: str(seq.value), return_dtype=pl.Utf8

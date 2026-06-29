@@ -789,7 +789,7 @@ class Dataset(BaseModel):
 
         assays_dfs = []
         for assay in self.assays:
-            df = assay.to_df(target_names=target_names)
+            df = assay.to_df(field_names=target_names)
             # Add the missing columns from target names and variable names
             missing_targets = [
                 pl.lit(None).alias(target_name)
