@@ -325,7 +325,6 @@ class _ManifestSection(BaseModel):
 
     @field_validator("path", mode="after", check_fields=True)  # noqa
     @classmethod
-    @field_validator("path", mode="after", check_fields=True)
     def validate_path_after(cls, path: Path) -> Path:
         """Validate that the file format is supported."""
         fmt = path.suffix.lower()
