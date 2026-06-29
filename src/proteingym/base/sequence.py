@@ -64,6 +64,9 @@ class SequenceAlphabet(StrEnum):
     AA = "AA"
     """Amino acid sequence containing the twenty natural occurring nucleotides"""
 
+    UNDEFINED = "Undefined"
+    """Placeholder if sequence alphabet has not been set."""
+
 
 class SequenceManifestSection(BaseModel):
     """This is the manifest section for Sequences.

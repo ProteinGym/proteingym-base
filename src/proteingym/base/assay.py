@@ -381,7 +381,7 @@ class AssayManifestSection(_ManifestSection):
     sequence_alias: str | None = None
     """The sequence feature name given in the file."""
 
-    sequence_alphabet: SequenceAlphabet | None = None
+    sequence_alphabet: SequenceAlphabet = SequenceAlphabet.UNDEFINED
     """The alphabet of the sequences of the assay."""
 
     targets: list[Field] = pydantic.Field(default_factory=list)
@@ -890,7 +890,7 @@ class Assay(AssayRaw):
         """
         # Get the sequence alphabet from the first record
         if self.is_empty():
-            sequence_alphabet = None
+            sequence_alphabet = SequenceAlphabet.UNDEFINED
         else:
             sequence_alphabet = self.records[0][0].alphabet
         return AssayManifestSection(
