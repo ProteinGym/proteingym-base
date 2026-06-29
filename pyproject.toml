@@ -42,6 +42,7 @@ dev = [
     "mkdocstrings-python",
     "mkdocs-autoapi",
     "mkdocs-jupyter",
+    "pyrefly>=1.1.1",
 ]
 
 [tool.hatch.version]
@@ -94,3 +95,8 @@ ignore-decorators = ["typing.overload"]
 
 [tool.ruff.lint.pep8-naming]
 extend-ignore-names = ["X"]
+
+[tool.pyrefly]
+project-includes = [
+    "src/proteingym/base/assay.py",
+]

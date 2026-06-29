@@ -5,7 +5,7 @@ import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, TypeGuard, TypeAlias, cast, Self
 
 import annotated_types
 import polars as pl
@@ -25,7 +25,8 @@ from pydantic import (
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 
 SEQUENCE = "sequence"
-RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
+Record: TypeAlias = tuple[Sequence, *tuple[str | int | float | bool | None, ...]]
+RECORDS: TypeAlias = list[Record]
 
 
 class AssayFormat(StrEnum):
@@ -254,7 +255,7 @@ class Field:
         # The obvious getter/setter pattern is not compatible with dataclasses
         return self.name if self.alias is None else self.alias
 
-    def __eq__(self, other: "Field") -> bool:
+    def __eq__(self, other: object) -> bool:
         """Implements the '==' operator for Field."""
         if not isinstance(other, Field):
             return False
@@ -273,7 +274,7 @@ class Field:
 
     # noinspection PyTypeChecker
     @functools.cached_property
-    def polars_type(self) -> pl.DataType:
+    def polars_type(self) -> type[pl.DataType]:
         """Returns the Polars data type of the field."""
         match self.value:
             case bool():
@@ -295,7 +296,7 @@ class _ManifestSection(BaseModel):
 
     model_config = ConfigDict(
         extra="forbid",
-        frozen=False,
+        frozen=True,
         use_attribute_docstrings=True,
         str_min_length=1,
     )
@@ -310,8 +311,8 @@ class _ManifestSection(BaseModel):
     description: str | None = None
     """A brief description"""
 
-    @field_validator("path", mode="before", check_fields=True)
     @classmethod
+    @field_validator("path", mode="before", check_fields=True)
     def validate_path_before(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context.
 
@@ -322,8 +323,8 @@ class _ManifestSection(BaseModel):
             path = info.context["relative_to_path"] / path
         return path
 
-    @field_validator("path", mode="after", check_fields=True)
     @classmethod
+    @field_validator("path", mode="after", check_fields=True)
     def validate_path_after(cls, path: Path) -> Path:
         """Validate that the file format is supported."""
         fmt = path.suffix.lower()
@@ -433,7 +434,7 @@ class AssayManifestSection(_ManifestSection):
     @field_serializer("sequence_alphabet")
     def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
         """Serialize the sequence alphabet as a string."""
-        return str(sequence_alphabet.value)
+        return sequence_alphabet.value
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -531,7 +532,7 @@ class AssayRaw:
     def from_manifest_section(
         cls,
         section: AssayRawManifestSection,
-    ) -> "AssayRaw":
+    ) -> Self:
         """Creates AssayRaw from a manifest section.
 
         Args:
@@ -689,7 +690,7 @@ class Assay(AssayRaw):
             for k, v in item.variables.items()
         )
 
-    def __eq__(self, item: "Assay") -> bool:
+    def __eq__(self, item: object) -> bool:
         """Implements the '==' operator for Assay."""
         if not isinstance(item, Assay):
             return False
@@ -725,10 +726,13 @@ class Assay(AssayRaw):
             records = []
         else:
             field_indices = [assay.fields.index(column) for column in fields_slice]
-            records = [
-                tuple(record[column_index] for column_index in field_indices)
-                for record in assay.records
-            ]
+            records = cast(
+                RECORDS,
+                [
+                    tuple(record[column_index] for column_index in field_indices)
+                    for record in assay.records
+                ],
+            )
         return dataclasses.replace(assay, records=records, fields=fields_slice)
 
     @staticmethod
@@ -746,7 +750,7 @@ class Assay(AssayRaw):
             records = list(itertools.compress(assay.records, slc))
         return dataclasses.replace(assay, records=records)
 
-    def __getitem__(self, slc: AssaySlice | list[bool | str]) -> "Assay":
+    def __getitem__(self, slc: AssaySlice | list[str] | list[bool]) -> "Assay":
         """Slice the assay to get a subset.
 
         Args:
@@ -778,12 +782,15 @@ class Assay(AssayRaw):
             )
 
         assay = self
-        is_assay_slice = isinstance(slc, AssaySlice)
-        if is_assay_slice or len(slc) > 0:
+        if isinstance(slc, AssaySlice):
             # An empty list is treated as an empty records slice. If you want to
             # have an empty column slice use `AssaySlice(columns=[])`
-            assay = self._slice_columns(assay, slc.columns if is_assay_slice else slc)
-        assay = self._slice_records(assay, slc.records if is_assay_slice else slc)
+            assay = self._slice_columns(assay, slc.columns)
+            assay = self._slice_records(assay, slc.records)
+        elif is_str_list(slc):
+            assay = self._slice_columns(assay, slc)
+        elif is_bool_list(slc):
+            assay = self._slice_records(assay, slc)
 
         return assay
 
@@ -825,7 +832,7 @@ class Assay(AssayRaw):
         return "\n".join(lines)
 
     @classmethod
-    def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
+    def from_manifest_section(cls, section: AssayManifestSection) -> Self:
         """Create an Assay instance from a manifest section."""
         sequence_field = Field(name=SEQUENCE, alias=section.sequence_alias)
         all_fields = [sequence_field] + section.targets + section.non_targets
@@ -990,3 +997,11 @@ class Assay(AssayRaw):
             case _:
                 raise NotImplementedError(f"Unsupported file type: {fmt.value}")  # noqa
         return path
+
+
+def is_bool_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[bool]]:
+    return isinstance(x, list) and len(x) > 0 and isinstance(x[0], bool)
+
+
+def is_str_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[str]]:
+    return isinstance(x, list) and len(x) > 0 and isinstance(x[0], bool)
