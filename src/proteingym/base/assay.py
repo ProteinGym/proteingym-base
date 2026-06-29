@@ -311,8 +311,8 @@ class _ManifestSection(BaseModel):
     description: str | None = None
     """A brief description"""
 
+    @field_validator("path", mode="before", check_fields=True)  # noqa
     @classmethod
-    @field_validator("path", mode="before", check_fields=True)
     def validate_path_before(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context.
 
@@ -323,8 +323,8 @@ class _ManifestSection(BaseModel):
             path = info.context["relative_to_path"] / path
         return path
 
+    @field_validator("path", mode="after", check_fields=True)  # noqa
     @classmethod
-    @field_validator("path", mode="after", check_fields=True)
     def validate_path_after(cls, path: Path) -> Path:
         """Validate that the file format is supported."""
         fmt = path.suffix.lower()
