@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable, Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 from zipfile import ZipFile
 
 import polars as pl
@@ -14,7 +14,7 @@ import pydantic
 from Bio.Seq import Seq
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import SEQUENCE, Assay, AssayRaw, AssaySlice, Field
+from .assay import SEQUENCE, Assay, AssayRaw, AssaySlice, Field, get_sequence, RECORDS
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA, MSAWeights
 from .publication import Publication
@@ -62,7 +62,7 @@ class DatasetSlice:
     assay slices.
     """
 
-    assays: list[AssaySlice | list[bool | str]] | None = None
+    assays: list[AssaySlice] | list[bool] | list[str] | None = None
     """The list of assay slices. If None, all assays are included."""
 
     metadata: dict[str, str | float] | None = None
@@ -233,7 +233,7 @@ class Dataset(BaseModel):
 
         def sort_by_name(
             values: list[Assay | Sequence | Structure | MSA | AssayRaw],
-        ) -> list[Assay | Sequence | Structure | MSA]:
+        ) -> list[Assay | Sequence | Structure | MSA | AssayRaw]:
             """Sort a list of BaseModel by name, placing unnamed items at the end."""
             return sorted(values, key=lambda value: value.name)
 
@@ -309,11 +309,15 @@ class Dataset(BaseModel):
         """
         if not isinstance(item, DatasetSlice):
             raise TypeError(
-                f"Dataset can only be sliced with a DatasetSlice, not {type(item)}"
+                f"Dataset can only be sliced with a DatasetSlice, not "
+                f"{type(item).__name__}"
             )
-        assays = [
-            assay[slc] for assay, slc in zip(self.assays, item.assays, strict=True)
-        ]
+        if item.assays is None:
+            assays = self.assays
+        else:
+            assays = [
+                assay[slc] for assay, slc in zip(self.assays, item.assays, strict=True)
+            ]
         return self.model_copy(update={"assays": assays})
 
     def __repr__(self) -> str:
@@ -953,7 +957,9 @@ class Dataset(BaseModel):
 
         all_sequences = set()
         for assay in self.assays:
-            all_sequences.update(str(record[0].value) for record in assay.records)
+            all_sequences.update(
+                str(get_sequence(record).value) for record in assay.records
+            )
         unused = set(predictions.keys()) - all_sequences
         if unused and not allow_extra_predictions:
             raise ValueError(
@@ -972,7 +978,7 @@ class Dataset(BaseModel):
                 new_assays.append(
                     dataclasses.replace(
                         assay,
-                        records=new_records,
+                        records=cast(RECORDS, new_records),
                         fields=new_fields,
                         non_targets=[],
                     )
@@ -981,7 +987,7 @@ class Dataset(BaseModel):
 
             new_records = []
             for record in assay.records:
-                sequence_obj = record[0]
+                sequence_obj = get_sequence(record)
                 seq_str = str(sequence_obj.value)
                 predicted_value = predictions.get(seq_str)
                 new_records.append((sequence_obj, predicted_value))
@@ -991,7 +997,7 @@ class Dataset(BaseModel):
             new_assays.append(
                 dataclasses.replace(
                     assay,
-                    records=new_records,
+                    records=cast(RECORDS, new_records),
                     fields=new_fields,
                     non_targets=[],
                 )

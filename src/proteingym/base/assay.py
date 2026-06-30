@@ -25,7 +25,8 @@ from pydantic import (
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 
 SEQUENCE = "sequence"
-RECORDS: TypeAlias = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
+RECORD: TypeAlias = tuple[Sequence | str | int | float | bool | str | None, ...]
+RECORDS: TypeAlias = list[RECORD]
 
 
 class AssayFormat(StrEnum):
@@ -827,7 +828,7 @@ class Assay(AssayRaw):
         if n_recs == 0:
             lines.append("\t\t<no records>")
         for i, record in enumerate(self.records[:n_recs]):
-            seq = cast(Sequence, record[0])
+            seq = get_sequence(record)
             targets = record[1:]
             seq_str = str(seq.value)
             if len(seq_str) > 30:
@@ -902,7 +903,7 @@ class Assay(AssayRaw):
         if self.is_empty():
             sequence_alphabet = SequenceAlphabet.UNDEFINED
         else:
-            sequence_alphabet = cast(Sequence, self.records[0][0]).alphabet
+            sequence_alphabet = get_sequence(self.records[0]).alphabet
         return AssayManifestSection(
             name=self.name,
             description=self.description,
@@ -1019,3 +1020,10 @@ def _is_bool_or_empty_list(
 
 def _is_str_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[str]]:
     return isinstance(x, list) and len(x) > 0 and isinstance(x[0], str)
+
+
+def get_sequence(x: RECORD) -> Sequence:
+    """Get the (type-assured) first element of a record which shall be a Sequence."""
+    if not isinstance(x[0], Sequence):
+        raise ValueError("First element of record must be a Sequence")
+    return x[0]

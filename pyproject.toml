@@ -98,5 +98,10 @@ extend-ignore-names = ["X"]
 
 [tool.pyrefly]
 project-includes = [
+    # type checking is a work in progress
+    "src/proteingym/base/__about__.py",
+    "src/proteingym/base/__init__.py",
+    "src/proteingym/base/__main__.py",
     "src/proteingym/base/assay.py",
+    "src/proteingym/base/data_generators.py",
 ]
