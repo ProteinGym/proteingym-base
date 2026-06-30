@@ -419,6 +419,12 @@ class AssayManifestSection(_ManifestSection):
     Authors include some form of assay uncertainty measure (they have replicate
     experiments and/or correlation to low-throughput data)"""
 
+    number_of_variants: int | None = None
+    """The number of unique variants (sequences) in the assay.
+
+    This value is not user-specified (any value provided at
+    construction is overwritten with computed count)"""
+
     @model_validator(mode="after")
     def validate_fields(self) -> "AssayManifestSection":
         """Validate whether field names are present in the `path` file."""
@@ -428,6 +434,17 @@ class AssayManifestSection(_ManifestSection):
                 raise ValueError(
                     f"Feature '{v.alias_}' not found in the file: {self.path}"
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _compute_number_of_variants(self) -> "AssayManifestSection":
+        """Compute number_of_variants from the assay file.
+
+        The value is derived from assay records via
+        Assay.number_of_variants
+        """
+        number_of_variants = Assay.from_manifest_section(self).number_of_variants
+        object.__setattr__(self, "number_of_variants", number_of_variants)
         return self
 
     @field_serializer("sequence_alphabet")

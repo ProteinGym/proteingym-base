@@ -119,7 +119,7 @@ path = "structures.pdb"
 [[ msas ]]
 path = "msas.a3m"
 format = "a3m"
-num_significant = 10
+neff_per_l = 10.0
 bit_score = 0.5
 theta = 0.8
 reference_sequence_name = "abc"
@@ -190,6 +190,7 @@ The assays section contains a list of assays included in the dataset.
 | `assay_method`                 | `string \| None` | No           | `None`       | The type of assay used to measure protein properties.                                                     |
 | `transformation`               | `string | None` | No           | `None`       | The transformation applied to the assay data.                                                             |
 | `target_phenotype`             | `string | None` | No           | `None`       | The property the assay attempts to capture.                                                               |
+| `number_of_variants`           | `int \| None`    | No           | `None`       | The number of unique variants (sequences) in the assay. Computed at manifest construction time.           |
 
 
 Example of an assay file:
@@ -265,7 +266,7 @@ The MSAs section contains a list of multiple sequence alignments included in the
 |---------------------------|-----------------|--------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `path`                    | `string`        | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
 | `format`                  | `string`        | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
-| `num_significant`         | `int \| None`   | No           | `None`      | The number of significant sequences to include in the MSA.                                                                                                 |
+| `neff_per_l`              | `float \| None` | No           | `None`      | The number of effective sequences normalized by the length of the alignment.                                                                               |
 | `bit_score`               | `float \| None` | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
 | `theta`                   | `float \| None` | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
 | `reference_sequence_name` | `string \| None`| No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |

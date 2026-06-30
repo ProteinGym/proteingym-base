@@ -94,8 +94,8 @@ class MSAMetadataManifestSection(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    num_significant: int | None = None
-    """Number of evolutionary couplings that are considered significant."""
+    neff_per_l: float | None = None
+    """Number of effective sequences normalized by the length of the alignment."""
 
     bit_score: float | None = None
     """Bitscore threshold.
@@ -208,8 +208,8 @@ class MSA:
     description: str | None = None
     """A brief description of the MSA."""
 
-    num_significant: int | None = None
-    """Number of evolutionary couplings that are considered significant."""
+    neff_per_l: float | None = None
+    """Number of effective sequences normalized by the length of the alignment."""
 
     bit_score: float | None = None
     """Bitscore threshold
@@ -292,7 +292,7 @@ class MSA:
             name=name,
             value=value,
             description=section.description,
-            num_significant=section.num_significant,
+            neff_per_l=section.neff_per_l,
             bit_score=section.bit_score,
             theta=section.theta,
             reference_sequence_name=section.reference_sequence_name,
@@ -315,7 +315,7 @@ class MSA:
             path=path,
             name=self.name,
             description=self.description,
-            num_significant=self.num_significant,
+            neff_per_l=self.neff_per_l,
             bit_score=self.bit_score,
             theta=self.theta,
             reference_sequence_name=self.reference_sequence_name,
