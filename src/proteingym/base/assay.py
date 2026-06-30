@@ -25,8 +25,7 @@ from pydantic import (
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 
 SEQUENCE = "sequence"
-Record: TypeAlias = tuple[Sequence, *tuple[str | int | float | bool | None, ...]]
-RECORDS: TypeAlias = list[Record]
+RECORDS: TypeAlias = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
 
 
 class AssayFormat(StrEnum):
@@ -68,7 +67,7 @@ class LibraryConstructionMethod(StrEnum):
     mutations across random positions (ex. epPCR)"""
 
     SITE_SATURATED_MUTAGENESIS = "site_saturated_mutagenesis"
-    """Site-saturated mutageneisis
+    """Site-saturated mutagenesis
 
     Introduction of mutants
     at specific sites with complete coverage (ex. NNK/S)"""
@@ -288,7 +287,7 @@ class Field:
             case None:
                 return pl.Unknown
             case _:
-                raise ValueError(f"Unsupported field type: {type(self.value)}")
+                raise ValueError(f"Unsupported field type: {type(self.value).__name__}")
 
 
 class _ManifestSection(BaseModel):
@@ -529,10 +528,7 @@ class AssayRaw:
         return len(self) == 0
 
     @classmethod
-    def from_manifest_section(
-        cls,
-        section: AssayRawManifestSection,
-    ) -> Self:
+    def from_manifest_section(cls, section: AssayRawManifestSection) -> Self:
         """Creates AssayRaw from a manifest section.
 
         Args:
@@ -603,7 +599,9 @@ class AssayRaw:
                 raise NotImplementedError(f"Unsupported file format: {fmt}")
         return path
 
-    def to_df(self, *, field_names: Collection[str] | str | None = None) -> pl.DataFrame:
+    def to_df(
+        self, *, field_names: Collection[str] | str | None = None
+    ) -> pl.DataFrame:
         """Returns the assay records as a Polars DataFrame.
 
         Args:
@@ -617,7 +615,9 @@ class AssayRaw:
             if isinstance(field_names, str):
                 field_names = {field_names}
             else:
-                field_names = set(field_names).intersection({e.name for e in self.fields})
+                field_names = set(field_names).intersection(
+                    {e.name for e in self.fields}
+                )
         else:
             field_names = [e.name for e in self.fields]
 
@@ -827,7 +827,7 @@ class Assay(AssayRaw):
         if n_recs == 0:
             lines.append("\t\t<no records>")
         for i, record in enumerate(self.records[:n_recs]):
-            seq = record[0]
+            seq = cast(Sequence, record[0])
             targets = record[1:]
             seq_str = str(seq.value)
             if len(seq_str) > 30:
@@ -840,6 +840,7 @@ class Assay(AssayRaw):
         return "\n".join(lines)
 
     @classmethod
+    # pyrefly: ignore [bad-override]
     def from_manifest_section(cls, section: AssayManifestSection) -> Self:
         """Create an Assay instance from a manifest section."""
         sequence_field = Field(name=SEQUENCE, alias=section.sequence_alias)
@@ -887,6 +888,7 @@ class Assay(AssayRaw):
             has_uncertainty=section.has_uncertainty,
         )
 
+    # pyrefly: ignore [bad-override]
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
         """Create `AssayManifestSection` from the assay.
 
@@ -900,7 +902,7 @@ class Assay(AssayRaw):
         if self.is_empty():
             sequence_alphabet = SequenceAlphabet.UNDEFINED
         else:
-            sequence_alphabet = self.records[0][0].alphabet
+            sequence_alphabet = cast(Sequence, self.records[0][0]).alphabet
         return AssayManifestSection(
             name=self.name,
             description=self.description,

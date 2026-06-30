@@ -36,6 +36,9 @@ jobs:
       - name: Ruff format
         run: uv run ruff format --check src tests
 
+      - name: Type check
+        run: uv run pyrefly check
+
   test:
     name: test
     runs-on: ubuntu-latest
