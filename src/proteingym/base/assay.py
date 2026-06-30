@@ -5,7 +5,7 @@ import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, TypeGuard, TypeAlias, cast, Self
+from typing import Annotated, Self, TypeAlias, TypeGuard, cast
 
 import annotated_types
 import polars as pl

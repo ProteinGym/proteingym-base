@@ -19,6 +19,7 @@ from proteingym.base.assay import (
     AssaySlice,
     Field,
     FieldEncoding,
+    get_sequence,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -545,7 +546,8 @@ def test_assay_raw_to_df() -> None:
     pl.testing.assert_frame_equal(df, expected)
 
 
-def test_assay_raw_to_df_with_fields() -> None:
+@pytest.mark.parametrize("field_names", [["OD"], "OD"])
+def test_assay_raw_to_df_with_field_names(field_names: str | list[str]) -> None:
     """Verify converting an AssayRaw to a Polars DataFrame."""
     expected = pl.DataFrame({"OD": [0.3, 0.9]})
     assay_raw = AssayRaw(
@@ -553,7 +555,7 @@ def test_assay_raw_to_df_with_fields() -> None:
         records=[(0.3, 10e9), (0.9, 20e9)],
         fields=[Field(name="OD"), Field(name="PPM")],
     )
-    df = assay_raw.to_df(field_names=["OD"])
+    df = assay_raw.to_df(field_names=field_names)
     pl.testing.assert_frame_equal(df, expected)
 
 
@@ -1706,3 +1708,12 @@ def test_assay_slice_repr_records_truncated():
         r2
         == "AssaySlice(columns=None, records=[True, ..., True] (len=20), metadata=None)"
     )
+
+
+def test_get_sequence(seq1):
+    assert get_sequence((seq1,)) is seq1
+
+
+def test_get_sequence_raises_on_not_sequence():
+    with pytest.raises(ValueError, match="First element .*"):
+        get_sequence((1,))

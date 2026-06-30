@@ -14,7 +14,7 @@ import pydantic
 from Bio.Seq import Seq
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import SEQUENCE, Assay, AssayRaw, AssaySlice, Field, get_sequence, RECORDS
+from .assay import RECORDS, SEQUENCE, Assay, AssayRaw, AssaySlice, Field, get_sequence
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA, MSAWeights
 from .publication import Publication
