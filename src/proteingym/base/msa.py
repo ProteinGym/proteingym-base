@@ -27,6 +27,7 @@ class MsaProteinSequence(Sequence):
     handling.
     """
 
+    # pyrefly: ignore [bad-override] (error in biotite)
     def get_alphabet(self):
         residues = "ACDEFGHIKLMNPQRSTWVYX"
         return LetterAlphabet(tuple(residues) + tuple(residues.lower() + "-"))
@@ -173,7 +174,7 @@ class MSAWeights:
     name: str
     """The name of the weights (should match an MSA name)."""
 
-    value: list[np.array]
+    value: list[np.ndarray]
     """The weight values."""
 
     @classmethod

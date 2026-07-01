@@ -3,7 +3,7 @@
 import dataclasses
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import biotite.structure.io.pdb as pdb
 import biotite.structure.io.pdbx as pdbx
@@ -44,7 +44,7 @@ class StructureManifestSection(BaseModel):
     metadata: dict[str, str] = Field(default_factory=dict)
     """Additional metadata for the protein structure."""
 
-    @field_validator("path", mode="before", check_fields=True)
+    @field_validator("path", mode="before", check_fields=True)  # noqa
     @classmethod
     def validate_path(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context."""
@@ -103,7 +103,11 @@ class Structure:
         if self.value.array_length() != item.value.array_length():
             return False
 
-        if not np.array_equal(self.value.coord, item.value.coord):
+        if (
+            self.value.coord is not None
+            and item.value.coord is not None
+            and not np.array_equal(self.value.coord, item.value.coord)
+        ):
             return False
 
         if set(self.value.get_annotation_categories()) != set(
@@ -167,7 +171,7 @@ class Structure:
         name = section.name or section.path.stem
         return Structure(
             name=name,
-            value=value,
+            value=cast(AtomArray, value),
             description=section.description,
             metadata=section.metadata,
         )

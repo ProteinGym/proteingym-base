@@ -137,7 +137,7 @@ class UniprotField(LookupField):
 
     identifier: str = "uniprot_id"
 
-    def resolve(self, id_: str):
+    def resolve(self, id_: str) -> dict[str, str]:
         response = requests.get(
             f"https://rest.uniprot.org/uniprotkb/{id_}",
             headers={"Accept": "application/json"},
@@ -156,11 +156,13 @@ class UniprotField(LookupField):
         )
         organism = api_data.get("organism", {}).get("scientificName")
 
-        return {
-            "taxon_root": taxon_root,
+        result = {
             "molecule_name": molecule_name,
             "organism": organism,
         }
+        if taxon_root is not None:
+            result["taxon_root"] = taxon_root
+        return result
 
 
 @dataclasses.dataclass
@@ -174,7 +176,7 @@ class Sequence:
     value: Seq
     """The value of the sequence, a Seq object."""
 
-    type: SequenceType
+    type: SequenceType | None
     """The type of the sequence."""
 
     alphabet: SequenceAlphabet
@@ -189,17 +191,20 @@ class Sequence:
     pfam_ids: list[str] | None = None
     """The Pfam accession strings for this sequence."""
 
+    # pyrefly: ignore[bad-assignment]
     taxon_root: str | None = dataclasses.field(default=UniprotField())
     """The root of taxonomic lineage information.
     Useful for grouping datasets into main taxons"""
 
+    # pyrefly: ignore[bad-assignment]
     molecule_name: str | None = dataclasses.field(default=UniprotField())
     """The molecule name."""
 
+    # pyrefly: ignore[bad-assignment]
     organism: str | None = dataclasses.field(default=UniprotField())
     """The organism information."""
 
-    def __eq__(self, item: "Sequence") -> bool:
+    def __eq__(self, item: object) -> bool:
         """Implements the equality (==) operator for Sequence.
 
         For equality, we only look at the sequence value.
@@ -315,7 +320,10 @@ class Sequence:
         if path.is_dir():
             path /= f"{self.name}.{fmt.value}"
         record = SeqRecord(
-            seq=self.value, id=self.name, name=self.name, description=self.description
+            seq=self.value,
+            id=self.name,
+            name=self.name,
+            description=self.description or "<unknown>",
         )
         SeqIO.write(record, path, fmt.value)
         return path

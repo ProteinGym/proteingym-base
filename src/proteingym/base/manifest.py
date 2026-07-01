@@ -70,6 +70,7 @@ class _VersionPydanticAnnotation:
     ) -> JsonSchemaValue:
         """See https://docs.pydantic.dev/latest/concepts/json_schema/#implementing-__get_pydantic_json_schema__."""
         _ = core_schema
+        # pyrefly: ignore [missing-attribute]
         return handler(core_schema.str_schema())
 
 

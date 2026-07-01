@@ -64,10 +64,11 @@ def test_dataset_slice_from_json_mask() -> None:
 def test_dataset_slice_dumps_mask() -> None:
     """Test that a dataset slice with a boolean mask is correctly dumped to JSON."""
     contents = (
-        '{"assays": ['
+        '{"metadata": {}, '
+        '"assays": ['
         '{"columns": null, "records": [true, false, true], "metadata": null}, '
-        '{"columns": null, "records": [false, true, false], "metadata": null}], '
-        '"metadata": null}'
+        '{"columns": null, "records": [false, true, false], "metadata": null}'
+        "]}"
     )
     slc = DatasetSlice(
         assays=[

@@ -78,7 +78,9 @@ class ModelProject(BaseModel):
         console_scripts = [
             ep
             for ep in metadata.entry_points()
-            if ep.dist.name == self.project["name"] and ep.group == "console_scripts"
+            if ep.dist is not None
+            and ep.dist.name == self.project["name"]
+            and ep.group == "console_scripts"
         ]
 
         entry_points = list(self._filter_entry_points(*console_scripts))
