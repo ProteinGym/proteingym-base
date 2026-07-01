@@ -75,9 +75,7 @@ class Publication:
     def __repr__(self) -> str:
         """Return a string representation of the Publication object."""
 
-        def _truncate(value: str | None) -> str:
-            if value is None:
-                return ""
+        def _truncate(value: str) -> str:
             return value[:60] + "..." if value and len(value) > 60 else value
 
         fields = [

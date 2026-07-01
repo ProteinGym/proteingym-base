@@ -156,13 +156,15 @@ class UniprotField(LookupField):
         )
         organism = api_data.get("organism", {}).get("scientificName")
 
-        result = {
-            "molecule_name": molecule_name,
-            "organism": organism,
+        return {
+            k: v
+            for k, v in {
+                "molecule_name": molecule_name,
+                "organism": organism,
+                "taxon_root": taxon_root,
+            }.items()
+            if v is not None
         }
-        if taxon_root is not None:
-            result["taxon_root"] = taxon_root
-        return result
 
 
 @dataclasses.dataclass
