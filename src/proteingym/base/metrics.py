@@ -10,26 +10,8 @@ datasets or specific cross-validation folds. All metrics use a plugin-style
 architecture: any function with the ``metric_`` prefix is automatically discovered
 and made available for calculation.
 
-Adding Custom Metrics:
-    To add a new metric, define a function following this pattern::
-
-        def metric_<name>(
-            ground_truth: Subsets | Dataset,
-            predicted: Dataset,
-            target: str,
-            split: str | None = None,
-            fold: int | None = None,
-        ) -> float:
-            scoring_df = prepare_and_validate_scoring_df(
-                ground_truth, predicted, target, split, fold
-            )
-            gt_values = scoring_df[target].to_numpy()
-            pred_values = scoring_df[f"{target}_pred"].to_numpy()
-            return custom_calculation(gt_values, pred_values)
-
-    The metric function is automatically discovered and made available for
-    calculation. The function name after ``metric_`` becomes the metric name used
-    in the ``selected_metrics`` argument.
+See the [Metrics documentation](../metrics.md) for a guide on how to design and
+add new metrics.
 """
 
 import inspect

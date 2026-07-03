@@ -21,6 +21,7 @@ plugins:
 nav:
 - Home: index.md
 - Manifest: manifest.md
+- Metrics: metrics.md
 - ADRs: decisions/
 - Tutorials:
   - Introduction: notebooks/01_Introduction_to_PG2_Dataset.ipynb
