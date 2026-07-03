@@ -23,6 +23,96 @@ The following metrics are provided out of the box:
 | `spearman` | `metric_spearman` | `-1.0`–`1.0` | Spearman rank correlation between ground truth and predicted values.        |
 | `recovery` | `metric_recovery` | `0.0`–`1.0`  | Fraction of the true top-k variants that appear in the predicted top-k.     |
 
+## Usage
+
+You do not need the DVC benchmark pipeline to compute metrics. The metrics API
+can be used directly on any dataset archive and set of predictions, which is
+handy for quick local checks and exploration.
+
+The typical local workflow is:
+
+1. Load the ground truth dataset archive.
+2. Build a predictions `Dataset` from your model's scores using
+   [`Dataset.predictions_delta`][proteingym.base.dataset.Dataset.predictions_delta],
+   which aligns predictions to the dataset's assay structure by sequence.
+3. Call [`calculate_selected_metrics`][proteingym.base.metrics.calculate_selected_metrics].
+
+### Scoring a plain dataset
+
+``` python
+import polars as pl
+
+from proteingym.base import Dataset, calculate_selected_metrics
+
+# 1. Load the ground truth dataset archive.
+dataset = Dataset.from_path("my_dataset.pgdata")
+
+# 2. Wrap your model's predictions in a Dataset. The DataFrame needs a
+#    'sequence' column and a column named after the target being predicted.
+scores = pl.DataFrame(
+    {
+        "sequence": ["MKT...", "MKV...", "MRT..."],
+        "DMS_score": [0.12, -0.85, 1.03],
+    }
+)
+predictions = dataset.predictions_delta(scores, target="DMS_score")
+
+# 3. Calculate the metrics you care about.
+results = calculate_selected_metrics(
+    selected_metrics=["spearman"],
+    ground_truth=dataset,
+    predicted=predictions,
+    target="DMS_score",
+)
+print(results)  # {"spearman": 0.87}
+```
+
+### Scoring a single fold of a split
+
+If your dataset ships with cross-validation splits (a `.splits.pgdata`
+archive), load it as `Subsets` and pass `split` and `fold` to score a single
+fold:
+
+``` python
+from proteingym.base import Subsets, calculate_selected_metrics
+
+subsets = Subsets.from_path("my_dataset.splits.pgdata")
+predictions = subsets.dataset.predictions_delta(scores, target="DMS_score")
+
+results = calculate_selected_metrics(
+    selected_metrics=["spearman", "recovery"],
+    ground_truth=subsets,
+    predicted=predictions,
+    target="DMS_score",
+    split="random",
+    fold=0,
+)
+```
+
+### Scoring across all folds at once
+
+To reproduce the benchmark's per-mode breakdown (test fold, aggregated training
+folds, and each fold individually) without the pipeline, use
+[`calculate_metrics_by_mode`][proteingym.base.metrics.calculate_metrics_by_mode]:
+
+``` python
+from proteingym.base import calculate_metrics_by_mode
+
+results = calculate_metrics_by_mode(
+    selected_metrics=["spearman", "recovery"],
+    ground_truth=subsets,
+    predicted=predictions,
+    target="DMS_score",
+    split="random",
+    test_fold=0,
+)
+# {
+#     "test": {...},
+#     "train_available": {...},
+#     "per_fold": {"fold_0": {...}, "fold_1": {...}, ...},
+# }
+```
+
 ## Calculating metrics
 
 The public API exposes three entry points:
