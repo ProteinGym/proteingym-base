@@ -149,7 +149,7 @@ def adjust_target_with_two_dummy_features(
     >>> result.columns
     ['target', 'foo', 'bar']
     """
-    feature_names = feature_names or ("foo", "bar")
+    feature_names = feature_names or ["foo", "bar"]
 
     if len(feature_names) != 2:
         raise ValueError(f"Expecting two feature names: {feature_names}")

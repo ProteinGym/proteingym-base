@@ -19,6 +19,7 @@ from proteingym.base.assay import (
     AssaySlice,
     Field,
     FieldEncoding,
+    get_sequence,
 )
 from proteingym.base.dataset import DatasetArchiveLayout
 from proteingym.base.manifest import Manifest
@@ -545,7 +546,8 @@ def test_assay_raw_to_df() -> None:
     pl.testing.assert_frame_equal(df, expected)
 
 
-def test_assay_raw_to_df_with_fields() -> None:
+@pytest.mark.parametrize("field_names", [["OD"], "OD"])
+def test_assay_raw_to_df_with_field_names(field_names: str | list[str]) -> None:
     """Verify converting an AssayRaw to a Polars DataFrame."""
     expected = pl.DataFrame({"OD": [0.3, 0.9]})
     assay_raw = AssayRaw(
@@ -553,7 +555,7 @@ def test_assay_raw_to_df_with_fields() -> None:
         records=[(0.3, 10e9), (0.9, 20e9)],
         fields=[Field(name="OD"), Field(name="PPM")],
     )
-    df = assay_raw.to_df(fields=[Field(name="OD")])
+    df = assay_raw.to_df(field_names=field_names)
     pl.testing.assert_frame_equal(df, expected)
 
 
@@ -771,7 +773,7 @@ def test_assay_to_df_single_string_target():
         ],
         fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
-    df = assay.to_df(target_names="DMS Score")
+    df = assay.to_df(field_names="DMS Score")
     assert "DMS Score" in df.columns
     assert df.shape == (2, 2)
     assert df["DMS Score"].to_list() == [1.56, 2.0]
@@ -804,7 +806,7 @@ def test_assay_to_df_invalid_target_name_returns_empty_df() -> None:
         fields=[Field(name="sequence"), Field(name="DMS Score")],
     )
     try:
-        df = assay.to_df(target_names=["Invalid Target"])
+        df = assay.to_df(field_names=["Invalid Target"])
     except ValueError as e:
         raise ValueError(f"Failed to convert assay to DataFrame: {e}") from e
     else:
@@ -834,7 +836,7 @@ def test_as_manifest_section_with_no_records(tmp_path: Path) -> None:
     path = assay.dump(path=tmp_path, fmt=AssayFormat.CSV)
     manifest = assay.as_manifest_section(path=path)
     assert manifest.name == "assay"
-    assert manifest.sequence_alphabet is None
+    assert manifest.sequence_alphabet is SequenceAlphabet.UNDEFINED
 
 
 def test_assay_dump(tmp_path: Path) -> None:
@@ -1730,3 +1732,12 @@ def test_assay_slice_repr_records_truncated():
         r2
         == "AssaySlice(columns=None, records=[True, ..., True] (len=20), metadata=None)"
     )
+
+
+def test_get_sequence(seq1):
+    assert get_sequence((seq1,)) is seq1
+
+
+def test_get_sequence_raises_on_not_sequence():
+    with pytest.raises(ValueError, match="First element .*"):
+        get_sequence((1,))

@@ -5,7 +5,7 @@ import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Self, TypeAlias, TypeGuard, cast
 
 import annotated_types
 import polars as pl
@@ -25,7 +25,8 @@ from pydantic import (
 from .sequence import Sequence, SequenceAlphabet, SequenceType
 
 SEQUENCE = "sequence"
-RECORDS = list[tuple[Sequence | str | int | float | bool | str | None, ...]]
+RECORD: TypeAlias = tuple[Sequence | str | int | float | bool | str | None, ...]
+RECORDS: TypeAlias = list[RECORD]
 
 
 class AssayFormat(StrEnum):
@@ -67,7 +68,7 @@ class LibraryConstructionMethod(StrEnum):
     mutations across random positions (ex. epPCR)"""
 
     SITE_SATURATED_MUTAGENESIS = "site_saturated_mutagenesis"
-    """Site-saturated mutageneisis
+    """Site-saturated mutagenesis
 
     Introduction of mutants
     at specific sites with complete coverage (ex. NNK/S)"""
@@ -254,7 +255,7 @@ class Field:
         # The obvious getter/setter pattern is not compatible with dataclasses
         return self.name if self.alias is None else self.alias
 
-    def __eq__(self, other: "Field") -> bool:
+    def __eq__(self, other: object) -> bool:
         """Implements the '==' operator for Field."""
         if not isinstance(other, Field):
             return False
@@ -273,7 +274,7 @@ class Field:
 
     # noinspection PyTypeChecker
     @functools.cached_property
-    def polars_type(self) -> pl.DataType:
+    def polars_type(self) -> type[pl.DataType]:
         """Returns the Polars data type of the field."""
         match self.value:
             case bool():
@@ -287,7 +288,7 @@ class Field:
             case None:
                 return pl.Unknown
             case _:
-                raise ValueError(f"Unsupported field type: {type(self.value)}")
+                raise ValueError(f"Unsupported field type: {type(self.value).__name__}")
 
 
 class _ManifestSection(BaseModel):
@@ -295,7 +296,7 @@ class _ManifestSection(BaseModel):
 
     model_config = ConfigDict(
         extra="forbid",
-        frozen=False,
+        frozen=True,
         use_attribute_docstrings=True,
         str_min_length=1,
     )
@@ -310,7 +311,7 @@ class _ManifestSection(BaseModel):
     description: str | None = None
     """A brief description"""
 
-    @field_validator("path", mode="before", check_fields=True)
+    @field_validator("path", mode="before", check_fields=True)  # noqa
     @classmethod
     def validate_path_before(cls, path: Path, info: ValidationInfo) -> Path:
         """Optionally, extend the path with the `relative_to_path` from the context.
@@ -322,7 +323,7 @@ class _ManifestSection(BaseModel):
             path = info.context["relative_to_path"] / path
         return path
 
-    @field_validator("path", mode="after", check_fields=True)
+    @field_validator("path", mode="after", check_fields=True)  # noqa
     @classmethod
     def validate_path_after(cls, path: Path) -> Path:
         """Validate that the file format is supported."""
@@ -380,7 +381,7 @@ class AssayManifestSection(_ManifestSection):
     sequence_alias: str | None = None
     """The sequence feature name given in the file."""
 
-    sequence_alphabet: SequenceAlphabet | None = None
+    sequence_alphabet: SequenceAlphabet = SequenceAlphabet.UNDEFINED
     """The alphabet of the sequences of the assay."""
 
     targets: list[Field] = pydantic.Field(default_factory=list)
@@ -450,7 +451,7 @@ class AssayManifestSection(_ManifestSection):
     @field_serializer("sequence_alphabet")
     def serialize_sequence_alphabet(self, sequence_alphabet: SequenceAlphabet) -> str:
         """Serialize the sequence alphabet as a string."""
-        return str(sequence_alphabet.value)
+        return sequence_alphabet.value
 
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
@@ -545,10 +546,7 @@ class AssayRaw:
         return len(self) == 0
 
     @classmethod
-    def from_manifest_section(
-        cls,
-        section: AssayRawManifestSection,
-    ) -> "AssayRaw":
+    def from_manifest_section(cls, section: AssayRawManifestSection) -> Self:
         """Creates AssayRaw from a manifest section.
 
         Args:
@@ -619,17 +617,29 @@ class AssayRaw:
                 raise NotImplementedError(f"Unsupported file format: {fmt}")
         return path
 
-    def to_df(self, *, fields: list[Field] | None = None) -> pl.DataFrame:
+    def to_df(
+        self, *, field_names: Collection[str] | str | None = None
+    ) -> pl.DataFrame:
         """Returns the assay records as a Polars DataFrame.
 
         Args:
-            fields: The fields to include.
+            field_names: The fields to include.
                 If None, all fields are included. Defaults to None.
 
         Returns:
             pl.DataFrame: The DataFrame containing the assay data.
         """
-        fields = fields or self.fields
+        if field_names:
+            if isinstance(field_names, str):
+                field_names = {field_names}
+            else:
+                field_names = set(field_names).intersection(
+                    {e.name for e in self.fields}
+                )
+        else:
+            field_names = [e.name for e in self.fields]
+
+        fields = [f for f in self.fields if f.name in field_names]
         data = {
             f.name: [r[i] for r in self.records]
             for i, f in enumerate(self.fields)
@@ -706,7 +716,7 @@ class Assay(AssayRaw):
             for k, v in item.variables.items()
         )
 
-    def __eq__(self, item: "Assay") -> bool:
+    def __eq__(self, item: object) -> bool:
         """Implements the '==' operator for Assay."""
         if not isinstance(item, Assay):
             return False
@@ -742,10 +752,13 @@ class Assay(AssayRaw):
             records = []
         else:
             field_indices = [assay.fields.index(column) for column in fields_slice]
-            records = [
-                tuple(record[column_index] for column_index in field_indices)
-                for record in assay.records
-            ]
+            records = cast(
+                RECORDS,
+                [
+                    tuple(record[column_index] for column_index in field_indices)
+                    for record in assay.records
+                ],
+            )
         return dataclasses.replace(assay, records=records, fields=fields_slice)
 
     @staticmethod
@@ -763,7 +776,7 @@ class Assay(AssayRaw):
             records = list(itertools.compress(assay.records, slc))
         return dataclasses.replace(assay, records=records)
 
-    def __getitem__(self, slc: AssaySlice | list[bool | str]) -> "Assay":
+    def __getitem__(self, slc: AssaySlice | list[str] | list[bool]) -> "Assay":
         """Slice the assay to get a subset.
 
         Args:
@@ -795,12 +808,15 @@ class Assay(AssayRaw):
             )
 
         assay = self
-        is_assay_slice = isinstance(slc, AssaySlice)
-        if is_assay_slice or len(slc) > 0:
+        if isinstance(slc, AssaySlice):
+            assay = self._slice_columns(assay, slc.columns)
+            assay = self._slice_records(assay, slc.records)
+        elif _is_str_list(slc):
+            assay = self._slice_columns(assay, slc)
+        elif _is_bool_or_empty_list(slc):
             # An empty list is treated as an empty records slice. If you want to
             # have an empty column slice use `AssaySlice(columns=[])`
-            assay = self._slice_columns(assay, slc.columns if is_assay_slice else slc)
-        assay = self._slice_records(assay, slc.records if is_assay_slice else slc)
+            assay = self._slice_records(assay, slc)
 
         return assay
 
@@ -829,7 +845,7 @@ class Assay(AssayRaw):
         if n_recs == 0:
             lines.append("\t\t<no records>")
         for i, record in enumerate(self.records[:n_recs]):
-            seq = record[0]
+            seq = get_sequence(record)
             targets = record[1:]
             seq_str = str(seq.value)
             if len(seq_str) > 30:
@@ -842,7 +858,8 @@ class Assay(AssayRaw):
         return "\n".join(lines)
 
     @classmethod
-    def from_manifest_section(cls, section: AssayManifestSection) -> "Assay":
+    # pyrefly: ignore [bad-override]
+    def from_manifest_section(cls, section: AssayManifestSection) -> Self:
         """Create an Assay instance from a manifest section."""
         sequence_field = Field(name=SEQUENCE, alias=section.sequence_alias)
         all_fields = [sequence_field] + section.targets + section.non_targets
@@ -889,6 +906,7 @@ class Assay(AssayRaw):
             has_uncertainty=section.has_uncertainty,
         )
 
+    # pyrefly: ignore [bad-override]
     def as_manifest_section(self, *, path: Path) -> AssayManifestSection:
         """Create `AssayManifestSection` from the assay.
 
@@ -900,9 +918,9 @@ class Assay(AssayRaw):
         """
         # Get the sequence alphabet from the first record
         if self.is_empty():
-            sequence_alphabet = None
+            sequence_alphabet = SequenceAlphabet.UNDEFINED
         else:
-            sequence_alphabet = self.records[0][0].alphabet
+            sequence_alphabet = get_sequence(self.records[0]).alphabet
         return AssayManifestSection(
             name=self.name,
             description=self.description,
@@ -925,12 +943,12 @@ class Assay(AssayRaw):
         )
 
     def to_df(
-        self, *, target_names: Collection[str] | str | None = None
+        self, *, field_names: Collection[str] | str | None = None
     ) -> pl.DataFrame:
         """Returns the assay records with assay variables as a Polars DataFrame.
 
         Args:
-            target_names: The target name(s) to include.
+            field_names: The target name(s) to include.
                 If None, all target names are included. Defaults to None.
 
         Returns:
@@ -939,16 +957,16 @@ class Assay(AssayRaw):
         if self.is_empty():
             # If no records are present, return empty DataFrame
             return pl.DataFrame(schema=[SEQUENCE])
-        if target_names:
-            if isinstance(target_names, str):
-                target_names = {target_names}
+        if field_names:
+            if isinstance(field_names, str):
+                field_names = {field_names}
             else:
-                target_names = set(target_names).intersection(self.target_feature_names)
-            if not target_names:
+                field_names = set(field_names).intersection(self.target_feature_names)
+            if not field_names:
                 # If not matching target names, return empty DataFrame
                 return pl.DataFrame(schema=[SEQUENCE])
         else:
-            target_names = self.target_feature_names
+            field_names = self.target_feature_names
 
         variables = [
             pl.lit(var_value).alias(var_name)
@@ -957,7 +975,7 @@ class Assay(AssayRaw):
         schema = {f.name: f.polars_type for f in self.fields}
         df = (
             pl.DataFrame(self.records, schema=schema, orient="row")
-            .select([self.sequence_feature_name] + list(target_names))
+            .select([self.sequence_feature_name] + list(field_names))
             .with_columns(
                 pl.col(self.sequence_feature_name).map_elements(
                     lambda seq: str(seq.value), return_dtype=pl.Utf8
@@ -1007,3 +1025,22 @@ class Assay(AssayRaw):
             case _:
                 raise NotImplementedError(f"Unsupported file type: {fmt.value}")  # noqa
         return path
+
+
+def _is_bool_or_empty_list(
+    x: AssaySlice | list[bool] | list[str],
+) -> TypeGuard[list[bool]]:
+    return isinstance(x, list) and (
+        (len(x) == 0) or (len(x) > 0 and isinstance(x[0], bool))
+    )
+
+
+def _is_str_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[str]]:
+    return isinstance(x, list) and len(x) > 0 and isinstance(x[0], str)
+
+
+def get_sequence(x: RECORD) -> Sequence:
+    """Get the (type-assured) first element of a record which shall be a Sequence."""
+    if not isinstance(x[0], Sequence):
+        raise ValueError("First element of record must be a Sequence")
+    return x[0]

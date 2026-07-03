@@ -10,10 +10,21 @@ from typer.testing import CliRunner
 
 from proteingym.base.__main__ import app
 from proteingym.base.assay import SEQUENCE, AssaySlice, Field
-from proteingym.base.dataset import Dataset, DatasetSlice, dummy_dataset
+from proteingym.base.dataset import (
+    Dataset,
+    DatasetSlice,
+)
+from proteingym.base.dataset import (
+    dummy_dataset as _dummy_dataset,
+)
 from proteingym.base.msa import MSA, MsaProteinSequence
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
 from proteingym.base.structure import Structure
+
+
+@pytest.fixture
+def dummy_dataset():
+    return _dummy_dataset()
 
 
 def test_dataset_slice_from_dict() -> None:
@@ -65,6 +76,14 @@ def test_dataset_slice_dumps_mask() -> None:
         ]
     )
     assert slc.to_json() == contents
+
+
+def test_dataset_getitem_with_none_assays(dummy_dataset) -> None:
+    """Slice with no assays should return all assays"""
+    slice_with_none_assays = DatasetSlice(assays=None)
+
+    result = dummy_dataset[slice_with_none_assays]
+    assert len(result.assays) == len(dummy_dataset.assays)
 
 
 def test_dataset_dump_extension(tmp_path: Path) -> None:
@@ -125,9 +144,6 @@ def dataset_file(tmp_path: Path) -> Path:
     dataset = Dataset(name="test_dataset")
     dataset_path = dataset.dump(path=tmp_path)
     return dataset_path
-
-
-dummy_dataset = pytest.fixture(dummy_dataset)
 
 
 def test_list_datasets_command(runner: CliRunner, dataset_file: Path) -> None:
