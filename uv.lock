@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -1724,6 +1724,7 @@ dependencies = [
     { name = "python-frontmatter" },
     { name = "requests" },
     { name = "scikit-learn" },
+    { name = "scipy" },
     { name = "semver" },
     { name = "toml" },
     { name = "typer" },
@@ -1759,6 +1760,7 @@ requires-dist = [
     { name = "python-frontmatter", specifier = ">=1.1.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "scikit-learn", specifier = ">=1.5.0,<2.0.0" },
+    { name = "scipy", specifier = ">=1.16.2,<2.0.0" },
     { name = "semver", specifier = ">=3.0.4,<4.0.0" },
     { name = "toml", specifier = ">=0.10.2,<1.0.0" },
     { name = "typer", specifier = ">=0.16.0,<1.0.0" },
