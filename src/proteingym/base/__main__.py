@@ -7,6 +7,7 @@ import click
 import typer
 from pydantic import ValidationError
 
+from . import metrics
 from .__about__ import __version__
 from .data_generators import (
     adjust_target_with_two_dummy_features,
@@ -287,6 +288,87 @@ def generate_data(
 
     if fmt.lower() == "csv":
         typer.echo(output.write_csv(), nl=False)
+
+
+@app.command("evaluate")
+def evaluate_metrics(
+    prediction_path: Annotated[
+        Path,
+        typer.Option(help="Path to the prediction dataset archive (.pgdata file)."),
+    ],
+    metric_path: Annotated[
+        Path,
+        typer.Option(help="Path where the calculated metrics JSON will be saved."),
+    ],
+    dataset_path: Annotated[
+        Path | None,
+        typer.Option(help="Path to the ground truth dataset archive."),
+    ] = None,
+    selected_metrics: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Metric name to calculate. Repeat the flag for multiple metrics."
+        ),
+    ] = None,
+    model_name: Annotated[
+        str | None,
+        typer.Option(help="Name of the model that generated predictions."),
+    ] = None,
+    split: Annotated[
+        str | None,
+        typer.Option(help="Name of the splitting strategy to evaluate."),
+    ] = None,
+    target: Annotated[
+        str | None,
+        typer.Option(help="Name of the target variable to score."),
+    ] = None,
+    fold: Annotated[
+        str | None,
+        typer.Option(help="Fold index designated as the test fold."),
+    ] = None,
+    score_modes: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Scoring mode to compute. Repeat the flag for multiple modes."
+        ),
+    ] = None,
+) -> None:
+    """Calculate performance metrics from predictions and save results to JSON.
+
+    Wraps ``metrics.evaluate`` to load ground truth and prediction archives,
+    compute the selected metrics, and persist the results to a JSON file.
+
+    Args:
+        prediction_path: Path to the prediction dataset archive (.pgdata file)
+            containing model predictions.
+        metric_path: Path where the calculated metrics JSON will be saved.
+        dataset_path: Path to the ground truth dataset archive (.pgdata or
+            .splits.pgdata).
+        selected_metrics: Optional list of metric names to calculate. If not
+            provided, all discovered metrics are included.
+        model_name: Name of the model that generated predictions (stored in
+            metadata).
+        split: Name of the splitting strategy to evaluate. Required for a
+            .splits.pgdata dataset.
+        target: Name of the target variable to score. Required for all metric
+            calculations.
+        fold: Fold index (as string) designated as the test fold. Required for a
+            .splits.pgdata dataset.
+        score_modes: Optional list of scoring modes to compute. Only used for a
+            .splits.pgdata dataset.
+    """
+    result_path = metrics.evaluate(
+        prediction_path=prediction_path,
+        metric_path=metric_path,
+        dataset_path=dataset_path,
+        selected_metrics=selected_metrics,
+        model_name=model_name,
+        split=split,
+        target=target,
+        fold=fold,
+        score_modes=score_modes,
+    )
+    typer.echo(f"Metrics saved to: {result_path}")
 
 
 if __name__ == "__main__":
