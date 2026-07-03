@@ -34,3 +34,14 @@ repos:
     - id: uv-lock
     # Synchronize the dependencies upon branch checkout, pull or rebase.
     - id: uv-sync
+
+- repo: local
+  hooks:
+    - id: pyrefly
+      name: pyrefly type checker
+      entry: uv run pyrefly check
+      language: system
+      types: [python]
+      files: ^src/
+      pass_filenames: true
+      require_serial: true

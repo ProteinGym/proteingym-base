@@ -5,7 +5,7 @@ import json
 from collections.abc import Collection
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Self, TypeAlias, TypeGuard, cast
+from typing import Annotated, Any, Self, TypeAlias, TypeGuard, cast
 
 import annotated_types
 import polars as pl
@@ -1027,15 +1027,13 @@ class Assay(AssayRaw):
         return path
 
 
-def _is_bool_or_empty_list(
-    x: AssaySlice | list[bool] | list[str],
-) -> TypeGuard[list[bool]]:
+def _is_bool_or_empty_list(x: Any) -> TypeGuard[list[bool]]:
     return isinstance(x, list) and (
         (len(x) == 0) or (len(x) > 0 and isinstance(x[0], bool))
     )
 
 
-def _is_str_list(x: AssaySlice | list[bool] | list[str]) -> TypeGuard[list[str]]:
+def _is_str_list(x: Any) -> TypeGuard[list[str]]:
     return isinstance(x, list) and len(x) > 0 and isinstance(x[0], str)
 
 

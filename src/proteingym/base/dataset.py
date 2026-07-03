@@ -6,7 +6,7 @@ import warnings
 from collections.abc import Callable, Collection
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Iterator, cast
+from typing import Any, Iterator, TypeGuard, cast
 from zipfile import ZipFile
 
 import polars as pl
@@ -14,7 +14,17 @@ import pydantic
 from Bio.Seq import Seq
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from .assay import RECORDS, SEQUENCE, Assay, AssayRaw, AssaySlice, Field, get_sequence
+from .assay import (
+    RECORDS,
+    SEQUENCE,
+    Assay,
+    AssayRaw,
+    AssaySlice,
+    Field,
+    _is_bool_or_empty_list,
+    _is_str_list,
+    get_sequence,
+)
 from .manifest import MANIFEST_LATEST_VERSION, Manifest
 from .msa import MSA, MSAWeights
 from .publication import Publication
@@ -65,12 +75,13 @@ class DatasetSlice:
     assays: list[AssaySlice] | list[bool] | list[str] | None = None
     """The list of assay slices. If None, all assays are included."""
 
-    metadata: dict[str, str | float] | None = None
-    """Metadata associated with the DatasetSlice. The metadata can be used to describe
-    details about the slice, for instance properties of the slice, like the number of
-    top performing variants contained in the dataset slice, or with what kind of
-    splitting parameters the slice was created, or any other information relevant to
-    the user."""
+    metadata: dict[str, str | float] = dataclasses.field(default_factory=dict)
+    """Metadata associated with the DatasetSlice.
+
+    The metadata can be used to describe details about the slice, for instance
+    properties of the slice, like the number of top performing variants contained in
+    the dataset slice, or with what kind of splitting parameters the slice was
+    created, or any other information relevant to the user."""
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "DatasetSlice":
@@ -88,7 +99,7 @@ class DatasetSlice:
             assays = None
         else:
             assays = [AssaySlice(**assay) for assay in data.get("assays", [])]
-        return cls(assays=assays, metadata=data.get("metadata"))
+        return cls(assays=assays, metadata=data.get("metadata", {}))
 
     @classmethod
     def from_json(cls, contents: str) -> "DatasetSlice":
@@ -109,9 +120,12 @@ class DatasetSlice:
         Returns:
             A JSON string representation of the dataset slice.
         """
-        data = {}
+        data = {"metadata": {}, "assays": []}
         if self.assays is not None:
-            data["assays"] = [dataclasses.asdict(slc) for slc in self.assays]
+            data["assays"] = [
+                dataclasses.asdict(slc) if isinstance(slc, AssaySlice) else slc
+                for slc in self.assays
+            ]
         data["metadata"] = self.metadata
         return json.dumps(data)
 
@@ -232,7 +246,11 @@ class Dataset(BaseModel):
             return False
 
         def sort_by_name(
-            values: list[Assay | Sequence | Structure | MSA | AssayRaw],
+            values: list[MSA]
+            | list[Sequence]
+            | list[Assay]
+            | list[AssayRaw]
+            | list[Structure],
         ) -> list[Assay | Sequence | Structure | MSA | AssayRaw]:
             """Sort a list of BaseModel by name, placing unnamed items at the end."""
             return sorted(values, key=lambda value: value.name)
@@ -314,10 +332,14 @@ class Dataset(BaseModel):
             )
         if item.assays is None:
             assays = self.assays
-        else:
+        elif _is_assay_slice_list(item.assays):
             assays = [
                 assay[slc] for assay, slc in zip(self.assays, item.assays, strict=True)
             ]
+        elif _is_bool_or_empty_list(item.assays) or _is_str_list(item.assays):
+            assays = [assay[item.assays] for assay in self.assays]
+        else:
+            assays = None
         return self.model_copy(update={"assays": assays})
 
     def __repr__(self) -> str:
@@ -1151,7 +1173,12 @@ class Subsets:
                     "Cannot update subsets with different datasets. "
                     f"Got {subset.dataset} while having {self.dataset}."
                 )
-        slices = {subset_name: subset.slices for subset_name, subset in subsets.items()}
+        # After the isinstance check above, we know self.slices is a dict
+        # Each subset.slices should be a list[DatasetSlice] to be added as a value
+        slices: dict[str, list[DatasetSlice]] = {
+            subset_name: cast(list[DatasetSlice], subset.slices)
+            for subset_name, subset in subsets.items()
+        }
         self.slices = {**self.slices, **slices}
 
     @staticmethod
@@ -1242,3 +1269,7 @@ class Subsets:
             slices_str = self._dumps_slices()
             zip_.writestr(SubsetsArchiveLayout.SLICES_FILE, slices_str)
         return path
+
+
+def _is_assay_slice_list(x: Any) -> TypeGuard[list[AssaySlice]]:
+    return isinstance(x, list) and len(x) > 0 and isinstance(x[0], AssaySlice)

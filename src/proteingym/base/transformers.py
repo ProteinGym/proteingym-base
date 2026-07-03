@@ -6,6 +6,8 @@ dataframes to feature matrices (X) and target vectors (y).
 
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -49,7 +51,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
             ValueError: If sequences have varying lengths.
         """
         if isinstance(X, Dataset):
-            X = X.to_df()[SEQUENCE]
+            X = X.to_df()[[SEQUENCE]]
 
         # Flatten to 1D array
         sequences = X.to_numpy().ravel()
@@ -113,7 +115,7 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
                 length from fitting.
         """
         if isinstance(X, Dataset):
-            X = X.to_df()[SEQUENCE]
+            X = X.to_df()[[SEQUENCE]]
 
         # Flatten to 1D array
         sequences = X.to_numpy().ravel()
@@ -344,8 +346,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
             X = X.to_df()
 
         if self.column_transformer_ is None:
-            msg = "Transformer has not been fitted. Call fit() first."
-            raise ValueError(msg)
+            raise ValueError("Transformer has not been fitted. Call fit() first.")
 
         feature_columns = [col for col in X.columns if col not in self.target_columns]
         x_features = X.select(feature_columns)
@@ -360,7 +361,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         if y_targets.shape[1] == 1:
             y_targets = y_targets.ravel()
 
-        return x_transformed, y_targets
+        return cast(np.ndarray, x_transformed), y_targets
 
     def _get_feature_names(self) -> list[str]:
         """Get feature names from the fitted transformer.
@@ -389,7 +390,9 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
 
         return feature_names
 
-    def get_feature_names_out(self, input_features: list[str] = None) -> np.ndarray:
+    def get_feature_names_out(
+        self, input_features: list[str] | None = None
+    ) -> np.ndarray:
         """Get output feature names for transformation.
 
         Args:
@@ -398,4 +401,4 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         Returns:
             Array of feature names.
         """
-        return np.array(self.feature_names_)
+        return np.array(input_features or self.feature_names_)

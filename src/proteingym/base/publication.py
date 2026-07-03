@@ -40,25 +40,32 @@ class DoiField(LookupField):
 class Publication:
     """Metadata about a publication."""
 
+    # pyrefly: ignore[bad-assignment]
     title: str | None = dataclasses.field(default=DoiField())
     """The title of the publication."""
 
+    # pyrefly: ignore[bad-assignment]
     author: str | None = dataclasses.field(default=DoiField())
     """The authors of the publication."""
     # singular since DOI returns author key
 
+    # pyrefly: ignore[bad-assignment]
     journal: str | None = dataclasses.field(default=DoiField())
     """The journal of the publication."""
 
+    # pyrefly: ignore[bad-assignment]
     volume: str | None = dataclasses.field(default=DoiField())
     """The volume of the publication."""
 
+    # pyrefly: ignore[bad-assignment]
     number: str | None = dataclasses.field(default=DoiField())
     """The number of the publication issue."""
 
+    # pyrefly: ignore[bad-assignment]
     year: str | None = dataclasses.field(default=DoiField())
     """The year of publication."""
 
+    # pyrefly: ignore[bad-assignment]
     pages: str | None = dataclasses.field(default=DoiField())
     """The pages of the publication."""
 
@@ -68,7 +75,7 @@ class Publication:
     def __repr__(self) -> str:
         """Return a string representation of the Publication object."""
 
-        def _truncate(value: str | None) -> str:
+        def _truncate(value: str) -> str:
             return value[:60] + "..." if value and len(value) > 60 else value
 
         fields = [

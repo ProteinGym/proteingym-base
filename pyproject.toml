@@ -21,6 +21,7 @@ dependencies = [
     "scikit-learn>=1.5.0,<2.0.0",
     "pandas>=2.3.3",
     "requests>=2.32.3",
+    "pandas-stubs~=3.0.0",
 ]
 
 [project.scripts]
@@ -43,6 +44,9 @@ dev = [
     "mkdocs-autoapi",
     "mkdocs-jupyter",
     "pyrefly>=1.1.1",
+    "types-toml",
+    "types-requests",
+    "pandas-stubs",
 ]
 
 [tool.hatch.version]
@@ -98,10 +102,5 @@ extend-ignore-names = ["X"]
 
 [tool.pyrefly]
 project-includes = [
-    # type checking is a work in progress
-    "src/proteingym/base/__about__.py",
-    "src/proteingym/base/__init__.py",
-    "src/proteingym/base/__main__.py",
-    "src/proteingym/base/assay.py",
-    "src/proteingym/base/data_generators.py",
+    "src/**/*.py",
 ]

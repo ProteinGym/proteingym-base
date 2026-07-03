@@ -28,7 +28,7 @@ class LookupField(ABC):
             raise ValueError("Look up identifier must not be a LookupField")
         self.private_name = "_" + name
 
-    def __get__(self, obj, type_=None) -> str:
+    def __get__(self, obj, type_=None) -> str | None:
         if (
             # no lookup if value already available
             obj.__dict__.get(self.private_name, None) is None
@@ -46,7 +46,7 @@ class LookupField(ABC):
 
         return obj.__dict__.get(self.private_name)
 
-    def __set__(self, obj, value: str) -> None:
+    def __set__(self, obj, value: str | None) -> None:
         if value is self:
             value = self.default
         obj.__dict__[self.private_name] = value

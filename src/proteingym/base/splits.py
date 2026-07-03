@@ -15,7 +15,7 @@ import numpy as np
 import numpy.typing as npt
 from Bio.Seq import Seq
 
-from .assay import SEQUENCE, AssaySlice
+from .assay import SEQUENCE, AssaySlice, get_sequence
 from .dataset import Dataset, DatasetSlice, Subsets
 
 logger = logging.getLogger(__name__)
@@ -194,7 +194,7 @@ def _reshape_list(flat_list: list, shape: tuple[int, ...]) -> list:
 
 
 def _unique_sequences_for_targets(
-    dataset: Dataset, targets: list[str] = None
+    dataset: Dataset, targets: list[str] | None = None
 ) -> list[Seq]:
     """Get the unique sequences for all assays, for a given list of targets.
 
@@ -205,14 +205,14 @@ def _unique_sequences_for_targets(
     sequences = set()
     for assay in dataset.assays:
         if not targets:
-            sequences |= {r[0].value for r in assay.records}
+            sequences |= {get_sequence(r).value for r in assay.records}
         else:
             target_names = [e.name for e in assay.fields]
             target_indices = [
                 target_names.index(t) for t in targets if t in target_names
             ]
             sequences |= {
-                r[0].value
+                get_sequence(r).value
                 for r in assay.records
                 if any(r[idx] is not None for idx in target_indices)
             }
@@ -292,7 +292,7 @@ def _target_assay_slices(
         if not contains_target:
             assay_slices.append(AssaySlice(records=None, columns=[]))
             continue
-        assay_sequences = [Seq(record[0].value) for record in assay.records]
+        assay_sequences = [Seq(get_sequence(record).value) for record in assay.records]
         mask = _sequences_to_mask(
             list(selected_sequences), all_sequences=assay_sequences
         )
@@ -617,7 +617,7 @@ class RandomSplitter:
         self.fractions = fractions
         self.random_state = _check_random_state(random_state)
 
-    def split(self, dataset: Dataset, *, targets: list[str] = None) -> Subsets:
+    def split(self, dataset: Dataset, *, targets: list[str] | None = None) -> Subsets:
         """Splits the dataset into a subsets.
 
         The unique sequences from the records of all assays that list at least one of
@@ -637,9 +637,12 @@ class RandomSplitter:
             Subsets: The subsets containing the splits.
         """
         sequences = [
-            record[0].value for assay in dataset.assays for record in assay.records
+            get_sequence(record).value
+            for assay in dataset.assays
+            for record in assay.records
         ]
         unique_sequences = _unique_sequences_for_targets(dataset, targets)
+        # pyrefly: ignore [bad-argument-type]
         self.random_state.shuffle(unique_sequences)
 
         records_shape = tuple(len(assay) for assay in dataset.assays)
@@ -725,10 +728,13 @@ class KFoldSplitter:
             and a validation set for one fold.
         """
         sequences = [
-            record[0].value for assay in dataset.assays for record in assay.records
+            get_sequence(record).value
+            for assay in dataset.assays
+            for record in assay.records
         ]
         unique_sequences = _unique_sequences_for_targets(dataset, targets)
         if self.shuffle:
+            # pyrefly: ignore [bad-argument-type]
             self.random_state.shuffle(unique_sequences)
 
         records_shape = tuple(len(assay) for assay in dataset.assays)
@@ -842,7 +848,7 @@ class PredefinedSplitter:
                     col_idx = field_names.index(self.split_column)
                     for record in assay.records:
                         if record[col_idx] == split_value:
-                            sequences.add(record[0].value)
+                            sequences.add(get_sequence(record).value)
             split_sequences[split_value] = sequences
 
         for i, split1 in enumerate(split_values):
