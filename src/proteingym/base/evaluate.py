@@ -1,12 +1,3 @@
-"""Orchestration layer for computing metrics from on-disk prediction archives.
-
-This module loads ground truth and prediction datasets from ``.pgdata`` /
-``.splits.pgdata`` archives, dispatches to the pure metric functions in
-:mod:`proteingym.base.metrics`, and writes the results to a JSON file. It
-contains the filesystem and orchestration logic, keeping ``metrics.py`` focused
-on pure metric computation.
-"""
-
 import json
 import logging
 from pathlib import Path
