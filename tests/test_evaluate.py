@@ -47,22 +47,21 @@ class TestEvaluateValidation:
                 target=target_value,
             )
 
-    def test_evaluate_missing_prediction_file_writes_error(self, tmp_path):
+    def test_evaluate_missing_prediction_file_raises(
+        self, tmp_path, metrics_dataset_with_assay: Dataset
+    ):
+        dataset_path = metrics_dataset_with_assay.dump(path=tmp_path)
         metric_path = tmp_path / "metrics.json"
         missing_pred = tmp_path / "does_not_exist.pgdata"
 
-        result_path = evaluate(
-            prediction_path=missing_pred,
-            metric_path=metric_path,
-            dataset_path=tmp_path / "dataset.pgdata",
-            selected_metrics=["spearman"],
-            target="DMS Score",
-        )
-
-        assert result_path == metric_path
-        result = json.loads(metric_path.read_text())
-        assert result["status"] == "failed"
-        assert result["spearman"] is None
+        with pytest.raises(FileNotFoundError):
+            evaluate(
+                prediction_path=missing_pred,
+                metric_path=metric_path,
+                dataset_path=dataset_path,
+                selected_metrics=["spearman"],
+                target="DMS Score",
+            )
 
     def test_evaluate_requires_dataset_path(
         self, tmp_path, metrics_predicted_dataset: Dataset

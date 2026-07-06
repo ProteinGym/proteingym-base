@@ -33,9 +33,6 @@ def evaluate(
     The function automatically detects whether the dataset is a plain Dataset
     (.pgdata) or Subsets (.splits.pgdata) based on the file extension.
 
-    If the prediction file is not found, an error JSON with null metric values
-    is written instead.
-
     Args:
         prediction_path: Path to the prediction dataset archive (.pgdata file)
             containing model predictions.
@@ -61,24 +58,12 @@ def evaluate(
         The path to the saved metrics JSON file (same as metric_path input).
 
     Raises:
-        ValueError: If required parameters (--split, --fold, --target) are missing for
-            a Subsets file, or if --target is missing for a plain Dataset.
+        FileNotFoundError: If the prediction or dataset archive does not exist.
+        ValueError: If dataset_path is missing, if required parameters (--split,
+            --fold, --target) are missing for a Subsets file, or if --target is
+            missing for a plain Dataset.
     """
     logger.info("Start to calculate metrics.")
-
-    if not prediction_path.exists():
-        logger.error(f"Prediction file not found: {prediction_path}")
-        error_result: dict[str, Any] = {
-            "error": f"Prediction file not found: {prediction_path}",
-            "status": "failed",
-        }
-
-        if selected_metrics:
-            for metric_name in selected_metrics:
-                error_result[metric_name] = None
-
-        metric_path.write_text(json.dumps(error_result, indent=2))
-        return metric_path
 
     if dataset_path is None:
         raise ValueError(
@@ -87,20 +72,12 @@ def evaluate(
 
     metrics_to_calculate = selected_metrics or list(_discover_metric_functions())
 
-    try:
-        if dataset_path.name.endswith(".splits.pgdata"):
-            ground_truth: Dataset | Subsets = Subsets.from_path(dataset_path)
-        else:
-            ground_truth = Dataset.from_path(dataset_path)
-    except (FileNotFoundError, ValueError) as e:
-        logger.error(f"Failed to load dataset from {dataset_path}: {e}")
-        raise
+    if dataset_path.name.endswith(".splits.pgdata"):
+        ground_truth: Dataset | Subsets = Subsets.from_path(dataset_path)
+    else:
+        ground_truth = Dataset.from_path(dataset_path)
 
-    try:
-        predicted = Dataset.from_path(prediction_path)
-    except (FileNotFoundError, ValueError) as e:
-        logger.error(f"Failed to load predictions from {prediction_path}: {e}")
-        raise
+    predicted = Dataset.from_path(prediction_path)
 
     test_fold: int | None = None
     metrics_result: dict[str, Any]
