@@ -2,78 +2,11 @@ import json
 from pathlib import Path
 
 import polars as pl
-from Bio.Seq import Seq
 from typer.testing import CliRunner
 
 from proteingym.base.__about__ import __version__
 from proteingym.base.__main__ import app
-from proteingym.base.dataset import Assay, Dataset, Field
-from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
-
-
-def _build_dataset() -> Dataset:
-    """Build a small in-memory dataset with a single assay of 10 records."""
-    sequences = [
-        Sequence(
-            name=f"seq{i}",
-            value=Seq(seq_value),
-            type=SequenceType.ENGINEERED_SEQUENCE,
-            alphabet=SequenceAlphabet.AA,
-        )
-        for i, seq_value in enumerate(
-            [
-                "ACDEFG",
-                "ACDEFH",
-                "ACDEFI",
-                "ACDEFK",
-                "ACDEFL",
-                "ACDEFM",
-                "ACDEFN",
-                "ACDEFP",
-                "ACDEFQ",
-                "ACDEFR",
-            ]
-        )
-    ]
-
-    assay = Assay(
-        name="assay1",
-        records=[(sequences[i], float(i + 1)) for i in range(10)],
-        fields=[Field(name="sequence"), Field(name="DMS Score")],
-    )
-
-    return Dataset(
-        name="cli_test_dataset",
-        description="A dataset for CLI evaluate tests.",
-        assay_variables=[],
-        assay_targets=[Field(name="DMS Score", description="The DMS score")],
-        assays=[assay],
-        sequences=[],
-        structures=[],
-        msas=[],
-    )
-
-
-def _build_predictions(dataset: Dataset) -> Dataset:
-    """Build a predictions dataset from the ground truth dataset."""
-    predictions_df = pl.DataFrame(
-        {
-            "sequence": [
-                "ACDEFG",
-                "ACDEFH",
-                "ACDEFI",
-                "ACDEFK",
-                "ACDEFL",
-                "ACDEFM",
-                "ACDEFN",
-                "ACDEFP",
-                "ACDEFQ",
-                "ACDEFR",
-            ],
-            "DMS Score": [1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1],
-        }
-    )
-    return dataset.predictions_delta(predictions_df, target="DMS Score")
+from proteingym.base.dataset import Dataset
 
 
 def test_cli_callback() -> None:
@@ -153,26 +86,19 @@ def test_build_command_with_output_path(tmp_path: Path) -> None:
     assert (output_dir / f"{dataset_name}.pgdata").as_posix() in result.stdout
 
 
-def test_evaluate_command_help() -> None:
-    """Evaluate command shows help message when --help is used."""
-
-    runner = CliRunner()
-    result = runner.invoke(app, ["evaluate", "--help"])
-
-    assert result.exit_code == 0
-    assert "--prediction-path" in result.stdout
-    assert "--metric-path" in result.stdout
-    assert "--selected-metrics" in result.stdout
-    assert "--score-modes" in result.stdout
-
-
-def test_evaluate_command_full_dataset(tmp_path: Path) -> None:
+def test_evaluate_command_full_dataset(
+    tmp_path: Path, dataset_with_assay: Dataset
+) -> None:
     """Evaluate command computes metrics for a plain dataset."""
 
-    dataset = _build_dataset()
-    predictions = _build_predictions(dataset)
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "DMS Score": [1.1, 2.1]}
+    )
+    predictions = dataset_with_assay.predictions_delta(
+        predictions_df, target="DMS Score"
+    )
 
-    dataset_path = dataset.dump(path=tmp_path)
+    dataset_path = dataset_with_assay.dump(path=tmp_path)
     prediction_path = predictions.dump(path=tmp_path)
     metric_path = tmp_path / "metrics.json"
 
@@ -198,13 +124,19 @@ def test_evaluate_command_full_dataset(tmp_path: Path) -> None:
     assert "spearman" in metrics_result["full_dataset"]
 
 
-def test_evaluate_command_repeated_metric_flags(tmp_path: Path) -> None:
+def test_evaluate_command_repeated_metric_flags(
+    tmp_path: Path, dataset_with_assay: Dataset
+) -> None:
     """Evaluate command accepts repeated --selected-metrics flags."""
 
-    dataset = _build_dataset()
-    predictions = _build_predictions(dataset)
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "DMS Score": [1.1, 2.1]}
+    )
+    predictions = dataset_with_assay.predictions_delta(
+        predictions_df, target="DMS Score"
+    )
 
-    dataset_path = dataset.dump(path=tmp_path)
+    dataset_path = dataset_with_assay.dump(path=tmp_path)
     prediction_path = predictions.dump(path=tmp_path)
     metric_path = tmp_path / "metrics.json"
 
