@@ -7,13 +7,13 @@ import click
 import typer
 from pydantic import ValidationError
 
-from . import metrics
 from .__about__ import __version__
 from .data_generators import (
     adjust_target_with_two_dummy_features,
     charge_ladder_dataset,
 )
 from .dataset import Dataset
+from .evaluate import evaluate as evaluate_fn
 from .manifest import Manifest
 from .model import ModelCard, ModelProject
 
@@ -335,7 +335,7 @@ def evaluate_metrics(
 ) -> None:
     """Calculate performance metrics from predictions and save results to JSON.
 
-    Wraps ``metrics.evaluate`` to load ground truth and prediction archives,
+    Wraps ``evaluate`` to load ground truth and prediction archives,
     compute the selected metrics, and persist the results to a JSON file.
 
     Args:
@@ -357,7 +357,7 @@ def evaluate_metrics(
         score_modes: Optional list of scoring modes to compute. Only used for a
             .splits.pgdata dataset.
     """
-    result_path = metrics.evaluate(
+    result_path = evaluate_fn(
         prediction_path=prediction_path,
         metric_path=metric_path,
         dataset_path=dataset_path,

@@ -1,10 +1,11 @@
 import biotite.sequence.io.fasta as fasta
+import polars as pl
 import pytest
 from Bio.Seq import Seq
 from biotite.structure import AtomArray
 
 from proteingym.base.assay import SEQUENCE, Assay, AssayRaw, Field
-from proteingym.base.dataset import Dataset
+from proteingym.base.dataset import AssaySlice, Dataset, DatasetSlice, Subsets
 from proteingym.base.msa import MSA
 from proteingym.base.publication import Publication
 from proteingym.base.sequence import Sequence, SequenceAlphabet, SequenceType
@@ -743,3 +744,97 @@ def dataset(request: pytest.FixtureRequest, datasets: list[Dataset]) -> Dataset:
 
 
 dataset2 = dataset  # To have a second fixture for union tests
+
+
+@pytest.fixture
+def metrics_dataset_with_assay() -> Dataset:
+    """A dataset containing a single assay with 10 records."""
+    sequences = [
+        Sequence(
+            name=f"seq{i}",
+            value=Seq(seq_value),
+            type=SequenceType.ENGINEERED_SEQUENCE,
+            alphabet=SequenceAlphabet.AA,
+        )
+        for i, seq_value in enumerate(
+            [
+                "ACDEFG",
+                "ACDEFH",
+                "ACDEFI",
+                "ACDEFK",
+                "ACDEFL",
+                "ACDEFM",
+                "ACDEFN",
+                "ACDEFP",
+                "ACDEFQ",
+                "ACDEFR",
+            ],
+            start=1,
+        )
+    ]
+
+    assay = Assay(
+        name="assay1",
+        records=[(sequences[i], float(i + 1), float(i + 1) + 0.5) for i in range(10)],
+        fields=[
+            Field(name="sequence"),
+            Field(name="DMS Score"),
+            Field(name="stability"),
+        ],
+    )
+    return Dataset(
+        name="dataset_with_single_assay",
+        description="A dataset containing a single assay.",
+        assay_variables=[Field(name="var1", description="A test variable")],
+        assay_targets=[
+            Field(name="DMS Score", description="The DMS score"),
+            Field(name="stability", description="The resistance to temperature"),
+        ],
+        assays=[assay],
+        sequences=[],
+        structures=[],
+        msas=[],
+    )
+
+
+@pytest.fixture
+def metrics_predicted_dataset(metrics_dataset_with_assay: Dataset) -> Dataset:
+    """A predictions dataset built from metrics_dataset_with_assay."""
+    predictions_df = pl.DataFrame(
+        {
+            "sequence": [
+                "ACDEFG",
+                "ACDEFH",
+                "ACDEFI",
+                "ACDEFK",
+                "ACDEFL",
+                "ACDEFM",
+                "ACDEFN",
+                "ACDEFP",
+                "ACDEFQ",
+                "ACDEFR",
+            ],
+            "DMS Score": [1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1],
+        }
+    )
+    return metrics_dataset_with_assay.predictions_delta(
+        predictions_df, target="DMS Score"
+    )
+
+
+@pytest.fixture
+def metrics_subsets_with_assays(metrics_dataset_with_assay: Dataset) -> Subsets:
+    """A Subsets object with a 5-fold 'random' split (2 records per fold)."""
+    folds = []
+    for fold_idx in range(5):
+        records_mask = [False] * 10
+        records_mask[fold_idx * 2] = True
+        records_mask[fold_idx * 2 + 1] = True
+
+        fold_slice = DatasetSlice(
+            assays=[AssaySlice(records=records_mask)],
+            metadata={"fold": float(fold_idx)},
+        )
+        folds.append(fold_slice)
+
+    return Subsets(dataset=metrics_dataset_with_assay, slices={"random": folds})

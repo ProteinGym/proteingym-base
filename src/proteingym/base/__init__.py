@@ -18,11 +18,11 @@ Attributes :
 """
 
 from .dataset import Dataset, Subsets
+from .evaluate import evaluate
 from .manifest import Manifest
 from .metrics import (
     calculate_metrics_by_mode,
     calculate_selected_metrics,
-    evaluate,
 )
 
 __all__ = [
