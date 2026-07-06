@@ -1,19 +1,3 @@
-"""Metric calculation for ProteinGym benchmark evaluation.
-
-This module provides a flexible, extensible framework for calculating performance
-metrics for machine learning models on protein datasets. It uses dynamic metric
-discovery to automatically detect and execute custom metric functions.
-
-Metrics operate on :class:`~proteingym.base.dataset.Dataset` or
-:class:`~proteingym.base.dataset.Subsets` objects, enabling evaluation on complete
-datasets or specific cross-validation folds. All metrics use a plugin-style
-architecture: any function with the ``metric_`` prefix is automatically discovered
-and made available for calculation.
-
-See the [Metrics documentation](../metrics.md) for a guide on how to design and
-add new metrics.
-"""
-
 import inspect
 import json
 import logging
@@ -136,7 +120,6 @@ def prepare_and_validate_scoring_df(
     else:
         raise TypeError("'ground_truth' must be a Dataset or a Subsets object.")
 
-    # Validate that ground_truth and predicted have the same assay_variables structure
     if isinstance(ground_truth, Subsets):
         gt_variables = ground_truth.dataset.assay_variables
         pred_variables = predicted.assay_variables
