@@ -216,18 +216,6 @@ class TestMetricSpearman:
 
         assert corr == pytest.approx(1.0)
 
-    def test_realistic_correlation(
-        self, metrics_dataset_with_assay, metrics_predicted_dataset
-    ):
-        corr = metric_spearman(
-            ground_truth=metrics_dataset_with_assay,
-            predicted=metrics_predicted_dataset,
-            target="DMS Score",
-        )
-
-        assert isinstance(corr, float)
-        assert -1.0 <= corr <= 1.0
-
 
 class TestGetTopKFromSlice:
     """Test _get_top_k_from_slice helper function."""
@@ -366,6 +354,30 @@ class TestMetricRecovery:
         )
         recovery = metric_recovery(
             ground_truth=subsets_no_metadata,
+            predicted=predictions,
+            target="fitness",
+            split="test",
+            fold=0,
+        )
+        assert recovery is None
+
+    def test_recovery_zero_top_k_returns_none(self, recovery_dataset):
+        subsets = Subsets(
+            dataset=recovery_dataset,
+            slices={
+                "test": [
+                    DatasetSlice(
+                        assays=[AssaySlice(records=[True] * 10)],
+                        metadata={"top_k": 0},
+                    )
+                ]
+            },
+        )
+        predictions = _fitness_predictions(
+            recovery_dataset, [(i + 1) / 10.0 for i in range(10)]
+        )
+        recovery = metric_recovery(
+            ground_truth=subsets,
             predicted=predictions,
             target="fitness",
             split="test",
@@ -592,6 +604,18 @@ class TestPrepareAndValidateScoringDf:
                 target="DMS Score",
             )
 
+    def test_mismatched_variables_raises_error(self, metrics_dataset_with_assay):
+        mismatched_predicted = metrics_dataset_with_assay.model_copy(
+            update={"assay_variables": [Field(name="different_var")]}
+        )
+
+        with pytest.raises(ValueError, match="must have identical assay_variables"):
+            prepare_and_validate_scoring_df(
+                ground_truth=metrics_dataset_with_assay,
+                predicted=mismatched_predicted,
+                target="DMS Score",
+            )
+
     def test_invalid_ground_truth_type_raises_error(self, metrics_predicted_dataset):
         with pytest.raises(TypeError, match="must be a Dataset or a Subsets object"):
             prepare_and_validate_scoring_df(
@@ -615,26 +639,6 @@ class TestPrepareAndValidateScoringDf:
 
 class TestCalculateSelectedMetrics:
     """Test calculate_selected_metrics function."""
-
-    def test_calculate_single_metric(
-        self, metrics_dataset_with_assay, metrics_predicted_dataset
-    ):
-        results = calculate_selected_metrics(
-            selected_metrics=["spearman"],
-            ground_truth=metrics_dataset_with_assay,
-            predicted=metrics_predicted_dataset,
-            target="DMS Score",
-        )
-
-        expected_result = {
-            "is_dict": isinstance(results, dict),
-            "has_spearman": "spearman" in results,
-            "spearman_is_float": isinstance(results.get("spearman"), float),
-        }
-
-        assert all(expected_result.values()), (
-            f"Failed checks: {[k for k, v in expected_result.items() if not v]}"
-        )
 
     def test_unknown_metric_warning(
         self, metrics_dataset_with_assay, metrics_predicted_dataset, caplog
@@ -725,6 +729,32 @@ class TestMetricsIntegration:
             f"Failed checks: {[k for k, v in expected_results.items() if not v]}"
         )
 
+    def test_full_dataset_mode(self, metrics_subsets_with_assays):
+        dataset = metrics_subsets_with_assays.dataset
+        target_name = dataset.assay_targets[0].name
+
+        predictions = Dataset(
+            name="test_predictions",
+            assay_targets=dataset.assay_targets,
+            assay_variables=dataset.assay_variables,
+            assays=dataset.assays,
+        )
+
+        split_name = list(metrics_subsets_with_assays.slices.keys())[0]
+
+        results = calculate_metrics_by_mode(
+            selected_metrics=["spearman"],
+            ground_truth=metrics_subsets_with_assays,
+            predicted=predictions,
+            target=target_name,
+            split=split_name,
+            test_fold=0,
+            score_modes=["full_dataset"],
+        )
+
+        assert set(results.keys()) == {"full_dataset", "metadata"}
+        assert results["full_dataset"]["spearman"] == pytest.approx(1.0)
+
 
 class TestEvaluateValidation:
     """Test validation in the evaluate function."""
@@ -778,3 +808,56 @@ class TestEvaluateValidation:
         result = json.loads(metric_path.read_text())
         assert result["status"] == "failed"
         assert result["spearman"] is None
+
+    def test_evaluate_requires_dataset_path(self, tmp_path, metrics_predicted_dataset):
+        pred_path = metrics_predicted_dataset.dump(path=tmp_path)
+        metric_path = tmp_path / "metrics.json"
+
+        with pytest.raises(ValueError, match="'dataset_path' parameter is required"):
+            evaluate(
+                prediction_path=pred_path,
+                metric_path=metric_path,
+                dataset_path=None,
+            )
+
+    def test_evaluate_dataset_requires_target(
+        self, tmp_path, metrics_dataset_with_assay, metrics_predicted_dataset
+    ):
+        dataset_path = metrics_dataset_with_assay.dump(path=tmp_path)
+        pred_path = metrics_predicted_dataset.dump(path=tmp_path)
+        metric_path = tmp_path / "metrics.json"
+
+        with pytest.raises(ValueError, match="'target' parameter is required"):
+            evaluate(
+                prediction_path=pred_path,
+                metric_path=metric_path,
+                dataset_path=dataset_path,
+                target=None,
+            )
+
+    def test_evaluate_subsets_writes_metrics_and_metadata(
+        self, tmp_path, metrics_subsets_with_assays, metrics_predicted_dataset
+    ):
+        dataset_path = metrics_subsets_with_assays.dump(path=tmp_path)
+        pred_path = metrics_predicted_dataset.dump(path=tmp_path)
+        metric_path = tmp_path / "metrics.json"
+
+        result_path = evaluate(
+            prediction_path=pred_path,
+            metric_path=metric_path,
+            dataset_path=dataset_path,
+            selected_metrics=["spearman"],
+            model_name="test_model",
+            split="random",
+            target="DMS Score",
+            fold="0",
+            score_modes=["test"],
+        )
+
+        assert result_path == metric_path
+        result = json.loads(metric_path.read_text())
+        assert "spearman" in result["test"]
+        assert result["metadata"]["model"] == "test_model"
+        assert result["metadata"]["split"] == "random"
+        assert result["metadata"]["target"] == "DMS Score"
+        assert result["metadata"]["test_fold"] == 0
