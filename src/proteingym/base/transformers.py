@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import cast
 
 import numpy as np
-import pandas as pd
 import polars as pl
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
@@ -34,15 +33,12 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
         self.char_to_idx_: dict[str, int] = {}
         self.variant_columns_: np.ndarray | None = None
 
-    def fit(
-        self, X: pl.DataFrame | pd.DataFrame | pd.Series | Dataset
-    ) -> SequenceOneHotEncoder:
+    def fit(self, X: pl.DataFrame | pl.Series | Dataset) -> SequenceOneHotEncoder:
         """Learn the alphabet and sequence length from the training data.
 
         Args:
-            X: Input data containing sequences. Can be a Polars DataFrame, Pandas
-                DataFrame, Pandas Series, or Dataset. All sequences must have the
-                same length.
+            X: Input data containing sequences. Can be a Polars DataFrame, Polars
+                Series, or Dataset. All sequences must have the same length.
 
         Returns:
             Fitted encoder.
@@ -94,15 +90,13 @@ class SequenceOneHotEncoder(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(
-        self, X: pl.DataFrame | pd.DataFrame | pd.Series | Dataset
-    ) -> np.ndarray:
+    def transform(self, X: pl.DataFrame | pl.Series | Dataset) -> np.ndarray:
         """Transform sequences to one-hot encoded matrix.
 
         Args:
-            X: Input data containing sequences. Can be a Polars DataFrame, Pandas
-                DataFrame, Pandas Series, or Dataset. All sequences must have the
-                same length as the sequences used during fitting.
+            X: Input data containing sequences. Can be a Polars DataFrame, Polars
+                Series, or Dataset. All sequences must have the same length as the
+                sequences used during fitting.
 
         Returns:
             One-hot encoded matrix of shape (n_samples, n_variant_features).
@@ -320,10 +314,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         feature_columns = [col for col in X.columns if col not in self.target_columns]
         x_features = X.select(feature_columns)
 
-        # sklearn's ColumnTransformer needs pandas DataFrame when using column names
-        x_features_pandas = x_features.to_pandas()
-
-        self.column_transformer_.fit(x_features_pandas)
+        self.column_transformer_.fit(x_features)
 
         self.feature_names_ = self._get_feature_names()
 
@@ -352,10 +343,7 @@ class AssayTransformer(BaseEstimator, TransformerMixin):
         x_features = X.select(feature_columns)
         y_targets = X.select(self.target_columns).to_numpy()
 
-        # Convert to pandas for sklearn compatibility
-        x_features_pandas = x_features.to_pandas()
-
-        x_transformed = self.column_transformer_.transform(x_features_pandas)
+        x_transformed = self.column_transformer_.transform(x_features)
 
         # Squeeze y if single target
         if y_targets.shape[1] == 1:

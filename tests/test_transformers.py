@@ -1,7 +1,6 @@
 """Tests for sklearn transformers."""
 
 import numpy as np
-import pandas as pd
 import polars as pl
 import pytest
 from Bio.Seq import Seq
@@ -225,26 +224,24 @@ def test_sequence_one_hot_encoder_get_feature_names_out() -> None:
     assert_array_equal(feature_names, expected_names)
 
 
-def test_sequence_one_hot_encoder_pandas_support() -> None:
-    """Test SequenceOneHotEncoder with pandas DataFrame and Series."""
-    encoder = SequenceOneHotEncoder()
+def test_sequence_one_hot_encoder_polars_dataframe_and_series_match() -> None:
+    """SequenceOneHotEncoder yields identical output for a DataFrame and Series."""
+    encoder_df = SequenceOneHotEncoder()
+    x_df = pl.DataFrame({"sequence": ["ABC", "DEF"]})
+    encoder_df.fit(x_df)
+    transformed_df = encoder_df.transform(x_df)
 
-    x_df = pd.DataFrame({"sequence": ["ABC", "DEF"]})
-    encoder.fit(x_df)
-    transformed_df = encoder.transform(x_df)
-
-    assert encoder.alphabet_ == ["A", "B", "C", "D", "E", "F"]
-    assert encoder.max_length_ == 3
-
+    assert encoder_df.alphabet_ == ["A", "B", "C", "D", "E", "F"]
+    assert encoder_df.max_length_ == 3
     assert transformed_df.shape == (2, 6)
 
-    encoder2 = SequenceOneHotEncoder()
-    x_series = pd.Series(["ABC", "DEF"])
-    encoder2.fit(x_series)
-    transformed_series = encoder2.transform(x_series)
+    encoder_series = SequenceOneHotEncoder()
+    x_series = pl.Series("sequence", ["ABC", "DEF"])
+    encoder_series.fit(x_series)
+    transformed_series = encoder_series.transform(x_series)
 
-    assert encoder2.alphabet_ == ["A", "B", "C", "D", "E", "F"]
-    assert encoder2.max_length_ == 3
+    assert encoder_series.alphabet_ == ["A", "B", "C", "D", "E", "F"]
+    assert encoder_series.max_length_ == 3
     assert transformed_series.shape == (2, 6)
 
     assert_array_equal(transformed_df, transformed_series)
