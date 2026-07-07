@@ -19,9 +19,7 @@ dependencies = [
     "polars[pyarrow]>=1.30.0,<2.0.0",
     "python-frontmatter>=1.1.0",
     "scikit-learn>=1.5.0,<2.0.0",
-    "pandas>=2.3.3",
     "requests>=2.32.3",
-    "pandas-stubs~=3.0.0",
 ]
 
 [project.scripts]
@@ -46,7 +44,6 @@ dev = [
     "pyrefly>=1.1.1",
     "types-toml",
     "types-requests",
-    "pandas-stubs",
 ]
 
 [tool.hatch.version]
