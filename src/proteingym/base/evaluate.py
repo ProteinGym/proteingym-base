@@ -112,20 +112,15 @@ def evaluate(
             )
         }
 
-    dataset_name = dataset_path.stem
-    if any([dataset_name, model_name, split, target, fold]):
-        if "metadata" not in metrics_result:
-            metrics_result["metadata"] = {}
-        if dataset_name:
-            metrics_result["metadata"]["dataset"] = dataset_name
-        if model_name:
-            metrics_result["metadata"]["model"] = model_name
-        if split:
-            metrics_result["metadata"]["split"] = split
-        if target:
-            metrics_result["metadata"]["target"] = target
-        if fold:
-            metrics_result["metadata"]["test_fold"] = test_fold
+    metadata = metrics_result.setdefault("metadata", {})
+    metadata["dataset"] = dataset_path.stem
+    metadata["target"] = target
+    if model_name:
+        metadata["model"] = model_name
+    if split:
+        metadata["split"] = split
+    if fold:
+        metadata["test_fold"] = test_fold
 
     metric_path.parent.mkdir(parents=True, exist_ok=True)
     metric_path.write_text(json.dumps(metrics_result, indent=2))
