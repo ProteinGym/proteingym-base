@@ -83,7 +83,7 @@ readout = "rna_sequencing"
 transformation = "non_parametric"
 target_phenotype = "activity"
 has_uncertainty = true
-number_of_replicates = 3
+number_of_biological_replicates = 3
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -191,7 +191,7 @@ The assays section contains a list of assays included in the dataset.
 | `growth_coupled`               | `bool \| None`   | No           | `None`       | Whether fitness measurement is coupled to cell growth.                                                    |
 | `transformation`               | `string \| None` | No           | `None`       | The transformation applied to the assay data.                                                             |
 | `target_phenotype`             | `string \| None` | No           | `None`       | The property the assay attempts to capture.                                                               |
-| `number_of_replicates`         | `int \| None`    | No           | `None`       | The number of experimental replicates performed in the assay.                                             |
+| `number_of_biological_replicates`         | `int \| None`    | No           | `None`       | The number of biological replicates performed in the assay.                                               |
 | `number_of_variants`           | `int \| None`    | No           | `None`       | The number of unique variants (sequences) in the assay. Computed at manifest construction time.           |
 
 
@@ -241,7 +241,7 @@ The fields section defines the fields in the raw assay data file.
 | `description`          | `string \| None`                      | No           | `None`      | A brief description.                                   |
 | `unit`                 | `string \| None`                      | No           | `None`      | The unit of measurement.                               |
 | `value`                | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the variable.                             |
-| `link_to_data_source`  | `string \| None`                      | No           | `None`      | A URL or reference pointing to the source of the data. |
+| `source_url`           | `HttpUrl \| None`                     | No           | `None`      | A URL pointing to the source of the data.              |
 
 ### Sequences
 

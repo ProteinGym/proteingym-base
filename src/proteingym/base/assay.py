@@ -15,6 +15,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     FilePath,
+    HttpUrl,
     SerializationInfo,
     ValidationInfo,
     field_serializer,
@@ -207,8 +208,8 @@ class Field:
     Example use is when a field is referred to be a different name in an input csv file.
     """
 
-    link_to_data_source: str | None = None
-    """A URL or reference pointing to the source of the data for this field."""
+    source_url: HttpUrl | None = None
+    """A URL pointing to the source of the data for this field."""
 
     def fill_from_parent(self, parent: "Field") -> None:
         """Fill value, unit and description this field from another field.
@@ -406,8 +407,8 @@ class AssayManifestSection(_ManifestSection):
     Authors include some form of assay uncertainty measure (they have replicate
     experiments and/or correlation to low-throughput data)"""
 
-    number_of_replicates: int | None = None
-    """The number of experimental replicates performed in the assay."""
+    number_of_biological_replicates: int | None = None
+    """The number of biological replicates performed in the assay."""
 
     number_of_variants: int | None = None
     """The number of unique variants (sequences) in the assay.
@@ -671,8 +672,8 @@ class Assay(AssayRaw):
     Authors include some form of assay uncertainty measure (they have replicate
     experiments and/or correlation to low-throughput data)"""
 
-    number_of_replicates: int | None = None
-    """The number of experimental replicates performed in the assay."""
+    number_of_biological_replicates: int | None = None
+    """The number of biological replicates performed in the assay."""
 
     @property
     def sequence_feature_name(self) -> str:
@@ -723,7 +724,8 @@ class Assay(AssayRaw):
             and self.transformation == item.transformation
             and self.target_phenotype == item.target_phenotype
             and self.has_uncertainty == item.has_uncertainty
-            and self.number_of_replicates == item.number_of_replicates
+            and self.number_of_biological_replicates
+            == item.number_of_biological_replicates
         )
 
     @staticmethod
@@ -897,7 +899,7 @@ class Assay(AssayRaw):
             transformation=section.transformation,
             target_phenotype=section.target_phenotype,
             has_uncertainty=section.has_uncertainty,
-            number_of_replicates=section.number_of_replicates,
+            number_of_biological_replicates=section.number_of_biological_replicates,
         )
 
     # pyrefly: ignore [bad-override]
@@ -934,7 +936,7 @@ class Assay(AssayRaw):
             transformation=self.transformation,
             target_phenotype=self.target_phenotype,
             has_uncertainty=self.has_uncertainty,
-            number_of_replicates=self.number_of_replicates,
+            number_of_biological_replicates=self.number_of_biological_replicates,
         )
 
     def to_df(
