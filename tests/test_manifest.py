@@ -36,11 +36,12 @@ name = "assay"
 path = "assay.csv"
 sequence_alphabet = "AA"
 library_construction_method = "discrete"
-assay_method = "selection"
+growth_coupled = true
 readout = "rna_sequencing"
 transformation = "non_parametric"
 target_phenotype = "activity"
 has_uncertainty = true
+number_of_biological_replicates = 3
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -203,10 +204,29 @@ def test_manifest_from_path_assay_enums(manifest_path: Path):
     manifest = Manifest.from_path(manifest_path)
     assay = manifest.assays[0]
     assert assay.library_construction_method == "discrete"
-    assert assay.assay_method == "selection"
+    assert assay.growth_coupled is True
     assert assay.readout == "rna_sequencing"
     assert assay.transformation == "non_parametric"
     assert assay.target_phenotype == "activity"
+
+
+def test_manifest_from_path_number_of_biological_replicates(manifest_path: Path):
+    manifest = Manifest.from_path(manifest_path)
+    assay = manifest.assays[0]
+    assert assay.number_of_biological_replicates == 3
+
+
+def test_manifest_from_path_number_of_biological_replicates_defaults_to_none(
+    tmp_path: Path, manifest_path: Path
+) -> None:
+    """number_of_biological_replicates is optional and defaults to None."""
+    contents = manifest_path.read_text().replace(
+        "number_of_biological_replicates = 3\n", ""
+    )
+    path = tmp_path / "manifest.toml"
+    path.write_text(contents)
+    manifest = Manifest.from_path(path)
+    assert manifest.assays[0].number_of_biological_replicates is None
 
 
 def test_manifest_from_non_existing_path(tmp_path: Path) -> None:

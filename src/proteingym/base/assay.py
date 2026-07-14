@@ -15,6 +15,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     FilePath,
+    HttpUrl,
     SerializationInfo,
     ValidationInfo,
     field_serializer,
@@ -83,23 +84,6 @@ class LibraryConstructionMethod(StrEnum):
     """Shuffling
 
     Random motif splitting/assembly-based methods"""
-
-
-class AssayMethod(StrEnum):
-    """AssayMethod.
-
-    The type of assay used to measure variant fitness.
-    """
-
-    SELECTION = "selection"
-    """Selection
-
-    Fitness measurement is coupled to cell growth"""
-
-    SCREEN = "screen"
-    """Screen
-
-    Fitness measurement is not coupled to cell growth"""
 
 
 class AssayReadout(StrEnum):
@@ -223,6 +207,9 @@ class Field:
 
     Example use is when a field is referred to be a different name in an input csv file.
     """
+
+    source_url: HttpUrl | None = None
+    """A URL pointing to the source of the data for this field."""
 
     def fill_from_parent(self, parent: "Field") -> None:
         """Fill value, unit and description this field from another field.
@@ -405,8 +392,8 @@ class AssayManifestSection(_ManifestSection):
     library_construction_method: LibraryConstructionMethod | None = None
     """The method used to construct the protein library."""
 
-    assay_method: AssayMethod | None = None
-    """The type of assay used to measure variant fitness."""
+    growth_coupled: bool | None = None
+    """Whether fitness measurement is coupled to cell growth."""
 
     transformation: AssayTransformation | None = None
     """The transformation applied to the raw assay data."""
@@ -419,6 +406,9 @@ class AssayManifestSection(_ManifestSection):
 
     Authors include some form of assay uncertainty measure (they have replicate
     experiments and/or correlation to low-throughput data)"""
+
+    number_of_biological_replicates: int | None = None
+    """The number of biological replicates performed in the assay."""
 
     number_of_variants: int | None = None
     """The number of unique variants (sequences) in the assay.
@@ -667,8 +657,8 @@ class Assay(AssayRaw):
     library_construction_method: LibraryConstructionMethod | None = None
     """The method used to construct the protein library."""
 
-    assay_method: AssayMethod | None = None
-    """The type of assay used to measure variant fitness."""
+    growth_coupled: bool | None = None
+    """Whether fitness measurement is coupled to cell growth."""
 
     transformation: AssayTransformation | None = None
     """The transformation applied to the raw assay data."""
@@ -681,6 +671,9 @@ class Assay(AssayRaw):
 
     Authors include some form of assay uncertainty measure (they have replicate
     experiments and/or correlation to low-throughput data)"""
+
+    number_of_biological_replicates: int | None = None
+    """The number of biological replicates performed in the assay."""
 
     @property
     def sequence_feature_name(self) -> str:
@@ -727,10 +720,12 @@ class Assay(AssayRaw):
             and self.non_targets == item.non_targets
             and self.readout == item.readout
             and self.library_construction_method == item.library_construction_method
-            and self.assay_method == item.assay_method
+            and self.growth_coupled == item.growth_coupled
             and self.transformation == item.transformation
             and self.target_phenotype == item.target_phenotype
             and self.has_uncertainty == item.has_uncertainty
+            and self.number_of_biological_replicates
+            == item.number_of_biological_replicates
         )
 
     @staticmethod
@@ -900,10 +895,11 @@ class Assay(AssayRaw):
             non_targets=section.non_targets,
             readout=section.readout,
             library_construction_method=section.library_construction_method,
-            assay_method=section.assay_method,
+            growth_coupled=section.growth_coupled,
             transformation=section.transformation,
             target_phenotype=section.target_phenotype,
             has_uncertainty=section.has_uncertainty,
+            number_of_biological_replicates=section.number_of_biological_replicates,
         )
 
     # pyrefly: ignore [bad-override]
@@ -936,10 +932,11 @@ class Assay(AssayRaw):
             path=path,
             readout=self.readout,
             library_construction_method=self.library_construction_method,
-            assay_method=self.assay_method,
+            growth_coupled=self.growth_coupled,
             transformation=self.transformation,
             target_phenotype=self.target_phenotype,
             has_uncertainty=self.has_uncertainty,
+            number_of_biological_replicates=self.number_of_biological_replicates,
         )
 
     def to_df(
