@@ -45,7 +45,6 @@ dev = [
     "pyrefly>=1.1.1",
     "types-toml",
     "types-requests",
-    "pandas-stubs",
 ]
 
 [tool.hatch.version]
