@@ -13,8 +13,10 @@ from .data_generators import (
     charge_ladder_dataset,
 )
 from .dataset import Dataset
-from .evaluate import evaluate as evaluate_fn
+from .evaluate import evaluate_data as evaluate_data_fn
+from .evaluate import evaluate_splits as evaluate_splits_fn
 from .manifest import Manifest
+from .metrics import ScoreMode
 from .model import ModelCard, ModelProject
 
 logger = logging.getLogger("proteingym.base")
@@ -290,8 +292,8 @@ def generate_data(
         typer.echo(output.write_csv(), nl=False)
 
 
-@app.command("evaluate")
-def evaluate_metrics(
+@app.command("evaluate-splits")
+def evaluate_splits_command(
     prediction_path: Annotated[
         Path,
         typer.Option(help="Path to the prediction dataset archive (.pgdata file)."),
@@ -301,9 +303,21 @@ def evaluate_metrics(
         typer.Option(help="Path where the calculated metrics JSON will be saved."),
     ],
     dataset_path: Annotated[
-        Path | None,
-        typer.Option(help="Path to the ground truth dataset archive."),
-    ] = None,
+        Path,
+        typer.Option(help="Path to the ground truth Subsets archive (.splits.pgdata)."),
+    ],
+    split: Annotated[
+        str,
+        typer.Option(help="Name of the splitting strategy to evaluate."),
+    ],
+    target: Annotated[
+        str,
+        typer.Option(help="Name of the target variable to score."),
+    ],
+    fold: Annotated[
+        str,
+        typer.Option(help="Fold index designated as the test fold."),
+    ],
     selected_metrics: Annotated[
         list[str] | None,
         typer.Option(
@@ -314,59 +328,92 @@ def evaluate_metrics(
         str | None,
         typer.Option(help="Name of the model that generated predictions."),
     ] = None,
-    split: Annotated[
-        str | None,
-        typer.Option(help="Name of the splitting strategy to evaluate."),
-    ] = None,
-    target: Annotated[
-        str | None,
-        typer.Option(help="Name of the target variable to score."),
-    ] = None,
-    fold: Annotated[
-        str | None,
-        typer.Option(help="Fold index designated as the test fold."),
-    ] = None,
     score_modes: Annotated[
-        list[str] | None,
+        list[ScoreMode] | None,
         typer.Option(
             help="Scoring mode to compute. Repeat the flag for multiple modes."
         ),
     ] = None,
 ) -> None:
-    """Calculate performance metrics from predictions and save results to JSON.
-
-    Wraps ``evaluate`` to load ground truth and prediction archives,
-    compute the selected metrics, and persist the results to a JSON file.
+    """Calculate metrics for cross-validation splits and save results to JSON.
 
     Args:
         prediction_path: Path to the prediction dataset archive (.pgdata file)
             containing model predictions.
         metric_path: Path where the calculated metrics JSON will be saved.
-        dataset_path: Path to the ground truth dataset archive (.pgdata or
-            .splits.pgdata).
+        dataset_path: Path to the ground truth Subsets archive (.splits.pgdata).
+        split: Name of the splitting strategy to evaluate.
+        target: Name of the target variable to score.
+        fold: Fold index (as string) designated as the test fold.
         selected_metrics: Optional list of metric names to calculate. If not
             provided, all discovered metrics are included.
         model_name: Name of the model that generated predictions (stored in
             metadata).
-        split: Name of the splitting strategy to evaluate. Required for a
-            .splits.pgdata dataset.
-        target: Name of the target variable to score. Required for all metric
-            calculations.
-        fold: Fold index (as string) designated as the test fold. Required for a
-            .splits.pgdata dataset.
-        score_modes: Optional list of scoring modes to compute. Only used for a
-            .splits.pgdata dataset.
+        score_modes: Optional list of scoring modes to compute.
     """
-    result_path = evaluate_fn(
+    result_path = evaluate_splits_fn(
         prediction_path=prediction_path,
         metric_path=metric_path,
         dataset_path=dataset_path,
-        selected_metrics=selected_metrics,
-        model_name=model_name,
         split=split,
         target=target,
         fold=fold,
+        selected_metrics=selected_metrics,
+        model_name=model_name,
         score_modes=score_modes,
+    )
+    typer.echo(f"Metrics saved to: {result_path}")
+
+
+@app.command("evaluate-data")
+def evaluate_data_command(
+    prediction_path: Annotated[
+        Path,
+        typer.Option(help="Path to the prediction dataset archive (.pgdata file)."),
+    ],
+    metric_path: Annotated[
+        Path,
+        typer.Option(help="Path where the calculated metrics JSON will be saved."),
+    ],
+    dataset_path: Annotated[
+        Path,
+        typer.Option(help="Path to the ground truth Dataset archive (.pgdata)."),
+    ],
+    target: Annotated[
+        str,
+        typer.Option(help="Name of the target variable to score."),
+    ],
+    selected_metrics: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Metric name to calculate. Repeat the flag for multiple metrics."
+        ),
+    ] = None,
+    model_name: Annotated[
+        str | None,
+        typer.Option(help="Name of the model that generated predictions."),
+    ] = None,
+) -> None:
+    """Calculate metrics for a plain dataset and save results to JSON.
+
+    Args:
+        prediction_path: Path to the prediction dataset archive (.pgdata file)
+            containing model predictions.
+        metric_path: Path where the calculated metrics JSON will be saved.
+        dataset_path: Path to the ground truth Dataset archive (.pgdata).
+        target: Name of the target variable to score.
+        selected_metrics: Optional list of metric names to calculate. If not
+            provided, all discovered metrics are included.
+        model_name: Name of the model that generated predictions (stored in
+            metadata).
+    """
+    result_path = evaluate_data_fn(
+        prediction_path=prediction_path,
+        metric_path=metric_path,
+        dataset_path=dataset_path,
+        target=target,
+        selected_metrics=selected_metrics,
+        model_name=model_name,
     )
     typer.echo(f"Metrics saved to: {result_path}")
 

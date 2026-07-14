@@ -106,7 +106,7 @@ def test_evaluate_command_full_dataset(
     result = runner.invoke(
         app,
         [
-            "evaluate",
+            "evaluate-data",
             "--prediction-path",
             prediction_path.as_posix(),
             "--metric-path",
@@ -144,7 +144,7 @@ def test_evaluate_command_repeated_metric_flags(
     result = runner.invoke(
         app,
         [
-            "evaluate",
+            "evaluate-data",
             "--prediction-path",
             prediction_path.as_posix(),
             "--metric-path",

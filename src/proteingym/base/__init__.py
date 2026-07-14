@@ -9,18 +9,29 @@ Attributes :
     Manifest :
         Represents the metadata and resources of a dataset.  Entrypoint for
         loading and validating dataset from metadata.
-    evaluate :
-        Calculate performance metrics from prediction and dataset archives.
+    evaluate_splits :
+        Calculate metrics for cross-validation splits (.splits.pgdata).
+    evaluate_data :
+        Calculate metrics for a plain dataset (.pgdata).
     calculate_selected_metrics :
         Calculate selected metrics comparing ground truth and predictions.
     calculate_metrics_by_mode :
         Calculate metrics across scoring modes (test, train_available, per_fold).
+    ScoringContext :
+        A validated request bundling ground truth, predictions, target, and folds.
+    MetricsResult :
+        Typed metrics computed across one or more scoring modes.
+    ScoreMode :
+        A scoring mode for evaluating cross-validation splits.
 """
 
 from .dataset import Dataset, Subsets
-from .evaluate import evaluate
+from .evaluate import evaluate_data, evaluate_splits
 from .manifest import Manifest
 from .metrics import (
+    MetricsResult,
+    ScoreMode,
+    ScoringContext,
     calculate_metrics_by_mode,
     calculate_selected_metrics,
 )
@@ -28,8 +39,12 @@ from .metrics import (
 __all__ = [
     "Dataset",
     "Manifest",
+    "MetricsResult",
+    "ScoreMode",
+    "ScoringContext",
     "Subsets",
     "calculate_metrics_by_mode",
     "calculate_selected_metrics",
-    "evaluate",
+    "evaluate_data",
+    "evaluate_splits",
 ]

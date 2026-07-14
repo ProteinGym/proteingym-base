@@ -1,10 +1,12 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any
 
 from .dataset import Dataset, Subsets
 from .metrics import (
+    MetricsResult,
+    ScoreMode,
+    ScoringContext,
     _discover_metric_functions,
     calculate_metrics_by_mode,
     calculate_selected_metrics,
@@ -13,115 +15,153 @@ from .metrics import (
 logger = logging.getLogger("proteingym.base")
 
 
-def evaluate(
-    prediction_path: Path,
+def _write_result(
+    result: MetricsResult,
     metric_path: Path,
-    dataset_path: Path | None = None,
-    selected_metrics: list[str] | None = None,
+    *,
+    dataset_stem: str,
+    target: str,
     model_name: str | None = None,
     split: str | None = None,
-    target: str | None = None,
-    fold: str | None = None,
-    score_modes: list[str] | None = None,
+    test_fold: int | None = None,
 ) -> Path:
-    """Calculate performance metrics from predictions and save results to JSON.
-
-    Loads ground truth data from a dataset archive (.pgdata or .splits.pgdata),
-    loads predictions from a prediction archive, calculates the selected metrics,
-    and saves the results to a JSON file with metadata.
-
-    The function automatically detects whether the dataset is a plain Dataset
-    (.pgdata) or Subsets (.splits.pgdata) based on the file extension.
+    """Merge provenance metadata into a result and write it to JSON.
 
     Args:
-        prediction_path: Path to the prediction dataset archive (.pgdata file)
-            containing model predictions.
-        metric_path: Path where the calculated metrics JSON will be saved.
-        dataset_path: Path to the ground truth dataset archive. Can be either:
-            - .pgdata file: Plain Dataset for single-fold scoring
-            - .splits.pgdata file: Subsets with cross-validation splits
-        selected_metrics: Optional list of metric names to calculate (e.g.,
-            ["spearman"]). If None, all discovered metrics are included.
-        model_name: Name of the model that generated predictions (stored in metadata).
-        split: Name of the splitting strategy to evaluate (e.g., 'random'). Required
-            when dataset_path is a .splits.pgdata file.
-        target: Name of the target variable to score (e.g., 'DMS_score', 'fitness').
-            Required for all metric calculations.
-        fold: Fold index (as string) designated as the test fold. Required when
-            dataset_path is a .splits.pgdata file.
-        score_modes: List of scoring modes. Options: "test", "train_available",
-            "per_fold", "full_dataset". If None, defaults to
-            ["test", "train_available", "per_fold"]. Only used when dataset_path is a
-            .splits.pgdata file.
+        result: The metrics result to persist.
+        metric_path: Path where the metrics JSON will be saved.
+        dataset_stem: The stem of the ground truth dataset archive.
+        target: The scored target variable.
+        model_name: Name of the model that generated predictions, if known.
+        split: The evaluated split strategy, if applicable.
+        test_fold: The test fold index, if applicable.
 
     Returns:
-        The path to the saved metrics JSON file (same as metric_path input).
-
-    Raises:
-        FileNotFoundError: If the prediction or dataset archive does not exist.
-        ValueError: If dataset_path is missing, if required parameters (--split,
-            --fold, --target) are missing for a Subsets file, or if --target is
-            missing for a plain Dataset.
+        The path the metrics JSON was written to (same as ``metric_path``).
     """
-    logger.info("Start to calculate metrics.")
-
-    if dataset_path is None:
-        raise ValueError(
-            "The 'dataset_path' parameter is required for metric calculation."
-        )
-
-    metrics_to_calculate = selected_metrics or list(_discover_metric_functions())
-
-    if dataset_path.name.endswith(".splits.pgdata"):
-        ground_truth: Dataset | Subsets = Subsets.from_path(dataset_path)
-    else:
-        ground_truth = Dataset.from_path(dataset_path)
-
-    predicted = Dataset.from_path(prediction_path)
-
-    test_fold: int | None = None
-    metrics_result: dict[str, Any]
-    if isinstance(ground_truth, Subsets):
-        if split is None or fold is None or target is None:
-            raise ValueError(
-                "Parameters --split, --fold, and --target are required when "
-                "dataset_path is a Subsets file (.splits.pgdata)."
-            )
-
-        test_fold = int(fold)
-
-        metrics_result = calculate_metrics_by_mode(
-            metrics_to_calculate,
-            ground_truth,
-            predicted,
-            target,
-            split,
-            test_fold,
-            score_modes,
-        )
-    else:
-        if target is None:
-            raise ValueError(
-                "The 'target' parameter is required for metric calculation. "
-                "Please provide --target."
-            )
-
-        metrics_result = {
-            "full_dataset": calculate_selected_metrics(
-                metrics_to_calculate, ground_truth, predicted, target, None, None
-            )
-        }
-
-    metadata = metrics_result.setdefault("metadata", {})
-    metadata["dataset"] = dataset_path.stem
+    metadata: dict[str, object] = result.metadata or {}
+    metadata["dataset"] = dataset_stem
     metadata["target"] = target
     if model_name:
         metadata["model"] = model_name
     if split:
         metadata["split"] = split
-    if fold:
+    if test_fold is not None:
         metadata["test_fold"] = test_fold
+    result = result.model_copy(update={"metadata": metadata})
 
     metric_path.parent.mkdir(parents=True, exist_ok=True)
-    metric_path.write_text(json.dumps(metrics_result, indent=2))
+    metric_path.write_text(json.dumps(result.to_dict(), indent=2))
     return metric_path
+
+
+def evaluate_splits(
+    prediction_path: Path,
+    metric_path: Path,
+    dataset_path: Path,
+    split: str,
+    target: str,
+    fold: str,
+    selected_metrics: list[str] | None = None,
+    model_name: str | None = None,
+    score_modes: list[ScoreMode] | None = None,
+) -> Path:
+    """Calculate metrics for cross-validation splits and save them to JSON.
+
+    Loads ground truth from a Subsets archive (.splits.pgdata) and predictions from a
+    prediction archive, scores the requested metrics across the requested scoring
+    modes, and writes the results to a JSON file with provenance metadata.
+
+    Args:
+        prediction_path: Path to the prediction dataset archive (.pgdata file)
+            containing model predictions.
+        metric_path: Path where the calculated metrics JSON will be saved.
+        dataset_path: Path to the ground truth Subsets archive (.splits.pgdata).
+        split: Name of the splitting strategy to evaluate (e.g., 'random').
+        target: Name of the target variable to score (e.g., 'DMS_score').
+        fold: Fold index (as string) designated as the test fold.
+        selected_metrics: Optional list of metric names to calculate (e.g.,
+            ["spearman"]). If None, all discovered metrics are included.
+        model_name: Name of the model that generated predictions (stored in metadata).
+        score_modes: Optional list of scoring modes to compute. If None, defaults to
+            test, train_available, and per_fold.
+
+    Returns:
+        The path to the saved metrics JSON file (same as metric_path input).
+    """
+    logger.info("Start to calculate metrics for splits.")
+
+    metrics_to_calculate = selected_metrics or list(_discover_metric_functions())
+    ground_truth = Subsets.from_path(dataset_path)
+    predicted = Dataset.from_path(prediction_path)
+    test_fold = int(fold)
+
+    context = ScoringContext(
+        ground_truth=ground_truth,
+        predicted=predicted,
+        target=target,
+        split=split,
+        fold=test_fold,
+    )
+    result = calculate_metrics_by_mode(
+        metrics_to_calculate, context, test_fold, score_modes
+    )
+
+    return _write_result(
+        result,
+        metric_path,
+        dataset_stem=dataset_path.stem,
+        target=target,
+        model_name=model_name,
+        split=split,
+        test_fold=test_fold,
+    )
+
+
+def evaluate_data(
+    prediction_path: Path,
+    metric_path: Path,
+    dataset_path: Path,
+    target: str,
+    selected_metrics: list[str] | None = None,
+    model_name: str | None = None,
+) -> Path:
+    """Calculate metrics for a plain dataset and save them to JSON.
+
+    Loads ground truth from a Dataset archive (.pgdata) and predictions from a
+    prediction archive, scores the requested metrics against the full dataset, and
+    writes the results to a JSON file with provenance metadata.
+
+    Args:
+        prediction_path: Path to the prediction dataset archive (.pgdata file)
+            containing model predictions.
+        metric_path: Path where the calculated metrics JSON will be saved.
+        dataset_path: Path to the ground truth Dataset archive (.pgdata).
+        target: Name of the target variable to score (e.g., 'DMS_score').
+        selected_metrics: Optional list of metric names to calculate (e.g.,
+            ["spearman"]). If None, all discovered metrics are included.
+        model_name: Name of the model that generated predictions (stored in metadata).
+
+    Returns:
+        The path to the saved metrics JSON file (same as metric_path input).
+    """
+    logger.info("Start to calculate metrics for dataset.")
+
+    metrics_to_calculate = selected_metrics or list(_discover_metric_functions())
+    ground_truth = Dataset.from_path(dataset_path)
+    predicted = Dataset.from_path(prediction_path)
+
+    context = ScoringContext(
+        ground_truth=ground_truth, predicted=predicted, target=target
+    )
+    result = MetricsResult(
+        full_dataset=calculate_selected_metrics(metrics_to_calculate, context)
+    )
+
+    return _write_result(
+        result,
+        metric_path,
+        dataset_stem=dataset_path.stem,
+        target=target,
+        model_name=model_name,
+    )
