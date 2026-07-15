@@ -664,9 +664,7 @@ def test_multi_mode_scoring(metrics_subsets_with_assays):
     )
 
     expected_results = {
-        "has_correct_keys": set(
-            results.model_dump(exclude_none=True).keys()
-        )
+        "has_correct_keys": set(results.model_dump(exclude_none=True).keys())
         == {"test", "train_available", "per_fold", "metadata"},
         "test_spearman_correct": results.test["spearman"] == pytest.approx(1.0),
         "train_available_spearman_correct": results.train_available["spearman"]
