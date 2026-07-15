@@ -231,7 +231,7 @@ class MetricsProvenance(BaseModel):
 
     Combines the fold layout produced during scoring (test/train folds, total fold
     count) with the write-time provenance describing the inputs (dataset, target,
-    model, split). 
+    model, split).
     """
 
     model_config = ConfigDict(extra="forbid")
