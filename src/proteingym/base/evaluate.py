@@ -1,9 +1,9 @@
-import json
 import logging
 from pathlib import Path
 
 from .dataset import Dataset, Subsets
 from .metrics import (
+    MetricsProvenance,
     MetricsResult,
     ScoreMode,
     ScoringContext,
@@ -39,19 +39,19 @@ def _write_result(
     Returns:
         The path the metrics JSON was written to (same as ``metric_path``).
     """
-    metadata: dict[str, object] = result.metadata or {}
-    metadata["dataset"] = dataset_stem
-    metadata["target"] = target
-    if model_name:
-        metadata["model"] = model_name
-    if split:
-        metadata["split"] = split
-    if test_fold is not None:
-        metadata["test_fold"] = test_fold
-    result = result.model_copy(update={"metadata": metadata})
+    provenance = (result.metadata or MetricsProvenance()).model_copy(
+        update={
+            "dataset": dataset_stem,
+            "target": target,
+            "model": model_name,
+            "split": split,
+            "test_fold": test_fold,
+        }
+    )
+    result = result.model_copy(update={"metadata": provenance})
 
     metric_path.parent.mkdir(parents=True, exist_ok=True)
-    metric_path.write_text(json.dumps(result.to_dict(), indent=2))
+    metric_path.write_text(result.model_dump_json(indent=2, exclude_none=True))
     return metric_path
 
 

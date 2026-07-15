@@ -29,6 +29,7 @@ from .dataset import Dataset, Subsets
 from .evaluate import evaluate_data, evaluate_splits
 from .manifest import Manifest
 from .metrics import (
+    MetricsProvenance,
     MetricsResult,
     ScoreMode,
     ScoringContext,
@@ -39,6 +40,7 @@ from .metrics import (
 __all__ = [
     "Dataset",
     "Manifest",
+    "MetricsProvenance",
     "MetricsResult",
     "ScoreMode",
     "ScoringContext",

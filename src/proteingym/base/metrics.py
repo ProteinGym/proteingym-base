@@ -226,6 +226,42 @@ class ScoringContext(BaseModel):
         return int(top_k) if top_k is not None else None
 
 
+class MetricsProvenance(BaseModel):
+    """Provenance for a metrics result, used to reproduce the scoring run in DVC.
+
+    Combines the fold layout produced during scoring (test/train folds, total fold
+    count) with the write-time provenance describing the inputs (dataset, target,
+    model, split). 
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    """Configuration for the Pydantic model."""
+
+    dataset: str | None = None
+    """Stem of the ground truth dataset archive."""
+
+    target: str | None = None
+    """The scored target variable."""
+
+    model: str | None = None
+    """Name of the model that generated predictions, if known."""
+
+    split: str | None = None
+    """The evaluated split strategy, if applicable."""
+
+    test_fold: int | None = None
+    """The test fold index, if applicable."""
+
+    test_folds: list[int] | None = None
+    """The fold indices scored as the test set, if applicable."""
+
+    train_available_folds: list[int] | None = None
+    """The fold indices available for training, if applicable."""
+
+    total_folds: int | None = None
+    """The total number of folds in the split, if applicable."""
+
+
 class MetricsResult(BaseModel):
     """Metrics computed across one or more scoring modes.
 
@@ -250,12 +286,8 @@ class MetricsResult(BaseModel):
     full_dataset: dict[str, float | None] | None = None
     """Metrics scored against the full dataset ignoring splits, if computed."""
 
-    metadata: dict[str, object] | None = None
+    metadata: MetricsProvenance | None = None
     """Provenance for the result (dataset, target, model, fold layout, etc.)."""
-
-    def to_dict(self) -> dict[str, object]:
-        """Return the flat mode -> metrics mapping, omitting uncomputed modes."""
-        return self.model_dump(exclude_none=True)
 
 
 def _discover_metric_functions() -> dict[str, MetricFunction]:
@@ -420,9 +452,9 @@ def calculate_metrics_by_mode(
         train_available=train_available,
         per_fold=per_fold,
         full_dataset=full_dataset,
-        metadata={
-            "test_folds": [test_fold],
-            "train_available_folds": train_folds,
-            "total_folds": len(all_fold_indices),
-        },
+        metadata=MetricsProvenance(
+            test_folds=[test_fold],
+            train_available_folds=train_folds,
+            total_folds=len(all_fold_indices),
+        ),
     )

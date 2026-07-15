@@ -15,6 +15,7 @@ from proteingym.base.dataset import (
     Subsets,
 )
 from proteingym.base.metrics import (
+    MetricsProvenance,
     MetricsResult,
     ScoringContext,
     calculate_metrics_by_mode,
@@ -477,7 +478,7 @@ def test_recovery_none_serializes_to_json_null(recovery_dataset):
         test_fold=1,
     )
 
-    json_str = json.dumps(results.to_dict())
+    json_str = results.model_dump_json(exclude_none=True)
     parsed = json.loads(json_str)
 
     expected_json_structure = {
@@ -487,7 +488,7 @@ def test_recovery_none_serializes_to_json_null(recovery_dataset):
         "fold_1_recovery_is_float": isinstance(
             parsed["per_fold"]["fold_1"]["recovery"], float
         ),
-        "json_contains_null_string": '"recovery": null' in json_str,
+        "json_contains_null_string": '"recovery":null' in json_str,
     }
 
     assert all(expected_json_structure.values()), (
@@ -663,7 +664,9 @@ def test_multi_mode_scoring(metrics_subsets_with_assays):
     )
 
     expected_results = {
-        "has_correct_keys": set(results.to_dict().keys())
+        "has_correct_keys": set(
+            results.model_dump(exclude_none=True).keys()
+        )
         == {"test", "train_available", "per_fold", "metadata"},
         "test_spearman_correct": results.test["spearman"] == pytest.approx(1.0),
         "train_available_spearman_correct": results.train_available["spearman"]
@@ -672,10 +675,10 @@ def test_multi_mode_scoring(metrics_subsets_with_assays):
             fold_metrics["spearman"] == pytest.approx(1.0)
             for fold_metrics in results.per_fold.values()
         ),
-        "metadata_test_folds_correct": results.metadata["test_folds"] == [test_fold],
+        "metadata_test_folds_correct": results.metadata.test_folds == [test_fold],
         "metadata_train_folds_correct": test_fold
-        not in results.metadata["train_available_folds"],
-        "metadata_total_folds_correct": results.metadata["total_folds"]
+        not in results.metadata.train_available_folds,
+        "metadata_total_folds_correct": results.metadata.total_folds
         == len(results.per_fold),
     }
 
@@ -710,30 +713,33 @@ def test_full_dataset_mode(metrics_subsets_with_assays):
         score_modes=["full_dataset"],
     )
 
-    assert set(results.to_dict().keys()) == {"full_dataset", "metadata"}
+    assert set(results.model_dump(exclude_none=True).keys()) == {
+        "full_dataset",
+        "metadata",
+    }
     assert results.full_dataset["spearman"] == pytest.approx(1.0)
 
 
-def test_to_dict_omits_uncomputed_modes():
+def test_dump_omits_uncomputed_modes():
     result = MetricsResult(
         test={"spearman": 0.5, "recovery": None},
-        metadata={"dataset": "d", "target": "t"},
+        metadata=MetricsProvenance(dataset="d", target="t"),
     )
-    assert result.to_dict() == {
+    assert result.model_dump(exclude_none=True) == {
         "test": {"spearman": 0.5, "recovery": None},
         "metadata": {"dataset": "d", "target": "t"},
     }
 
 
-def test_to_dict_matches_expected_full_shape():
+def test_dump_matches_expected_full_shape():
     result = MetricsResult(
         test={"spearman": 0.85},
         train_available={"spearman": 0.92},
         per_fold={"fold_0": {"spearman": 0.91}},
         full_dataset={"spearman": 0.83},
-        metadata={"test_folds": [4], "total_folds": 5},
+        metadata=MetricsProvenance(test_folds=[4], total_folds=5),
     )
-    as_dict = result.to_dict()
+    as_dict = result.model_dump(exclude_none=True)
     assert set(as_dict.keys()) == {
         "test",
         "train_available",
@@ -743,4 +749,4 @@ def test_to_dict_matches_expected_full_shape():
     }
     # None values inside a mode are preserved (serialize to JSON null).
     recovery_result = MetricsResult(test={"recovery": None})
-    assert '"recovery": null' in json.dumps(recovery_result.to_dict())
+    assert '"recovery":null' in recovery_result.model_dump_json(exclude_none=True)
