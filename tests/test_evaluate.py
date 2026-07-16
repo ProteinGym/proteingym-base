@@ -3,7 +3,11 @@ import json
 import pytest
 
 from proteingym.base.dataset import Dataset, Subsets
-from proteingym.base.evaluate import evaluate_data, evaluate_splits
+from proteingym.base.evaluate import (
+    evaluate_dataset,
+    evaluate_subset,
+    evaluate_zero_shot,
+)
 from proteingym.base.metrics import ScoreMode
 
 
@@ -15,7 +19,7 @@ from proteingym.base.metrics import ScoreMode
         ("split_name", None, "target_name"),
     ],
 )
-def test_evaluate_splits_requires_parameters(
+def test_evaluate_subset_requires_parameters(
     tmp_path,
     metrics_subsets_with_assays: Subsets,
     split,
@@ -33,7 +37,7 @@ def test_evaluate_splits_requires_parameters(
     target_value = target_name if target == "target_name" else target
 
     with pytest.raises((ValueError, TypeError)):
-        evaluate_splits(
+        evaluate_subset(
             prediction_path=pred_path,
             metric_path=metric_path,
             dataset_path=dataset_path,
@@ -43,7 +47,7 @@ def test_evaluate_splits_requires_parameters(
         )
 
 
-def test_evaluate_data_missing_prediction_file_raises(
+def test_evaluate_dataset_missing_prediction_file_raises(
     tmp_path, metrics_dataset_with_assay: Dataset
 ):
     dataset_path = metrics_dataset_with_assay.dump(path=tmp_path)
@@ -51,7 +55,7 @@ def test_evaluate_data_missing_prediction_file_raises(
     missing_pred = tmp_path / "does_not_exist.pgdata"
 
     with pytest.raises(FileNotFoundError):
-        evaluate_data(
+        evaluate_dataset(
             prediction_path=missing_pred,
             metric_path=metric_path,
             dataset_path=dataset_path,
@@ -60,7 +64,7 @@ def test_evaluate_data_missing_prediction_file_raises(
         )
 
 
-def test_evaluate_data_writes_full_dataset_metrics(
+def test_evaluate_dataset_writes_full_dataset_metrics(
     tmp_path,
     metrics_dataset_with_assay: Dataset,
     metrics_predicted_dataset: Dataset,
@@ -69,7 +73,7 @@ def test_evaluate_data_writes_full_dataset_metrics(
     pred_path = metrics_predicted_dataset.dump(path=tmp_path)
     metric_path = tmp_path / "metrics.json"
 
-    result_path = evaluate_data(
+    result_path = evaluate_dataset(
         prediction_path=pred_path,
         metric_path=metric_path,
         dataset_path=dataset_path,
@@ -85,7 +89,7 @@ def test_evaluate_data_writes_full_dataset_metrics(
     assert result["metadata"]["target"] == "DMS Score"
 
 
-def test_evaluate_splits_writes_metrics_and_metadata(
+def test_evaluate_subset_writes_metrics_and_metadata(
     tmp_path,
     metrics_subsets_with_assays: Subsets,
     metrics_predicted_dataset: Dataset,
@@ -94,7 +98,7 @@ def test_evaluate_splits_writes_metrics_and_metadata(
     pred_path = metrics_predicted_dataset.dump(path=tmp_path)
     metric_path = tmp_path / "metrics.json"
 
-    result_path = evaluate_splits(
+    result_path = evaluate_subset(
         prediction_path=pred_path,
         metric_path=metric_path,
         dataset_path=dataset_path,
@@ -113,3 +117,33 @@ def test_evaluate_splits_writes_metrics_and_metadata(
     assert result["metadata"]["split"] == "random"
     assert result["metadata"]["target"] == "DMS Score"
     assert result["metadata"]["test_fold"] == 0
+
+
+def test_evaluate_zero_shot_writes_full_dataset_metrics(
+    tmp_path,
+    metrics_subsets_with_assays: Subsets,
+    metrics_predicted_dataset: Dataset,
+):
+    dataset_path = metrics_subsets_with_assays.dump(path=tmp_path)
+    pred_path = metrics_predicted_dataset.dump(path=tmp_path)
+    metric_path = tmp_path / "metrics.json"
+
+    result_path = evaluate_zero_shot(
+        prediction_path=pred_path,
+        metric_path=metric_path,
+        dataset_path=dataset_path,
+        split="random",
+        target="DMS Score",
+        selected_metrics=["spearman"],
+        model_name="test_model",
+    )
+
+    assert result_path == metric_path
+    result = json.loads(metric_path.read_text())
+    assert "spearman" in result["full_dataset"]
+    # Zero-shot scores the full dataset once; no fold-based modes are written.
+    assert "test" not in result
+    assert "per_fold" not in result
+    assert result["metadata"]["model"] == "test_model"
+    assert result["metadata"]["split"] == "random"
+    assert result["metadata"]["target"] == "DMS Score"

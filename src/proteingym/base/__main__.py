@@ -13,8 +13,9 @@ from .data_generators import (
     charge_ladder_dataset,
 )
 from .dataset import Dataset
-from .evaluate import evaluate_data as evaluate_data_fn
-from .evaluate import evaluate_splits as evaluate_splits_fn
+from .evaluate import evaluate_dataset as evaluate_dataset_fn
+from .evaluate import evaluate_subset as evaluate_subset_fn
+from .evaluate import evaluate_zero_shot as evaluate_zero_shot_fn
 from .manifest import Manifest
 from .metrics import ScoreMode
 from .model import ModelCard, ModelProject
@@ -292,8 +293,8 @@ def generate_data(
         typer.echo(output.write_csv(), nl=False)
 
 
-@app.command("evaluate-splits")
-def evaluate_splits_command(
+@app.command("evaluate-subset")
+def evaluate_subset_command(
     prediction_path: Annotated[
         Path,
         typer.Option(help="Path to the prediction dataset archive (.pgdata file)."),
@@ -351,7 +352,7 @@ def evaluate_splits_command(
             metadata).
         score_modes: Optional list of scoring modes to compute.
     """
-    result_path = evaluate_splits_fn(
+    result_path = evaluate_subset_fn(
         prediction_path=prediction_path,
         metric_path=metric_path,
         dataset_path=dataset_path,
@@ -365,8 +366,8 @@ def evaluate_splits_command(
     typer.echo(f"Metrics saved to: {result_path}")
 
 
-@app.command("evaluate-data")
-def evaluate_data_command(
+@app.command("evaluate-dataset")
+def evaluate_dataset_command(
     prediction_path: Annotated[
         Path,
         typer.Option(help="Path to the prediction dataset archive (.pgdata file)."),
@@ -407,10 +408,73 @@ def evaluate_data_command(
         model_name: Name of the model that generated predictions (stored in
             metadata).
     """
-    result_path = evaluate_data_fn(
+    result_path = evaluate_dataset_fn(
         prediction_path=prediction_path,
         metric_path=metric_path,
         dataset_path=dataset_path,
+        target=target,
+        selected_metrics=selected_metrics,
+        model_name=model_name,
+    )
+    typer.echo(f"Metrics saved to: {result_path}")
+
+
+@app.command("evaluate-zero-shot")
+def evaluate_zero_shot_command(
+    prediction_path: Annotated[
+        Path,
+        typer.Option(help="Path to the prediction dataset archive (.pgdata file)."),
+    ],
+    metric_path: Annotated[
+        Path,
+        typer.Option(help="Path where the calculated metrics JSON will be saved."),
+    ],
+    dataset_path: Annotated[
+        Path,
+        typer.Option(help="Path to the ground truth Subsets archive (.splits.pgdata)."),
+    ],
+    split: Annotated[
+        str,
+        typer.Option(help="Name of the splitting strategy (stored in metadata)."),
+    ],
+    target: Annotated[
+        str,
+        typer.Option(help="Name of the target variable to score."),
+    ],
+    selected_metrics: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Metric name to calculate. Repeat the flag for multiple metrics."
+        ),
+    ] = None,
+    model_name: Annotated[
+        str | None,
+        typer.Option(help="Name of the model that generated predictions."),
+    ] = None,
+) -> None:
+    """Calculate zero-shot metrics against the full dataset and save to JSON.
+
+    Scores the requested metrics once against the complete underlying dataset of a
+    Subsets archive, ignoring cross-validation folds. Appropriate for zero-shot
+    models whose predictions do not depend on the training fold.
+
+    Args:
+        prediction_path: Path to the prediction dataset archive (.pgdata file)
+            containing model predictions.
+        metric_path: Path where the calculated metrics JSON will be saved.
+        dataset_path: Path to the ground truth Subsets archive (.splits.pgdata).
+        split: Name of the splitting strategy (stored in metadata).
+        target: Name of the target variable to score.
+        selected_metrics: Optional list of metric names to calculate. If not
+            provided, all discovered metrics are included.
+        model_name: Name of the model that generated predictions (stored in
+            metadata).
+    """
+    result_path = evaluate_zero_shot_fn(
+        prediction_path=prediction_path,
+        metric_path=metric_path,
+        dataset_path=dataset_path,
+        split=split,
         target=target,
         selected_metrics=selected_metrics,
         model_name=model_name,
