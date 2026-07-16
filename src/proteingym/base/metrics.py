@@ -31,7 +31,7 @@ class ScoreMode(StrEnum):
     """Score against the full underlying dataset, ignoring splits."""
 
 
-MetricFunction = Callable[["ScoringContext"], float | None]
+MetricFunction = Callable[["DatasetScoringContext"], float | None]
 
 _metric_functions_cache: dict[str, MetricFunction] | None = None
 
@@ -51,20 +51,46 @@ def get_fold_indices(subsets: Subsets, split: str) -> list[int]:
     return list(range(len(_split_slices(subsets, split))))
 
 
-class ScoringContext(BaseModel):
-    """A validated request to score predictions against ground truth.
+def _align(
+    gt_df: pl.DataFrame, pred_df: pl.DataFrame, gt_variables: list
+) -> pl.DataFrame:
+    """Align ground truth and predicted dataframes on (sequence, variables).
 
-    This bundles everything a metric needs to run: the ground truth data (either a
-    complete Dataset or a Subsets object with cross-validation slices), the
-    predicted Dataset, the target being scored, and-when scoring Subsets-the split
-    strategy and fold(s) to evaluate.
+    Only use variables that are present and not all-null in both dataframes
+    (Polars doesn't match null values in joins: NULL != NULL).
+    """
+    declared_variable_names = [v.name for v in gt_variables]
+    variable_names = [
+        var
+        for var in declared_variable_names
+        if var in gt_df.columns
+        and var in pred_df.columns
+        and not gt_df[var].is_null().all()
+        and not pred_df[var].is_null().all()
+    ]
+    join_keys = [SEQUENCE] + variable_names
+
+    joined = gt_df.join(pred_df, on=join_keys, how="inner", suffix="_pred")
+
+    missing_predictions = len(gt_df) - len(joined)
+    if missing_predictions > 0:
+        raise ValueError(f"Missing {missing_predictions} prediction(s).")
+
+    return joined
+
+
+class DatasetScoringContext(BaseModel):
+    """A validated request to score predictions against a plain Dataset.
+
+    This bundles everything a metric needs to run: the ground truth Dataset, the
+    predicted Dataset, and the target being scored.
 
     The predicted dataset is created by `Dataset.predictions_delta` which takes as
     input the target predictions in a form of a dataframe and returns an protein-
     gym dataset with predicted properties.
 
-    Metric functions accept a single ScoringContext and read the aligned data from
-    :attr:`scoring_df` rather than re-joining the datasets themselves.
+    Metric functions accept a single DatasetScoringContext and read the aligned data
+    from :attr:`scoring_df` rather than re-joining the datasets themselves.
     """
 
     model_config = ConfigDict(
@@ -74,8 +100,8 @@ class ScoringContext(BaseModel):
     )
     """Configuration for the Pydantic model."""
 
-    ground_truth: Subsets | Dataset
-    """The ground truth data, either a complete Dataset or a Subsets object."""
+    ground_truth: Dataset
+    """The ground truth Dataset."""
 
     predicted: Dataset
     """The predicted Dataset containing model predictions for the target."""
@@ -83,27 +109,10 @@ class ScoringContext(BaseModel):
     target: str
     """The name of the target variable to score (e.g., 'fitness')."""
 
-    split: str | None = None
-    """The split strategy to evaluate. Required when ground_truth is a Subsets."""
-
-    fold: int | list[int] | None = None
-    """The fold index (or indices) to evaluate. Required for a Subsets.
-
-    A single int scores one fold; a list scores multiple folds in aggregate.
-    """
-
     @model_validator(mode="after")
-    def _validate(self) -> "ScoringContext":
-        """Validate split/fold presence and matching assay variables."""
-        if isinstance(self.ground_truth, Subsets):
-            if self.split is None or self.fold is None:
-                raise ValueError(
-                    "Both 'split' and 'fold' must be provided when scoring Subsets."
-                )
-            gt_variables = self.ground_truth.dataset.assay_variables
-        else:
-            gt_variables = self.ground_truth.assay_variables
-
+    def _validate(self) -> "DatasetScoringContext":
+        """Validate matching assay variables."""
+        gt_variables = self.ground_truth.assay_variables
         if gt_variables != self.predicted.assay_variables:
             gt_var_names = [v.name for v in gt_variables]
             pred_var_names = [v.name for v in self.predicted.assay_variables]
@@ -114,70 +123,92 @@ class ScoringContext(BaseModel):
             )
         return self
 
-    def for_fold(self, fold: int | list[int]) -> "ScoringContext":
+    @property
+    def scoring_df(self) -> pl.DataFrame:
+        """Aligned ground truth and predicted values for the target."""
+        gt_df = self.ground_truth.to_df(target_names=self.target)
+        pred_df = self.predicted.to_df(target_names=self.target)
+        return _align(gt_df, pred_df, self.ground_truth.assay_variables)
+
+    @property
+    def top_k(self) -> int | None:
+        """Top-k threshold. Always None for a plain Dataset (no splitter metadata).
+
+        Kept on the base so `metric_recovery` can read `context.top_k` uniformly;
+        recovery returns None for plain datasets.
+        """
+        return None
+
+
+class SubsetScoringContext(DatasetScoringContext):
+    """A validated request to score predictions against cross-validation Subsets.
+
+    In addition to the base fields, this carries the split strategy and fold(s) to
+    evaluate.
+    """
+
+    ground_truth: Subsets  # pyrefly: ignore[bad-override]
+    """The ground truth Subsets object with cross-validation slices."""
+
+    split: str
+    """The split strategy to evaluate."""
+
+    fold: int | list[int]
+    """The fold index (or indices) to evaluate.
+
+    A single int scores one fold; a list scores multiple folds in aggregate.
+    """
+
+    @model_validator(mode="after")
+    def _validate(self) -> "SubsetScoringContext":
+        """Validate split/fold presence and matching assay variables."""
+        if self.split is None or self.fold is None:
+            raise ValueError(
+                "Both 'split' and 'fold' must be provided when scoring Subsets."
+            )
+        gt_variables = self.ground_truth.dataset.assay_variables
+        if gt_variables != self.predicted.assay_variables:
+            gt_var_names = [v.name for v in gt_variables]
+            pred_var_names = [v.name for v in self.predicted.assay_variables]
+            raise ValueError(
+                "Ground truth and predicted datasets must have identical "
+                f"assay_variables. Ground truth has: {gt_var_names}, predicted has: "
+                f"{pred_var_names}"
+            )
+        return self
+
+    def for_fold(self, fold: int | list[int]) -> "SubsetScoringContext":
         """Return a copy of this context targeting different fold(s)."""
         return self.model_copy(update={"fold": fold})
 
-    def for_full_dataset(self) -> "ScoringContext":
+    def for_full_dataset(self) -> "DatasetScoringContext":
         """Return a context scoring the full underlying dataset, ignoring splits."""
-        dataset = (
-            self.ground_truth.dataset
-            if isinstance(self.ground_truth, Subsets)
-            else self.ground_truth
-        )
-        return ScoringContext(
-            ground_truth=dataset, predicted=self.predicted, target=self.target
+        return DatasetScoringContext(
+            ground_truth=self.ground_truth.dataset,
+            predicted=self.predicted,
+            target=self.target,
         )
 
     @property
     def scoring_df(self) -> pl.DataFrame:
-        """Aligned ground truth and predicted values for the target."""
-        if isinstance(self.ground_truth, Subsets):
-            # Validator ensures split and fold are not None when ground_truth is Subsets
-            assert self.split is not None and self.fold is not None
-            fold_indices = [self.fold] if isinstance(self.fold, int) else self.fold
-            split_slices = _split_slices(self.ground_truth, self.split)
-            gt_dfs = []
-            pred_dfs = []
-            for fold_idx in fold_indices:
-                dataset_slice = split_slices[fold_idx]
-                gt_dfs.append(
-                    self.ground_truth.dataset[dataset_slice].to_df(
-                        target_names=self.target
-                    )
+        """Aligned ground truth and predicted values for the target fold(s)."""
+        fold_indices = [self.fold] if isinstance(self.fold, int) else self.fold
+        split_slices = _split_slices(self.ground_truth, self.split)
+        gt_dfs = []
+        pred_dfs = []
+        for fold_idx in fold_indices:
+            dataset_slice = split_slices[fold_idx]
+            gt_dfs.append(
+                self.ground_truth.dataset[dataset_slice].to_df(
+                    target_names=self.target
                 )
-                pred_dfs.append(
-                    self.predicted[dataset_slice].to_df(target_names=self.target)
-                )
-            gt_df = pl.concat(gt_dfs, how="vertical_relaxed")
-            pred_df = pl.concat(pred_dfs, how="vertical_relaxed")
-            gt_variables = self.ground_truth.dataset.assay_variables
-        else:
-            gt_df = self.ground_truth.to_df(target_names=self.target)
-            pred_df = self.predicted.to_df(target_names=self.target)
-            gt_variables = self.ground_truth.assay_variables
-
-        # Join on (sequence, variables) to align predictions with ground truth.
-        # Only use variables that are present and not all-null in both dataframes
-        # (Polars doesn't match null values in joins: NULL != NULL).
-        declared_variable_names = [v.name for v in gt_variables]
-        variable_names = [
-            var
-            for var in declared_variable_names
-            if var in gt_df.columns
-            and var in pred_df.columns
-            and not gt_df[var].is_null().all()
-            and not pred_df[var].is_null().all()
-        ]
-        join_keys = [SEQUENCE] + variable_names
-
-        joined = gt_df.join(pred_df, on=join_keys, how="inner", suffix="_pred")
-
-        missing_predictions = len(gt_df) - len(joined)
-        if missing_predictions > 0:
-            raise ValueError(f"Missing {missing_predictions} prediction(s).")
-
-        return joined
+            )
+            pred_dfs.append(
+                self.predicted[dataset_slice].to_df(target_names=self.target)
+            )
+        gt_df = pl.concat(gt_dfs, how="vertical_relaxed")
+        pred_df = pl.concat(pred_dfs, how="vertical_relaxed")
+        return _align(gt_df, pred_df, self.ground_truth.dataset.assay_variables)
 
     @property
     def top_k(self) -> int | None:
@@ -189,7 +220,6 @@ class ScoringContext(BaseModel):
 
         Returns None when:
 
-        - Ground truth is a plain Dataset (not Subsets from a splitter)
         - Context targets multiple folds or no specific fold
         - Split name doesn't exist in the Subsets
         - Fold index is out of range
@@ -202,9 +232,7 @@ class ScoringContext(BaseModel):
         Returns:
             The top-k threshold as an integer, or None if unavailable.
         """
-        if not isinstance(self.ground_truth, Subsets):
-            return None
-        if self.split is None or not isinstance(self.fold, int):
+        if not isinstance(self.fold, int):
             return None
 
         # Validate split exists
@@ -303,7 +331,7 @@ def _discover_metric_functions() -> dict[str, MetricFunction]:
     return _metric_functions_cache
 
 
-def metric_recovery(context: ScoringContext) -> float | None:
+def metric_recovery(context: DatasetScoringContext) -> float | None:
     """Compute the recovery metric: fraction of top-k variants correctly identified.
 
     The recovery metric measures what fraction of the true top-k highest-value
@@ -347,7 +375,7 @@ def metric_recovery(context: ScoringContext) -> float | None:
     return overlap / effective_k
 
 
-def metric_spearman(context: ScoringContext) -> float:
+def metric_spearman(context: DatasetScoringContext) -> float:
     """Compute the Spearman rank correlation between ground truth and predictions.
 
     The Spearman correlation assesses how well the relationship between ground truth
@@ -367,7 +395,7 @@ def metric_spearman(context: ScoringContext) -> float:
 
 def calculate_selected_metrics(
     selected_metrics: list[str],
-    context: ScoringContext,
+    context: DatasetScoringContext,
 ) -> dict[str, float | None]:
     """Calculate selected metrics for a scoring context.
 
@@ -389,7 +417,7 @@ def calculate_selected_metrics(
 
 def calculate_metrics_by_mode(
     selected_metrics: list[str],
-    context: ScoringContext,
+    context: SubsetScoringContext,
     test_fold: int,
     score_modes: list[ScoreMode] | None = None,
 ) -> MetricsResult:
@@ -397,9 +425,9 @@ def calculate_metrics_by_mode(
 
     Args:
         selected_metrics: List of metric names to calculate (e.g., ["spearman"]).
-        context: The scoring context. Its ground truth must be a Subsets and its
-            split must name the cross-validation strategy to evaluate. The context's
-            fold is ignored; the fold to score is determined per mode.
+        context: The scoring context. Must be a SubsetScoringContext whose split
+            names the cross-validation strategy to evaluate. The context's fold is
+            ignored; the fold to score is determined per mode.
         test_fold: The fold index designated as the test fold.
         score_modes: List of scoring modes (see ScoreMode). If None, defaults to
             [ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD].
@@ -410,11 +438,6 @@ def calculate_metrics_by_mode(
         full_dataset mode is used, it scores against the complete dataset ignoring all
         splits; the value is identical across folds since it evaluates the same data.
     """
-    if not isinstance(context.ground_truth, Subsets):
-        raise TypeError("calculate_metrics_by_mode requires a Subsets ground truth.")
-    if context.split is None:
-        raise ValueError("The scoring context must specify a split.")
-
     if score_modes is None:
         score_modes = [ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD]
 

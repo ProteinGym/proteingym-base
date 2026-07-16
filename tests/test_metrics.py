@@ -4,6 +4,7 @@ import logging
 import polars as pl
 import pytest
 from Bio.Seq import Seq
+from pydantic import ValidationError
 
 from proteingym.base.assay import SEQUENCE
 from proteingym.base.dataset import (
@@ -15,9 +16,10 @@ from proteingym.base.dataset import (
     Subsets,
 )
 from proteingym.base.metrics import (
+    DatasetScoringContext,
     MetricsProvenance,
     MetricsResult,
-    ScoringContext,
+    SubsetScoringContext,
     calculate_metrics_by_mode,
     calculate_selected_metrics,
     metric_recovery,
@@ -122,7 +124,7 @@ def test_perfect_correlation(metrics_dataset_with_assay):
     )
 
     corr = metric_spearman(
-        ScoringContext(
+        DatasetScoringContext(
             ground_truth=metrics_dataset_with_assay,
             predicted=perfect_preds,
             target="DMS Score",
@@ -133,7 +135,7 @@ def test_perfect_correlation(metrics_dataset_with_assay):
 
 
 def test_returns_none_for_dataset(simple_dataset):
-    context = ScoringContext(
+    context = DatasetScoringContext(
         ground_truth=simple_dataset, predicted=simple_dataset, target="target"
     )
     assert context.top_k is None
@@ -144,7 +146,7 @@ def test_returns_none_for_list_fold(simple_dataset):
         dataset=simple_dataset,
         slices={"test": [DatasetSlice(metadata={"top_k": 10})]},
     )
-    context = ScoringContext(
+    context = SubsetScoringContext(
         ground_truth=subsets,
         predicted=simple_dataset,
         target="target",
@@ -158,7 +160,7 @@ def test_returns_none_without_metadata(simple_dataset):
     subsets = Subsets(
         dataset=simple_dataset, slices={"test": [DatasetSlice(metadata=None)]}
     )
-    context = ScoringContext(
+    context = SubsetScoringContext(
         ground_truth=subsets,
         predicted=simple_dataset,
         target="target",
@@ -173,7 +175,7 @@ def test_returns_none_without_top_k_in_metadata(simple_dataset):
         dataset=simple_dataset,
         slices={"test": [DatasetSlice(metadata={"other_key": "value"})]},
     )
-    context = ScoringContext(
+    context = SubsetScoringContext(
         ground_truth=subsets,
         predicted=simple_dataset,
         target="target",
@@ -188,7 +190,7 @@ def test_extracts_top_k_successfully(simple_dataset):
         dataset=simple_dataset,
         slices={"test": [DatasetSlice(metadata={"top_k": 10})]},
     )
-    context = ScoringContext(
+    context = SubsetScoringContext(
         ground_truth=subsets,
         predicted=simple_dataset,
         target="target",
@@ -203,7 +205,7 @@ def test_converts_float_top_k_to_int(simple_dataset):
         dataset=simple_dataset,
         slices={"test": [DatasetSlice(metadata={"top_k": 10.0})]},
     )
-    context = ScoringContext(
+    context = SubsetScoringContext(
         ground_truth=subsets,
         predicted=simple_dataset,
         target="target",
@@ -220,8 +222,10 @@ def test_requires_split_and_fold_for_subsets(simple_dataset):
         dataset=simple_dataset,
         slices={"test": [DatasetSlice(metadata={"top_k": 10})]},
     )
-    with pytest.raises(ValueError, match="Both 'split' and 'fold' must be provided"):
-        ScoringContext(ground_truth=subsets, predicted=simple_dataset, target="target")
+    with pytest.raises(ValidationError):
+        SubsetScoringContext(
+            ground_truth=subsets, predicted=simple_dataset, target="target"
+        )
 
 
 def test_perfect_recovery(recovery_subsets):
@@ -229,7 +233,7 @@ def test_perfect_recovery(recovery_subsets):
         recovery_subsets.dataset, [(i + 1) / 10.0 for i in range(10)]
     )
     recovery = metric_recovery(
-        ScoringContext(
+        SubsetScoringContext(
             ground_truth=recovery_subsets,
             predicted=predictions,
             target="fitness",
@@ -245,7 +249,7 @@ def test_zero_recovery(recovery_subsets):
         recovery_subsets.dataset, [(10 - i) / 10.0 for i in range(10)]
     )
     recovery = metric_recovery(
-        ScoringContext(
+        SubsetScoringContext(
             ground_truth=recovery_subsets,
             predicted=predictions,
             target="fitness",
@@ -262,7 +266,7 @@ def test_partial_recovery(recovery_subsets):
         [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.95, 0.75, 0.9, 1.0],
     )
     recovery = metric_recovery(
-        ScoringContext(
+        SubsetScoringContext(
             ground_truth=recovery_subsets,
             predicted=predictions,
             target="fitness",
@@ -278,7 +282,7 @@ def test_recovery_with_dataset_returns_none(recovery_dataset):
         recovery_dataset, [(i + 1) / 10.0 for i in range(10)]
     )
     recovery = metric_recovery(
-        ScoringContext(
+        DatasetScoringContext(
             ground_truth=recovery_dataset,
             predicted=predictions,
             target="fitness",
@@ -295,7 +299,7 @@ def test_recovery_without_metadata_returns_none(recovery_dataset):
         recovery_dataset, [(i + 1) / 10.0 for i in range(10)]
     )
     recovery = metric_recovery(
-        ScoringContext(
+        SubsetScoringContext(
             ground_truth=subsets_no_metadata,
             predicted=predictions,
             target="fitness",
@@ -322,7 +326,7 @@ def test_recovery_zero_top_k_returns_none(recovery_dataset):
         recovery_dataset, [(i + 1) / 10.0 for i in range(10)]
     )
     recovery = metric_recovery(
-        ScoringContext(
+        SubsetScoringContext(
             ground_truth=subsets,
             predicted=predictions,
             target="fitness",
@@ -339,7 +343,7 @@ def test_recovery_in_calculate_selected_metrics(recovery_subsets):
     )
     results = calculate_selected_metrics(
         selected_metrics=["recovery", "spearman"],
-        context=ScoringContext(
+        context=SubsetScoringContext(
             ground_truth=recovery_subsets,
             predicted=predictions,
             target="fitness",
@@ -373,7 +377,7 @@ def test_recovery_none_for_training_folds(recovery_dataset):
     )
 
     test_recovery = metric_recovery(
-        ScoringContext(
+        SubsetScoringContext(
             ground_truth=subsets_with_mixed_metadata,
             predicted=predictions,
             target="fitness",
@@ -384,7 +388,7 @@ def test_recovery_none_for_training_folds(recovery_dataset):
     assert test_recovery == pytest.approx(1.0)
 
     train_recovery = metric_recovery(
-        ScoringContext(
+        SubsetScoringContext(
             ground_truth=subsets_with_mixed_metadata,
             predicted=predictions,
             target="fitness",
@@ -420,7 +424,7 @@ def test_recovery_in_calculate_metrics_by_mode(recovery_dataset):
 
     results = calculate_metrics_by_mode(
         selected_metrics=["recovery", "spearman"],
-        context=ScoringContext(
+        context=SubsetScoringContext(
             ground_truth=subsets,
             predicted=predictions,
             target="fitness",
@@ -468,7 +472,7 @@ def test_recovery_none_serializes_to_json_null(recovery_dataset):
 
     results = calculate_metrics_by_mode(
         selected_metrics=["recovery", "spearman"],
-        context=ScoringContext(
+        context=SubsetScoringContext(
             ground_truth=subsets,
             predicted=predictions,
             target="fitness",
@@ -517,7 +521,7 @@ def test_top_k_larger_than_samples_raises_error(recovery_dataset):
         match=r"top_k \(10\) is larger than the number of samples \(2\)\.",
     ):
         metric_recovery(
-            ScoringContext(
+            SubsetScoringContext(
                 ground_truth=subsets,
                 predicted=predicted,
                 target="fitness",
@@ -528,7 +532,7 @@ def test_top_k_larger_than_samples_raises_error(recovery_dataset):
 
 
 def test_with_dataset(metrics_dataset_with_assay, metrics_predicted_dataset):
-    df = ScoringContext(
+    df = DatasetScoringContext(
         ground_truth=metrics_dataset_with_assay,
         predicted=metrics_predicted_dataset,
         target="DMS Score",
@@ -558,7 +562,7 @@ def test_missing_predictions_raises_error(metrics_dataset_with_assay):
         incomplete_predictions_df, target="DMS Score"
     )
 
-    context = ScoringContext(
+    context = DatasetScoringContext(
         ground_truth=metrics_dataset_with_assay,
         predicted=incomplete_preds,
         target="DMS Score",
@@ -573,7 +577,7 @@ def test_mismatched_variables_raises_error(metrics_dataset_with_assay):
     )
 
     with pytest.raises(ValueError, match="must have identical assay_variables"):
-        ScoringContext(
+        DatasetScoringContext(
             ground_truth=metrics_dataset_with_assay,
             predicted=mismatched_predicted,
             target="DMS Score",
@@ -583,8 +587,8 @@ def test_mismatched_variables_raises_error(metrics_dataset_with_assay):
 def test_subsets_without_split_raises_error(
     metrics_subsets_with_assays, metrics_predicted_dataset
 ):
-    with pytest.raises(ValueError, match="Both 'split' and 'fold' must be provided"):
-        ScoringContext(
+    with pytest.raises(ValidationError):
+        SubsetScoringContext(
             ground_truth=metrics_subsets_with_assays,
             predicted=metrics_predicted_dataset,
             target="DMS Score",
@@ -597,7 +601,7 @@ def test_unknown_metric_warning(
     with caplog.at_level(logging.WARNING, logger="proteingym.base"):
         results = calculate_selected_metrics(
             selected_metrics=["unknown_metric"],
-            context=ScoringContext(
+            context=DatasetScoringContext(
                 ground_truth=metrics_dataset_with_assay,
                 predicted=metrics_predicted_dataset,
                 target="DMS Score",
@@ -623,7 +627,7 @@ def test_with_subsets(metrics_subsets_with_assays):
 
     results = calculate_selected_metrics(
         selected_metrics=["spearman"],
-        context=ScoringContext(
+        context=SubsetScoringContext(
             ground_truth=metrics_subsets_with_assays,
             predicted=predictions,
             target=target_name,
@@ -652,7 +656,7 @@ def test_multi_mode_scoring(metrics_subsets_with_assays):
 
     results = calculate_metrics_by_mode(
         selected_metrics=["spearman"],
-        context=ScoringContext(
+        context=SubsetScoringContext(
             ground_truth=metrics_subsets_with_assays,
             predicted=predictions,
             target=target_name,
@@ -700,7 +704,7 @@ def test_full_dataset_mode(metrics_subsets_with_assays):
 
     results = calculate_metrics_by_mode(
         selected_metrics=["spearman"],
-        context=ScoringContext(
+        context=SubsetScoringContext(
             ground_truth=metrics_subsets_with_assays,
             predicted=predictions,
             target=target_name,

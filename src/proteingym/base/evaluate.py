@@ -3,10 +3,11 @@ from pathlib import Path
 
 from .dataset import Dataset, Subsets
 from .metrics import (
+    DatasetScoringContext,
     MetricsProvenance,
     MetricsResult,
     ScoreMode,
-    ScoringContext,
+    SubsetScoringContext,
     _discover_metric_functions,
     calculate_metrics_by_mode,
     calculate_selected_metrics,
@@ -96,7 +97,7 @@ def evaluate_splits(
     predicted = Dataset.from_path(prediction_path)
     test_fold = int(fold)
 
-    context = ScoringContext(
+    context = SubsetScoringContext(
         ground_truth=ground_truth,
         predicted=predicted,
         target=target,
@@ -151,7 +152,7 @@ def evaluate_data(
     ground_truth = Dataset.from_path(dataset_path)
     predicted = Dataset.from_path(prediction_path)
 
-    context = ScoringContext(
+    context = DatasetScoringContext(
         ground_truth=ground_truth, predicted=predicted, target=target
     )
     result = MetricsResult(
