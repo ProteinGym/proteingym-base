@@ -9,6 +9,7 @@ Attributes :
     Manifest :
         Represents the metadata and resources of a dataset.  Entrypoint for
         loading and validating dataset from metadata.
+<<<<<<< HEAD
     evaluate_subset :
         Calculate metrics for cross-validation splits (.splits.pgdata).
     evaluate_dataset :
@@ -16,6 +17,12 @@ Attributes :
     evaluate_zero_shot :
         Calculate zero-shot metrics against the full dataset of a Subsets
         archive (.splits.pgdata), scoring once and ignoring folds.
+=======
+    evaluate_splits :
+        Calculate metrics for cross-validation splits (.splits.pgdata).
+    evaluate_data :
+        Calculate metrics for a plain dataset (.pgdata).
+>>>>>>> main
     calculate_selected_metrics :
         Calculate selected metrics comparing ground truth and predictions.
     calculate_metrics_by_mode :
@@ -32,7 +39,11 @@ Attributes :
 """
 
 from .dataset import Dataset, Subsets
+<<<<<<< HEAD
 from .evaluate import evaluate_dataset, evaluate_subset, evaluate_zero_shot
+=======
+from .evaluate import evaluate_data, evaluate_splits
+>>>>>>> main
 from .manifest import Manifest
 from .metrics import (
     DatasetScoringContext,
