@@ -199,9 +199,7 @@ class SubsetScoringContext(DatasetScoringContext):
         for fold_idx in fold_indices:
             dataset_slice = split_slices[fold_idx]
             gt_dfs.append(
-                self.ground_truth.dataset[dataset_slice].to_df(
-                    target_names=self.target
-                )
+                self.ground_truth.dataset[dataset_slice].to_df(target_names=self.target)
             )
             pred_dfs.append(
                 self.predicted[dataset_slice].to_df(target_names=self.target)
