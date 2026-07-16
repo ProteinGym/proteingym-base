@@ -106,7 +106,7 @@ def test_evaluate_command_full_dataset(
     result = runner.invoke(
         app,
         [
-            "evaluate-data",
+            "evaluate-dataset",
             "--prediction-path",
             prediction_path.as_posix(),
             "--metric-path",
@@ -125,12 +125,12 @@ def test_evaluate_command_full_dataset(
     assert "spearman" in metrics_result["full_dataset"]
 
 
-def test_evaluate_splits_command(
+def test_evaluate_subset_command(
     tmp_path: Path,
     metrics_subsets_with_assays: Subsets,
     metrics_predicted_dataset: Dataset,
 ) -> None:
-    """Evaluate-splits command computes metrics for cross-validation splits."""
+    """Evaluate-subset command computes metrics for cross-validation splits."""
 
     dataset_path = metrics_subsets_with_assays.dump(path=tmp_path)
     prediction_path = metrics_predicted_dataset.dump(path=tmp_path)
@@ -140,7 +140,7 @@ def test_evaluate_splits_command(
     result = runner.invoke(
         app,
         [
-            "evaluate-splits",
+            "evaluate-subset",
             "--prediction-path",
             prediction_path.as_posix(),
             "--metric-path",
@@ -165,6 +165,45 @@ def test_evaluate_splits_command(
     assert "spearman" in metrics_result["test"]
 
 
+def test_evaluate_zero_shot_command(
+    tmp_path: Path,
+    metrics_subsets_with_assays: Subsets,
+    metrics_predicted_dataset: Dataset,
+) -> None:
+    """Evaluate-zero-shot command scores the full dataset of a Subsets archive."""
+
+    dataset_path = metrics_subsets_with_assays.dump(path=tmp_path)
+    prediction_path = metrics_predicted_dataset.dump(path=tmp_path)
+    metric_path = tmp_path / "metrics.json"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "evaluate-zero-shot",
+            "--prediction-path",
+            prediction_path.as_posix(),
+            "--metric-path",
+            metric_path.as_posix(),
+            "--dataset-path",
+            dataset_path.as_posix(),
+            "--split",
+            "random",
+            "--target",
+            "DMS Score",
+            "--selected-metrics",
+            "spearman",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert metric_path.exists()
+    assert f"Metrics saved to: {metric_path}" in result.stdout
+    metrics_result = json.loads(metric_path.read_text())
+    assert "spearman" in metrics_result["full_dataset"]
+    assert "test" not in metrics_result
+
+
 def test_evaluate_command_repeated_metric_flags(
     tmp_path: Path, dataset_with_assay: Dataset
 ) -> None:
@@ -185,7 +224,7 @@ def test_evaluate_command_repeated_metric_flags(
     result = runner.invoke(
         app,
         [
-            "evaluate-data",
+            "evaluate-dataset",
             "--prediction-path",
             prediction_path.as_posix(),
             "--metric-path",

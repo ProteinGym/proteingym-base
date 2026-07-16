@@ -56,7 +56,7 @@ def _write_result(
     return metric_path
 
 
-def evaluate_splits(
+def evaluate_subset(
     prediction_path: Path,
     metric_path: Path,
     dataset_path: Path,
@@ -123,7 +123,7 @@ def evaluate_splits(
     )
 
 
-def evaluate_data(
+def evaluate_dataset(
     prediction_path: Path,
     metric_path: Path,
     dataset_path: Path,
@@ -169,4 +169,64 @@ def evaluate_data(
         dataset_stem=dataset_path.stem,
         target=target,
         model_name=model_name,
+    )
+
+
+def evaluate_zero_shot(
+    prediction_path: Path,
+    metric_path: Path,
+    dataset_path: Path,
+    split: str,
+    target: str,
+    selected_metrics: list[str] | None = None,
+    model_name: str | None = None,
+) -> Path:
+    """Calculate zero-shot metrics against the full dataset and save them to JSON.
+
+    Loads ground truth from a Subsets archive (.splits.pgdata) and predictions from a
+    prediction archive, then scores the requested metrics once against the complete
+    underlying dataset (ignoring cross-validation folds).
+
+    Args:
+        prediction_path: Path to the prediction dataset archive (.pgdata file)
+            containing model predictions.
+        metric_path: Path where the calculated metrics JSON will be saved.
+        dataset_path: Path to the ground truth Subsets archive (.splits.pgdata).
+        split: Name of the splitting strategy (stored in metadata).
+        target: Name of the target variable to score (e.g., 'DMS_score').
+        selected_metrics: Optional list of metric names to calculate (e.g.,
+            ["spearman"]). If None, all discovered metrics are included.
+        model_name: Name of the model that generated predictions (stored in metadata).
+
+    Returns:
+        The path to the saved metrics JSON file (same as metric_path input).
+    """
+    logger.info("Start to calculate zero-shot metrics for the full dataset.")
+
+    metrics_to_calculate = selected_metrics or list(_discover_metric_functions())
+    ground_truth = Subsets.from_path(dataset_path)
+    predicted = Dataset.from_path(prediction_path)
+
+    # A fold is required to construct the context but is ignored: for_full_dataset
+    # scores the complete underlying dataset regardless of the fold.
+    context = SubsetScoringContext(
+        ground_truth=ground_truth,
+        predicted=predicted,
+        target=target,
+        split=split,
+        fold=0,
+    )
+    result = MetricsResult(
+        full_dataset=calculate_selected_metrics(
+            metrics_to_calculate, context.for_full_dataset()
+        )
+    )
+
+    return _write_result(
+        result,
+        metric_path,
+        dataset_stem=dataset_path.stem,
+        target=target,
+        model_name=model_name,
+        split=split,
     )
