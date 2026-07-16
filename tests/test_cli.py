@@ -1,9 +1,12 @@
+import json
 from pathlib import Path
 
+import polars as pl
 from typer.testing import CliRunner
 
 from proteingym.base.__about__ import __version__
 from proteingym.base.__main__ import app
+from proteingym.base.dataset import Dataset, Subsets
 
 
 def test_cli_callback() -> None:
@@ -81,3 +84,122 @@ def test_build_command_with_output_path(tmp_path: Path) -> None:
         app, ["build", manifest.as_posix(), "--output-path", output_dir.as_posix()]
     )
     assert (output_dir / f"{dataset_name}.pgdata").as_posix() in result.stdout
+
+
+def test_evaluate_command_full_dataset(
+    tmp_path: Path, dataset_with_assay: Dataset
+) -> None:
+    """Evaluate command computes metrics for a plain dataset."""
+
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "DMS Score": [1.1, 2.1]}
+    )
+    predictions = dataset_with_assay.predictions_delta(
+        predictions_df, target="DMS Score"
+    )
+
+    dataset_path = dataset_with_assay.dump(path=tmp_path)
+    prediction_path = predictions.dump(path=tmp_path)
+    metric_path = tmp_path / "metrics.json"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "evaluate-data",
+            "--prediction-path",
+            prediction_path.as_posix(),
+            "--metric-path",
+            metric_path.as_posix(),
+            "--dataset-path",
+            dataset_path.as_posix(),
+            "--target",
+            "DMS Score",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert metric_path.exists()
+    assert f"Metrics saved to: {metric_path}" in result.stdout
+    metrics_result = json.loads(metric_path.read_text())
+    assert "spearman" in metrics_result["full_dataset"]
+
+
+def test_evaluate_splits_command(
+    tmp_path: Path,
+    metrics_subsets_with_assays: Subsets,
+    metrics_predicted_dataset: Dataset,
+) -> None:
+    """Evaluate-splits command computes metrics for cross-validation splits."""
+
+    dataset_path = metrics_subsets_with_assays.dump(path=tmp_path)
+    prediction_path = metrics_predicted_dataset.dump(path=tmp_path)
+    metric_path = tmp_path / "metrics.json"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "evaluate-splits",
+            "--prediction-path",
+            prediction_path.as_posix(),
+            "--metric-path",
+            metric_path.as_posix(),
+            "--dataset-path",
+            dataset_path.as_posix(),
+            "--split",
+            "random",
+            "--target",
+            "DMS Score",
+            "--fold",
+            "0",
+            "--selected-metrics",
+            "spearman",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert metric_path.exists()
+    assert f"Metrics saved to: {metric_path}" in result.stdout
+    metrics_result = json.loads(metric_path.read_text())
+    assert "spearman" in metrics_result["test"]
+
+
+def test_evaluate_command_repeated_metric_flags(
+    tmp_path: Path, dataset_with_assay: Dataset
+) -> None:
+    """Evaluate command accepts repeated --selected-metrics flags."""
+
+    predictions_df = pl.DataFrame(
+        {"sequence": ["ACDEFG", "GFEDCA"], "DMS Score": [1.1, 2.1]}
+    )
+    predictions = dataset_with_assay.predictions_delta(
+        predictions_df, target="DMS Score"
+    )
+
+    dataset_path = dataset_with_assay.dump(path=tmp_path)
+    prediction_path = predictions.dump(path=tmp_path)
+    metric_path = tmp_path / "metrics.json"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "evaluate-data",
+            "--prediction-path",
+            prediction_path.as_posix(),
+            "--metric-path",
+            metric_path.as_posix(),
+            "--dataset-path",
+            dataset_path.as_posix(),
+            "--target",
+            "DMS Score",
+            "--selected-metrics",
+            "spearman",
+            "--selected-metrics",
+            "recovery",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert metric_path.exists()
