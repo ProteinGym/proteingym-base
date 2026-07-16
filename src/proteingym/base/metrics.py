@@ -161,11 +161,7 @@ class SubsetScoringContext(DatasetScoringContext):
 
     @model_validator(mode="after")
     def _validate(self) -> "SubsetScoringContext":
-        """Validate split/fold presence and matching assay variables."""
-        if self.split is None or self.fold is None:
-            raise ValueError(
-                "Both 'split' and 'fold' must be provided when scoring Subsets."
-            )
+        """Validate matching assay variables."""
         gt_variables = self.ground_truth.dataset.assay_variables
         if gt_variables != self.predicted.assay_variables:
             gt_var_names = [v.name for v in gt_variables]

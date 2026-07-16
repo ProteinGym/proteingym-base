@@ -584,6 +584,23 @@ def test_mismatched_variables_raises_error(metrics_dataset_with_assay):
         )
 
 
+def test_subsets_mismatched_variables_raises_error(
+    metrics_subsets_with_assays, metrics_predicted_dataset
+):
+    mismatched_predicted = metrics_predicted_dataset.model_copy(
+        update={"assay_variables": [Field(name="different_var")]}
+    )
+
+    with pytest.raises(ValueError, match="must have identical assay_variables"):
+        SubsetScoringContext(
+            ground_truth=metrics_subsets_with_assays,
+            predicted=mismatched_predicted,
+            target="DMS Score",
+            split="random",
+            fold=0,
+        )
+
+
 def test_subsets_without_split_raises_error(
     metrics_subsets_with_assays, metrics_predicted_dataset
 ):
