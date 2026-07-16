@@ -104,8 +104,12 @@ def evaluate_splits(
         split=split,
         fold=test_fold,
     )
-    result = calculate_metrics_by_mode(
-        metrics_to_calculate, context, test_fold, score_modes
+    result = (
+        calculate_metrics_by_mode(metrics_to_calculate, context, test_fold)
+        if score_modes is None
+        else calculate_metrics_by_mode(
+            metrics_to_calculate, context, test_fold, score_modes
+        )
     )
 
     return _write_result(

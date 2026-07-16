@@ -1,7 +1,7 @@
 import inspect
 import logging
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import StrEnum
 
 import numpy as np
@@ -419,7 +419,11 @@ def calculate_metrics_by_mode(
     selected_metrics: list[str],
     context: SubsetScoringContext,
     test_fold: int,
-    score_modes: list[ScoreMode] | None = None,
+    score_modes: Sequence[ScoreMode] = (
+        ScoreMode.TEST,
+        ScoreMode.TRAIN_AVAILABLE,
+        ScoreMode.PER_FOLD,
+    ),
 ) -> MetricsResult:
     """Calculate metrics in different scoring modes.
 
@@ -429,8 +433,8 @@ def calculate_metrics_by_mode(
             names the cross-validation strategy to evaluate. The context's fold is
             ignored; the fold to score is determined per mode.
         test_fold: The fold index designated as the test fold.
-        score_modes: List of scoring modes (see ScoreMode). If None, defaults to
-            [ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD].
+        score_modes: Sequence of scoring modes (see ScoreMode). Defaults to
+            (ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD).
 
     Returns:
         A MetricsResult with the computed modes populated and ``metadata`` describing
@@ -438,9 +442,6 @@ def calculate_metrics_by_mode(
         full_dataset mode is used, it scores against the complete dataset ignoring all
         splits; the value is identical across folds since it evaluates the same data.
     """
-    if score_modes is None:
-        score_modes = [ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD]
-
     all_fold_indices = get_fold_indices(context.ground_truth, context.split)
     train_folds = [f for f in all_fold_indices if f != test_fold]
 
