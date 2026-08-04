@@ -1,0 +1,4592 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../manifest/">
+      
+      
+        <link rel="next" href="../model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../../images/proteingymlogo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>metrics - ProteinGym Base Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#proteingym.base.metrics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="ProteinGym Base Documentation" class="md-header__button md-logo" aria-label="ProteinGym Base Documentation" data-md-component="logo">
+      
+  <img src="../../../../images/proteingymlogo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ProteinGym Base Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              metrics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="ProteinGym Base Documentation" class="md-nav__button md-logo" aria-label="ProteinGym Base Documentation" data-md-component="logo">
+      
+  <img src="../../../../images/proteingymlogo.png" alt="logo">
+
+    </a>
+    ProteinGym Base Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ADRs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/0002-user-facing-and-programmaticlly-used-manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. User-facing and programmatically-used manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/0003-pydantic-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Pydantic usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/0004-dataset-archive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Dataset archive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/0005-dataset-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Dataset list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/0006-model-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Model validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/0007-dataset-splits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. Dataset splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/0008-single-top-level-reference-sequence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. Single top-level reference sequence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../decisions/templates/template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../notebooks/01_Introduction_to_PG2_Dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction to the ProteinGym dataset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../notebooks/02_Creating_Manifests_and_Archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating Manifests and Archives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../notebooks/03_Loading_and_Accessing_Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loading and Accessing Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../notebooks/04_Data_Access_for_ML/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accessing Data for ML
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../notebooks/05_Creating_Dataset_Splits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating Dataset Splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Code Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    proteingym
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    proteingym
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_1" id="__nav_6_1_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    base
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    base
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    assay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    data_generators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dataset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    evaluate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lookup_field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lookup_field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DatasetScoringContext
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DatasetScoringContext">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.ground_truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ground_truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.predicted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predicted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.scoring_df" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scoring_df
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.top_k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        top_k
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetricsProvenance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MetricsProvenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.test_fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test_fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.test_folds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test_folds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.total_folds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        total_folds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.train_available_folds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        train_available_folds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetricsResult
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MetricsResult">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.full_dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        full_dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.per_fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        per_fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.train_available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        train_available
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScoreMode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ScoreMode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.FULL_DATASET" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FULL_DATASET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.PER_FOLD" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PER_FOLD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.TEST" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TEST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.TRAIN_AVAILABLE" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRAIN_AVAILABLE
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SubsetScoringContext
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SubsetScoringContext">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.ground_truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ground_truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.scoring_df" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scoring_df
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.top_k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        top_k
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.for_fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        for_fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.for_full_dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        for_full_dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.calculate_metrics_by_mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculate_metrics_by_mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.calculate_selected_metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculate_selected_metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.get_fold_indices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_fold_indices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.metric_recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metric_recovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.metric_spearman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metric_spearman
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../msa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    msa
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../publication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    publication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sequence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sequence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../splits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transformers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    transformers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DatasetScoringContext
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DatasetScoringContext">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.ground_truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ground_truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.predicted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        predicted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.scoring_df" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scoring_df
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.DatasetScoringContext.top_k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        top_k
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetricsProvenance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MetricsProvenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.target" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        target
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.test_fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test_fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.test_folds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test_folds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.total_folds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        total_folds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsProvenance.train_available_folds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        train_available_folds
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetricsResult
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MetricsResult">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.full_dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        full_dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model_config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.per_fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        per_fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.MetricsResult.train_available" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        train_available
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ScoreMode
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ScoreMode">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.FULL_DATASET" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FULL_DATASET
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.PER_FOLD" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PER_FOLD
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.TEST" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TEST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.ScoreMode.TRAIN_AVAILABLE" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRAIN_AVAILABLE
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SubsetScoringContext
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SubsetScoringContext">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.ground_truth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ground_truth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.scoring_df" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scoring_df
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.top_k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        top_k
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.for_fold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        for_fold
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.SubsetScoringContext.for_full_dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        for_full_dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.calculate_metrics_by_mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculate_metrics_by_mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.calculate_selected_metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculate_selected_metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.get_fold_indices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_fold_indices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.metric_recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metric_recovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proteingym.base.metrics.metric_spearman" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        metric_spearman
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>metrics</h1>
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="proteingym.base.metrics"></a>
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="proteingym.base.metrics.DatasetScoringContext" class="doc doc-heading">
+            <code>DatasetScoringContext</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
+
+
+        <p>A validated request to score predictions against a plain Dataset.</p>
+<p>This bundles everything a metric needs to run: the ground truth Dataset, the
+predicted Dataset, and the target being scored.</p>
+<p>The predicted dataset is created by <code>Dataset.predictions_delta</code> which takes as
+input the target predictions in a form of a dataframe and returns an protein-
+gym dataset with predicted properties.</p>
+<p>Metric functions accept a single DatasetScoringContext and read the aligned data
+from :attr:<code>scoring_df</code> rather than re-joining the datasets themselves.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">DatasetScoringContext</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A validated request to score predictions against a plain Dataset.</span>
+
+<span class="sd">    This bundles everything a metric needs to run: the ground truth Dataset, the</span>
+<span class="sd">    predicted Dataset, and the target being scored.</span>
+
+<span class="sd">    The predicted dataset is created by `Dataset.predictions_delta` which takes as</span>
+<span class="sd">    input the target predictions in a form of a dataframe and returns an protein-</span>
+<span class="sd">    gym dataset with predicted properties.</span>
+
+<span class="sd">    Metric functions accept a single DatasetScoringContext and read the aligned data</span>
+<span class="sd">    from :attr:`scoring_df` rather than re-joining the datasets themselves.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
+        <span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">,</span>
+        <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Pydantic model.&quot;&quot;&quot;</span>
+
+    <span class="n">ground_truth</span><span class="p">:</span> <span class="n">Dataset</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ground truth Dataset.&quot;&quot;&quot;</span>
+
+    <span class="n">predicted</span><span class="p">:</span> <span class="n">Dataset</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The predicted Dataset containing model predictions for the target.&quot;&quot;&quot;</span>
+
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The name of the target variable to score (e.g., &#39;fitness&#39;).&quot;&quot;&quot;</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DatasetScoringContext&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate matching assay variables.&quot;&quot;&quot;</span>
+        <span class="n">gt_variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">assay_variables</span>
+        <span class="k">if</span> <span class="n">gt_variables</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="o">.</span><span class="n">assay_variables</span><span class="p">:</span>
+            <span class="n">gt_var_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">gt_variables</span><span class="p">]</span>
+            <span class="n">pred_var_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="o">.</span><span class="n">assay_variables</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Ground truth and predicted datasets must have identical &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;assay_variables. Ground truth has: </span><span class="si">{</span><span class="n">gt_var_names</span><span class="si">}</span><span class="s2">, predicted has: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pred_var_names</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scoring_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Aligned ground truth and predicted values for the target.&quot;&quot;&quot;</span>
+        <span class="n">gt_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">target_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+        <span class="n">pred_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">target_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_align</span><span class="p">(</span><span class="n">gt_df</span><span class="p">,</span> <span class="n">pred_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">assay_variables</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">top_k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Top-k threshold. Always None for a plain Dataset (no splitter metadata).</span>
+
+<span class="sd">        Kept on the base so `metric_recovery` can read `context.top_k` uniformly;</span>
+<span class="sd">        recovery returns None for plain datasets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.DatasetScoringContext.ground_truth" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ground_truth</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The ground truth Dataset.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.DatasetScoringContext.model_config" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">arbitrary_types_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="s1">&#39;forbid&#39;</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Configuration for the Pydantic model.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.DatasetScoringContext.predicted" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">predicted</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The predicted Dataset containing model predictions for the target.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.DatasetScoringContext.scoring_df" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">scoring_df</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Aligned ground truth and predicted values for the target.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.DatasetScoringContext.target" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">target</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The name of the target variable to score (e.g., 'fitness').</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.DatasetScoringContext.top_k" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">top_k</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Top-k threshold. Always None for a plain Dataset (no splitter metadata).</p>
+<p>Kept on the base so <code>metric_recovery</code> can read <code>context.top_k</code> uniformly;
+recovery returns None for plain datasets.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="proteingym.base.metrics.MetricsProvenance" class="doc doc-heading">
+            <code>MetricsProvenance</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
+
+
+        <p>Provenance for a metrics result, used to reproduce the scoring run in DVC.</p>
+<p>Combines the fold layout produced during scoring (test/train folds, total fold
+count) with the write-time provenance describing the inputs (dataset, target,
+model, split).</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MetricsProvenance</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provenance for a metrics result, used to reproduce the scoring run in DVC.</span>
+
+<span class="sd">    Combines the fold layout produced during scoring (test/train folds, total fold</span>
+<span class="sd">    count) with the write-time provenance describing the inputs (dataset, target,</span>
+<span class="sd">    model, split).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Pydantic model.&quot;&quot;&quot;</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stem of the ground truth dataset archive.&quot;&quot;&quot;</span>
+
+    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The scored target variable.&quot;&quot;&quot;</span>
+
+    <span class="n">model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the model that generated predictions, if known.&quot;&quot;&quot;</span>
+
+    <span class="n">split</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The evaluated split strategy, if applicable.&quot;&quot;&quot;</span>
+
+    <span class="n">test_fold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The test fold index, if applicable.&quot;&quot;&quot;</span>
+
+    <span class="n">test_folds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fold indices scored as the test set, if applicable.&quot;&quot;&quot;</span>
+
+    <span class="n">train_available_folds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fold indices available for training, if applicable.&quot;&quot;&quot;</span>
+
+    <span class="n">total_folds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The total number of folds in the split, if applicable.&quot;&quot;&quot;</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.dataset" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Stem of the ground truth dataset archive.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.model" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Name of the model that generated predictions, if known.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.model_config" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">&#39;forbid&#39;</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Configuration for the Pydantic model.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.split" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">split</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The evaluated split strategy, if applicable.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.target" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">target</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The scored target variable.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.test_fold" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">test_fold</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The test fold index, if applicable.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.test_folds" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">test_folds</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The fold indices scored as the test set, if applicable.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.total_folds" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">total_folds</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The total number of folds in the split, if applicable.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsProvenance.train_available_folds" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">train_available_folds</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The fold indices available for training, if applicable.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="proteingym.base.metrics.MetricsResult" class="doc doc-heading">
+            <code>MetricsResult</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
+
+
+        <p>Metrics computed across one or more scoring modes.</p>
+<p>Each scoring mode maps metric names to their computed value (None when a metric
+cannot be calculated for that slice). <code>per_fold</code> maps a fold label (e.g.
+'fold_0') to its own metric mapping. <code>metadata</code> carries provenance such as the
+dataset, target, model, and fold layout.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">MetricsResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics computed across one or more scoring modes.</span>
+
+<span class="sd">    Each scoring mode maps metric names to their computed value (None when a metric</span>
+<span class="sd">    cannot be calculated for that slice). ``per_fold`` maps a fold label (e.g.</span>
+<span class="sd">    &#39;fold_0&#39;) to its own metric mapping. ``metadata`` carries provenance such as the</span>
+<span class="sd">    dataset, target, model, and fold layout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;forbid&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for the Pydantic model.&quot;&quot;&quot;</span>
+
+    <span class="n">test</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics scored on the test fold, if computed.&quot;&quot;&quot;</span>
+
+    <span class="n">train_available</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics scored on the aggregate of non-test folds, if computed.&quot;&quot;&quot;</span>
+
+    <span class="n">per_fold</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics scored on each fold individually, keyed by fold label.&quot;&quot;&quot;</span>
+
+    <span class="n">full_dataset</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metrics scored against the full dataset ignoring splits, if computed.&quot;&quot;&quot;</span>
+
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">MetricsProvenance</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provenance for the result (dataset, target, model, fold layout, etc.).&quot;&quot;&quot;</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsResult.full_dataset" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">full_dataset</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Metrics scored against the full dataset ignoring splits, if computed.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsResult.metadata" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">metadata</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Provenance for the result (dataset, target, model, fold layout, etc.).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsResult.model_config" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s1">&#39;forbid&#39;</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Configuration for the Pydantic model.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsResult.per_fold" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">per_fold</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Metrics scored on each fold individually, keyed by fold label.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsResult.test" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">test</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Metrics scored on the test fold, if computed.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.MetricsResult.train_available" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">train_available</span> <span class="o">=</span> <span class="kc">None</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Metrics scored on the aggregate of non-test folds, if computed.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="proteingym.base.metrics.ScoreMode" class="doc doc-heading">
+            <code>ScoreMode</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="enum.StrEnum">StrEnum</span></code></p>
+
+
+
+        <p>A scoring mode for evaluating cross-validation splits.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ScoreMode</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A scoring mode for evaluating cross-validation splits.&quot;&quot;&quot;</span>
+
+    <span class="n">TEST</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score only the test fold.&quot;&quot;&quot;</span>
+
+    <span class="n">TRAIN_AVAILABLE</span> <span class="o">=</span> <span class="s2">&quot;train_available&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score all non-test folds in aggregate.&quot;&quot;&quot;</span>
+
+    <span class="n">PER_FOLD</span> <span class="o">=</span> <span class="s2">&quot;per_fold&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score each fold individually.&quot;&quot;&quot;</span>
+
+    <span class="n">FULL_DATASET</span> <span class="o">=</span> <span class="s2">&quot;full_dataset&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score against the full underlying dataset, ignoring splits.&quot;&quot;&quot;</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.ScoreMode.FULL_DATASET" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">FULL_DATASET</span> <span class="o">=</span> <span class="s1">&#39;full_dataset&#39;</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Score against the full underlying dataset, ignoring splits.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.ScoreMode.PER_FOLD" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">PER_FOLD</span> <span class="o">=</span> <span class="s1">&#39;per_fold&#39;</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Score each fold individually.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.ScoreMode.TEST" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">TEST</span> <span class="o">=</span> <span class="s1">&#39;test&#39;</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Score only the test fold.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.ScoreMode.TRAIN_AVAILABLE" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">TRAIN_AVAILABLE</span> <span class="o">=</span> <span class="s1">&#39;train_available&#39;</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Score all non-test folds in aggregate.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="proteingym.base.metrics.SubsetScoringContext" class="doc doc-heading">
+            <code>SubsetScoringContext</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="DatasetScoringContext (proteingym.base.metrics.DatasetScoringContext)" href="#proteingym.base.metrics.DatasetScoringContext">DatasetScoringContext</a></code></p>
+
+
+
+        <p>A validated request to score predictions against cross-validation Subsets.</p>
+<p>In addition to the base fields, this carries the split strategy and fold(s) to
+evaluate.</p>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SubsetScoringContext</span><span class="p">(</span><span class="n">DatasetScoringContext</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A validated request to score predictions against cross-validation Subsets.</span>
+
+<span class="sd">    In addition to the base fields, this carries the split strategy and fold(s) to</span>
+<span class="sd">    evaluate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ground_truth</span><span class="p">:</span> <span class="n">Subsets</span>  <span class="c1"># pyrefly: ignore[bad-override]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ground truth Subsets object with cross-validation slices.&quot;&quot;&quot;</span>
+
+    <span class="n">split</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The split strategy to evaluate.&quot;&quot;&quot;</span>
+
+    <span class="n">fold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The fold index (or indices) to evaluate.</span>
+
+<span class="sd">    A single int scores one fold; a list scores multiple folds in aggregate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SubsetScoringContext&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate matching assay variables.&quot;&quot;&quot;</span>
+        <span class="n">gt_variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">assay_variables</span>
+        <span class="k">if</span> <span class="n">gt_variables</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="o">.</span><span class="n">assay_variables</span><span class="p">:</span>
+            <span class="n">gt_var_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">gt_variables</span><span class="p">]</span>
+            <span class="n">pred_var_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="o">.</span><span class="n">assay_variables</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Ground truth and predicted datasets must have identical &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;assay_variables. Ground truth has: </span><span class="si">{</span><span class="n">gt_var_names</span><span class="si">}</span><span class="s2">, predicted has: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pred_var_names</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">for_fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;SubsetScoringContext&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a copy of this context targeting different fold(s).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fold&quot;</span><span class="p">:</span> <span class="n">fold</span><span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">for_full_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DatasetScoringContext&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a context scoring the full underlying dataset, ignoring splits.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DatasetScoringContext</span><span class="p">(</span>
+            <span class="n">ground_truth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="n">predicted</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="p">,</span>
+            <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scoring_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Aligned ground truth and predicted values for the target fold(s).&quot;&quot;&quot;</span>
+        <span class="n">fold_indices</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fold</span>
+        <span class="n">split_slices</span> <span class="o">=</span> <span class="n">_split_slices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">)</span>
+        <span class="n">gt_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pred_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fold_idx</span> <span class="ow">in</span> <span class="n">fold_indices</span><span class="p">:</span>
+            <span class="n">dataset_slice</span> <span class="o">=</span> <span class="n">split_slices</span><span class="p">[</span><span class="n">fold_idx</span><span class="p">]</span>
+            <span class="n">gt_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="n">dataset_slice</span><span class="p">]</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">target_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">pred_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="p">[</span><span class="n">dataset_slice</span><span class="p">]</span><span class="o">.</span><span class="n">to_df</span><span class="p">(</span><span class="n">target_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">gt_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">gt_dfs</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;vertical_relaxed&quot;</span><span class="p">)</span>
+        <span class="n">pred_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">pred_dfs</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;vertical_relaxed&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_align</span><span class="p">(</span><span class="n">gt_df</span><span class="p">,</span> <span class="n">pred_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">assay_variables</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">top_k</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The top-k threshold from QuantileSplitter metadata, if available.</span>
+
+<span class="sd">        QuantileSplitter tags test slices with the number of high-property variants</span>
+<span class="sd">        they contain. This value is used by metric_recovery to compute the recovery</span>
+<span class="sd">        metric (fraction of true top-k variants that appear in predicted top-k).</span>
+
+<span class="sd">        Returns None when:</span>
+
+<span class="sd">        - Context targets multiple folds or no specific fold</span>
+<span class="sd">        - Split name doesn&#39;t exist in the Subsets</span>
+<span class="sd">        - Fold index is out of range</span>
+<span class="sd">        - The slice has no metadata or no &quot;top_k&quot; key (e.g., training folds,</span>
+<span class="sd">          non-QuantileSplitter splits)</span>
+
+<span class="sd">        This is expected behavior. Most slices won&#39;t have top_k metadata, and that&#39;s</span>
+<span class="sd">        fine—metric_recovery simply returns None for those cases.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The top-k threshold as an integer, or None if unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Validate split exists</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">slices</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">slices</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Validate fold index is in range</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fold</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">slices</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">dataset_slice</span> <span class="o">=</span> <span class="n">slices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">dataset_slice</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">top_k</span> <span class="o">=</span> <span class="n">dataset_slice</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;top_k&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">top_k</span><span class="p">)</span> <span class="k">if</span> <span class="n">top_k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.SubsetScoringContext.fold" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">fold</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The fold index (or indices) to evaluate.</p>
+<p>A single int scores one fold; a list scores multiple folds in aggregate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.SubsetScoringContext.ground_truth" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">ground_truth</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The ground truth Subsets object with cross-validation slices.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.SubsetScoringContext.scoring_df" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">scoring_df</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Aligned ground truth and predicted values for the target fold(s).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.SubsetScoringContext.split" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">split</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The split strategy to evaluate.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="proteingym.base.metrics.SubsetScoringContext.top_k" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">top_k</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>The top-k threshold from QuantileSplitter metadata, if available.</p>
+<p>QuantileSplitter tags test slices with the number of high-property variants
+they contain. This value is used by metric_recovery to compute the recovery
+metric (fraction of true top-k variants that appear in predicted top-k).</p>
+<p>Returns None when:</p>
+<ul>
+<li>Context targets multiple folds or no specific fold</li>
+<li>Split name doesn't exist in the Subsets</li>
+<li>Fold index is out of range</li>
+<li>The slice has no metadata or no "top_k" key (e.g., training folds,
+  non-QuantileSplitter splits)</li>
+</ul>
+<p>This is expected behavior. Most slices won't have top_k metadata, and that's
+fine—metric_recovery simply returns None for those cases.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The top-k threshold as an integer, or None if unavailable.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="proteingym.base.metrics.SubsetScoringContext.for_fold" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">for_fold</span><span class="p">(</span><span class="n">fold</span><span class="p">)</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return a copy of this context targeting different fold(s).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">for_fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;SubsetScoringContext&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a copy of this context targeting different fold(s).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fold&quot;</span><span class="p">:</span> <span class="n">fold</span><span class="p">})</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="proteingym.base.metrics.SubsetScoringContext.for_full_dataset" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">for_full_dataset</span><span class="p">()</span></code>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Return a context scoring the full underlying dataset, ignoring splits.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">for_full_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DatasetScoringContext&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a context scoring the full underlying dataset, ignoring splits.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">DatasetScoringContext</span><span class="p">(</span>
+        <span class="n">ground_truth</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span>
+        <span class="n">predicted</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">predicted</span><span class="p">,</span>
+        <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="proteingym.base.metrics.calculate_metrics_by_mode" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">calculate_metrics_by_mode</span><span class="p">(</span><span class="n">selected_metrics</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">test_fold</span><span class="p">,</span> <span class="n">score_modes</span><span class="o">=</span><span class="p">(</span><span class="n">ScoreMode</span><span class="o">.</span><span class="n">TEST</span><span class="p">,</span> <span class="n">ScoreMode</span><span class="o">.</span><span class="n">TRAIN_AVAILABLE</span><span class="p">,</span> <span class="n">ScoreMode</span><span class="o">.</span><span class="n">PER_FOLD</span><span class="p">))</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate metrics in different scoring modes.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>selected_metrics</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of metric names to calculate (e.g., ["spearman"]).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>context</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="SubsetScoringContext (proteingym.base.metrics.SubsetScoringContext)" href="#proteingym.base.metrics.SubsetScoringContext">SubsetScoringContext</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The scoring context. Must be a SubsetScoringContext whose split
+names the cross-validation strategy to evaluate. The context's fold is
+ignored; the fold to score is determined per mode.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>test_fold</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The fold index designated as the test fold.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>score_modes</code>
+            </td>
+            <td>
+                  <code><span title="collections.abc.Sequence">Sequence</span>[<a class="autorefs autorefs-internal" title="ScoreMode (proteingym.base.metrics.ScoreMode)" href="#proteingym.base.metrics.ScoreMode">ScoreMode</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Sequence of scoring modes (see ScoreMode). Defaults to
+(ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD).</p>
+              </div>
+            </td>
+            <td>
+                  <code>(<a class="autorefs autorefs-internal" title="TEST = 'test'
+
+  
+      class-attribute
+      instance-attribute
+   (proteingym.base.metrics.ScoreMode.TEST)" href="#proteingym.base.metrics.ScoreMode.TEST">TEST</a>, <a class="autorefs autorefs-internal" title="TRAIN_AVAILABLE = 'train_available'
+
+  
+      class-attribute
+      instance-attribute
+   (proteingym.base.metrics.ScoreMode.TRAIN_AVAILABLE)" href="#proteingym.base.metrics.ScoreMode.TRAIN_AVAILABLE">TRAIN_AVAILABLE</a>, <a class="autorefs autorefs-internal" title="PER_FOLD = 'per_fold'
+
+  
+      class-attribute
+      instance-attribute
+   (proteingym.base.metrics.ScoreMode.PER_FOLD)" href="#proteingym.base.metrics.ScoreMode.PER_FOLD">PER_FOLD</a>)</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="MetricsResult (proteingym.base.metrics.MetricsResult)" href="#proteingym.base.metrics.MetricsResult">MetricsResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A MetricsResult with the computed modes populated and <code>metadata</code> describing</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="MetricsResult (proteingym.base.metrics.MetricsResult)" href="#proteingym.base.metrics.MetricsResult">MetricsResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the test fold, the available train folds, and the total fold count. When</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="MetricsResult (proteingym.base.metrics.MetricsResult)" href="#proteingym.base.metrics.MetricsResult">MetricsResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>full_dataset mode is used, it scores against the complete dataset ignoring all</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="MetricsResult (proteingym.base.metrics.MetricsResult)" href="#proteingym.base.metrics.MetricsResult">MetricsResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>splits; the value is identical across folds since it evaluates the same data.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">calculate_metrics_by_mode</span><span class="p">(</span>
+    <span class="n">selected_metrics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">SubsetScoringContext</span><span class="p">,</span>
+    <span class="n">test_fold</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">score_modes</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">ScoreMode</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ScoreMode</span><span class="o">.</span><span class="n">TEST</span><span class="p">,</span>
+        <span class="n">ScoreMode</span><span class="o">.</span><span class="n">TRAIN_AVAILABLE</span><span class="p">,</span>
+        <span class="n">ScoreMode</span><span class="o">.</span><span class="n">PER_FOLD</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricsResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate metrics in different scoring modes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        selected_metrics: List of metric names to calculate (e.g., [&quot;spearman&quot;]).</span>
+<span class="sd">        context: The scoring context. Must be a SubsetScoringContext whose split</span>
+<span class="sd">            names the cross-validation strategy to evaluate. The context&#39;s fold is</span>
+<span class="sd">            ignored; the fold to score is determined per mode.</span>
+<span class="sd">        test_fold: The fold index designated as the test fold.</span>
+<span class="sd">        score_modes: Sequence of scoring modes (see ScoreMode). Defaults to</span>
+<span class="sd">            (ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A MetricsResult with the computed modes populated and ``metadata`` describing</span>
+<span class="sd">        the test fold, the available train folds, and the total fold count. When</span>
+<span class="sd">        full_dataset mode is used, it scores against the complete dataset ignoring all</span>
+<span class="sd">        splits; the value is identical across folds since it evaluates the same data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">all_fold_indices</span> <span class="o">=</span> <span class="n">get_fold_indices</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ground_truth</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">split</span><span class="p">)</span>
+    <span class="n">train_folds</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">all_fold_indices</span> <span class="k">if</span> <span class="n">f</span> <span class="o">!=</span> <span class="n">test_fold</span><span class="p">]</span>
+
+    <span class="n">test</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">train_available</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">per_fold</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">full_dataset</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">ScoreMode</span><span class="o">.</span><span class="n">TEST</span> <span class="ow">in</span> <span class="n">score_modes</span><span class="p">:</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">calculate_selected_metrics</span><span class="p">(</span><span class="n">selected_metrics</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">for_fold</span><span class="p">(</span><span class="n">test_fold</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">ScoreMode</span><span class="o">.</span><span class="n">TRAIN_AVAILABLE</span> <span class="ow">in</span> <span class="n">score_modes</span><span class="p">:</span>
+        <span class="n">train_available</span> <span class="o">=</span> <span class="n">calculate_selected_metrics</span><span class="p">(</span>
+            <span class="n">selected_metrics</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">for_fold</span><span class="p">(</span><span class="n">train_folds</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ScoreMode</span><span class="o">.</span><span class="n">PER_FOLD</span> <span class="ow">in</span> <span class="n">score_modes</span><span class="p">:</span>
+        <span class="n">per_fold</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;fold_</span><span class="si">{</span><span class="n">fold_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">calculate_selected_metrics</span><span class="p">(</span>
+                <span class="n">selected_metrics</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">for_fold</span><span class="p">(</span><span class="n">fold_idx</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">fold_idx</span> <span class="ow">in</span> <span class="n">all_fold_indices</span>
+        <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">ScoreMode</span><span class="o">.</span><span class="n">FULL_DATASET</span> <span class="ow">in</span> <span class="n">score_modes</span><span class="p">:</span>
+        <span class="n">full_dataset</span> <span class="o">=</span> <span class="n">calculate_selected_metrics</span><span class="p">(</span>
+            <span class="n">selected_metrics</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">for_full_dataset</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MetricsResult</span><span class="p">(</span>
+        <span class="n">test</span><span class="o">=</span><span class="n">test</span><span class="p">,</span>
+        <span class="n">train_available</span><span class="o">=</span><span class="n">train_available</span><span class="p">,</span>
+        <span class="n">per_fold</span><span class="o">=</span><span class="n">per_fold</span><span class="p">,</span>
+        <span class="n">full_dataset</span><span class="o">=</span><span class="n">full_dataset</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">MetricsProvenance</span><span class="p">(</span>
+            <span class="n">test_folds</span><span class="o">=</span><span class="p">[</span><span class="n">test_fold</span><span class="p">],</span>
+            <span class="n">train_available_folds</span><span class="o">=</span><span class="n">train_folds</span><span class="p">,</span>
+            <span class="n">total_folds</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">all_fold_indices</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="proteingym.base.metrics.calculate_selected_metrics" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">calculate_selected_metrics</span><span class="p">(</span><span class="n">selected_metrics</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate selected metrics for a scoring context.</p>
+<p>This function dynamically discovers all functions with the <code>metric_</code> prefix in
+this module and executes the requested ones. Each metric function receives the
+scoring context.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">calculate_selected_metrics</span><span class="p">(</span>
+    <span class="n">selected_metrics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">DatasetScoringContext</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate selected metrics for a scoring context.</span>
+
+<span class="sd">    This function dynamically discovers all functions with the ``metric_`` prefix in</span>
+<span class="sd">    this module and executes the requested ones. Each metric function receives the</span>
+<span class="sd">    scoring context.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">metric_functions</span> <span class="o">=</span> <span class="n">_discover_metric_functions</span><span class="p">()</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">metric_name</span> <span class="ow">in</span> <span class="n">selected_metrics</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">metric_name</span> <span class="ow">in</span> <span class="n">metric_functions</span><span class="p">:</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">metric_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">metric_functions</span><span class="p">[</span><span class="n">metric_name</span><span class="p">](</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Metric &#39;</span><span class="si">{</span><span class="n">metric_name</span><span class="si">}</span><span class="s2">&#39; not found in available metrics&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="proteingym.base.metrics.get_fold_indices" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_fold_indices</span><span class="p">(</span><span class="n">subsets</span><span class="p">,</span> <span class="n">split</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get all fold indices for a given split strategy.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_fold_indices</span><span class="p">(</span><span class="n">subsets</span><span class="p">:</span> <span class="n">Subsets</span><span class="p">,</span> <span class="n">split</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get all fold indices for a given split strategy.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_split_slices</span><span class="p">(</span><span class="n">subsets</span><span class="p">,</span> <span class="n">split</span><span class="p">))))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="proteingym.base.metrics.metric_recovery" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">metric_recovery</span><span class="p">(</span><span class="n">context</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the recovery metric: fraction of top-k variants correctly identified.</p>
+<p>The recovery metric measures what fraction of the true top-k highest-value
+variants (from ground truth) are also ranked in the top-k of predictions. This
+metric is useful for evaluating whether a model successfully identifies the best
+candidates, which is often more important than precise value prediction.</p>
+<p>The top-k threshold is retrieved from the dataset slice metadata. If the metadata
+does not contain a "top_k" value, or if the context scores a plain Dataset (not
+Subsets), the metric returns None.</p>
+<p>Note on None/NaN values: It is expected and correct for this metric to return
+None in certain scenarios, particularly when evaluating training data. In the
+standard workflow, top-k variants are typically only present in test folds (where
+metadata includes "top_k"), while training folds do not have this metadata. This
+is the intended behavior and None values should be preserved in metric outputs
+(serialized as <code>null</code> in JSON).</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
+<span class="normal">353</span>
+<span class="normal">354</span>
+<span class="normal">355</span>
+<span class="normal">356</span>
+<span class="normal">357</span>
+<span class="normal">358</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">metric_recovery</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">DatasetScoringContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the recovery metric: fraction of top-k variants correctly identified.</span>
+
+<span class="sd">    The recovery metric measures what fraction of the true top-k highest-value</span>
+<span class="sd">    variants (from ground truth) are also ranked in the top-k of predictions. This</span>
+<span class="sd">    metric is useful for evaluating whether a model successfully identifies the best</span>
+<span class="sd">    candidates, which is often more important than precise value prediction.</span>
+
+<span class="sd">    The top-k threshold is retrieved from the dataset slice metadata. If the metadata</span>
+<span class="sd">    does not contain a &quot;top_k&quot; value, or if the context scores a plain Dataset (not</span>
+<span class="sd">    Subsets), the metric returns None.</span>
+
+<span class="sd">    Note on None/NaN values: It is expected and correct for this metric to return</span>
+<span class="sd">    None in certain scenarios, particularly when evaluating training data. In the</span>
+<span class="sd">    standard workflow, top-k variants are typically only present in test folds (where</span>
+<span class="sd">    metadata includes &quot;top_k&quot;), while training folds do not have this metadata. This</span>
+<span class="sd">    is the intended behavior and None values should be preserved in metric outputs</span>
+<span class="sd">    (serialized as ``null`` in JSON).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">top_k</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">top_k</span>
+    <span class="k">if</span> <span class="n">top_k</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">scoring_df</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">scoring_df</span>
+    <span class="n">gt_values</span> <span class="o">=</span> <span class="n">scoring_df</span><span class="p">[</span><span class="n">context</span><span class="o">.</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">pred_values</span> <span class="o">=</span> <span class="n">scoring_df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+
+    <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gt_values</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">top_k</span> <span class="o">&gt;</span> <span class="n">n_samples</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;top_k (</span><span class="si">{</span><span class="n">top_k</span><span class="si">}</span><span class="s2">) is larger than the number of samples (</span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">).&quot;</span>
+        <span class="p">)</span>
+    <span class="n">effective_k</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">top_k</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">effective_k</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">top_k_gt_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">gt_values</span><span class="p">)[</span><span class="o">-</span><span class="n">effective_k</span><span class="p">:])</span>
+    <span class="n">top_k_pred_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">pred_values</span><span class="p">)[</span><span class="o">-</span><span class="n">effective_k</span><span class="p">:])</span>
+
+    <span class="n">overlap</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">top_k_gt_indices</span> <span class="o">&amp;</span> <span class="n">top_k_pred_indices</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">overlap</span> <span class="o">/</span> <span class="n">effective_k</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="proteingym.base.metrics.metric_spearman" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">metric_spearman</span><span class="p">(</span><span class="n">context</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the Spearman rank correlation between ground truth and predictions.</p>
+<p>The Spearman correlation assesses how well the relationship between ground truth
+and predicted values can be described using a monotonic function. It measures the
+strength and direction of association between the ranked versions of the values.</p>
+<p>This metric is rank-based and robust to outliers, making it suitable for
+evaluating model predictions when the absolute scale matters less than the
+relative ordering of samples.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/proteingym/base/metrics.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">metric_spearman</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">DatasetScoringContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the Spearman rank correlation between ground truth and predictions.</span>
+
+<span class="sd">    The Spearman correlation assesses how well the relationship between ground truth</span>
+<span class="sd">    and predicted values can be described using a monotonic function. It measures the</span>
+<span class="sd">    strength and direction of association between the ranked versions of the values.</span>
+
+<span class="sd">    This metric is rank-based and robust to outliers, making it suitable for</span>
+<span class="sd">    evaluating model predictions when the absolute scale matters less than the</span>
+<span class="sd">    relative ordering of samples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scoring_df</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">scoring_df</span>
+    <span class="n">gt_values</span> <span class="o">=</span> <span class="n">scoring_df</span><span class="p">[</span><span class="n">context</span><span class="o">.</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">pred_values</span> <span class="o">=</span> <span class="n">scoring_df</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">spearman_corr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">spearmanr</span><span class="p">(</span><span class="n">gt_values</span><span class="p">,</span> <span class="n">pred_values</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">spearman_corr</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": [], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

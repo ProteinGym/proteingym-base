@@ -1,0 +1,1988 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../manifest/">
+      
+      
+        <link rel="next" href="../decisions/0001-record-architecture-decisions/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../images/proteingymlogo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Metrics - ProteinGym Base Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#metrics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="ProteinGym Base Documentation" class="md-header__button md-logo" aria-label="ProteinGym Base Documentation" data-md-component="logo">
+      
+  <img src="../images/proteingymlogo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ProteinGym Base Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Metrics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="ProteinGym Base Documentation" class="md-nav__button md-logo" aria-label="ProteinGym Base Documentation" data-md-component="logo">
+      
+  <img src="../images/proteingymlogo.png" alt="logo">
+
+    </a>
+    ProteinGym Base Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scoring-a-plain-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoring a plain dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoring-a-single-fold-of-a-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoring a single fold of a split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoring-across-all-folds-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoring across all folds at once
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calculating-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculating metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-none-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handling None results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#designing-a-new-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Designing a new metric
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Designing a new metric">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#signature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signature
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guidelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ADRs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/0002-user-facing-and-programmaticlly-used-manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. User-facing and programmatically-used manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/0003-pydantic-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. Pydantic usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/0004-dataset-archive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Dataset archive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/0005-dataset-list/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Dataset list
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/0006-model-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Model validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/0007-dataset-splits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    7. Dataset splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/0008-single-top-level-reference-sequence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    8. Single top-level reference sequence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../decisions/templates/template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/01_Introduction_to_PG2_Dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction to the ProteinGym dataset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/02_Creating_Manifests_and_Archives/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating Manifests and Archives
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/03_Loading_and_Accessing_Data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Loading and Accessing Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/04_Data_Access_for_ML/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Accessing Data for ML
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../notebooks/05_Creating_Dataset_Splits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating Dataset Splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Code Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    proteingym
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    proteingym
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1_1" id="__nav_6_1_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    base
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    base
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/assay/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    assay
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/data_generators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    data_generators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    dataset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/evaluate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    evaluate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/lookup_field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    lookup_field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/manifest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    manifest
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/msa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    msa
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/publication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    publication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/sequence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sequence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/splits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    splits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoapi/proteingym/base/transformers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    transformers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scoring-a-plain-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoring a plain dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoring-a-single-fold-of-a-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoring a single fold of a split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scoring-across-all-folds-at-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scoring across all folds at once
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calculating-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calculating metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-none-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handling None results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#designing-a-new-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Designing a new metric
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Designing a new metric">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#signature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Signature
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Guidelines
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="metrics">Metrics</h1>
+<p>Metrics quantify how well a model's predictions match the ground truth of a
+dataset. ProteinGym Base ships a small, extensible metrics framework that is
+used by the benchmark to score model predictions. This document describes how
+metrics work and how to design and add new ones.</p>
+<h2 id="overview">Overview</h2>
+<p>Metrics operate on a ground truth <code>Dataset</code> or <code>Subsets</code> object and a
+<code>predicted</code> <code>Dataset</code>. The framework uses <strong>dynamic discovery</strong>: any function in
+<code>proteingym.base.metrics</code> whose name starts with the <code>metric_</code> prefix is
+automatically discovered and made available for calculation. The part of the
+name after <code>metric_</code> becomes the metric's name.</p>
+<p>For example, a function named <code>metric_spearman</code> is exposed as the metric
+<code>"spearman"</code>, and can be requested via the <code>selected_metrics</code> argument.</p>
+<p>The following metrics are provided out of the box:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Function</th>
+<th>Range</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spearman</code></td>
+<td><code>metric_spearman</code></td>
+<td><code>-1.0</code>–<code>1.0</code></td>
+<td>Spearman rank correlation between ground truth and predicted values.</td>
+</tr>
+<tr>
+<td><code>recovery</code></td>
+<td><code>metric_recovery</code></td>
+<td><code>0.0</code>–<code>1.0</code></td>
+<td>Fraction of the true top-k variants that appear in the predicted top-k.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="usage">Usage</h2>
+<p>You do not need the DVC benchmark pipeline to compute metrics. The metrics API
+can be used directly on any dataset archive and set of predictions, which is
+handy for quick local checks and exploration.</p>
+<p>The typical local workflow is:</p>
+<ol>
+<li>Load the ground truth dataset archive.</li>
+<li>Build a predictions <code>Dataset</code> from your model's scores using
+   <a class="autorefs autorefs-internal" title="predictions_delta(df, *, target, allow_extra_predictions=False)" href="../autoapi/proteingym/base/dataset/#proteingym.base.dataset.Dataset.predictions_delta"><code>Dataset.predictions_delta</code></a>,
+   which aligns predictions to the dataset's assay structure by sequence.</li>
+<li>Call <a class="autorefs autorefs-internal" title="calculate_selected_metrics(selected_metrics, context)" href="../autoapi/proteingym/base/metrics/#proteingym.base.metrics.calculate_selected_metrics"><code>calculate_selected_metrics</code></a>.</li>
+</ol>
+<h3 id="scoring-a-plain-dataset">Scoring a plain dataset</h3>
+<pre><code class="language-python">import polars as pl
+
+from proteingym.base import Dataset, calculate_selected_metrics
+
+# 1. Load the ground truth dataset archive.
+dataset = Dataset.from_path(&quot;my_dataset.pgdata&quot;)
+
+# 2. Wrap your model's predictions in a Dataset. The DataFrame needs a
+#    'sequence' column and a column named after the target being predicted.
+scores = pl.DataFrame(
+    {
+        &quot;sequence&quot;: [&quot;MKT...&quot;, &quot;MKV...&quot;, &quot;MRT...&quot;],
+        &quot;DMS_score&quot;: [0.12, -0.85, 1.03],
+    }
+)
+predictions = dataset.predictions_delta(scores, target=&quot;DMS_score&quot;)
+
+# 3. Calculate the metrics you care about.
+results = calculate_selected_metrics(
+    selected_metrics=[&quot;spearman&quot;],
+    ground_truth=dataset,
+    predicted=predictions,
+    target=&quot;DMS_score&quot;,
+)
+print(results)  # {&quot;spearman&quot;: 0.87}
+</code></pre>
+<h3 id="scoring-a-single-fold-of-a-split">Scoring a single fold of a split</h3>
+<p>If your dataset ships with cross-validation splits (a <code>.splits.pgdata</code>
+archive), load it as <code>Subsets</code> and pass <code>split</code> and <code>fold</code> to score a single
+fold:</p>
+<pre><code class="language-python">from proteingym.base import Subsets, calculate_selected_metrics
+
+subsets = Subsets.from_path(&quot;my_dataset.splits.pgdata&quot;)
+predictions = subsets.dataset.predictions_delta(scores, target=&quot;DMS_score&quot;)
+
+results = calculate_selected_metrics(
+    selected_metrics=[&quot;spearman&quot;, &quot;recovery&quot;],
+    ground_truth=subsets,
+    predicted=predictions,
+    target=&quot;DMS_score&quot;,
+    split=&quot;random&quot;,
+    fold=0,
+)
+</code></pre>
+<h3 id="scoring-across-all-folds-at-once">Scoring across all folds at once</h3>
+<p>To reproduce the benchmark's per-mode breakdown (test fold, aggregated training
+folds, and each fold individually) without the pipeline, use
+<a class="autorefs autorefs-internal" title="calculate_metrics_by_mode(selected_metrics, context, test_fold, score_modes=(ScoreMode.TEST, ScoreMode.TRAIN_AVAILABLE, ScoreMode.PER_FOLD))" href="../autoapi/proteingym/base/metrics/#proteingym.base.metrics.calculate_metrics_by_mode"><code>calculate_metrics_by_mode</code></a>:</p>
+<pre><code class="language-python">from proteingym.base import calculate_metrics_by_mode
+
+results = calculate_metrics_by_mode(
+    selected_metrics=[&quot;spearman&quot;, &quot;recovery&quot;],
+    ground_truth=subsets,
+    predicted=predictions,
+    target=&quot;DMS_score&quot;,
+    split=&quot;random&quot;,
+    test_fold=0,
+)
+# {
+#     &quot;test&quot;: {...},
+#     &quot;train_available&quot;: {...},
+#     &quot;per_fold&quot;: {&quot;fold_0&quot;: {...}, &quot;fold_1&quot;: {...}, ...},
+# }
+</code></pre>
+<h2 id="calculating-metrics">Calculating metrics</h2>
+<p>The public API exposes three entry points:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>calculate_selected_metrics</code></td>
+<td>Calculate a chosen set of metrics for a single <code>Dataset</code> or a single fold of a <code>Subsets</code> object.</td>
+</tr>
+<tr>
+<td><code>calculate_metrics_by_mode</code></td>
+<td>Calculate metrics across scoring modes (<code>test</code>, <code>train_available</code>, <code>per_fold</code>) of a <code>Subsets</code>.</td>
+</tr>
+<tr>
+<td><code>evaluate</code></td>
+<td>Load ground truth and prediction archives, calculate metrics, and write the results to a JSON file.</td>
+</tr>
+</tbody>
+</table>
+<p>A minimal example using <code>calculate_selected_metrics</code>:</p>
+<pre><code class="language-python">from proteingym.base import calculate_selected_metrics
+
+results = calculate_selected_metrics(
+    selected_metrics=[&quot;spearman&quot;],
+    ground_truth=dataset,
+    predicted=predictions,
+    target=&quot;DMS_score&quot;,
+)
+# {&quot;spearman&quot;: 0.87}
+</code></pre>
+<p>When scoring a <code>Subsets</code> object, <code>split</code> and <code>fold</code> must be provided to select
+the relevant cross-validation fold:</p>
+<pre><code class="language-python">results = calculate_selected_metrics(
+    selected_metrics=[&quot;spearman&quot;, &quot;recovery&quot;],
+    ground_truth=subsets,
+    predicted=predictions,
+    target=&quot;DMS_score&quot;,
+    split=&quot;random&quot;,
+    fold=0,
+)
+</code></pre>
+<h2 id="handling-none-results">Handling <code>None</code> results</h2>
+<p>A metric may return <code>None</code> when it cannot be computed for a given dataset slice.
+For example, <code>recovery</code> returns <code>None</code> when the dataset slice has no <code>top_k</code>
+metadata (typically the case for training folds). <code>None</code> values are preserved in
+the output and serialize to <code>null</code> in JSON. Metric functions should return
+<code>None</code> rather than raise when a metric is simply not applicable to the input.</p>
+<h2 id="designing-a-new-metric">Designing a new metric</h2>
+<p>To add a new metric, define a function in <code>proteingym.base.metrics</code> that follows
+the metric signature below. The function is automatically discovered by its
+<code>metric_</code> prefix; no registration is required.</p>
+<h3 id="signature">Signature</h3>
+<p>Every metric function must accept the following parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ground_truth</code></td>
+<td><code>Subsets \| Dataset</code></td>
+<td>The ground truth data.</td>
+</tr>
+<tr>
+<td><code>predicted</code></td>
+<td><code>Dataset</code></td>
+<td>The model predictions for the target.</td>
+</tr>
+<tr>
+<td><code>target</code></td>
+<td><code>str</code></td>
+<td>Name of the target variable to score (e.g. <code>"DMS_score"</code>).</td>
+</tr>
+<tr>
+<td><code>split</code></td>
+<td><code>str \| None</code></td>
+<td>Required for <code>Subsets</code>: the split strategy name (e.g. <code>"random"</code>).</td>
+</tr>
+<tr>
+<td><code>fold</code></td>
+<td><code>int \| list[int] \| None</code></td>
+<td>Required for <code>Subsets</code>: the fold index (or indices) within the split.</td>
+</tr>
+</tbody>
+</table>
+<p>It must return a <code>float</code>, or <code>None</code> when the metric is not applicable.</p>
+<h3 id="example">Example</h3>
+<p>The following metric computes the mean absolute error between the ground truth
+and predicted values:</p>
+<pre><code class="language-python">import numpy as np
+
+from proteingym.base.dataset import Dataset, Subsets
+from proteingym.base.metrics import prepare_and_validate_scoring_df
+
+
+def metric_mae(
+    ground_truth: Subsets | Dataset,
+    predicted: Dataset,
+    target: str,
+    split: str | None = None,
+    fold: int | list[int] | None = None,
+) -&gt; float:
+    &quot;&quot;&quot;Compute the mean absolute error between ground truth and predictions.&quot;&quot;&quot;
+    scoring_df = prepare_and_validate_scoring_df(
+        ground_truth, predicted, target, split, fold
+    )
+    gt_values = scoring_df[target].to_numpy()
+    pred_values = scoring_df[f&quot;{target}_pred&quot;].to_numpy()
+    return float(np.mean(np.abs(gt_values - pred_values)))
+</code></pre>
+<p>Once defined, the metric is available under the name <code>"mae"</code>:</p>
+<pre><code class="language-python">results = calculate_selected_metrics(
+    selected_metrics=[&quot;mae&quot;],
+    ground_truth=dataset,
+    predicted=predictions,
+    target=&quot;DMS_score&quot;,
+)
+# {&quot;mae&quot;: 0.12}
+</code></pre>
+<h3 id="guidelines">Guidelines</h3>
+<p>The following guidelines help keep metrics consistent and predictable:</p>
+<table>
+<thead>
+<tr>
+<th>Guideline</th>
+<th>Motivation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use <code>prepare_and_validate_scoring_df</code></td>
+<td>Aligns ground truth and predictions on sequence and assay variables, and validates complete prediction coverage.</td>
+</tr>
+<tr>
+<td>Read both <code>target</code> and <code>target_pred</code> columns</td>
+<td>The scoring dataframe stores predicted values under the <code>_pred</code> suffix.</td>
+</tr>
+<tr>
+<td>Return <code>None</code> when not applicable</td>
+<td>Signals "not measured" without raising; serializes to <code>null</code> in JSON.</td>
+</tr>
+<tr>
+<td>Prefix the function name with <code>metric_</code></td>
+<td>Required for automatic discovery.</td>
+</tr>
+<tr>
+<td>Keep the standard signature</td>
+<td>Enables the metric to be called uniformly by the orchestration functions.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
