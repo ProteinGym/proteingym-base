@@ -109,6 +109,13 @@ class Manifest(BaseModel):
     description: str | None = None
     """A brief description of the dataset."""
 
+    links: str | list | None = None
+    """Links to various references of the dataset to be displayed.
+    
+    Can be used to link e.g. lab websites, grant funders or
+    organizations associated with the work
+    """
+
     reference_sequence_name: str | None = None
     """Name of the sequence that is to be considered the reference for this dataset.
 
