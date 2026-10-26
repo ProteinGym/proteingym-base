@@ -4,18 +4,12 @@ This file contains documentation about contributing to this project.
 
 ## Develop locally
 
-After cloning the repository, you can start developing locally by installing the
-project with your environment using [`uv`](https://docs.astral.sh/uv/):
+After cloning the repository, install the project and its development
+dependencies with [`uv`](https://docs.astral.sh/uv/), which creates `.venv/`:
 
 ```shell
-$ source .venv/bin/activate  # Load your virtual environment
-$ uv sync
-```
-
-To install all optional dependencies, run:
-
-```shell
-$ uv sync --all-extras
+$ uv sync --all-extras --dev
+$ source .venv/bin/activate  # optional; otherwise prefix commands with `uv run`
 ```
 
 ### Pre-commit hooks
@@ -34,11 +28,38 @@ To run the unit tests, use the following command:
 $ uv run pytest
 ```
 
-To run the static tests, run:
+This also runs the `>>>` examples in `README.md` and in docstrings under `src/`
+as doctests, and enforces 80% coverage.
+
+CI ([ci.yaml](.github/workflows/ci.yaml)) additionally runs:
+
+```shell
+$ uv run ruff check src tests
+$ uv run ruff format --check src tests
+$ uv run pyrefly check
+$ find docs/notebooks/*.ipynb -maxdepth 1 -type f | xargs -L1 uv run jupyter nbconvert --to notebook --execute
+```
+
+To run the pre-commit hooks on all files, run:
 
 ```shell
 $ pre-commit run --all-files
 ```
+
+### Documentation
+
+The documentation site is built with [mkdocs](https://www.mkdocs.org/) from
+`docs/` (see [mkdocs.yml](mkdocs.yml)) and deployed to GitHub Pages on every push
+to `main` ([pages.yaml](.github/workflows/pages.yaml)); `README.md` is copied to
+the site's home page (locally, `docs/index.md` is a placeholder). Preview it
+locally with:
+
+```shell
+$ uv run mkdocs serve
+```
+
+Code examples in `docs/*.md` are not tested, so check them by hand when you
+change the API they use.
 
 ## How to release
 
@@ -46,7 +67,7 @@ This section describes how to release the package in this project.
 
 ### Prerequisites
 
-* Push and merge rights for this repo, 
+* Push and merge rights for this repo,
   [proteingym-base](https://github.com/ProteinGym/proteingym-base),
   also referred to as the *upstream*.
 * A UNIX system that has:
@@ -58,7 +79,7 @@ We use hatch to [version](https://hatch.pypa.io/latest/version/) the project.
 Before releasing, you decide which semantic version segment you want to
 release, like:
 
-| Segement | New version | 
+| Segment  | New version | 
 | -------- | ----------- |
 | release  | 1.0.0       |
 | major    | 2.0.0       |
