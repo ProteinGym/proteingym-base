@@ -22,3 +22,5 @@ coverage.*
 /example_data/neime_2019_python_example.toml
 /example_data/NEIME_2019.pgdata
 /example_data/neime_2019_complete.toml
+/example_data/NEIME_2019.splits.pgdata
+/docs/notebooks/*.pgdata

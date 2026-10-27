@@ -143,13 +143,15 @@ the protein data types.
 | `name`                    | `string`              | Yes          | N/A         | The name of the dataset.                                                                                                                                                                                                                                                                                                 |
 | `description`             | `string \| None`      | No           | `None`      | A brief description of the dataset.                                                                                                                                                                                                                                                                                      |
 | `reference_sequence_name` | `string \| None`      | No           | `None`      | The name of the sequence considered to be the main reference sequence.                                                                                                                                                                                                                                                   |
-| `assay_variables`         | `dict[str, str]`      | No           | Empty dict  | The variables for the assays defined in the dataset. Can be an assay condition or other variables of interest.                                                                                                                                                                                                           |
-| `assay_targets`           | `dict[str, str]`      | No           | Empty dict  | The targets for the assays defined in the dataset. Can be binding affinity, stability, or other targets of interest.                                                                                                                                                                                                     |
+| `assay_variables`         | `list[Field]`         | No           | Empty list  | The variables for the assays defined in the dataset. Can be an assay condition or other variables of interest.                                                                                                                                                                                                           |
+| `assay_targets`           | `list[Field]`         | No           | Empty list  | The targets for the assays defined in the dataset. Can be binding affinity, stability, or other targets of interest.                                                                                                                                                                                                     |
 | `assays`                  | `list[map[str, str]]` | No           | Empty list  | A list of assays included in the dataset.                                                                                                                                                                                                                                                                                |
+| `assays_raw`              | `list[map[str, str]]` | No           | Empty list  | Raw assay data the assays are derived from.                                                                                                                                                                                                                                                                              |
 | `sequences`               | `list[map[str, str]]` | No           | Empty list  | The sequences included in the dataset.                                                                                                                                                                                                                                                                                   |
 | `structures`              | `list[map[str, str]]` | No           | Empty list  | The structures included in the dataset.                                                                                                                                                                                                                                                                                  |
 | `msas`                    | `list[map[str, str]]` | No           | Empty list  | The multiple sequence alignments included in the dataset.                                                                                                                                                                                                                                                                |
 | `msa_weights`             | `list[map[str, str]]` | No           | Empty list  | The MSA weights included in the dataset.                                                                                                                                                                                                                                                                                 |
+| `publication`             | `map[str, str]`       | No           | `None`      | The publication the data comes from. Give a `doi`; `title`, `author`, `journal`, `volume`, `number`, `year` and `pages` are looked up from it when not set.                                                                                                                                                               |
 
 ### Assay Variables
 
@@ -161,6 +163,7 @@ The assay variables section contains a list of assay variables defined in the da
 | `description` | `string \| None`                      | No           | `None`      | A brief description.       |
 | `unit`        | `string \| None`                      | No           | `None`      | The unit of measurement.   |
 | `value`       | `bool \| int \| float \| str \| None` | No           | `None`      | The value of the variable. |
+| `encoding`    | `string \| None`                      | No           | `None`      | `"numerical"` or `"categorical"`. |
 
 ### Assay Targets
 
@@ -179,18 +182,19 @@ The assays section contains a list of assays included in the dataset.
 
 | **Field**                      | **Type**         | **Required** | **Default**  | **Description**                                                                                           |
 |--------------------------------|------------------|--------------|--------------|-----------------------------------------------------------------------------------------------------------|
-| `name`                         | `string`         | No           | `None`       | The name of the assay.                                                                                    |
+| `name`                         | `string`         | Yes          | N/A          | The name of the assay.                                                                                    |
 | `path`                         | `string`         | Yes          | N/A          | The path to the assay data file. Supported extensions: `.csv`.                                            |
-| `targets`                      | `dict[str, str]` | Yes          | N/A          | The map of target names given in manifest to feature names in the assay.                                  |
+| `targets`                      | `list[Field]`    | No           | Empty list   | Targets measured in the assay. Each `name` must be defined in `assay_targets`; `alias` is the column name in the file. |
 | `non_targets`                  | `list[Field]`    | No           | Empty list   | List of non-target fields that are included but not prediction targets. E.g., predefined CV split allocations |
-| `sequence_alias`               | `string`         | No           | `"sequence"` | The name of the column with sequences in the provided data.                                               |
-| `sequence_alphabet`            | `string`         | Yes          | `"AA"`       | The alphabet of the sequence ("DNA", "RNA", or "AA").                                                     |
-| `variables`                    | `dict[str, str]` | No           | Empty dict   | The variables of the assay.                                                                               |
-| `readout`                      | `string \| None` | No           | `None`       | The readout method used in the assay.                                                                     |
-| `library_construction_method`  | `string \| None` | No           | `None`       | The method used to construct the protein library.                                                         |
+| `sequence_alias`               | `string \| None` | No           | `None`       | The name of the column with sequences in the provided data, if it is not `sequence`.                      |
+| `sequence_alphabet`            | `string`         | No           | `"Undefined"`| The alphabet of the sequence (`"DNA"`, `"RNA"` or `"AA"`).                                                 |
+| `variables`                    | `dict[str, bool \| int \| float \| str]` | No | Empty dict | Values of the `assay_variables` for this assay.                                                  |
+| `readout`                      | `string \| None` | No           | `None`       | The readout method: `rna_sequencing`, `dna_sequencing`, `fluorescence` or `product`.                      |
+| `library_construction_method`  | `string \| None` | No           | `None`       | `random_mutagenesis`, `site_saturated_mutagenesis`, `discrete` or `shuffling`.                            |
 | `growth_coupled`               | `bool \| None`   | No           | `None`       | Whether fitness measurement is coupled to cell growth.                                                    |
-| `transformation`               | `string \| None` | No           | `None`       | The transformation applied to the assay data.                                                             |
-| `target_phenotype`             | `string \| None` | No           | `None`       | The property the assay attempts to capture.                                                               |
+| `transformation`               | `string \| None` | No           | `None`       | The transformation applied to the assay data: `none`, `non_parametric` or `fit`.                          |
+| `target_phenotype`             | `string \| None` | No           | `None`       | `binding`, `activity`, `abundance`, `expression`, `stability` or `other`.                                 |
+| `has_uncertainty`              | `bool \| None`   | No           | `None`       | Whether the assay reports measurement uncertainty.                                                        |
 | `number_of_biological_replicates`         | `int \| None`    | No           | `None`       | The number of biological replicates performed in the assay.                                               |
 | `number_of_variants`           | `int \| None`    | No           | `None`       | The number of unique variants (sequences) in the assay. Computed at manifest construction time.           |
 
@@ -207,8 +211,9 @@ This would be represented in the manifest as:
 
 ``` toml
 [[assays]]
+name = "assay"
 path = "path/to/assay.csv"
-sequence = "mutated_sequence"
+sequence_alias = "mutated_sequence"
 
 [[ assays.targets ]]
 name = "DMS Score"
@@ -227,7 +232,8 @@ be linked to an assay.
 
 | **Field**     | **Type**         | **Required** | **Default** | **Description**                                                |
 |---------------|------------------|--------------|-------------|----------------------------------------------------------------|
-| `name`        | `string`         | Yes          | `None`      | The name of the assay the raw data belongs to.                 |
+| `name`        | `string`         | Yes          | N/A         | The name of the assay the raw data belongs to.                 |
+| `fields`      | `list[Field]`    | Yes          | N/A         | At least one field describing the columns of the file.         |
 | `path`        | `string`         | Yes          | N/A         | The path to the assay data file. Supported extensions: `.csv`. |
 | `description` | `string \| None` | No           | `None`      | A brief description.                                           |
 
@@ -251,7 +257,12 @@ The sequences section contains a list of sequences included in the dataset.
 |------------|------------------|--------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `path`     | `string`         | Yes          | N/A         | The path to the sequence data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.fasta`, `.fastq`. |
 | `alphabet` | `string`         | Yes          | N/A         | The alphabet of the sequence (e.g., "DNA", "RNA", "AA").                                                                                                            |
-| `type`     | `string` \| None | No           | None        | The type of the sequence (e.g., "wild_type", "starting_sequence", "engineered_sequence").                                                                           |
+| `type`     | `string` \| None | No           | None        | `wild_type`, `starting_sequence`, `engineered_sequence`, `control_sequence` or `standard_sequence`.                                                                 |
+| `uniprot_id` | `string \| None` | No         | None        | UniProt accession.                                                                                                                                                  |
+| `pfam_ids` | `list[string] \| None` | No     | None        | Pfam family identifiers.                                                                                                                                            |
+| `taxon_root` | `string \| None` | No         | None        | Taxonomic root of the organism.                                                                                                                                     |
+| `molecule_name` | `string \| None` | No      | None        | Name of the molecule.                                                                                                                                               |
+| `organism` | `string \| None` | No           | None        | Source organism.                                                                                                                                                    |
 
 ### Structures
 
@@ -260,6 +271,9 @@ The structures section contains a list of structures included in the dataset.
 | **Field** | **Type** | **Required** | **Default** | **Description**                                                                                                                                                           |
 |-----------|----------|--------------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `path`    | `string` | Yes          | N/A         | The path to the structure data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.pdb`, `.cif`, `.bcif`. |
+| `name`        | `string \| None` | No | `None` | Name of the structure. |
+| `description` | `string \| None` | No | `None` | A brief description. |
+| `metadata`    | `map[str, str]`  | No | Empty map | Free-form metadata. |
 
 ### MSAs
 
@@ -268,13 +282,16 @@ The MSAs section contains a list of multiple sequence alignments included in the
 | **Field**                 | **Type**        | **Required** | **Default** | **Description**                                                                                                                                            |
 |---------------------------|-----------------|--------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `path`                    | `string`        | Yes          | N/A         | The path to the MSA data file or directory. In case of directories, all files within the directory will be included. Supported extensions: `.a3m`, `.msa`. |
-| `format`                  | `string`        | No           | `"fasta"`   | The format of the MSA data. Supported formats: `"fasta"`                                                                                                   |
+| `name`                    | `string \| None`| No           | `None`      | Name of the MSA; referenced by `msa_weights`.                                                                                                              |
+| `description`             | `string \| None`| No           | `None`      | A brief description.                                                                                                                                       |
 | `neff_per_l`              | `float \| None` | No           | `None`      | The number of effective sequences normalized by the length of the alignment.                                                                               |
 | `bit_score`               | `float \| None` | No           | `None`      | The bit score threshold for including sequences in the MSA.                                                                                                |
 | `theta`                   | `float \| None` | No           | `None`      | The sequence identity threshold for weighting sequences in the MSA.                                                                                        |
 | `reference_sequence_name` | `string \| None`| No           | `None`      | The reference sequence name in the MSA.                                                                                                                    |
 | `sequence_start`          | `int \| None`   | No           | `None`      | The start position of the sequence in the MSA.                                                                                                             |
+| `sequence_end`            | `int \| None`   | No           | `None`      | The end position of the sequence in the MSA.                                                                                                               |
 | `format`                  | `string`        | No           | `"a3m"`     | The format of the MSA data. Supported formats: `"a3m"`                                                                                                     |
+| `metadata`                | `map[str, str]` | No           | Empty map   | Free-form metadata.                                                                                                                                        |
 
 ### MSA Weights
 
@@ -283,7 +300,7 @@ The MSA weights section contains a list of MSA weight files included in the data
 | **Field** | **Type** | **Required** | **Default** | **Description**                                                         |
 |-----------|----------|--------------|-------------|-------------------------------------------------------------------------|
 | `name`    | `string` | Yes          | N/A         | The name of the weights (should match an MSA name).                     |
-| `path`    | `string` | Yes*         | N/A         | The path to the weights file. Supported extensions: `.npy`.             |
+| `path`    | `string` | Yes          | N/A         | The path to the weights file. Supported extensions: `.npy`.             |
 
 Example:
 
