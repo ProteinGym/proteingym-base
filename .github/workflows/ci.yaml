@@ -96,6 +96,12 @@ jobs:
           uv pip install dist/proteingym_base-*.whl
           uv run --with proteingym_base --no-project --no-cache -- python -c "import proteingym.base"
 
+      - name: Upload the Python package distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
   github-release:
     runs-on: ubuntu-latest
     needs: test-release
@@ -117,3 +123,21 @@ jobs:
           prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'rc') ||  contains(steps.get_version.outputs.VERSION, 'b') }}
           token: ${{ secrets.GITHUB_TOKEN }}
           generate_release_notes: true
+
+  github-release:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: pypi
+      url: https://pypi.org/p/proteingym-base
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    steps:
+      - name: Download the distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Create PyPI release
+        uses: pypa/gh-action-pypi-publish@release/v1
