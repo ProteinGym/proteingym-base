@@ -283,9 +283,12 @@ class MSA:
             NotImplementedError if the file type is not supported.
         """
         name = section.name or section.path.stem
-        a3m = fasta.FastaFile.read(section.path)
-        seq_iter = iter(a3m.values())
-        value = [MsaProteinSequence(seq) for seq in seq_iter]
+        # read_iter keeps every record; FastaFile.read() is keyed by header, so it
+        # drops (biotite<2) or rejects (biotite>=2) sequences with duplicate headers
+        value = [
+            MsaProteinSequence(seq)
+            for _, seq in fasta.FastaFile.read_iter(section.path)
+        ]
         weights = np.load(weights_section.path).tolist() if weights_section else None
         with open(section.path, "rb") as f:
             file_data = BytesIO(f.read())
